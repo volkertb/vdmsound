@@ -303,7 +303,7 @@ BOOL CBasicSettingsPage::OnInitDialog()
 
   for (i = 0, numFailures = 0; i < fileNames.GetSize(); i++) {
     if (SUCCEEDED(VLPUtil::GetEffectiveRights(fileNames.GetAt(i), SE_FILE_OBJECT, &effectiveRights))) {
-      if ((effectiveRights & READ_CONTROL) != READ_CONTROL) {
+      if ((effectiveRights & FILE_GENERIC_READ) != FILE_GENERIC_READ) {
         if (numFailures < 10) {
           failedFiles += fileNames.GetAt(i) + _T("\n\r");
         } else {
