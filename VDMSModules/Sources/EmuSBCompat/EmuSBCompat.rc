@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,7
+ FILEVERSION 1,0,4,9
  PRODUCTVERSION 2,0,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -73,7 +73,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "EmuSBCompat Module\0"
-            VALUE "FileVersion", "1, 0, 4, 7\0"
+            VALUE "FileVersion", "1, 0, 4, 9\0"
             VALUE "InternalName", "EmuSBCompat\0"
             VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "EmuSBCompat.DLL\0"
