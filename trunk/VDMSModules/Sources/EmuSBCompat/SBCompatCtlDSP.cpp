@@ -545,7 +545,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x80:  /* 080h : Silence DAC */
       // TODO: implement
-      set8BitIRQ();         // generate a 8-bit IRQ
+//    set8BitIRQ();         // generate a 8-bit IRQ
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x80 (Silence DAC)");
       return false;
 

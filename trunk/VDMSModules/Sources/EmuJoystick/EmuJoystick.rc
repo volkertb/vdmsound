@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,5
+ FILEVERSION 1,0,4,10
  PRODUCTVERSION 2,0,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -72,7 +72,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "EmuJoystick Module\0"
-            VALUE "FileVersion", "1, 0, 4, 5\0"
+            VALUE "FileVersion", "1, 0, 4, 10\0"
             VALUE "InternalName", "EmuJoystick\0"
             VALUE "LegalCopyright", "Copyright 2001 Stefan FARTHOFER\0"
             VALUE "OriginalFilename", "EmuJoystick.DLL\0"
