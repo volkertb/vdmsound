@@ -155,7 +155,7 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
   m_ranges.RemoveAll();       // make sure the array of port ranges to hook is empty
 
 #ifdef _NTVDM_SVC
-  m_fixPOPF = CFG_Get(Config, INI_STR_POPF_FIX, 0, 10, true);
+  m_fixPOPF = CFG_Get(Config, INI_STR_POPF_FIX, 1, 10, true);
 #endif //_NTVDM_SVC
 
 #ifdef _VXD_SVC
