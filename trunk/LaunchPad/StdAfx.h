@@ -29,6 +29,7 @@ extern CComModule _Module;
 #include <afxdlgs.h>
 #include <afxtempl.h>
 #include <afxmt.h>
+#include <afxcmn.h>
 
 #include <comdef.h>
 #include <shlobj.h>
