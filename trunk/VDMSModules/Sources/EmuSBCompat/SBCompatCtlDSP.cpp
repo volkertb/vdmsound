@@ -24,12 +24,13 @@ CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu, CSBCompatCtlMixe
   : m_hwemu(hwemu), m_sbmix(sbmix),
     m_state(DSP_S_NORMAL),          // not in high-speed mode
     m_lastCommand((char)0x00),      // no last command
-    m_isRstAsserted(false),         // the reset sequence was not yet engaged
     m_isSpeakerEna(false),          // the speaker is disabled
     m_useTimeConstant(false),       // playback rate determined by sample rate, not time constant
     m_is8BitIRQPending(false),      // no 8-bit operation IRQ pending
     m_is16BitIRQPending(false),     // no 16-bit operation IRQs pending
-    m_testRegister((char)0x00)      // no value in the test register
+    m_testRegister((char)0x00),     // no value in the test register
+    m_E2Value((char)0xaa),          //
+    m_E2Count(0)                    //
 {
   _ASSERTE(m_hwemu != NULL);
   _ASSERTE(m_sbmix != NULL);
@@ -47,8 +48,6 @@ CSBCompatCtlDSP::~CSBCompatCtlDSP(void)
 // Unconditionally resets the DSP
 //
 void CSBCompatCtlDSP::reset(void) {
-  m_isRstAsserted = false;
-
   // flush buffers
   flushInputBuffer();
   flushOutputBuffer();
@@ -59,40 +58,40 @@ void CSBCompatCtlDSP::reset(void) {
   m_isSpeakerEna = false;
   m_lastCommand  = (char)0x00;
 
+  m_E2Value      = (char)0xaa;
+  m_E2Count      = 0;
+
   setNumSamples(0);
   setSampleRate(11025);
 
   stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
+  ackAllIRQs();     // clear any pending IRQs
 }
 
 //
 // Resets DSP on 1->0 level transition
 //
 void CSBCompatCtlDSP::reset(char data) {
-  if (data != 0) {
-    m_isRstAsserted = true;
-  } else if (m_isRstAsserted) {
-    /* TODO: account for different meanings of RESET when in high-speed DMA,
-       MIDI UART mode, etc. */
+  if ((data & 0x01) != 0) { // SB16 only looks at bit 0
     switch (m_state) {
       case DSP_S_NORMAL:
         m_hwemu->logInformation("DSP reset - reinitializing DSP");
-        reset();
+        reset();  // reset the DSP
         break;
 
       case DSP_S_HIGHSPEED:
         m_hwemu->logInformation("DSP reset - exiting high-speed mode");
-        m_state = DSP_S_NORMAL;
         stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
+        ackAllIRQs();     // clear any pending IRQs
         break;
-
-      default:
-        m_hwemu->logError("DSP reset - invalid state, reverting to NORMAL");
-        m_state = DSP_S_NORMAL;
     }
 
+    m_state = DSP_S_RESET;
+  } else {
     flushOutputBuffer();        // flush the buffer
     m_bufOut.push((char)0xaa);  // acknowledge reset
+
+    m_state = DSP_S_NORMAL;
   }
 }
 
@@ -150,6 +149,10 @@ void CSBCompatCtlDSP::putCommand(char data) {
       // or treated like a sample byte, but *not* like a DSP command
       return;
 
+    case DSP_S_RESET:
+      // While reset is asserted, any byte that comes in here is ignored
+      return;
+
     default:
       m_hwemu->logError("DSP command - invalid state, reverting to NORMAL");
       m_state = DSP_S_NORMAL;
@@ -188,6 +191,10 @@ char CSBCompatCtlDSP::getData(void) {
       // During high-speed DMA ignore any port read requests
       return lastReply;
 
+    case DSP_S_RESET:
+      // While reset is asserted ignore any port read requests
+      return lastReply;
+
     default:
       m_hwemu->logError("DSP get data - invalid state, reverting to NORMAL");
       m_state = DSP_S_NORMAL;
@@ -201,6 +208,9 @@ char CSBCompatCtlDSP::getWrStatus(void) {
       return (char)MK_SB_WR_STATUS(true);   // always accept commands
 
     case DSP_S_HIGHSPEED:
+      return (char)MK_SB_WR_STATUS(false);  // don't accept commands
+
+    case DSP_S_RESET:
       return (char)MK_SB_WR_STATUS(false);  // don't accept commands
 
     default:
@@ -217,6 +227,9 @@ char CSBCompatCtlDSP::getRdStatus(void) {
       return (char)MK_SB_RD_STATUS(!m_bufOut.empty());
 
     case DSP_S_HIGHSPEED:
+      return (char)MK_SB_RD_STATUS(false);  // no data is available
+
+    case DSP_S_RESET:
       return (char)MK_SB_RD_STATUS(false);  // no data is available
 
     default:
@@ -282,7 +295,10 @@ void CSBCompatCtlDSP::stopAllDMA(bool isSynchronous) {
   // stop all pending DMA operations
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, isSynchronous);
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, isSynchronous);
+}
 
+void CSBCompatCtlDSP::ackAllIRQs(void) {
+  // acknowledge any pending IRQs
   if (m_is8BitIRQPending) ack8BitIRQ();
   if (m_is16BitIRQPending) ack16BitIRQ();
 }
@@ -584,6 +600,17 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       flushOutputBuffer();  // flush any previous replies
       m_bufOut.push(HIBYTE(m_hwemu->getDSPVersion()));  // output reply: major version
       m_bufOut.push(LOBYTE(m_hwemu->getDSPVersion()));  // output reply: minor version
+      return true;
+
+    case 0xe2:  /* 0E2h : ??? */
+      for (i = 0; i < 8; i++)
+        if ((m_bufIn[1] >> i) & 0x01) m_E2Value += E2_incr_table[m_E2Count % 4][i];
+
+      m_E2Value += E2_incr_table[m_E2Count % 4][8];
+      m_E2Count++;
+
+      m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_E2CMD, m_E2Value, true);
+
       return true;
 
     case 0xe3:  /* 0E3h : DSP Copyright */

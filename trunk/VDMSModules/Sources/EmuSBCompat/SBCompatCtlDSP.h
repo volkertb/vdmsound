@@ -9,11 +9,15 @@ class CSBCompatCtlMixer;
 //
 class ISBDSPHWEmulationLayer {
   public:
-    enum transfer_t { TT_PLAYBACK, TT_RECORD };
+    enum transfer_t { TT_PLAYBACK, TT_RECORD, TT_E2CMD };
     enum codec_t { CODEC_PCM, CODEC_PCM_SIGNED, CODEC_ADPCM_2, CODEC_ADPCM_3, CODEC_ADPCM_4 };
 
   public:
     virtual short getDSPVersion(void) = 0;
+    virtual void startTransfer(
+        transfer_t type,        // DSP command 0xe2 (input)
+        char E2Reply,           // reply byte to be written back using DMA
+        bool isSynchronous = false) = 0;  // function only returns after DREQ has been asserted and byte transferred
     virtual void startTransfer(
         transfer_t type,        // playback (output) or recording (input)
         int numChannels,        // 1 = mono, 2 = stereo
@@ -42,7 +46,8 @@ class CSBCompatCtlDSP {
   protected:
     enum DSPState_t {
       DSP_S_NORMAL,
-      DSP_S_HIGHSPEED
+      DSP_S_HIGHSPEED,
+      DSP_S_RESET
     };
 
   public:
@@ -65,6 +70,7 @@ class CSBCompatCtlDSP {
 
   protected:
     void stopAllDMA(bool isSynchronous);
+    void ackAllIRQs(void);
     bool processCommand(unsigned char command);
     const char* getCopyright(void);
     int getNumChannels(void);
@@ -94,7 +100,10 @@ class CSBCompatCtlDSP {
     DSPState_t m_state;
     unsigned char m_lastCommand;
 
-    bool m_isRstAsserted, m_isSpeakerEna;
+    char m_E2Value;
+    int m_E2Count;
+
+    bool m_isSpeakerEna;
     bool m_useTimeConstant;
     int m_sampleRate, m_timeConstant;
     int m_numSamples;
