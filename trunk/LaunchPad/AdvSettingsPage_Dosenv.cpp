@@ -61,10 +61,10 @@ BOOL CAdvSettingsPage_Dosenv::SyncGUIData(BOOL bSave) {
   // CONFIG.SYS
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useHIMEM.SYS"), m_chkHimemsys,    TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useUMB"),       m_chkDosumb,      TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useConfig"),    m_chkConfigsys,   TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useConfig"),    m_chkConfigsys,   FALSE);
   SyncGUIData_CONFIG(bSave, m_chkConfigsys.GetCheck() != BST_UNCHECKED);
 
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useAutoexec"),  m_chkAutoexecbat, TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useAutoexec"),  m_chkAutoexecbat, FALSE);
   SyncGUIData_AUTOEXEC(bSave, m_chkAutoexecbat.GetCheck() != BST_UNCHECKED);
 
   return TRUE;
