@@ -21,7 +21,7 @@ CMPU401CtlFSM::~CMPU401CtlFSM(void)
 // Resets the MPU-401
 //
 void CMPU401CtlFSM::reset(void) {
-  m_inBuf.reset();                  // flush the input buffer
+  m_inBuf.reset();                  // flush the input buffer //TODO: it appears that the real MPU-401 (LAPC-I) does not flush this buffer when RESET is sent
   m_outBuf.reset();                 // flush the output buffer
 }
 
