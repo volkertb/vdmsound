@@ -74,7 +74,7 @@ void CChangeIconDlg::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CChangeIconDlg)
 	DDX_Control(pDX, IDC_LST_ICONS, m_lstIcons);
 	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
-	DDV_MaxChars(pDX, m_edtFile_val, 80);
+	DDV_MaxChars(pDX, m_edtFile_val, 79);
 	DDX_LBIndex(pDX, IDC_LST_ICONS, m_lstIcons_val);
 	//}}AFX_DATA_MAP
 }

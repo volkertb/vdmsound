@@ -70,23 +70,40 @@ HRESULT CBasicSettingsPage::AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
     return E_UNEXPECTED;
   }
 
+#if 0
+  if (AfxIsValidAddress((const void*)lParam, sizeof(PROPSHEETHEADER), TRUE)) {
+    PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;
+    pPSH->nStartPage = pPSH->nPages - 1;
+  }
+#endif
+
   return S_OK;
 }
 
-UINT CALLBACK CBasicSettingsPage::PropPageCallbackProc(HWND hwnd, UINT uMsg, LPPROPSHEETPAGE ppsp) {
+UINT CALLBACK CBasicSettingsPage::PropPageCallbackProc(HWND hWnd, UINT uMsg, LPPROPSHEETPAGE pPSP) {
   UINT retVal = TRUE;
 
-  ASSERT(ppsp != NULL);
-  CBasicSettingsPage* pBasicSettingsPage = (CBasicSettingsPage*)(ppsp->lParam);
+  ASSERT(pPSP != NULL);
+  CBasicSettingsPage* pBasicSettingsPage = (CBasicSettingsPage*)(pPSP->lParam);
   ASSERT_VALID(pBasicSettingsPage);
 
   if (pBasicSettingsPage->m_psp.dwFlags & PSP_USECALLBACK) {
-    retVal = (pBasicSettingsPage->m_psp.pfnCallback)(hwnd, uMsg, (LPPROPSHEETPAGE)(&(pBasicSettingsPage->m_psp)));
+    retVal = (pBasicSettingsPage->m_psp.pfnCallback)(hWnd, uMsg, (LPPROPSHEETPAGE)(&(pBasicSettingsPage->m_psp)));
   }
 
-  if (uMsg == PSPCB_RELEASE) {
-    TRACE(_T("LaunchPad: automatically deleting CBasicSettingsPage from heap\n"));
-    delete pBasicSettingsPage;
+  switch (uMsg) {
+    case PSPCB_CREATE:
+      // Do nothing
+      break;
+
+    case PSPCB_RELEASE:
+      TRACE(_T("LaunchPad: automatically deleting CBasicSettingsPage from heap\n"));
+      delete pBasicSettingsPage;
+      break;
+
+    default:
+      // Do nothing
+      break;
   }
 
   return retVal;
@@ -255,11 +272,16 @@ void CBasicSettingsPage::OnButChange()
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:
-      m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtFile_val);
-      m_settings.SetValue(_T("program"), _T("params"), dlgBrowse.m_edtArgs_val);
-      m_settings.SetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
+      // If got back empty strings then leave unchanged
+      if (!dlgBrowse.m_edtFile_val.IsEmpty())
+        m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtFile_val);
+      if (!dlgBrowse.m_edtArgs_val.IsEmpty())
+        m_settings.SetValue(_T("program"), _T("params"), dlgBrowse.m_edtArgs_val);
+      if (!dlgBrowse.m_edtDir_val.IsEmpty())
+        m_settings.SetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
 
-      m_settings.SetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
+      if (!dlgBrowse.m_iconLocation.IsEmpty())
+        m_settings.SetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
 
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
@@ -274,4 +296,14 @@ void CBasicSettingsPage::OnButChange()
       GetWindowText(tmpStr2);
       MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONERROR);
   }
+}
+
+BOOL CBasicSettingsPage::OnApply() 
+{
+  SyncGUIData(TRUE);        // save all changes that occured in the GUI
+
+  if (FAILED(m_settings.CommitAll()))
+    return FALSE;
+
+  return CPropertyPage::OnApply();
 }
