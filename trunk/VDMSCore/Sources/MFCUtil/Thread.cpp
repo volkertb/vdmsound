@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Thread.h"
+#include "MFCUtil.h"
 
 CThread::CThread(
     IRunnable* target,
@@ -26,7 +27,14 @@ unsigned int WINAPI CThread::ThreadProc(
 
   ASSERT(pRunnable != NULL);
 
-  unsigned int status = pRunnable->Run(*pThis);
+  unsigned int status;
+
+  try {
+    status = pRunnable->Run(*pThis);
+  } catch (...) {
+    MessageBox(Format(_T("Unhandled exception in thread %d (0x%08x)"), (int)(pThis->GetThreadID()), (int)(pThis->GetThreadHandle())), _T("Error"), MB_OK, MB_ICONERROR);
+    status = -1;
+  }
 
   _endthreadex(status);
 
@@ -122,8 +130,14 @@ bool CThread::PostMessage(
 }
 
 bool CThread::GetMessage(
-    MSG* message)
+    MSG* message,
+    bool isBlocking)
 {
   ASSERT(m_hThread != NULL);
-  return (::GetMessage(message, NULL, 0, 0) != -1);
+
+  if (isBlocking) {
+    return (::GetMessage(message, NULL, 0, 0) != -1);
+  } else {
+    return (::PeekMessage(message, NULL, 0, 0, PM_REMOVE | PM_NOYIELD) != 0);
+  }
 }

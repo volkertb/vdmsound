@@ -25,7 +25,7 @@ class CThread {
 
   public:
     bool PostMessage(UINT message, WPARAM wParam, LPARAM lParam);
-    bool GetMessage(MSG* message);
+    bool GetMessage(MSG* message, bool isBlocking = true);
     int GetPriority(void);
     bool SetPriority(int priority);
     IRunnable* GetTarget(void);
