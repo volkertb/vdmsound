@@ -125,7 +125,7 @@ STDMETHODIMP CJoystickCtl::Init(IUnknown * configuration) {
   resetJoystick();
 
   // Create the joystick driver polling thread (regularly updates the locally-cached joystick state)
-  m_joyPollThread.Create(this, true);
+  m_joyPollThread.Create(this, true);   /* TODO: check that creation was successful */
   m_joyPollThread.SetPriority(THREAD_PRIORITY_NORMAL);
   m_joyPollThread.Resume();
 
