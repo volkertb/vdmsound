@@ -16,3 +16,6 @@ Verdana=MS Sans Serif ; Standardize the look
 
 [MAP]
 #include <LaunchPad.hm>
+
+[WINDOWS]
+main="LaunchPad help",(672,64,320,256),0x7c00,,,f3
