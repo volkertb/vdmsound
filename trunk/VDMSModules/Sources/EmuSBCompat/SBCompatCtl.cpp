@@ -352,11 +352,12 @@ STDMETHODIMP CSBCompatCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT cou
 // IDMAHandler
 /////////////////////////////////////////////////////////////////////////////
 
-STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred) {
+STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred, LONG * isTooSlow) {
   if (transferred == NULL)
     return E_POINTER;
 
   *transferred = 0;
+  *isTooSlow = false;
 
   // If this transfer does not occur on the active DMA channel, ignore it
   if (channel != m_activeDMAChannel)
@@ -406,13 +407,6 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   //   the time elapsed since the last transfer (+/- 1 time uncertainty)
   long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(deltaTime + 1)) / 1000.0);
 
-  // Ensure that the number of bytes to transfer do not span more than one
-  //   DSP block (avoids having to generate more than one interrupt per transfer)
-  if (toTransfer > m_DSPBlockSize) {
-    toTransfer = m_DSPBlockSize;
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, _T("DMA updates too infrequent -- unable to keep up with desired transfer rate"));
-  }
-
   // Round (down) the number of bytes to transfer in such a way so that
   //   the transfer will not break a 16-bit sample down the middle, or split
   //   a left/right sample pair (for stereo data)
@@ -424,6 +418,14 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   } else {                    // 16-bit DMA transfer, maxData is in WORDS
     toTransfer = round(toTransfer, 1);  // make sure we transfer in multiples of WORDS, or else we can lose up to one byte/transfer
     toTransfer = toTransfer > (2 * maxData) ? (2 * maxData) : toTransfer;
+  }
+
+  // Ensure that the number of bytes to transfer do not span more than one
+  //   DSP block (avoids having to generate more than one interrupt per transfer)
+  if (toTransfer > m_DSPBlockSize) {
+    *isTooSlow = true;            // request an increase in DMA servicing frequency
+    toTransfer = m_DSPBlockSize;  // clip data amount
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, _T("DMA updates too infrequent (unable to keep up with desired transfer rate), requesting boost"));
   }
 
   // If, after all calculations, no bytes need to be transferred, finish now
@@ -606,6 +608,10 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
   }
 }
 
+/* TODO: should wait for the current block to finish, generate the interript,
+   and only then stop the DMA transaction */
+/* TODO: does DREQ have to stay asserted (i.e. the xfer is not stopped)
+   until IRQAck? */
 void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
   try {
     m_DMACtl->AbortTransfer(m_activeDMAChannel, isSynchronous);
@@ -615,6 +621,13 @@ void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
   }
 }
 
+/* TODO: while the xfer is paused, do we (also) deassert DREQ ? If yes,
+   then instead of only modifying m_isPaused also STOP the DMA transfer,
+   this will take care of DREQ *but* probably not a good idea, since 
+   as it is now the transfer manager will reset its A/I count & address
+   (which it saved when the xfer first started) to whatever value they might
+   happen to have when the xfer is (re)started as part of the DSP resume,
+   which is clearly bad -- I really hope DREQ stays asserted. :) */
 void CSBCompatCtl::pauseTransfer(transfer_t type) {
   if (!m_isPaused) {
     m_transferPauseTime = timeGetTime();
