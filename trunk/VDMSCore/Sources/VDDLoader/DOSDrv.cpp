@@ -12,6 +12,7 @@
 
 #include <dos.h>
 #include <stdio.h>
+#include <conio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,7 +166,7 @@ char* strrpbrk(const char *string, const char *strCharSet) {
 
 
 
-int load(LPCSTR szDllPath, LPHANDLE lphVDD) {
+int load(LPCSTR szDllPath, LPHANDLE lphVDD, LPVOID lpParam = NULL, WORD uParamLen = 0) {
   HANDLE hVDD;
   BOOL bSuccess;
   WORD wResult;
@@ -207,7 +208,7 @@ int load(LPCSTR szDllPath, LPHANDLE lphVDD) {
     }
     return -1;      // error; does not require unloading of VDD
   } else {
-    wResult = DispatchCall(hVDD, CMD_VDD_INIT, NULL, 0);
+    wResult = DispatchCall(hVDD, CMD_VDD_INIT, lpParam, uParamLen);
 
     if (wResult != 0) {
       fprintf(stderr, "Error encountered during post-initialization (0x%02x).\n", (int)wResult);
@@ -218,10 +219,10 @@ int load(LPCSTR szDllPath, LPHANDLE lphVDD) {
   }
 }
 
-int unload(HANDLE hVDD) {
+int unload(HANDLE hVDD, LPVOID lpParam = NULL, WORD uParamLen = 0) {
   WORD wResult;
 
-  wResult = DispatchCall(hVDD, CMD_VDD_DESTROY, NULL, 0);
+  wResult = DispatchCall(hVDD, CMD_VDD_DESTROY, lpParam, uParamLen);
 
   if (wResult != 0) {
     fprintf(stderr, "Error encountered during pre-release (0x%02x).\n", (int)wResult);
@@ -239,6 +240,7 @@ int unload(HANDLE hVDD) {
 
 
 enum fnType {
+  FN_DONOTHING,
   FN_HELP,
   FN_LOAD,
   FN_UNLOAD
@@ -248,11 +250,20 @@ int main(int argc, char** argv) {
   HANDLE hVDD = 0;
   char* szDllPath = "VDDLoader.dll";
 
+  char INIFiles[16384] = "";
+  int INIFilesLen = 0;
+
   fnType function = FN_LOAD;
 
-  fprintf(stdout, "VDMSound DOS loader ver. %d.%02d (%s)\n"
-                  "Copyright (c) Vlad ROMASCANU 2000.  All rights reserved.\n\n", _VER_MAJOR, _VER_MINOR, __DATE__);
+  highvideo();
+  cprintf("VDMSound DOS loader, version %d.%02d (%s)\n\r"
+          "Copyright (C) 2000-2001 Vlad ROMASCANU.\n\n\r", _VER_MAJOR, _VER_MINOR, __DATE__);
 
+  lowvideo();
+  cprintf("VDMSound is covered by the GNU Public License (GPL), version 2 or later, as\n\r"
+          "published by the Free Software Foundation, Inc. (http://www.gnu.org/).\n\n\r");
+
+  normvideo();
   for (int i = 1; i < argc; i++) {
     if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
       char* arg = &(argv[i][1]);
@@ -272,6 +283,27 @@ int main(int argc, char** argv) {
         continue;
       }
 
+      if (stribegin(arg, "i:")) {
+        int INIFNameLen = strlen(&(arg[strlen("i:")]));
+
+        if (INIFilesLen + INIFNameLen + 2 < sizeof(INIFiles)) { /* + 2 = the final two terminating NULLs */
+          if (INIFNameLen > 0) {
+            strcpy(&(INIFiles[INIFilesLen]), &(arg[strlen("i:")]));
+            INIFilesLen += INIFNameLen + 1;
+          } else {
+            fprintf(stderr, "Invalid use of the switch - %s.\nPlease provide a valid file name following the switch.\n", argv[i]);
+            function = FN_DONOTHING;
+            break;
+          }
+        } else {
+          fprintf(stderr, "Not enough memory.\nPlease reduce the length of your command-line parameters.\n");
+          function = FN_DONOTHING;
+          break;
+        }
+
+        continue;
+      }
+
       fprintf(stderr, "Unknown switch - %s.\n", argv[i]);
       function = FN_HELP;
       break;
@@ -283,11 +315,19 @@ int main(int argc, char** argv) {
   }
 
   switch (function) {
+    case FN_DONOTHING:
+      /* do nothing */
+      break;
+
     case FN_HELP:
+      fprintf(stdout, "Usage: DOSDRV [-i:iniFile1 [-i:iniFile2 [...]]]\n");
       break;
 
     case FN_LOAD:
-      switch (load(szDllPath, &hVDD)) {
+      INIFilesLen++;
+      INIFiles[INIFilesLen] = '\0';
+
+      switch (load(szDllPath, &hVDD, INIFiles, INIFilesLen + 1)) {
         case 0:
           fprintf(stderr, "Successfully loaded & initialized (hVDD = 0x%02x).\n", hVDD);
           break;
