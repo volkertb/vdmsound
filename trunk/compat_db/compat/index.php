@@ -3,6 +3,7 @@
   require_once('inc/html.php');
   require_once('inc/session.php');
   require_once('inc/auth.php');
+  require_once('inc/news.php');
   require_once('inc/apps.php');
 
   SessionStart();
@@ -16,59 +17,99 @@
 
 <?php
   $globStats = AppsGetGlobalStats();
+  $theNews   = NewsGetItems('updated', false, 0, 5);
   $myReports = AppsGetReports(NULL, AuthGetUserId(), NULL, true,
                               APPS_GET_USER  | APPS_GET_AS_TEXT,
                               APPS_GET_TITLE | APPS_GET_APPVER | APPS_GET_DISTRIB | APPS_GET_AS_TEXT,
                               APPS_GET_OSVER | APPS_GET_EMUVER | APPS_GET_AS_TEXT,
-                              0, 'updated', false, 0, 10);
+                              0, 'updated', false, 0, 5);
 
-  echo('<table border="0" cellspacing="0" cellpadding="7" width="100%" height="100%"><tr valign="top">');
+  echo('<table border="0" cellspacing="0" cellpadding="7" width="100%"><tr valign="top">');
 
-  echo('<td align="left">');
-  echo('xxx');
+  //
+  // The "titles" section
+  //
 
-  echo('</td><td align="center">');
-  echo('App = ' . $globStats['apps'] . '<br>');
-  echo('Rep = ' . $globStats['reports']);
+  echo('<td align="left" width="15%">');
 
-  echo('</td><td align="right">');
+  echo('<h1 class="normal"><nobr> Apps </nobr></h1>');
+  echo('<table border="0" cellspacing="0" cellpadding="5" width="100%">');
+  echo('<tr class="opaque1"><td class="opaque1_bevel"><small>Currently supporting ' . $globStats['apps'] . ' DOS applications with ' . $globStats['reports'] . ' compatibility reports!</small></td></tr>');
 
-  echo('<table border="0" cellspacing="2" cellpadding="5">');
+  echo('<tr><td height="2"></td></tr>');
+
+  $slices = 9;
+  $index = Array('#');
+
+  for ($i = ord('A'); $i <= ord('Z'); $i++) {
+    array_push($index, chr($i));
+  }
+
+  echo('<tr class="opaque1"><td class="opaque1_bevel"><div style="margin-bottom: 0.5em">Browse:</div>');
+  echo('<table border="0" cellspacing="0" cellpadding="1" width="100%" style="font-family: monospace">');
+
+  for ($i = 0; $i < count($index); $i++) {
+    if (($i % $slices) == 0) {
+      echo('<tr>');
+    }
+
+    echo('<td align="center">' . HtmlMakeLink($index[$i], 'search.php', Array('byletter' => $index[$i])) . '</td>');
+
+    if ((($i % $slices) == ($slices - 1)) || ($i == (count($index) - 1))) {
+      echo('</tr>');
+    }
+  }
+
+  echo('</table></td></tr>');
+
+  echo('<tr><td height="2"></td></tr>');
+
+  echo('<form method="get" action="search.php"><tr class="opaque1" valign="top"><td class="opaque1_bevel" align="right">Search:&nbsp;<input class="flat1" type="text" size="12" name="query" value=""><br>');
+  echo('<label accesskey="x"><input type="checkbox" name="exact" value="yes">Exact match</label>&nbsp;<input type="submit" class="flat2" value="Go!">');
+  HtmlFormSendSID();
+  echo('</td></tr></form>');
+
+  echo('</table>');
+
+  //
+  // The "news" section
+  //
+
+  echo('</td><td align="center" width="45%">');
+  echo('<h1 class="normal"><nobr> What\'s new </nobr></h1>');
+
+  if ($theNews && (count($theNews) > 0)) {
+    HtmlSendNewsList($theNews);
+  } else {
+    echo('<h2 class="normal">No news items are available at this time</h2>');
+  }
+
+  //
+  // The "reports" section
+  //
 
   if ($loggedin) {
     $hdr = 'My compatibility reports';
   } else {
-    $hdr = 'Newest compatibility reports';
+    $hdr = 'Latest compatibility reports';
   }
 
-  echo('<tr><td colspan="2"><h2>' . $hdr . '</h2></td></tr>');
+  echo('</td><td align="right" width="40%">');
+  echo('<h1 class="normal"><nobr> ' . $hdr . ' </nobr></h1>');
 
-  if (count($myReports) > 0) {
-    $i = 0;
-
-    foreach ($myReports as $myReport) {
-      echo('<tr bgcolor="#5f5f5f" valign="middle"><td>');
-      echo('<div style="font: 60%">' . date('D M j Y', strtotime($myReport['updated'])) . ' &nbsp; (contributed by <em>' . $myReport['user_text'] . '</em>)</div>');
-      echo('<div style="font: serif; text-indent: 10"><b>' . $myReport['title_text'] . '</b> ' . $myReport['appver_text'] . ' <i>(' . $myReport['distrib_text'] . ')</i></div>');
-      echo('<div style="font: 75% sans-serif; text-indent: 10; color: #bfbfbf">Tested under ' . $myReport['osver_text'] . ' using ' . $myReport['emuver_text'] . '</div>');
-
-      echo('</td><td align="center"><div style="font: 75% sans-serif">');
-      echo(HtmlMakeLink('View', 'list.php', Array('reportid' => $myReport['report_id'])));
-
-      if ($loggedin) {
-        echo('<br>' . HtmlMakeLink('Edit', 'edit.php', Array('reportid' => $myReport['report_id'])));
-        echo('<br>' . HtmlMakeLink('Delete', 'edit.php', Array('reportid' => $myReport['report_id'])));
-      }
-
-      echo('</div></td></tr>');
-    }
+  if ($myReports && (count($myReports) > 0)) {
+    HtmlSendReportList($myReports, $loggedin, true);
   } else {
-    echo('<tr><td colspan="2"><h3>You have not submitted any compatibility reports</h3></td></tr>');
+    if ($loggedin) {
+      $errMsg = 'You have not yet submitted any compatibility reports';
+    } else {
+      $errMsg = 'No compatibility reports are available at this time';
+    }
+
+    echo('<h2 class="normal">' . $errMsg . '</h2>');
   }
 
   echo('</table>');
-
-  echo('</td></tr></table>');
 ?>
 
 <?php HtmlBeginFooter(); ?>

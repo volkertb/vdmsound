@@ -70,6 +70,8 @@
     if (is_null($username))
       return $auth_userid;
 
+    $username = strtolower($username);
+
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
       return NULL;
@@ -233,6 +235,9 @@
   function AuthCreateUser($username, $fullname, $email, $newpwd1, $newpwd2) {
     ErrSetLastError();
 
+    $username = strtolower($username);
+    $email = strtolower($email);
+
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
       return false;
@@ -277,6 +282,8 @@
   function AuthDeleteUser($username, $password, $type) {
     ErrSetLastError();
 
+    $username = strtolower($username);
+
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
       return false;
@@ -289,6 +296,8 @@
   // Compute an activation hash
   //
   function AuthGetVerificationHash($username) {
+    $username = strtolower($username);
+
     if (($result = MysqlQuery('SELECT UCASE(MD5(CONCAT_WS(",",id,name,type,time_created,salt))) FROM Users WHERE name="' . $username . '"')) &&
         (list($hash) = mysql_fetch_row($result)))
     {
@@ -303,6 +312,8 @@
   //
   function AuthActivateUser($username, $hash) {
     ErrSetLastError();
+
+    $username = strtolower($username);
 
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
@@ -333,6 +344,8 @@
   //
   function AuthResetUserPassword($username, $hash, $newpwd1, $newpwd2) {
     ErrSetLastError();
+
+    $username = strtolower($username);
 
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
