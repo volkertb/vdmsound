@@ -10,6 +10,31 @@
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
+class CPIFFile;
+
+/////////////////////////////////////////////////////////////////////////////
+// CDOSEnv class
+
+class CDOSEnv : public CMapStringToString
+{
+// Construction
+public:
+  CDOSEnv();
+  virtual ~CDOSEnv();
+
+// Helper methods
+public:
+  static BOOL AppendEnvBlockEntry(LPTSTR& lpEnvBlock, LPCTSTR szEntry, int& ncch);
+
+// Methods
+public:
+  BOOL GetEnvBlock(LPTSTR lpEnvBlock, int ncch) const;
+  BOOL SetEnvBlock(void);
+  BOOL SetEnvBlock(LPCTSTR lpEnvBlock);
+};
+
+
+
 /////////////////////////////////////////////////////////////////////////////
 // CRUNWITHVDMSThread class
 
@@ -27,6 +52,15 @@ public:
 protected:
   virtual BOOL InitInstance(void);
   virtual int Run(void);
+
+// Utility functions
+protected:
+  BOOL SetupPIF(CPIFFile& PIFFile);
+  BOOL SetupEnv(LPTSTR lpEnvBlock, int ncch);
+
+  CString SettingGetString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue = _T(""));
+  bool SettingGetBool(LPCTSTR section, LPCTSTR key, bool defValue = false);
+  int SettingGetInt(LPCTSTR section, LPCTSTR key, int defValue = 0);
 
 // Member variables
 protected:
