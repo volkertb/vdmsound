@@ -26,6 +26,11 @@ extern CComModule _Module;
 
 // TODO: reference additional headers your program requires here
 
+#include <afxmt.h>
+
+#include <mmsystem.h>
+#pragma comment ( lib , "winmm.lib" )
+
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 

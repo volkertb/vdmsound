@@ -6,7 +6,9 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /* TODO: put these in a .mc file or something */
-#define MSG_ERR_INTERFACE _T("The dependency module '%1' does not support the '%2' interface.%0")
+#define MSG_ERR_INTERFACE     _T("The dependency module '%1' does not support the '%2' interface.%0")
+#define MSG_ERR_NOINSTSLOTS   _T("Too many instances running (maximum %!d!1 allowed).%0")
+#define MSG_ERR_OPLINITFAILED _T("Unable to initialize OPL software synthesizer.%0")
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -18,11 +20,21 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define OPL_INTERNAL_FREQ     3600000   // The OPL operates at 3.6MHz
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
 #include <VDMUtil.h>
 #pragma comment ( lib , "VDMUtil.lib" )
+
+/////////////////////////////////////////////////////////////////////////////
+
+bool CAdLibCtl::isInstancesInitialized = false;
+CAdLibCtl* CAdLibCtl::instances[MAX_INSTANCES];
+CCriticalSection CAdLibCtl::OPLMutex;
 
 /////////////////////////////////////////////////////////////////////////////
 // CAdLibCtl
@@ -118,8 +130,9 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
-  // initialize the OPL software synthesizer
-  m_OPL = MAME::OPLCreate(OPL_TYPE_YM3812, 12500, m_sampleRate);    /* TODO: check m_OPL non-null */
+  // Initialize the OPL software synthesizer
+  if (FAILED(hr = OPLCreate(m_sampleRate)))
+    return hr;
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x)"), m_basePort));
 
@@ -128,8 +141,10 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
 
 STDMETHODIMP CAdLibCtl::Destroy() {
   // release the OPL software synthesizer
-  if (m_OPL != NULL)
-    MAME::OPLDestroy(m_OPL);
+  OPLDestroy();
+
+  // Release the Wave-out module
+  m_waveOut = NULL;
 
   // Release the VDM Services module
   m_IOSrv   = NULL;
@@ -152,9 +167,19 @@ STDMETHODIMP CAdLibCtl::HandleINB(USHORT inPort, BYTE * data) {
   if (data == NULL)
     return E_POINTER;
 
+  DWORD curTime = 0;
+
   switch (inPort - m_basePort) {
     case 0:   // the address/status port
-      *data = 0xff; // TODO: retrieve status
+      curTime = timeGetTime();
+
+      if (m_targetTime[0].isActive && (m_targetTime[0].expiration <= curTime))
+        MAME::OPLTimerOver(m_OPL, 0);   // The first timer expired
+
+      if (m_targetTime[1].isActive && (m_targetTime[1].expiration <= curTime))
+        MAME::OPLTimerOver(m_OPL, 1);   // The second timer expired
+
+      *data = MAME::OPLRead(m_OPL, 0);
       return S_OK;
 
     case 1:   // the data port
@@ -172,10 +197,12 @@ STDMETHODIMP CAdLibCtl::HandleOUTB(USHORT outPort, BYTE data) {
   switch (outPort - m_basePort) {
     case 0:   // the address/status port
       // TODO: set register index
+      MAME::OPLWrite(m_OPL, 0, data);
       return S_OK;
 
     case 1:   // the data port
       // TODO: set register data
+      MAME::OPLWrite(m_OPL, 1, data);
       return S_OK;
 
     default:
@@ -214,3 +241,140 @@ STDMETHODIMP CAdLibCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count,
 }
 
 // ** END not implemented ** ////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Utility functions
+/////////////////////////////////////////////////////////////////////////////
+
+//
+//
+//
+HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
+  int i;
+
+  // Lock static instances array and access to OPL software synthesizer
+  CSingleLock lock(&OPLMutex, TRUE);
+
+  // Initialize the static instances array (only once per DLL instance)
+  if (!isInstancesInitialized) {
+    isInstancesInitialized = true;
+
+    for (i = 0; i < MAX_INSTANCES; i++) {
+      instances[i] = NULL;
+    }
+  }
+
+  // Look for an empty slot in the static instances array
+  for (i = 0; i < MAX_INSTANCES; i++) {
+    if (instances[i] == NULL) {
+      m_instanceID = i;
+      break;
+    }
+  }
+
+  // If an empty slot was found take it, return an error otherwise
+  if (m_instanceID < 0)
+    return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_NOINSTSLOTS, /*false, NULL, 0, */false, (int)MAX_INSTANCES), __uuidof(IVDMBasicModule), E_OUTOFMEMORY);
+
+  instances[m_instanceID] = this;
+
+  // Initialize the OPL software synthesizer, return an error if failed
+  if ((m_OPL = MAME::OPLCreate(OPL_TYPE_YM3812, OPL_INTERNAL_FREQ, sampleRate)) == NULL)
+    return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
+
+  // Install the callback handlers
+  MAME::OPLSetTimerHandler(m_OPL, OPLTimerHandler, m_instanceID * 2);
+  MAME::OPLSetUpdateHandler(m_OPL, OPLUpdateHandler, m_instanceID);
+
+  m_targetTime[0].isActive = false;
+  m_targetTime[1].isActive = false;
+
+  return S_OK;
+}
+
+//
+//
+//
+void CAdLibCtl::OPLDestroy(void) {
+  // Lock static instances array and access to OPL software synthesizer
+  CSingleLock lock(&OPLMutex, TRUE);
+
+  // Release the OPL software synthesizer
+  if (m_OPL != NULL)
+    MAME::OPLDestroy(m_OPL);
+
+  // Release the slot in the static instance array
+  if (m_instanceID >= 0)
+    instances[m_instanceID] = NULL;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// OPL callback functions
+/////////////////////////////////////////////////////////////////////////////
+
+//
+//
+//
+void CAdLibCtl::OPLTimerHandler(int channel, double interval_sec) {
+  CAdLibCtl* pThis = instances[channel / 2];
+  if (pThis == NULL) return;
+
+  TimerInfo& timerInfo = pThis->m_targetTime[channel % 2];
+
+  if (interval_sec == 0.0) {
+    timerInfo.isActive = false;
+  } else {
+    timerInfo.expiration = timeGetTime() + (DWORD)(interval_sec * 1.0e3);
+    timerInfo.isActive = true;
+  }
+}
+
+//
+//
+//
+void CAdLibCtl::OPLUpdateHandler(int param, int min_interval_usec) {
+  static DWORD lastTime = 0;  /* NO STATIC in final version (because of multimple COM instances with same DLL !!! */
+  static double scale = 1.0;
+
+  /* TODO: try doing all this crap from a thread, asynchronously */
+
+  CAdLibCtl* pThis = instances[param];
+  if (pThis == NULL) return;
+
+  if (pThis->m_waveOut == NULL)
+    return; // why bother if no renderer is attached ?
+
+  DWORD curTime = timeGetTime();
+
+  if (lastTime == 0) {
+    lastTime = curTime;
+
+    // Set up the renderer (if any)
+    try {
+      pThis->m_waveOut->SetFormat(1, pThis->m_sampleRate, 16);
+    } catch (_com_error& ce) {
+      CString args = Format(_T("%d, %d, %d"), 1, pThis->m_sampleRate, 16);
+      RTE_RecordLogEntry(pThis->m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    }
+  } else if (curTime > lastTime) {
+    MAME::INT16 buf[65536];
+    int numBytes = (int)(pThis->m_sampleRate * ((curTime - lastTime) / 1000.0));
+    numBytes = min(65536, numBytes);
+
+    lastTime = curTime;
+
+    MAME::YM3812UpdateOne(instances[param]->m_OPL, buf, numBytes);
+
+    // Play the data, and update the load factor
+    try {
+      pThis->m_waveOut->PlayData((BYTE*)buf, 2*numBytes);
+    } catch (_com_error& ce) {
+      CString args = Format(_T("%p, %d"), buf, 2*numBytes);
+      RTE_RecordLogEntry(pThis->m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    }
+  }
+}
