@@ -538,9 +538,9 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
     _ASSERTE(numInterrupts <= 1);
 
     if (m_bitsPerSample != 16) {
-      m_SBDSP.set8BitIRQ(numInterrupts);
+      m_SBDSP.set8BitIRQ();
     } else {
-      m_SBDSP.set16BitIRQ(numInterrupts);
+      m_SBDSP.set16BitIRQ();
     }
 
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
@@ -727,7 +727,7 @@ inline int CODEC_UnsignedPCM_decode(
       return bufSize;
     case 16:  /* 16-bit quantities */
       buf16 = (WORD*)buf;
-      for (i = 0; i < bufSize / 2; i++) buf16[i] += 0x8000;
+      for (i = 0; i < bufSize / 2; i++) buf16[i] ^= 0x8000;
       return bufSize;
     default:
       return bufSize;
@@ -746,7 +746,7 @@ inline int CODEC_SignedPCM_decode(
 
   switch (bitsPerSample) {
     case 8:   /* 8-bit quantities */
-      for (i = 0; i < bufSize; i++) buf[i] += 0x80;
+      for (i = 0; i < bufSize; i++) buf[i] ^= 0x80;
       return bufSize;
     case 16:  /* 16-bit quantities */
       return bufSize;
