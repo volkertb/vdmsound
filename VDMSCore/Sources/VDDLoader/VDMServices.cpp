@@ -280,9 +280,9 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       return E_NOTIMPL;
 
     case ADDR_V86:
-      pSrc = GetVDMPointer(MAKELONG(segment, offset), length, FALSE);
+      pSrc = GetVDMPointer(MAKELONG(offset, segment), length, FALSE);
       memcpy(buffer, pSrc, length);
-      FreeVDMPointer(MAKELONG(segment, offset), length, pSrc, FALSE);
+      FreeVDMPointer(MAKELONG(offset, segment), length, pSrc, FALSE);
       return S_OK;
 
     default:
@@ -305,9 +305,9 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       return E_NOTIMPL;
 
     case ADDR_V86:
-      pDest = GetVDMPointer(MAKELONG(segment, offset), length, FALSE);
+      pDest = GetVDMPointer(MAKELONG(offset, segment), length, FALSE);
       memcpy(pDest, buffer, length);
-      FreeVDMPointer(MAKELONG(segment, offset), length, pDest, FALSE);
+      FreeVDMPointer(MAKELONG(offset, segment), length, pDest, FALSE);
       return S_OK;
 
     default:
