@@ -166,20 +166,20 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   //
 
   // Compatibility
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.memory"), _T("useEMS"), m_chkEms, TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.video"), _T("useVESA"), m_chkVesa, FALSE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"), m_chkCdrom, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.memory"),  _T("useEMS"),     m_chkEms,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.video"),   _T("useVESA"),    m_chkVesa,   FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"),   m_chkCdrom,  FALSE);
 
   // MIDI
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_chkUsempu, TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"),     _T("enabled"),    m_chkUsempu, TRUE);
   SyncGUIData_MIDI(bSave, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 
   // Joystick
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_chkUsejoy, TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"),  _T("enabled"),   m_chkUsejoy, TRUE);
   SyncGUIData_Joystick(bSave, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 
   // Other
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"), _T("exitClose"), m_chkClose, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"),   _T("exitClose"), m_chkClose,  FALSE);
 
   //
   // Synchronize the read-only controls with the settings they represent
@@ -338,12 +338,15 @@ void CBasicSettingsPage::OnDestroy()
 
 BOOL CBasicSettingsPage::OnCommand(WPARAM wParam, LPARAM lParam) 
 {
-  ASSERT(::GetDlgItem(m_hWnd, LOWORD(wParam)) == (HWND)lParam);
+	UINT nID = LOWORD(wParam);
+	HWND hWndCtrl = (HWND)lParam;
+	int nCode = HIWORD(wParam);
 
-  if ((GetDlgItem(LOWORD(wParam)) != NULL) &&
-      (LOWORD(wParam) != IDC_EDT_DOSCMD) &&
-      (LOWORD(wParam) != IDC_BUT_CHANGE) &&
-      (LOWORD(wParam) != IDC_BUT_ADVANCED))
+  ASSERT(::GetDlgItem(m_hWnd, nID) == hWndCtrl);
+
+  if ((GetDlgItem(nID) != NULL) &&
+      (nID != IDC_BUT_CHANGE) && (nID != IDC_BUT_ADVANCED) &&
+      (nCode == BN_CLICKED))
   {
     SetModified();              // enable the "Apply" button to reflect the fact that changes were made
   }
@@ -378,7 +381,7 @@ void CBasicSettingsPage::OnButChange()
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:
-      // If got back empty strings then leave unchanged
+      // If got back the same values then leave unchanged (even if indeterminate)
       if (edtDosProgram.Compare(dlgBrowse.m_edtDosprogram_val) != 0)
         m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtDosprogram_val);
       if (edtDosArgs.Compare(dlgBrowse.m_edtDosargs_val) != 0)
@@ -391,7 +394,9 @@ void CBasicSettingsPage::OnButChange()
 
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
-      SetModified();            // enable the "Apply" button to reflect the fact that changes were made
+      if (m_settings.IsChanged())
+        SetModified();          // enable the "Apply" button to reflect the fact that changes were made
+
       break;
 
     case IDCANCEL:
@@ -407,9 +412,31 @@ void CBasicSettingsPage::OnButChange()
 
 void CBasicSettingsPage::OnButAdvanced() 
 {
+  CWaitCursor wait;
 
-  CAdvSettingsSheet propSheet(m_settings, _T("Advanced VDMSound Properties"), this, 0);
-  propSheet.DoModal();
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
+  SyncGUIData(TRUE);        // save all changes that occured in the GUI
+
+  CAdvSettingsSheet propSheet(m_settings, IDS_ADVPROPERTIES, this, 0);
+
+  switch (propSheet.DoModal()) {
+    case IDOK:
+    case IDCANCEL:          // Settings may have been changed by "Apply" in the property sheet
+      SyncGUIData(FALSE);   // update the GUI to reflect any changed settings
+
+      if (m_settings.IsChanged())
+        SetModified();      // enable the "Apply" button to reflect the fact that changes were made
+
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  }
 }
 
 BOOL CBasicSettingsPage::OnApply() 
@@ -436,12 +463,12 @@ BOOL CBasicSettingsPage::OnApply()
 
 void CBasicSettingsPage::OnChkUsempu() 
 {
-  SyncGUIData_MIDI(TRUE);
+  SyncGUIData_MIDI(TRUE);     // save current radio-button selection
   SyncGUIData_MIDI(FALSE, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 }
 
 void CBasicSettingsPage::OnChkUsejoy() 
 {
-  SyncGUIData_Joystick(TRUE);
+  SyncGUIData_Joystick(TRUE); // save current radio-button selection
   SyncGUIData_Joystick(FALSE, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 }
