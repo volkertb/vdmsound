@@ -417,8 +417,8 @@ O(12),O(12),O(12),O(12),O(12),O(12),O(12),O(12),
 #define O(a) (a*1)
 static const unsigned char eg_rate_shift[16+64+16]={	/* Envelope Generator counter shifts (16 + 64 rates + 16 RKS) */
 /* 16 dummy (infinite time) rates */
-O(16),O(16),O(16),O(16),O(16),O(16),O(16),O(16),
-O(16),O(16),O(16),O(16),O(16),O(16),O(16),O(16),
+O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
+O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 
 /* rates 00-12 */
 O(12),O(12),O(12),O(12),
