@@ -11,11 +11,13 @@
 #include "EmuAdLib.h"
 
 #include "EmuAdLib_i.c"
+#include "AdLibCtl.h"
 
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
+OBJECT_ENTRY(CLSID_AdLibCtl, CAdLibCtl)
 END_OBJECT_MAP()
 
 class CEmuAdLibApp : public CWinApp
