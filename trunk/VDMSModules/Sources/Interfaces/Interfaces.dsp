@@ -61,6 +61,10 @@ MTL=midl.exe
 # Name "Interfaces - Win32 Debug"
 # Begin Source File
 
+SOURCE=.\IAddressable.idl
+# End Source File
+# Begin Source File
+
 SOURCE=.\IDMAC.idl
 # End Source File
 # Begin Source File
