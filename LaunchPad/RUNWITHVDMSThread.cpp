@@ -149,11 +149,17 @@ BOOL CDOSEnv::AppendEnvBlockEntry(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) : CWinThread(), m_vlpFileName(vlpFileName), m_exeFileName(vlpFileName), m_settings(vlpFileName)
+CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) : CWinThread(), m_vlpFileName(vlpFileName), m_exeFileName(exeFileName), m_settings(vlpFileName)
 {
   m_bAutoDelete = TRUE;     // let the thread manage its own life cycle
 
-  // TODO: replace program name with m_exeFileName in m_settings if m_exeFileName is non-NULL/non-empty
+  if (exeFileName != NULL) {
+    // Override .vlp settings for program name, args and dir during this session,
+    //  but do not commit to disk
+    m_settings.SetValue(_T("program"), _T("executable"), exeFileName);
+    m_settings.SetValue(_T("program"), _T("params"), _T(""));
+    m_settings.SetValue(_T("program"), _T("workdir"), VLPUtil::GetDirectory(exeFileName));
+  }
 }
 
 CRUNWITHVDMSThread::~CRUNWITHVDMSThread()

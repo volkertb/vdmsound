@@ -12,15 +12,13 @@
 class CRUNWITHVDMSDispatcher  
 {
 public:
-	CRUNWITHVDMSDispatcher(CString fileName);
-	virtual ~CRUNWITHVDMSDispatcher();
+	CRUNWITHVDMSDispatcher(void);
+	virtual ~CRUNWITHVDMSDispatcher(void);
 
 public:
-  HRESULT RunWithVdms(void);
-  HRESULT RunWithVdms_Wizard(void);
-
-protected:
-  CString m_fileName;
+  static HRESULT RunWithVdms(LPCTSTR fileName);
+  static HRESULT RunWithVdms(LPCTSTR vlpFileName, LPCTSTR exeFileName);
+  static HRESULT RunWithVdms_Wizard(void);
 };
 
 #endif // !defined(AFX_RUNWITHVDMSDISPATCHER_H__9D630F6C_BE3C_4E7C_8BA1_699264F58B3A__INCLUDED_)

@@ -341,6 +341,10 @@ SOURCE=.\BasicSettingsPage.cpp
 # PROP Default_Filter "cpp"
 # Begin Source File
 
+SOURCE=.\DragNDropFSM.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPad.cpp
 # End Source File
 # Begin Source File
@@ -456,6 +460,10 @@ SOURCE=.\BasicSettingsPage.h
 # Begin Group "Shell Extension Header Files"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\DragNDropFSM.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\LaunchPadSettings.h
