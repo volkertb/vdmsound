@@ -105,7 +105,7 @@ BOOL CWizardPage_Finis::OnInitDialog()
 
     if (m_fntBoldButtons.CreateFontIndirect(&logFont)) {
       m_chkSavesettings.SetFont(&m_fntBoldButtons);
-      m_chkDesktopshort.SetFont(&m_fntBoldButtons);
+//    m_chkDesktopshort.SetFont(&m_fntBoldButtons);
     }
   }
 

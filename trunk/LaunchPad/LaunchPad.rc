@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,2
+ PRODUCTVERSION 2,0,5,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -72,12 +72,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "VDMSound LaunchPad Shell Extension\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "1, 0, 0, 2\0"
             VALUE "InternalName", "LaunchPad\0"
             VALUE "LegalCopyright", "Copyright (C) 2001\0"
             VALUE "OriginalFilename", "LaunchPad.DLL\0"
             VALUE "ProductName", "VDMSound 2.x\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", "2, 0, 5, 1\0"
             VALUE "OLESelfRegister", "\0"
         END
     END
@@ -231,6 +231,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,109,153,45,10
     CONTROL         "Alt+Space",IDC_CHK_WINKALTSPACE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
+    LTEXT           "VDMSound Launchpad (ver. 1,0,0,2)\nBETA 1 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
     PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
@@ -623,7 +624,7 @@ BEGIN
                     IDC_STATIC,123,119,194,16
     LTEXT           "To run the configured DOS application, click Finish.",
                     IDC_STATIC,123,142,194,8
-    CONTROL         "Add a VDMSound &shortcut to my desktop",IDC_CHK_DESKTOPSHORT,
+    CONTROL         "Add a &shortcut to my desktop",IDC_CHK_DESKTOPSHORT,
                     "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_GROUP | 
                     WS_TABSTOP,123,173,182,10
 END
@@ -1062,6 +1063,14 @@ BEGIN
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
     IDS_TXT_BROWSEFOLDER_TIPS 
                             "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
+    IDS_TXT_WIZPROPPAGE_CUSTOM_1_T
+                            "Set up a Custom Configuration - Step 1 of 2"
+    IDS_TXT_WIZPROPPAGE_CUSTOM_1_S
+                            "Do you want the new configuration to be based on a template?"
+    IDS_TXT_WIZPROPPAGE_CUSTOM_2_T
+                            "Set up a Custom Configuration - Step 2 of 2"
+    IDS_TXT_WIZPROPPAGE_CUSTOM_2_S
+                            "Make final tweaks, check memory usage with settings, test program\nfor n seconds, etc."
 END
 
 STRINGTABLE DISCARDABLE 
