@@ -1060,7 +1060,14 @@ BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
 //
 //
 CString VLPUtil::GetVDMSFilePath(LPCTSTR fileName) {
-  return GetAbsolutePath(fileName, _tgetenv(_T("VDMSPath")));
+  LPCTSTR szVDMSPath = _tgetenv(_T("VDMSPath"));
+  ASSERT(szVDMSPath != NULL);
+
+  if (szVDMSPath != NULL) {
+    return GetAbsolutePath(fileName, szVDMSPath);
+  } else {
+    return fileName;
+  }
 }
 
 //
