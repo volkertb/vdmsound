@@ -138,7 +138,7 @@ VDDDeInstallUserHook(
 INT
 WINAPI
 VDDHookDMA(
-    BYTE iChannel,
+    WORD iChannel,
     PFNVDD_DMACALLB callback
     );
 
@@ -209,7 +209,7 @@ VDDTerminateVDM(
 VOID
 WINAPI
 VDDUnhookDMA(
-    BYTE iChannel
+    WORD iChannel
     );
 
 VOID
@@ -331,6 +331,7 @@ vSetFlag(
 #define GetVDMPointer(Address, Size, Mode) \
           MGetVdmPointer(Address, Size, Mode)
 
-#define FreeVDMPointer(Address, Size, Buffer, Mode) TRUE
+#define FreeVDMPointer(Address, Size, Buffer, Mode) \
+          TRUE
 
-#endif // __VXDSDLL_H
+#endif //__VXDSDLL_H
