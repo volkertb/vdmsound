@@ -4,6 +4,7 @@
 #include "AdLibCtl.h"
 
 #include <stdexcept>
+#include <memory>
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -27,7 +28,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define OPL_AUDIOBUF_SIZE     65536
+#define OPL_AUDIOBUF_SIZE     65536     // Allows for almost 1s of stereo audio data at 44.1kHz
 #define OPL_INTERNAL_FREQ     3600000   // The OPL operates at 3.6MHz
 #define OPL_NUM_CHIPS         1         // Number of OPL chips
 #define OPL_CHIP0             0
@@ -318,8 +319,8 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
         MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.regIdx);
         MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
 #elif USE_OPL3
-        MAME::YMF262Write(OPL_CHIP0, 0 + OPLMsg.regSet << 1, OPLMsg.regIdx);
-        MAME::YMF262Write(OPL_CHIP0, 1 + OPLMsg.regSet << 1, OPLMsg.value);
+        MAME::YMF262Write(OPL_CHIP0, 0 + (OPLMsg.regSet << 1), OPLMsg.regIdx);
+        MAME::YMF262Write(OPL_CHIP0, 1 + (OPLMsg.regSet << 1), OPLMsg.value);
 #endif
       }
 
@@ -436,19 +437,32 @@ void CAdLibCtl::OPLPlay(DWORD deltaTime) {
     long toTransfer = min(OPL_AUDIOBUF_SIZE, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
 
 #if USE_OPL2
-    MAME::OPLSAMPLE buf[OPL_AUDIOBUF_SIZE];
+    MAME::OPLSAMPLE* buf = NULL;
 
+    buf = (MAME::OPLSAMPLE*)_alloca(toTransfer * sizeof(buf[0]));
     MAME::YM3812UpdateOne(OPL_CHIP0, buf, toTransfer);
 #elif USE_OPL3
-    MAME::OPL3SAMPLE  buf_tmp[4][OPL_AUDIOBUF_SIZE];
-    MAME::OPL3SAMPLE* buf_tbl[] = { buf_tmp[0], buf_tmp[1], buf_tmp[2], buf_tmp[3] };
-    MAME::OPL3SAMPLE* buf = buf_tmp[2];
+    MAME::OPL3SAMPLE* buf = NULL;
 
+#   if 0
+    buf = (MAME::OPL3SAMPLE*)_alloca(4 * toTransfer * sizeof(buf1[0]));
+#   else
+    // KLUDGE: in Win2k's NTVDM it looks as if the thread's reserved
+    //  stack size is awfully tiny (supposed to be 1MB), and declaring
+    //  buf[] on the stack causes a stack overflow!
+    //  We therefore use the heap for now. :(
+    buf = new MAME::OPL3SAMPLE[4 * toTransfer];
+    std::auto_ptr<MAME::OPL3SAMPLE> buf_auto(buf);
+#   endif
+
+    // Synthesize channel A @ buf[2*toTransfer], channel B @ buf[3*toTransfer], and
+    //  discard channels C and D (starting at buf[0], will be overwritten)
+    MAME::OPL3SAMPLE* buf_tbl[] = { buf + 2 * toTransfer, buf + 3 * toTransfer, buf, buf };
     MAME::YMF262UpdateOne(OPL_CHIP0, buf_tbl, toTransfer);
 
     for (int i = 0; i < toTransfer; i++) {
-      buf[2 * i + 0] = buf_tmp[0][i];
-      buf[2 * i + 1] = buf_tmp[1][i];
+      buf[2 * i + 0] = buf_tbl[0][i];
+      buf[2 * i + 1] = buf_tbl[1][i];
     }
 #endif
 
