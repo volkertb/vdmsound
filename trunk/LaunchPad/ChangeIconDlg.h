@@ -7,7 +7,10 @@
 // ChangeIconDlg.h : header file
 //
 
+/////////////////////////////////////////////////////////////////////////////
+
 #include "IconListBox.h"
+#include "LaunchPadUtil.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CChangeIconDlg dialog
@@ -25,11 +28,14 @@ protected:
 // Member variables
 protected:
   CString m_lastEdtFile;
+  VLPUtil::CComKeepAlive _autocomplete;    // COM must be present during the entire lifespan of any autocomplete controls
 
+// Public MFC stuff
 public:
 // Dialog Data
 	//{{AFX_DATA(CChangeIconDlg)
 	enum { IDD = IDD_CHANGEICON };
+	CEdit	m_edtFile;
 	CIconListBox m_lstIcons;
 	CString	m_edtFile_val;
 	int		m_lstIcons_val;

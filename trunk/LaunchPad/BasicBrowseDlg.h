@@ -8,6 +8,10 @@
 //
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include "LaunchPadUtil.h"
+
+/////////////////////////////////////////////////////////////////////////////
 // CBasicBrowseDlg dialog
 
 class CBasicBrowseDlg : public CDialog
@@ -16,11 +20,19 @@ class CBasicBrowseDlg : public CDialog
 public:
 	CBasicBrowseDlg(CWnd* pParent = NULL);   // standard constructor
 
+// Member variables
+protected:
+  VLPUtil::CComKeepAlive _autocomplete;    // COM must be present during the entire lifespan of any autocomplete controls
+
+// Public MFC stuff
+public:
   CString m_iconLocation;   // icon location (file name), not shown in CBasicBrowseDlg
 
 // Dialog Data
 	//{{AFX_DATA(CBasicBrowseDlg)
 	enum { IDD = IDD_BASICBROWSE };
+	CEdit	m_edtDir;
+	CEdit	m_edtFile;
 	CString	m_edtArgs_val;
 	CString	m_edtFile_val;
 	CString	m_edtDir_val;
@@ -39,8 +51,10 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CBasicBrowseDlg)
+	virtual BOOL OnInitDialog();
 	afx_msg void OnButFilebrowse();
 	afx_msg void OnButChangeicon();
+	afx_msg void OnUpdateEdtFile();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

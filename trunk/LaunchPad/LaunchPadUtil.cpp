@@ -3,6 +3,8 @@
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
+#include <delayimp.h>
+
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -198,6 +200,61 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 // VLPUtil
 //
 //////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// Delayed imports
+//////////////////////////////////////////////////////////////////////
+
+#if (_WIN32_IE < 0x0500)
+// Force declaration even for older versions of IE; the delayed imports binding
+//  wil take care of any problems with missing exports or dll's etc. at runtime.
+// Do it this way in order to provide prototypes for older versions of VC because
+//  VC7's shlwapi.h is the firts one to declare these.
+// TODO: switch to VC7 and define _WIN32_IE = 0x0500 before including shlwapi.h
+//  instead of keeping the declarations below
+
+#define SHACF_DEFAULT                   0x00000000  // Currently (SHACF_FILESYSTEM | SHACF_URLALL)
+#define SHACF_FILESYSTEM                0x00000001  // This includes the File System as well as the rest of the shell (Desktop\My Computer\Control Panel\)
+#define SHACF_URLALL                    (SHACF_URLHISTORY | SHACF_URLMRU)
+#define SHACF_URLHISTORY                0x00000002  // URLs in the User's History
+#define SHACF_URLMRU                    0x00000004  // URLs in the User's Recently Used list.
+#define SHACF_USETAB                    0x00000008  // Use the tab to move thru the autocomplete possibilities instead of to the next dialog/window control.
+
+#define SHACF_AUTOSUGGEST_FORCE_ON      0x10000000  // Ignore the registry default and force the feature on.
+#define SHACF_AUTOSUGGEST_FORCE_OFF     0x20000000  // Ignore the registry default and force the feature off.
+#define SHACF_AUTOAPPEND_FORCE_ON       0x40000000  // Ignore the registry default and force the feature on. (Also know as AutoComplete)
+#define SHACF_AUTOAPPEND_FORCE_OFF      0x80000000  // Ignore the registry default and force the feature off. (Also know as AutoComplete)
+
+LWSTDAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags);
+
+#endif
+
+//////////////////////////////////////////////////////////////////////
+// Private utility function(s)
+//////////////////////////////////////////////////////////////////////
+
+BOOL StrSplit(LPCTSTR szSrc, TCHAR sep, CString& lhs, CString& rhs, BOOL fromBeginning = TRUE) {
+  int splitPos;
+  CString strSrc(szSrc);
+  BOOL retVal = TRUE;
+
+  if (fromBeginning) {
+    if ((splitPos = strSrc.Find(sep)) < 0) {
+      splitPos = -1;
+      retVal = FALSE;
+    }
+  } else {
+    if ((splitPos = strSrc.ReverseFind(sep)) < 0) {
+      splitPos = strSrc.GetLength();
+      retVal = FALSE;
+    }
+  }
+
+  lhs = strSrc.Left(max(0, splitPos));
+  rhs = strSrc.Mid(min(strSrc.GetLength() - 1, splitPos + 1), max(0, strSrc.GetLength() - (splitPos + 1)));
+
+  return retVal;
+}
 
 //////////////////////////////////////////////////////////////////////
 // Constants
@@ -495,9 +552,16 @@ void VLPUtil::ParseIconLocation(
   iconPath = iconLocation;
   LPTSTR iconPathBuf = iconPath.GetBuffer(0);
 
-  iconIndex = PathParseIconLocation(iconPathBuf);
-
-  iconPath.ReleaseBuffer();
+  try {
+    iconIndex = PathParseIconLocation(iconPathBuf);
+    iconPath.ReleaseBuffer();
+  } catch (...) {
+    iconPath.ReleaseBuffer();
+    CString lhs, rhs;
+    StrSplit(iconPath, _T(','), lhs, rhs, FALSE);
+    iconPath = lhs;
+    iconIndex = _tcstol(rhs, NULL, 10);
+  }
 }
 
 //
@@ -505,8 +569,8 @@ void VLPUtil::ParseIconLocation(
 //
 CString VLPUtil::GetRelativePath(
   LPCTSTR filePath,             // string that contains the path that relPath will be relative to; the relative path will point to this path
-  BOOL isPathOnly,              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
-  LPCTSTR basePath)             // string that contains the path that the returned path will be relative from; this is the path in which the relative path can be used
+  LPCTSTR basePath,             // string that contains the path that the returned path will be relative from; this is the path in which the relative path can be used
+  BOOL isPathOnly)              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
 {
   ASSERT(filePath != NULL);
   ASSERT(basePath != NULL);
@@ -515,14 +579,18 @@ CString VLPUtil::GetRelativePath(
 
   TCHAR szPath[MAX_PATH + 1];
 
-  if (!PathIsRelative(basePath) &&
-      !PathIsRelative(filePath) &&
-      PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
-  {
-    return CString(szPath);
-  } else {
-    return filePath;
+  try {
+    if (!PathIsRelative(basePath) &&
+        !PathIsRelative(filePath) &&
+        PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
+    {
+      return CString(szPath);
+    }
+  } catch (...) {
+    // Do nothing
   }
+
+  return filePath;
 }
 
 //
@@ -530,8 +598,8 @@ CString VLPUtil::GetRelativePath(
 //
 CString VLPUtil::GetAbsolutePath(
   LPCTSTR filePath,             // string that contains the relative path to be converted
-  BOOL isPathOnly,              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
-  LPCTSTR basePath)             // string that contains the path relative to which the return path is computed from
+  LPCTSTR basePath,             // string that contains the path relative to which the return path is computed from
+  BOOL isPathOnly)              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
 {
   ASSERT(filePath != NULL);
   ASSERT(basePath != NULL);
@@ -542,15 +610,19 @@ CString VLPUtil::GetAbsolutePath(
 
   _tcscpy(szPath1, basePath);
 
-  if (!PathIsRelative(basePath) &&
-      PathIsRelative(filePath) &&
-      PathAppend(szPath1, filePath) &&
-      PathCanonicalize(szPath2, szPath1))
-  {
-    return CString(szPath2);
-  } else {
-    return filePath;
+  try {
+    if (!PathIsRelative(basePath) &&
+        PathIsRelative(filePath) &&
+        PathAppend(szPath1, filePath) &&
+        PathCanonicalize(szPath2, szPath1))
+    {
+      return CString(szPath2);
+    }
+  } catch (...) {
+    // Do nothing
   }
+
+  return filePath;
 }
 
 //
@@ -561,23 +633,61 @@ CString VLPUtil::GetDirectory(LPCTSTR filePath) {
 
   LPTSTR retValBuf = retVal.GetBuffer(0);
 
-  PathRemoveFileSpec(retValBuf);
+  try {
+    PathRemoveFileSpec(retValBuf);
+    retVal.ReleaseBuffer();
+    return retVal;
+  } catch (...) {
+    CString lhs, rhs;
+    StrSplit(filePath, _T('\\'), lhs, rhs, FALSE);
+    return lhs;
+  }
+}
 
-  retVal.ReleaseBuffer();
+//
+// Verifies that a path is a valid directory
+//
+BOOL VLPUtil::IsDirectory(LPCTSTR pszPath) {
+  try {
+    return PathIsDirectory(pszPath);
+  } catch (...) {
+    return (GetFileAttributes(pszPath) & FILE_ATTRIBUTE_DIRECTORY);
+  }
+}
 
-  return retVal;
+//
+//
+//
+HRESULT VLPUtil::EnableAutoComplete(HWND hwndEdit) {
+  try {
+    return SHAutoComplete(hwndEdit, SHACF_FILESYSTEM);
+  } catch (...) {
+    return E_NOTIMPL;
+  }
 }
 
 //
 //
 //
 BOOL VLPUtil::isVLPFile(LPCTSTR fName) {
-  return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0);
+  try {
+    return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0);
+  } catch (...) {
+    CString lhs, rhs;
+    StrSplit(fName, _T('.'), lhs, rhs, FALSE);
+    return (rhs.CompareNoCase(_T("vlp")) == 0);
+  }
 }
 
 //
 //
 //
 BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
-  return (_tcsicmp(PathFindExtension(fName), _T(".bat")) == 0) || (SHGetFileInfo(fName, 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d);
+  try {
+    return (_tcsicmp(PathFindExtension(fName), _T(".bat")) == 0) || (SHGetFileInfo(fName, 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d);
+  } catch (...) {
+    CString lhs, rhs;
+    StrSplit(fName, _T('.'), lhs, rhs, FALSE);
+    return (rhs.CompareNoCase(_T("exe")) == 0) || (rhs.CompareNoCase(_T("com")) == 0) || (rhs.CompareNoCase(_T("bat")) == 0);
+  }
 }

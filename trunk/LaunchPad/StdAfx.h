@@ -24,7 +24,7 @@
 extern CComModule _Module;
 #include <atlcom.h>
 
-// TODO: reference additional headers your program requires here
+// Reference additional headers your program requires here
 
 #include <afxdlgs.h>
 #include <afxtempl.h>
