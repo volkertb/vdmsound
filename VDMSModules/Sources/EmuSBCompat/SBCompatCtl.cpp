@@ -563,16 +563,16 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
       // Decode/decompress the data (if necessary)
       switch (m_codec) {
         case CODEC_PCM:
-          bufSize = CSBCompatCtlDSP::decode_PCM(buf, toTransfer, m_bitsPerSample);
+          bufSize = m_SBDSP.decode_PCM(buf, toTransfer, m_bitsPerSample);
           break;
         case CODEC_PCM_SIGNED:
-          bufSize = CSBCompatCtlDSP::decode_PCM_SIGNED(buf, toTransfer, m_bitsPerSample);
+          bufSize = m_SBDSP.decode_PCM_SIGNED(buf, toTransfer, m_bitsPerSample);
           break;
         case CODEC_ADPCM_2:
-          bufSize = CSBCompatCtlDSP::decode_ADPCM_2(buf, m_ADPCMReference, m_ADPCMScale, toTransfer, sizeof(buf));
+          bufSize = m_SBDSP.decode_ADPCM_2(buf, toTransfer, sizeof(buf));
           break;
         case CODEC_ADPCM_4:
-          bufSize = CSBCompatCtlDSP::decode_ADPCM_4(buf, m_ADPCMReference, m_ADPCMScale, toTransfer, sizeof(buf));
+          bufSize = m_SBDSP.decode_ADPCM_4(buf, toTransfer, sizeof(buf));
           break;
         case CODEC_ADPCM_3:
         default:
@@ -863,11 +863,6 @@ void CSBCompatCtl::resumeTransfer(transfer_t type) {
   } else {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("resumeTransfer: Attempted to resume an already active transfer")));
   }
-}
-
-void CSBCompatCtl::resetADPCM(void) {
-  m_ADPCMReference = -1;
-  m_ADPCMScale = 0;
 }
 
 void CSBCompatCtl::generateInterrupt(int count) {

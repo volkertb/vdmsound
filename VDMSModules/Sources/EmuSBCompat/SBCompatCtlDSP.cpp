@@ -67,7 +67,7 @@ void CSBCompatCtlDSP::reset(void) {
   stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
   ackAllIRQs();     // clear any pending IRQs
 
-  m_hwemu->resetADPCM();
+  resetADPCM();
 }
 
 //
@@ -350,7 +350,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x16:  /* 016h : DMA DAC, 2-bit ADPCM */
     case 0x17:  /* 017h : DMA DAC, 2-bit ADPCM Reference */
       if (command == 0x17)  // initialize reference byte
-        m_hwemu->resetADPCM();
+        resetADPCM();
 
       m_hwemu->startTransfer(
           ISBDSPHWEmulationLayer::TT_PLAYBACK,
@@ -515,7 +515,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x74:  /* 074h : DMA DAC, 4-bit ADPCM */
     case 0x75:  /* 075h : DMA DAC, 4-bit ADPCM Reference */
       if (command == 0x75)  // initialize reference byte
-        m_hwemu->resetADPCM();
+        resetADPCM();
 
       m_hwemu->startTransfer(
           ISBDSPHWEmulationLayer::TT_PLAYBACK,
@@ -720,6 +720,17 @@ int CSBCompatCtlDSP::getNumChannels(void) {
   }
 }
 
+
+
+
+//
+// Resets the ADPCM decompressor state
+//
+void CSBCompatCtlDSP::resetADPCM(void) {
+  m_ADPCMReference = -1;
+  m_ADPCMScale = 0;
+}
+
 //
 // Performs unsigned-PCM decoding in-place.
 //
@@ -769,8 +780,6 @@ int CSBCompatCtlDSP::decode_PCM_SIGNED(
 //
 int CSBCompatCtlDSP::decode_ADPCM_2(
     unsigned char* buf,
-    int& reference,
-    int& scale,
     int bufSize,
     int maxSize)
 {
@@ -779,14 +788,15 @@ int CSBCompatCtlDSP::decode_ADPCM_2(
 
   maxSize = min(bufSize, maxSize / 4);  // 4x factor because of 2bits/sample to 8bits/sample decoding
 
-  if (reference < 0) {
-    reference = buf[0] & 0xff;          // use the first byte in the buffer as the reference byte
+  if (m_ADPCMReference < 0) {
+    m_ADPCMReference = buf[0] & 0xff;   // use the first byte in the buffer as the reference byte
     maxSize--;                          // remember to skip the reference byte
     memcpy(tmpBuf, &(buf[1]), maxSize); // copy the ADPCM compressed information (except for the reference byte)
   } else {
     memcpy(tmpBuf, buf, bufSize);       // copy the ADPCM compressed information
   }
 
+  // TODO: implement ADPCM2 decompression
   // ...
 
   return maxSize * 4;
@@ -815,8 +825,6 @@ inline int decode_ADPCM_4_sample(
 //
 int CSBCompatCtlDSP::decode_ADPCM_4(
     unsigned char* buf,
-    int& reference,
-    int& scale,
     int bufSize,
     int maxSize)
 {
@@ -825,8 +833,8 @@ int CSBCompatCtlDSP::decode_ADPCM_4(
 
   maxSize = min(bufSize, maxSize / 2);  // 2x factor because of 4bits/sample to 8bits/sample decoding
 
-  if (reference < 0) {
-    reference = buf[0] & 0xff;          // use the first byte in the buffer as the reference byte
+  if (m_ADPCMReference < 0) {
+    m_ADPCMReference = buf[0] & 0xff;   // use the first byte in the buffer as the reference byte
     maxSize--;                          // remember to skip the reference byte
     memcpy(tmpBuf, &(buf[1]), maxSize); // copy the ADPCM compressed information (except for the reference byte)
   } else {
@@ -834,8 +842,8 @@ int CSBCompatCtlDSP::decode_ADPCM_4(
   }
 
   for (i = 0; i < maxSize; i++) {
-    buf[i * 2 + 0] = decode_ADPCM_4_sample(tmpBuf[i] >> 4, reference, scale);
-    buf[i * 2 + 1] = decode_ADPCM_4_sample(tmpBuf[i] >> 0, reference, scale);
+    buf[i * 2 + 0] = decode_ADPCM_4_sample(tmpBuf[i] >> 4, m_ADPCMReference, m_ADPCMScale);
+    buf[i * 2 + 1] = decode_ADPCM_4_sample(tmpBuf[i] >> 0, m_ADPCMReference, m_ADPCMScale);
   }
 
   return maxSize * 2;

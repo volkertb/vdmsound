@@ -32,8 +32,6 @@ class ISBDSPHWEmulationLayer {
     virtual void pauseTransfer(transfer_t type) = 0;
     virtual void resumeTransfer(transfer_t type) = 0;
 
-    virtual void resetADPCM(void) = 0;
-
     virtual void generateInterrupt(int count = 1) = 0;
 
     virtual void logError(const char* message) = 0;
@@ -70,24 +68,22 @@ class CSBCompatCtlDSP {
     bool get8BitIRQ(void);
     bool get16BitIRQ(void);
 
-    static int decode_PCM(
+    void resetADPCM(void);
+
+    int decode_PCM(
         unsigned char* buf,
         int bufSize,
         int bitsPerSample);
-    static int decode_PCM_SIGNED(
+    int decode_PCM_SIGNED(
         unsigned char* buf,
         int bufSize,
         int bitsPerSample);
-    static int decode_ADPCM_2(
+    int decode_ADPCM_2(
         unsigned char* buf,
-        int& reference,
-        int& scale,
         int bufSize,
         int maxSize);
-    static int decode_ADPCM_4(
+    int decode_ADPCM_4(
         unsigned char* buf,
-        int& reference,
-        int& scale,
         int bufSize,
         int maxSize);
 
@@ -118,22 +114,26 @@ class CSBCompatCtlDSP {
       { while (!m_bufOut.empty()) m_bufOut.pop(); }
 
   protected:
-    std::queue<unsigned char> m_bufOut;
-    std::vector<unsigned char> m_bufIn;
+    std::vector<unsigned char> m_bufIn;   // DSP command queue (incoming)
+    std::queue<unsigned char> m_bufOut;   // DSP reply queue (outgoing)
     DSPState_t m_state;
-    unsigned char m_lastCommand;
+    unsigned char m_lastCommand;          // last successful DSP command
 
-    char m_E2Value;
-    int m_E2Count;
+    char m_E2Value;                       // control values used bye the undocumented
+    int m_E2Count;                        //  0xE2 challenge/response DSP command
 
-    bool m_isSpeakerEna;
-    bool m_useTimeConstant;
-    int m_sampleRate, m_timeConstant;
-    int m_numSampleBytes;
+    bool m_isSpeakerEna;                  // is the output muted or not (no effect on output on SB16)
+    bool m_useTimeConstant;               // sample rate is defined using the alternate "time constant"/period method (as opposed to frequency)
+    int m_sampleRate, m_timeConstant;     // sample rate defined either as frequency or period (time constant)
+    int m_numSampleBytes;                 // number of bytes to be transferred via DMA playback/recording
 
-    bool m_is8BitIRQPending, m_is16BitIRQPending;
+    bool m_is8BitIRQPending, m_is16BitIRQPending;   // an IRQ is pending and needs to be acknowledged by the DOS application before the DMA transfer resumes
 
-    unsigned char m_testRegister;
+    unsigned char m_testRegister;         // storage used by the 0xE4/0xE8 DSP authentication commands
+
+  protected:
+    int m_ADPCMReference;                 // reference audio-sample value used in ADPCM decompression
+    int m_ADPCMScale;                     // exponential-scaling factor used in ADPCM decompression
 
   protected:
     ISBDSPHWEmulationLayer* m_hwemu;
