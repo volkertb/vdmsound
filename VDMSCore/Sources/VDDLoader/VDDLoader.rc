@@ -58,7 +58,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,1
+ FILEVERSION 1,0,4,3
  PRODUCTVERSION 2,0,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -77,7 +77,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "WinNT/2k VDD service provider & low-level loader\0"
-            VALUE "FileVersion", "1, 0, 4, 1\0"
+            VALUE "FileVersion", "1, 0, 4, 3\0"
             VALUE "InternalName", "VDDLoader\0"
             VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "VDDLoader.DLL\0"
