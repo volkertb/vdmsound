@@ -408,13 +408,7 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       break;
 
     case ADDR_PHYSICAL:
-
-#ifdef _NTVDM_SVC
       pSrc = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
-#else //_NTVDM_SVC
-      pSrc = NULL;
-#endif //_NTVDM_SVC
-
       memcpy(buffer, pSrc + offset, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pSrc, FALSE);
       break;
@@ -451,13 +445,7 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       break;
 
     case ADDR_PHYSICAL:
-
-#ifdef _NTVDM_SVC
       pDest = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
-#else //_NTVDM_SVC
-      pDest = NULL;
-#endif //_NTVDM_SVC
-
       memcpy(pDest + offset, buffer, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pDest, FALSE);
       break;
