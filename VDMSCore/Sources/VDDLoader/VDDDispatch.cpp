@@ -12,8 +12,8 @@
 HMODULE g_hCfgLib = NULL;
 LONG g_lInstanceCount = 0;
 
-int loadConfiguration(void);
-int unloadConfiguration(void);
+int loadConfiguration(LPVOID lpParam, WORD uParamLen);
+int unloadConfiguration(LPVOID lpParam, WORD uParamLen);
 
 void SignalVDMSStatus(bool);
 
@@ -21,6 +21,10 @@ BOOL WINAPI ConsoleEventHandler(DWORD);
 
 /////////////////////////////////////////////////////////////////////////////
 
+typedef HRESULT (WINAPI* LPFNCFGINITIALIZE)(char*);
+typedef HRESULT (WINAPI* LPFNCFGDESTROY)(void);
+
+/////////////////////////////////////////////////////////////////////////////
 
 
 //
@@ -49,21 +53,25 @@ STDAPI_(void) VddDispatch(void) {
   WORD paramOffset = getSI();
   WORD paramLen    = getDX();
 
+  LPVOID param = GetVDMPointer(MAKELONG(paramOffset, paramSeg), paramLen, FALSE);
+
   int retVal;
 
   switch (dispCmd) {
     case CMD_VDD_INIT:
-      retVal = loadConfiguration();
+      retVal = loadConfiguration(param, paramLen);
       break;
 
     case CMD_VDD_DESTROY:
-      retVal = unloadConfiguration();
+      retVal = unloadConfiguration(param, paramLen);
       break;
 
     default:
       retVal = -1;
       break;
   }
+
+  FreeVDMPointer(MAKELONG(paramOffset, paramSeg), paramLen, param, FALSE);
 
   setAX(retVal);
 }
@@ -79,7 +87,7 @@ STDAPI_(void) VddDispatch(void) {
 //   parse the configuration files and in turn load the sub-modules that
 //   provide the emulation
 //
-int loadConfiguration(void) {
+int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
   try {
     // Check if first instance
     if ((++g_lInstanceCount) > 1) {
@@ -107,12 +115,21 @@ int loadConfiguration(void) {
       return 0x90;        // Could not load DLL
     }
 
+    // Obtain initialization information
+    char* INIFiles;
+
+    if ((lpParam == NULL) || (((char*)lpParam)[0] == '\0')) {
+      INIFiles = ".\\VDMS.INI";   // use a default value
+    } else {
+      INIFiles = (char*)lpParam;  // information provided by DOS loader
+    }
+
     // Try to invoke initialization code
-    FARPROC lpInitProc;
+    LPFNCFGINITIALIZE lpfnInitProc;
 
-    lpInitProc = GetProcAddress(g_hCfgLib, "CfgInitialize");
+    lpfnInitProc = (LPFNCFGINITIALIZE)GetProcAddress(g_hCfgLib, "CfgInitialize");
 
-    if (lpInitProc == NULL) {
+    if (lpfnInitProc == NULL) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgInitialize' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                  FormatMessage(_T("VDD Error")),
@@ -120,7 +137,7 @@ int loadConfiguration(void) {
       return 0xa0;        // Could not find procedure in DLL
     }
 
-    if (FAILED(lpInitProc())) {
+    if (FAILED((*lpfnInitProc)(INIFiles))) {
       return 0xf0;        // Initialization failed, or aborted by user
     }
 
@@ -154,7 +171,7 @@ int loadConfiguration(void) {
 //   cleanup routine in order to unload the sub-modules that provide the
 //   emulation
 //
-int unloadConfiguration(void) {
+int unloadConfiguration(LPVOID lpParam, WORD uParamLen) {
   int retVal = 0;
 
   try {
@@ -171,18 +188,19 @@ int unloadConfiguration(void) {
     if (g_hCfgLib == NULL)
       return 0x89;        // Initialization did not occur (2), or DLL load failed?
 
-    FARPROC lpDestroyProc;
+    // Try to invoke cleanup code
+    LPFNCFGDESTROY lpfnDestroyProc;
 
-    lpDestroyProc = GetProcAddress(g_hCfgLib, "CfgDestroy");
+    lpfnDestroyProc = (LPFNCFGDESTROY)GetProcAddress(g_hCfgLib, "CfgDestroy");
 
-    if (lpDestroyProc == NULL) {
+    if (lpfnDestroyProc == NULL) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgDestroy' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                  FormatMessage(_T("VDD Error")),
                  MB_OK, MB_ICONERROR);
       retVal = 0xa8;      // Could not find procedure in DLL, but proceed with unloading the library before returning
     } else {
-      lpDestroyProc();
+      (*lpfnDestroyProc)();
     }
 
     if (!FreeLibrary(g_hCfgLib)) {
@@ -257,7 +275,7 @@ BOOL WINAPI ConsoleEventHandler(
     case CTRL_CLOSE_EVENT:
     case CTRL_LOGOFF_EVENT:
     case CTRL_SHUTDOWN_EVENT:
-      unloadConfiguration();
+      unloadConfiguration(NULL, 0);
       VDDTerminateVDM();
       return TRUE;
 

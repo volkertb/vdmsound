@@ -80,7 +80,7 @@ strvector_t orderedNames;
 //
 // Load and initialize all emulation modules
 //
-STDAPI CfgInitialize(void) {
+STDAPI CfgInitialize(char* INIFiles) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   HRESULT hr;
@@ -97,7 +97,12 @@ STDAPI CfgInitialize(void) {
   try {
     // Parse the configuration (INI) file
     try {
-      config.load("vdms.ini");
+      char* INIFileName = INIFiles;
+
+      while (INIFileName[0] != '\0') {
+        config.load(INIFileName);
+        INIFileName = INIFileName + strlen(INIFileName) + 1;
+      }
     } catch (CINIParser::fopen_error& foe) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(MSG_ERR_IO_OPEN, false, NULL, 0, false, (LPCTSTR)CString(foe.location.c_str()), lastError, (LPCTSTR)FormatMessage(lastError)),
