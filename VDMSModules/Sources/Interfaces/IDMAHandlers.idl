@@ -33,7 +33,8 @@ interface IDMAHandler : IUnknown
 		[in] ULONG physicalAddr,              // Physical address where the data is located
 		[in] ULONG maxData,                   // Maximum amount of bytes (or words) that can be transferred
 		[in] BOOL isDescending,               // Direction in which the data should be transferred
-		[out, retval] ULONG * transferred );  // Actual amount of bytes (or words) that were transferred
+		[out] ULONG * transferred,            // Actual amount of bytes (or words) that were transferred
+		[out, retval] BOOL * isTooSlow );     // Indicates the need to manage DMA at a higher rate
 
 	[ helpstring("Transfers data on a DMA channel") ]
 	HRESULT HandleAfterTransfer(
