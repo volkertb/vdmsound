@@ -104,6 +104,9 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
 }
 
 STDMETHODIMP CWaveOut::Destroy() {
+  // Gain exclusive access to the DSound buffer and related variables
+  CSingleLock lock(&m_mutex, TRUE);
+
   // Release Directsound device
   if (m_lpDirectSound != NULL)
     DSoundClose();
@@ -136,6 +139,9 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
      buffer
    */
 
+  // Gain exclusive access to the DSound buffer and related variables
+  CSingleLock lock(&m_mutex, TRUE);
+
   if ((m_lpDirectSound == NULL) && (!DSoundOpen(false)))
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
 
@@ -151,9 +157,6 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
     // If the buffer is open, try to close it first
     if (m_lpDirectSoundBuffer != NULL)
       DSoundCloseBuffer();
-
-    // Gain exclusive access to the DSound buffer and related variables
-    CSingleLock lock(&m_mutex, TRUE);
 
     // Change the format
     m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
@@ -187,6 +190,8 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
     m_bufferedHi = m_bufferedLo * 2;
   }
 
+  lock.Unlock();
+
   // Forward the call to other module(s) daisy-chained after us (if any)
   if (m_waveOut != NULL)
     hrThat = m_waveOut->SetFormat(channels, samplesPerSec, bitsPerSample);
@@ -204,15 +209,15 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
   HRESULT hrThis = S_OK, hrThat = S_OK, hr;
   DOUBLE loadThis = 1.0, loadThat = 1.0;
 
+  // Gain exclusive access to the DSound buffer and related variables
+  CSingleLock lock(&m_mutex, TRUE);
+
   if (((m_lpDirectSound == NULL) && (!DSoundOpen(false))) ||
       ((m_lpDirectSoundBuffer == NULL) && (!DSoundOpenBuffer())))
   {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
   } else {
     try {
-      // Gain exclusive access to the DSound buffer and related variables
-      CSingleLock lock(&m_mutex, TRUE);
-
       // Get an process playback indicators from the DSound buffer
       DWORD dwCurrentWriteCursor, dwCurrentReadCursor;  // safe-write and read cursors in the DSound buffer
       LONG  commitLen;  // how many bytes (the data between the safe-write and read cursors) were commited by DSound to the device and should not be touched
@@ -283,6 +288,8 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
     }
   }
 
+  lock.Unlock();
+
   // Forward the call to other module(s) daisy-chained after us (if any)
   if (m_waveOut != NULL)
     hrThat = m_waveOut->PlayData(data, length, &loadThat);
@@ -318,10 +325,10 @@ unsigned int CWaveOut::Run(CThread& thread) {
           break;
       }
     } else {
-      try {
-        // Gain exclusive access to the DSound buffer and related variables
-        CSingleLock lock(&m_mutex, TRUE);
+      // Gain exclusive access to the DSound buffer and related variables
+      CSingleLock lock(&m_mutex, TRUE);
 
+      try {
         if (m_lpDirectSoundBuffer != NULL) {
           HRESULT hr;
 
@@ -376,6 +383,8 @@ unsigned int CWaveOut::Run(CThread& thread) {
       } catch (HRESULT hr) {
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Error encountered while cleaning up secondary DirectSound buffer\n0x%08x - %s"), (int)hr, (LPCTSTR)FormatMessage(hr)));
       }
+
+      lock.Unlock();
 
       Sleep(m_bufferDuration / 2);
     }
@@ -493,9 +502,6 @@ bool CWaveOut::DSoundOpenBuffer(void) {
   DSBufferDesc.dwBufferBytes = m_bufferLen;
   DSBufferDesc.dwReserved = 0;
   DSBufferDesc.lpwfxFormat = &m_waveFormat;
-
-  // Gain exclusive access to the DSound buffer and related variables
-  CSingleLock lock(&m_mutex, TRUE);
 
   HRESULT hr;
 
