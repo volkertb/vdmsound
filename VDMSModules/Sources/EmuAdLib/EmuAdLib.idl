@@ -16,4 +16,13 @@ library EMUADLIBLib
 	import "IVDMModule.idl";
 	import "IVDMHandlers.idl";
 
+	[
+		uuid(18D98B72-41AA-11D5-9D37-00A024112F81),
+		helpstring("AdLibCtl Class")
+	]
+	coclass AdLibCtl
+	{
+		[default] interface IVDMBasicModule;
+		interface IIOHandler;
+	};
 };
