@@ -5,6 +5,15 @@
 #define OPL_T1_PERIOD 80
 #define OPL_T2_PERIOD 320
 
+#define OPL_STATUS_IRQ_PENDING 0x80
+#define OPL_STATUS_T1_EXPIRED  0x40
+#define OPL_STATUS_T2_EXPIRED  0x20
+
+#define OPL_CONTROL_RST_STATUS 0x80
+#define OPL_CONTROL_T1_MASKED  0x40
+#define OPL_CONTROL_T2_MASKED  0x20
+#define OPL_CONTROL_T1_ENABLED 0x01
+#define OPL_CONTROL_T2_ENABLED 0x02
 
 CAdLibCtlFSM::CAdLibCtlFSM(IAdLibHWEmulationLayer* hwemu)
   : m_regIdx(0), m_status(0), m_hwemu(hwemu)
@@ -61,7 +70,7 @@ char CAdLibCtlFSM::getStatus(void) {
     // Compute the most recent moment when the counter rolled over (expired)
     m_timer1.timebase = t_now - ((t_now - m_timer1.timebase) % m_timer1.timeout);
     // If the timer is not masked, set the corresponding status bit(s)
-    if (!m_timer1.isMasked) m_status |= (0x80 | 0x40);
+    if (!m_timer1.isMasked) m_status |= OPL_STATUS_T1_EXPIRED;
   }
 
   // Check if Timer 2 has expired
@@ -69,7 +78,14 @@ char CAdLibCtlFSM::getStatus(void) {
     // Compute the most recent moment when the counter rolled over (expired)
     m_timer2.timebase = t_now - ((t_now - m_timer2.timebase) % m_timer2.timeout);
     // If the timer is not masked, set the corresponding status bit(s)
-    if (!m_timer2.isMasked) m_status |= (0x80 | 0x20);
+    if (!m_timer2.isMasked) m_status |= OPL_STATUS_T2_EXPIRED;
+  }
+
+  // If either timer expired while unmasked, set the IRQ bit; clear the IRQ bit otherwise
+  if ((m_status & (OPL_STATUS_T1_EXPIRED | OPL_STATUS_T2_EXPIRED)) != 0) {
+    m_status |= OPL_STATUS_IRQ_PENDING;
+  } else {
+    m_status &= ~OPL_STATUS_IRQ_PENDING ;
   }
 
   return m_status;
@@ -113,21 +129,27 @@ void CAdLibCtlFSM::putData(char data) {
         OPLTime_t t_now = m_hwemu->getTimeMicros();
 
         // Mask/unmask timers
-        m_timer1.isMasked = ((data & 0x04) != 0);
-        m_timer2.isMasked = ((data & 0x02) != 0);
+        m_timer1.isMasked = ((data & OPL_CONTROL_T1_MASKED) != 0);
+        m_timer2.isMasked = ((data & OPL_CONTROL_T2_MASKED) != 0);
+
+        if (m_timer1.isMasked)
+          m_status &= ~OPL_STATUS_T1_EXPIRED;
+
+        if (m_timer2.isMasked)
+          m_status &= ~OPL_STATUS_T2_EXPIRED;
 
         // Enable/disable timers
         bool old_T1_isEnabled = m_timer1.isEnabled;
         bool old_T2_isEnabled = m_timer2.isEnabled;
 
-        m_timer1.isEnabled = ((data & 0x01) != 0);
-        m_timer2.isEnabled = ((data & 0x02) != 0);
+        m_timer1.isEnabled = ((data & OPL_CONTROL_T1_ENABLED) != 0);
+        m_timer2.isEnabled = ((data & OPL_CONTROL_T2_ENABLED) != 0);
 
         // If previously-disabled timers were just enabled, resynchronize
-        if (m_timer1.isEnabled != old_T1_isEnabled)
+        if (m_timer1.isEnabled && !old_T1_isEnabled)
           m_timer1.timebase = t_now;
 
-        if (m_timer2.isEnabled != old_T2_isEnabled)
+        if (m_timer2.isEnabled && !old_T2_isEnabled)
           m_timer2.timebase = t_now;
 
         sprintf(buf, "Reprogramming OPL timers (timer 1 is %s and %s, timer 2 is %s and %s).", m_timer1.isEnabled ? "enabled" : "disabled", m_timer1.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_timer2.isMasked ? "masked" : "unmasked");

@@ -4,7 +4,7 @@
 //
 // Define a type to store time intervals (in microseconds)
 //
-typedef unsigned long OPLTime_t;
+typedef __int64 OPLTime_t;
 
 
 
