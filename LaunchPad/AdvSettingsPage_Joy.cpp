@@ -31,6 +31,7 @@ void CAdvSettingsPage_Joy::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Joy)
+	DDX_Control(pDX, IDC_EDT_JOYMAPBROWSE, m_edtJoymapbrowse);
 	DDX_Control(pDX, IDC_SPN_JOYSCALEMIN, m_spnJoyscalemin);
 	DDX_Control(pDX, IDC_SPN_JOYSCALEMAX, m_spnJoyscalemax);
 	DDX_Control(pDX, IDC_CMB_JOYSCALEMIN, m_cmbJoyscalemin);
@@ -46,6 +47,7 @@ void CAdvSettingsPage_Joy::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAdvSettingsPage_Joy, CPropertyPage)
 	//{{AFX_MSG_MAP(CAdvSettingsPage_Joy)
 	ON_BN_CLICKED(IDC_CHK_USEJOY, OnChkUsejoy)
+	ON_BN_CLICKED(IDC_BUT_JOYMAPBROWSE, OnButJoymapbrowse)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -60,17 +62,17 @@ VOID CAdvSettingsPage_Joy::SyncGUIData(BOOL bSave) {
   //  with the settings they represent
   //
 
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_chkUsejoy, TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"),   m_chkUsejoy,       TRUE);
   SyncGUIData_Enabled(bSave, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 }
 
 VOID CAdvSettingsPage_Joy::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("port"),       m_cmbJoyport,     _T("0x201"));
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("minCoord"),   m_cmbJoyscalemin, _T("5"));
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("maxCoord"),   m_cmbJoyscalemax, _T("250"));
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("pollPeriod"), m_cmbJoypoll,     _T("125"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("port"),       m_cmbJoyport,      _T("0x201"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("minCoord"),   m_cmbJoyscalemin,  _T("5"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("maxCoord"),   m_cmbJoyscalemax,  _T("250"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("pollPeriod"), m_cmbJoypoll,      _T("125"));
 
-  // TODO: read/write map file
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"),    m_edtJoymapbrowse, VLPUtil::GetVDMSFilePath(_T("joy2.map")));
 
   if (!bEnabled) {
     m_cmbJoyport.EnableWindow(FALSE);
@@ -149,4 +151,32 @@ void CAdvSettingsPage_Joy::OnChkUsejoy()
 {
   SyncGUIData_Enabled(TRUE);  // save current combo-box selection
   SyncGUIData_Enabled(FALSE, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Joy::OnButJoymapbrowse() 
+{
+  CWaitCursor wait;
+
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
+  CString fileName;
+  m_edtJoymapbrowse.GetWindowText(fileName);
+
+  COpenMAPFileDialog dlgFile(fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), this);
+
+  switch (dlgFile.DoModal()) {
+    case IDOK:
+      m_edtJoymapbrowse.SetWindowText(dlgFile.GetPathName());
+      break;
+
+    case IDCANCEL:
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  }
 }
