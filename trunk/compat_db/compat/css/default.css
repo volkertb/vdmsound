@@ -1,8 +1,6 @@
-body       { color: #ffffff; background-color: #4f4f4f; font: monospace; margin: 0 }
-
-h1.normal  { width: 100%; color: #ffffff; background-color: #5f5f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
-h1.success { width: 100%; color: #ffffff; background-color: #5f9f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
-h1.error   { width: 100%; color: #ffffff; background-color: #9f5f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
+h1.normal  { width: 100%; color: #ffffff; background-color: #5f5f5f; padding: 5px; border-top: 2px solid #2f2f2f; border-bottom: 2px solid #2f2f2f; font: bold 150% monospace; text-transform: lowercase; text-align: center; margin-top: 2em; margin-bottom: 1em; filter: blur(Add=0, Strength=5) }
+h1.success { width: 100%; color: #ffffff; background-color: #5f9f5f; padding: 5px; border-top: 2px solid #2f5f2f; border-bottom: 2px solid #2f5f2f; font: bold 150% monospace; text-transform: lowercase; text-align: center; margin-top: 2em; margin-bottom: 1em; filter: blur(Add=0, Strength=5) }
+h1.error   { width: 100%; color: #ffffff; background-color: #9f5f5f; padding: 5px; border-top: 2px solid #5f2f2f; border-bottom: 2px solid #5f2f2f; font: bold 150% monospace; text-transform: lowercase; text-align: center; margin-top: 2em; margin-bottom: 1em; filter: blur(Add=0, Strength=5) }
 
 h2.normal  { font: bold italic 125%; text-align: center }
 
@@ -11,5 +9,9 @@ a:visited  { color: #009f9f }
 a:active   { color: #7fff7f }
 a:hover    { color: #ffff7f }
 
-.header    { color: #ffffff; background-color: #5f5f5f; font: normal 100% sans-serif; border-bottom: 1 solid #7f7f7f }
-.footer    { color: #8f8f8f; background-color: #5f5f5f; font: normal 75% sans-serif; border-top: 1 solid #7f7f7f; text-align: center }
+input.flat { font: sans-serif; background: #dfdfdf; color: #000000; border: 2px solid #bfbfbf }
+
+.header    { background-color: #5f5f5f; font-family: sans-serif; border-bottom: 1px solid #7f7f7f }
+.footer    { background-color: #5f5f5f; font-family: sans-serif; border-top: 1px solid #7f7f7f }
+
+.note      { background-color: #7f7f5f; font-family: sans-serif; font-size: 75% }
