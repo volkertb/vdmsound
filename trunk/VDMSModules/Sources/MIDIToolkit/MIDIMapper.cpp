@@ -96,7 +96,7 @@ STDMETHODIMP CMIDIMapper::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDIMapper initialized")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDIMapper initialized")));
 
   return S_OK;
 }
@@ -106,7 +106,7 @@ STDMETHODIMP CMIDIMapper::Destroy() {
   m_midiOut = NULL;
 
   // Release the runtime environment
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDIMapper released")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDIMapper released")));
   RTE_Set(m_env, NULL);
 
   return S_OK;

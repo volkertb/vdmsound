@@ -16,6 +16,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#include "SBCompatCtlDSP.h"
 #include "SBCompatCtlMixer.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -23,6 +24,7 @@
 class ATL_NO_VTABLE CSBCompatCtl : 
   public CComObjectRootEx<CComMultiThreadModel>,
   public CComCoClass<CSBCompatCtl, &CLSID_SBCompatCtl>,
+  public ISBDSPHWEmulationLayer,
   public ISBMixerHWEmulationLayer,
   public ISupportErrorInfo,
   public IVDMBasicModule,
@@ -30,7 +32,7 @@ class ATL_NO_VTABLE CSBCompatCtl :
 {
 public:
   CSBCompatCtl()
-    : m_SBMixer(this)
+    : m_SBDSP(this), m_SBMixer(this)
     { };
 
 DECLARE_REGISTRY_RESOURCEID(IDR_SBCOMPATCTL)
@@ -44,7 +46,7 @@ BEGIN_COM_MAP(CSBCompatCtl)
   COM_INTERFACE_ENTRY(IIOHandler)
 END_COM_MAP()
 
-// ISBMixerHWEmulationLayer
+// ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
   void logError(const char* message);
   void logWarning(const char* message);
@@ -70,6 +72,7 @@ public:
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
 protected:
+  CSBCompatCtlDSP m_SBDSP;
   CSBCompatCtlMixer m_SBMixer;
   int m_basePort;
   int m_IRQLine;

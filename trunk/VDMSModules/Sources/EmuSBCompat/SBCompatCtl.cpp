@@ -102,6 +102,9 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
+  // put the DSP in a known state
+  m_SBDSP.reset();
+
   // put the mixer in a known state
   m_SBMixer.reset();
   m_SBMixer.setIRQSelect(m_IRQLine);
@@ -115,6 +118,9 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
 STDMETHODIMP CSBCompatCtl::Destroy() {
   // put the mixer in a known state
   m_SBMixer.reset();
+
+  // put the DSP in a known state
+  m_SBDSP.reset();
 
   // Release the VDM Services module
   m_IOSrv   = NULL;
@@ -143,20 +149,20 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
       return S_OK;
 
     case 0x0a:  /* DSP read data */
-//    sb16_dspdata_wr(data);
+      *data = m_SBDSP.getData();
       return S_OK;
 
     case 0x0c:  /* DSP write buffer status */
-//    sb16_dspwrbufstat_wr(data);
+      *data = m_SBDSP.getWrStatus();
       return S_OK;
 
     case 0x0e:  /* DSP data available status / IRQ ack. 8-bit */
-//    sb16_dspdataavilstat_wr(data);
-//    sb16_dspirqack_wr();
+      m_SBDSP.ack8bitIRQ();
+      *data = m_SBDSP.getRdStatus();
       return S_OK;
 
     case 0x0f:  /* DSP IRQ ack. 16-bit */
-//    sb16_dspirqack_wr();
+      m_SBDSP.ack16bitIRQ();
       *data = 0xff;
       return S_OK;
 
@@ -196,11 +202,11 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
       return S_OK;
 
     case 0x06:  /* DSP reset */
-//    sb16_dspreset(data);  // TODO: reset is actually level triggered, not 'event driven
+      m_SBDSP.reset(data);
       return S_OK;
 
     case 0x0c:  /* DSP write data or command */
-//    sb16_dspdatacmd_rd(data);
+      m_SBDSP.putCommand(data);
       return S_OK;
 
     case 0x00:
