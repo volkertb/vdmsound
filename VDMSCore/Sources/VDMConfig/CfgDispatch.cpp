@@ -198,6 +198,7 @@ STDAPI CfgInitialize(char* INIFiles) {
     return E_FAIL;
   }
 
+#if 0 /* Disable "Tip of the day" in order not to interfere with LaunchPad */
   // Show the tip of the day
   if (!ShowTips(_T("/Software/Freeware/VDMSound"))) {
       DWORD lastError = GetLastError();
@@ -205,6 +206,7 @@ STDAPI CfgInitialize(char* INIFiles) {
                  LoadString(IDS_MBT_ERROR),
                  MB_OK, MB_ICONEXCLAMATION);
   }
+#endif
 
   return S_OK;
 }
