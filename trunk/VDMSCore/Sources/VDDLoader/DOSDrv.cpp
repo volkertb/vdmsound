@@ -334,6 +334,8 @@ int main(int argc, char** argv) {
       INIFilesLen++;
       INIFiles[INIFilesLen] = '\0';
 
+      delay(500);   // let windows update its console
+
       switch (load(szDllPath, &hVDD, INIFiles, INIFilesLen + 1)) {
         case 0:
           fprintf(stderr, "Successfully loaded & initialized (hVDD = 0x%02x).\n", hVDD);
