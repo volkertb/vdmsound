@@ -477,8 +477,8 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   CString program_params     = SettingGetString(_T("program"), _T("params"));
   CString program_workdir    = SettingGetString(_T("program"), _T("workdir"));
 
-  CString tmp_expWorkDir     = VLPUtil::GetExpandedPath(program_workdir);
-  CString tmp_expExecutable  = VLPUtil::GetExpandedPath(program_executable);
+  CString tmp_expWorkDir     = VLPUtil::GetShortPath(VLPUtil::GetExpandedPath(program_workdir));
+  CString tmp_expExecutable  = VLPUtil::GetShortPath(VLPUtil::GetExpandedPath(program_executable));
   CString tmp_fullProgPath   = VLPUtil::GetAbsolutePath(tmp_expExecutable, tmp_expWorkDir);
 
   // Check that directory exists, that file exists, and that file is valid
@@ -492,6 +492,15 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
       return FALSE;
   } else if (!VLPUtil::isMSDOSFile(tmp_fullProgPath)) {
     strTmp.FormatMessage(IDS_MSG_NOEXECOMBATERR, (LPCTSTR)tmp_fullProgPath);
+    if (MessageBox(NULL, strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES)
+      return FALSE;
+  }
+
+  CString tmp_dosdrvPath = VLPUtil::GetShortPath(VLPUtil::GetVDMSFilePath(_T("dosdrv.exe")));
+
+  // Check that VDMSound is installed properly
+  if (!VLPUtil::FileExists(tmp_dosdrvPath)) {
+    strTmp.FormatMessage(IDS_MSG_NOVDMSOUND, (LPCTSTR)tmp_dosdrvPath);
     if (MessageBox(NULL, strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES)
       return FALSE;
   }
@@ -559,7 +568,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     autoexec += vdms_winnt_dos_Autoexec + _T("\r\n");
   }
 
-  autoexec += VLPUtil::GetShortPath(VLPUtil::GetVDMSFilePath(_T("dosdrv.exe"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
+  autoexec += tmp_dosdrvPath + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
 
   //
   // PIF

@@ -2,7 +2,8 @@
 // Microsoft Developer Studio generated include file.
 // Used by LaunchPad.rc
 //
-#define IDR_WINXP_MANIFEST              1
+#define IDR_WINXP_MANIFEST              ISOLATIONAWARE_MANIFEST_RESOURCE_ID
+
 #define IDR_LAUNCHPADSHELLEX            101
 #define IDR_MENU_DRAGNDROP              102
 
@@ -201,6 +202,7 @@
 #define IDS_MSG_NODIRERR                10207
 #define IDS_MSG_NOEXECOMBATERR          10208
 #define IDS_MSG_SHORTCUTERR             10209
+#define IDS_MSG_NOVDMSOUND              10210
 
 #define ID_RUNWITH                      32771
 #define ID_REPLACE                      32772

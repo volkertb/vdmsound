@@ -19,6 +19,10 @@
 #define _WIN32_IE 0x0400
 #endif
 
+#ifndef ISOLATION_AWARE_ENABLED
+#define ISOLATION_AWARE_ENABLED 1
+#endif
+
 #define _ATL_APARTMENT_THREADED
 
 #include <afxwin.h>
