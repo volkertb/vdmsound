@@ -16,30 +16,31 @@ class CMPU401CtlFSM
     };
 
   public:
-    CMPU401CtlFSM(IMPU401HWEmulationLayer* _hwemu);
+    CMPU401CtlFSM(IMPU401HWEmulationLayer* hwemu);
     ~CMPU401CtlFSM(void);
 
   public:
     inline void putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length)
-      { inBuf.putEvent(status, data1, data2, length); };
+      { m_inBuf.putEvent(status, data1, data2, length); };
     inline void putSysEx(const unsigned char * data, long length)
-      { inBuf.putSysEx(data, length); };
+      { m_inBuf.putSysEx(data, length); };
     inline void putRealTime(unsigned char data)
-      { inBuf.putRealTime(data); };
+      { m_inBuf.putRealTime(data); };
 
   public:
+    void reset(void);
     void putCommand(char data);
     char getStatus(void);
     void putData(char data);
     char getData(void);
 
   protected:
-    mode_t mode;
+    mode_t m_mode;
 
   protected:
-    IMPU401HWEmulationLayer* hwemu;
-    CMIDIInputBuffer inBuf;
-    CMIDIOutputBuffer outBuf;
+    IMPU401HWEmulationLayer* m_hwemu;
+    CMIDIInputBuffer m_inBuf;
+    CMIDIOutputBuffer m_outBuf;
 };
 
 #endif __MPU401CTLFSM_H_

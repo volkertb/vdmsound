@@ -105,12 +105,18 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
+  // put the MPU in a known state
+  m_MPUFSM.reset();
+
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MPU401Ctl initialized (base port = 0x%03x, IRQ = %d)"), m_basePort, m_IRQLine));
 
   return S_OK;
 }
 
 STDMETHODIMP CMPU401Ctl::Destroy() {
+  // put the MPU in a known state
+  m_MPUFSM.reset();
+
   // Release the MIDI-out module
   m_midiOut = NULL;
 
@@ -232,21 +238,12 @@ void CMPU401Ctl::generateInterrupt(void) {
   }
 }
 
-void CMPU401Ctl::logMessage(msgType type, const char* message) {
-  IVDMQUERYLib::LOGENTRY_T logType;
+void CMPU401Ctl::logError(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, (LPCTSTR)CString(message));
+}
 
-  switch (type) {
-    case IMPU401HWEmulationLayer::MSG_INFO:
-      logType = IVDMQUERYLib::LOG_INFORMATION; break;
-    case IMPU401HWEmulationLayer::MSG_WARNING:
-      logType = IVDMQUERYLib::LOG_WARNING; break;
-    case IMPU401HWEmulationLayer::MSG_ERROR:
-      logType = IVDMQUERYLib::LOG_ERROR; break;
-    default:
-      logType = IVDMQUERYLib::LOG_ERROR;
-  }
-
-  RTE_RecordLogEntry(m_env, logType, (LPCTSTR)CString(message));
+void CMPU401Ctl::logWarning(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, (LPCTSTR)CString(message));
 }
 
 void CMPU401Ctl::putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length) {
