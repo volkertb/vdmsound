@@ -288,6 +288,10 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\ApiHook.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\IOPortMgr.cpp
 # End Source File
 # Begin Source File
@@ -311,6 +315,10 @@ SOURCE=.\VDMServices.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\ApiHook.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\IOPortMgr.h
