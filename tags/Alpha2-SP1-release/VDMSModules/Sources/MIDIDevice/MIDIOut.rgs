@@ -1,0 +1,25 @@
+HKCR
+{
+	MIDIDevice.MIDIOut.1 = s 'MIDIOut Class'
+	{
+		CLSID = s '{F3285843-FDE7-11D4-9C64-00A024112F81}'
+	}
+	MIDIDevice.MIDIOut = s 'MIDIOut Class'
+	{
+		CLSID = s '{F3285843-FDE7-11D4-9C64-00A024112F81}'
+		CurVer = s 'MIDIDevice.MIDIOut.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {F3285843-FDE7-11D4-9C64-00A024112F81} = s 'MIDIOut Class'
+		{
+			ProgID = s 'MIDIDevice.MIDIOut.1'
+			VersionIndependentProgID = s 'MIDIDevice.MIDIOut'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{F3285833-FDE7-11D4-9C64-00A024112F81}'
+		}
+	}
+}
