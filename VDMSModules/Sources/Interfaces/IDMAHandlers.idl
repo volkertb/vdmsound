@@ -31,14 +31,14 @@ interface IDMAHandler : IUnknown
 		[in] TMODE_T mode,                    // Modality of transfer
 		[in] BOOL isAutoInit,                 // The transfer re-initializes itself
 		[in] ULONG physicalAddr,              // Physical address where the data is located
-		[in] ULONG maxBytes,                  // Maximum amount of bytes that can be transferred
+		[in] ULONG maxData,                   // Maximum amount of bytes (or words) that can be transferred
 		[in] BOOL isDescending,               // Direction in which the data should be transferred
-		[out, retval] ULONG * transferred );  // Actual amount of bytes that were transferred
+		[out, retval] ULONG * transferred );  // Actual amount of bytes (or words) that were transferred
 
 	[ helpstring("Transfers data on a DMA channel") ]
 	HRESULT HandleAfterTransfer(
 		[in] BYTE channel,                    // DMA channel
-		[in] ULONG transferred,               // Amount of bytes that were transferred in the last burst
+		[in] ULONG transferred,               // Amount of bytes (or words) that were transferred in the last burst
 		[in] BOOL isTerminalCount );          // The transfer reached terminal-count
 };
 
