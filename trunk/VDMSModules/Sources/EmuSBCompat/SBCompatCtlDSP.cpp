@@ -783,7 +783,7 @@ int CSBCompatCtlDSP::decode_ADPCM_2(
     int bufSize,
     int maxSize)
 {
-  int i, skip = 0;
+  int skip = 0;
   unsigned char tmpBuf[65536];
 
   maxSize = min(bufSize, maxSize / 4);  // 4x factor because of 2bits/sample to 8bits/sample decoding
