@@ -268,7 +268,7 @@ unsigned int CMIDIOut::Run(CThread& thread) {
 
 //
 // Callback function invoked by MIDI driver when the device is opened/closed,
-//   or when a (SysEx) buffer finishes playing.
+//  or when a (SysEx) buffer finishes playing.
 //
 void CALLBACK CMIDIOut::MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2) {
   MMRESULT errCode;

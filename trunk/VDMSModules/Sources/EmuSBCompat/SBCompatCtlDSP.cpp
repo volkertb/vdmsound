@@ -493,7 +493,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xd4:  /* 0D4h : Continue DMA Operation, 8-bit */
     case 0xd6:  /* 0D6h : Continue DMA Operation, 16-bit */
       // TODO: do we need to discriminate between 8-bit and 16-bit (i.e. expect
-      //   matching 8-bit or 16-bit halt/resume calls), or A/I and S.C. ?
+      //  matching 8-bit or 16-bit halt/resume calls), or A/I and S.C. ?
       m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
