@@ -1,0 +1,25 @@
+HKCR
+{
+	EmuMPU401.MPU401Ctl.1 = s 'MPU401Ctl Class'
+	{
+		CLSID = s '{57152171-FB02-11D4-9C60-00A024112F81}'
+	}
+	EmuMPU401.MPU401Ctl = s 'MPU401Ctl Class'
+	{
+		CLSID = s '{57152171-FB02-11D4-9C60-00A024112F81}'
+		CurVer = s 'EmuMPU401.MPU401Ctl.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {57152171-FB02-11D4-9C60-00A024112F81} = s 'MPU401Ctl Class'
+		{
+			ProgID = s 'EmuMPU401.MPU401Ctl.1'
+			VersionIndependentProgID = s 'EmuMPU401.MPU401Ctl'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{57152162-FB02-11D4-9C60-00A024112F81}'
+		}
+	}
+}

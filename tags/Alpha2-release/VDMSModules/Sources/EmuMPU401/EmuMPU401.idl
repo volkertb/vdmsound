@@ -1,0 +1,30 @@
+// EmuMPU401.idl : IDL source for EmuMPU401.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (EmuMPU401.tlb) and marshalling code.
+
+import "oaidl.idl";
+
+[
+	uuid(57152162-FB02-11D4-9C60-00A024112F81),
+	version(1.0),
+	helpstring("EmuMPU401 1.0 Type Library")
+]
+library EMUMPU401Lib
+{
+	import "IVDMModule.idl";
+	import "IVDMHandlers.idl";
+	import "IMIDI.idl";
+
+	[
+		uuid(57152171-FB02-11D4-9C60-00A024112F81),
+		helpstring("MPU401Ctl Class")
+	]
+	coclass MPU401Ctl
+	{
+		[default] interface IVDMBasicModule;
+		interface IIOHandler;
+		interface IMIDIEventHandler;
+	};
+};
