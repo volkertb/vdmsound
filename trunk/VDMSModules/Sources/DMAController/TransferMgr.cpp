@@ -24,7 +24,8 @@
 #define DMA8_PAGE_MASK    0x00ff      // supposed to be 0x0f, but some games go beyond that
 #define DMA16_PAGE_MASK   0x00ff      // 0x7f on pre-386 machines?
 
-#define RECOVERY_TIME     5000        // how many milliseconds should elapse before the DMA activity period can grow fom minimal to maximal
+#define DMA_BOOST         1.30        // how much to boost DMA performance when requested to
+#define RECOVERY_TIME     3000        // how many milliseconds should elapse before the DMA activity period can recuperate the increase obtained in a boost
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -101,9 +102,9 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
 
   // Set the DMA activity period
   m_period = m_maxPeriod;
-  m_recoveryIncrement = (m_maxPeriod * (m_maxPeriod - m_minPeriod)) / ((double)RECOVERY_TIME - m_maxPeriod + m_minPeriod);
+  m_recoveryRate = 1.00;
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("TransferMgr initialized (minPeriod = %dms, maxPeriod = %dms, recovery increment = %0.3fms)"), (int)m_minPeriod, (int)m_maxPeriod, m_recoveryIncrement));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("TransferMgr initialized (minPeriod = %dms, maxPeriod = %dms)"), (int)m_minPeriod, (int)m_maxPeriod));
 
   return S_OK;
 }
@@ -220,7 +221,9 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
-  bool doNotify = false;  // indicates whether a one-time notification is needed regarding some aspect of DMA transfer management
+  bool notifyLo = false,
+       notifyHi = false;  // indicates whether a one-time notification is needed regarding some aspect of DMA transfer management
+
   bool needsAck = false;  // indicates whether someone initiated/aborted a transaction and is waiting for an acknowledgement
 
   do {
@@ -274,14 +277,14 @@ unsigned int CTransferMgr::Run(CThread& thread) {
             if (numData > 0) {  // any change?
               if (numData > DMAInfo.count) {
                 // Terminal count reached
-                DMAInfo.status |= DMAChMask;  // set TC
+                DMAInfo.status |= DMAChMask;        // set TC
 
                 if (isAutoInit) {
                   // Reinitialize
                   DMAInfo.addr = m_channels[DMAChannel].addr;
                   DMAInfo.count = m_channels[DMAChannel].count;
                 } else {
-                  DMAInfo.status &= (~DREQMask);            // transfer done, clear DREQ
+                  DMAInfo.status &= (~DREQMask);    // transfer done => clear DREQ
                   DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
                   DMAInfo.count = 0xffff;
 
@@ -302,6 +305,9 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
                 m_channels[DMAChannel].handler->HandleAfterTransfer(DMAChannel, numData, false);
               }
+            } else {
+              DMAInfo.status &= (~DREQMask);        // temporarily inactive => clear DREQ
+              m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_STATUS, &DMAInfo);
             }
           } else {
             m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_STATUS, &DMAInfo);
@@ -332,30 +338,35 @@ unsigned int CTransferMgr::Run(CThread& thread) {
     //   otherwise slowly bring it down to the minimum possible value for minimal overhead
     if (isSlow) {
       double lastPeriod = m_period;
-      m_period = max(m_minPeriod, m_period * 0.75);
+      m_period = max(m_minPeriod, m_period * (1.0 / DMA_BOOST));
 
-      if (m_period == lastPeriod) {   // did not change, so we probably hit the lower limit
-        if (doNotify) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Unable to further boost DMA processing rate, lower bound already met (lower bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_minPeriod, lastPeriod, m_period));
-        doNotify = false;   // notified of exceptional condition once, don't do it again if the condition persists
+      if (((int)m_period == (int)lastPeriod) &&     // did not change, so we probably hit the lower limit
+          ((int)m_period == (int)m_minPeriod))
+      {
+        if (notifyLo) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Unable to further boost DMA processing rate, lower bound already met (lower bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_minPeriod, lastPeriod, m_period));
+        notifyLo = false;   // notified of exceptional condition once, don't do it again if the condition persists
       } else {
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Boosting DMA processing rate by %0.1f%% at DMA handler's request (period decreased from %0.2fms to %0.2fms)"), 100.0 * (lastPeriod/m_period - 1.0), lastPeriod, m_period));
-        doNotify = (m_period / lastPeriod < 0.80);  // if the system is changing significantly, assume we left the exceptional state, so notify as soon as it arises again (if ever)
+        m_recoveryRate = (double)(RECOVERY_TIME - m_period) / (RECOVERY_TIME - DMA_BOOST * m_period);
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Boosting DMA processing rate by %0.1f%% at DMA handler's request (period decreased from %0.2fms to %0.2fms), post-boost recovery rate updated to %0.3f%%"), 100.0 * (lastPeriod/m_period - 1.0), lastPeriod, m_period, (m_recoveryRate - 1.00) * 100.0));
+        notifyLo = ((m_period / lastPeriod) < ((1.0 / DMA_BOOST) + 0.05));  // if the system is changing significantly, assume we left the exceptional state, so notify as soon as it arises again (if ever)
       }
     } else {
       double lastPeriod = m_period;
-      m_period = min(m_maxPeriod, m_period + m_recoveryIncrement);
+      m_period = min(m_maxPeriod, m_period * m_recoveryRate);
 
-      if (m_period == lastPeriod) {   // did not change, so we probably hit the upper limit
-        if (doNotify) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA processing rate recovered to its normal value (upper bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_maxPeriod, lastPeriod, m_period));
-        doNotify = false;   // notified of this condition once, don't do it again if the condition persists
+      if (((int)m_period == (int)lastPeriod) &&     // did not change, so we probably hit the upper limit
+          ((int)m_period == (int)m_maxPeriod))
+      {
+        if (notifyHi) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA processing rate recovered to its normal value (upper bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_maxPeriod, lastPeriod, m_period));
+        notifyHi = false;   // notified of this condition once, don't do it again if the condition persists
       } else {
-        doNotify = true;    // left the condition, so notify as soon as it arises again
+        notifyHi = true;    // left the condition, so notify as soon as it arises again
       }
     }
 
     // Check if any start/stop requests are pending; if no channels are
     //   active, block until a request is received, otherwise continue
-    if (thread.GetMessage(&message, isIdle)) {  // blocks if isIdle==true
+    if (thread.GetMessage(&message, isIdle)) {      // blocks if isIdle==true
       switch (message.message) {
         case WM_QUIT:
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread cancelled")));
@@ -368,7 +379,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Received DMA start request (%s) on %s channel %d"), message.lParam != FALSE ? _T("synchronous") : _T("asynchronous"), m_channels[message.wParam].isActive ? _T("active") : _T("inactive"), (int)message.wParam));
 #         endif
 
-          needsAck = (message.lParam != FALSE); // remember to signal back after the DMA is programmed to reflect a STARTED transaction
+          needsAck = (message.lParam != FALSE);     // remember to signal back after the DMA is programmed to reflect a STARTED transaction
           m_channels[message.wParam].isActive = true;
           m_channels[message.wParam].inProgress = false;
           break;
@@ -380,7 +391,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Received DMA stop request (%s) on %s channel %d"), message.lParam != FALSE ? _T("synchronous") : _T("asynchronous"), m_channels[message.wParam].isActive ? _T("active") : _T("inactive"), (int)message.wParam));
 #         endif
 
-          needsAck = (message.lParam != FALSE); // remember to signal back after the DMA is programmed to reflect a STOPPED transaction
+          needsAck = (message.lParam != FALSE);     // remember to signal back after the DMA is programmed to reflect a STOPPED transaction
           m_channels[message.wParam].isActive = false;
           m_channels[message.wParam].inProgress = false;
           break;
