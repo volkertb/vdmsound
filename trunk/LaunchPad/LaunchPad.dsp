@@ -280,6 +280,10 @@ SOURCE=.\LaunchPad.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\PropertySheetShellEx.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
@@ -287,6 +291,10 @@ SOURCE=.\StdAfx.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\PropertySheetShellEx.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\StdAfx.h
@@ -298,6 +306,10 @@ SOURCE=.\StdAfx.h
 # Begin Source File
 
 SOURCE=.\LaunchPad.rc
+# End Source File
+# Begin Source File
+
+SOURCE=.\PropertySheetShellEx.rgs
 # End Source File
 # Begin Source File
 
