@@ -80,7 +80,7 @@ protected:
   int m_deviceID;
   CString m_deviceName;
   HMIDIOUT m_hMidiOut;
-  CThread gcThread;
+  CThread m_gcThread;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
