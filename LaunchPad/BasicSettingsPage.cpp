@@ -213,12 +213,12 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
 }
 
 VOID CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
-  static LPCTSTR T_IDENTITY_MAP = _T("identity.map");
-  static LPCTSTR T_MT2GM_MAP = _T("mt2gm.map");
+  const CString str_identity_map = VLPUtil::GetVDMSFilePath(_T("identity.map"));
+  const CString str_mt2gm_map = VLPUtil::GetVDMSFilePath(_T("mt2gm.map"));
 
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, str_identity_map);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, str_mt2gm_map);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, m_tmpMIDIStorage, str_identity_map, str_mt2gm_map, NULL);
 
   if (!bEnabled) {
     m_optGmidi.EnableWindow(FALSE);
@@ -228,13 +228,12 @@ VOID CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
 }
 
 VOID CBasicSettingsPage::SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled) {
-  static LPCTSTR T_JOY1_MAP = _T("joy1.map");
-  static LPCTSTR T_JOY2_MAP = _T("joy2.map");
-  static LPCTSTR T_JOY3_MAP = _T("joy3.map");
+  const CString str_joy2_map = VLPUtil::GetVDMSFilePath(_T("joy2.map"));
+  const CString str_joy3_map = VLPUtil::GetVDMSFilePath(_T("joy3.map"));
 
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, str_joy2_map);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, str_joy3_map);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, m_tmpJoyStorage, str_joy2_map, str_joy3_map, NULL);
 
   if (!bEnabled) {
     m_optJoy2but.EnableWindow(FALSE);
@@ -455,6 +454,9 @@ BOOL CBasicSettingsPage::OnApply()
     MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONWARNING);
     return FALSE;
   }
+
+  m_tmpMIDIStorage.Empty();
+  m_tmpJoyStorage.Empty();
 
   SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 

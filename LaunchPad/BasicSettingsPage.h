@@ -83,6 +83,7 @@ protected:
 protected:
   CLaunchPadSettings m_settings;
   CContextHelp m_help;
+  CString m_tmpMIDIStorage, m_tmpJoyStorage;
 };
 
 //{{AFX_INSERT_LOCATION}}
