@@ -3,8 +3,8 @@
 // Used by LaunchPad.rc
 //
 #define IDS_PROJNAME                    100
-#define IDR_PROPERTYSHEETSHELLEX        102
-#define IDD_PROPPAGE                    105
+#define IDR_LAUNCHPADSHELLEX            102
+#define IDD_PROPPAGE                    104
 #define IDI_ICON                        201
 #define IDC_ICO_APP                     201
 #define IDC_EDT_DOSCMD                  202

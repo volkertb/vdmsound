@@ -7,7 +7,7 @@
 import "oaidl.idl";
 
 [
-	uuid(08E6E524-B9D0-4907-B803-504B46C07040),
+	uuid(5397AA66-C386-4F77-B625-7A34EB12B576),
 	version(1.0),
 	helpstring("LaunchPad 1.0 Type Library")
 ]
@@ -17,10 +17,10 @@ library LAUNCHPADLib
 	importlib("stdole2.tlb");
 
 	[
-		uuid(2524BE3A-D262-4B1F-AE31-3127350B05A5),
-		helpstring("PropertySheetShellEx Class")
+		uuid(64BC5640-700F-4E7E-8462-D3092DD74B0F),
+		helpstring("LaunchPadShellEx Class")
 	]
-	coclass PropertySheetShellEx
+	coclass LaunchPadShellEx
 	{
 		[default] interface IUnknown;
 	};

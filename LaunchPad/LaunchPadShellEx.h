@@ -1,28 +1,28 @@
-// PropertySheetShellEx.h : Declaration of the CPropertySheetShellEx
+// LaunchPadShellEx.h : Declaration of the CLaunchPadShellEx
 
-#ifndef __PROPERTYSHEETSHELLEX_H_
-#define __PROPERTYSHEETSHELLEX_H_
+#ifndef __LAUNCHPADSHELLEX_H_
+#define __LAUNCHPADSHELLEX_H_
 
 #include "resource.h"       // main symbols
 
 /////////////////////////////////////////////////////////////////////////////
-// CPropertySheetShellEx
-class ATL_NO_VTABLE CPropertySheetShellEx : 
+// CLaunchPadShellEx
+class ATL_NO_VTABLE CLaunchPadShellEx : 
 	public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<CPropertySheetShellEx, &CLSID_PropertySheetShellEx>,
+	public CComCoClass<CLaunchPadShellEx, &CLSID_LaunchPadShellEx>,
 	public IShellExtInit,
   public IShellPropSheetExt
 {
 public:
-	CPropertySheetShellEx()
+	CLaunchPadShellEx()
 	{
 	}
 
-DECLARE_REGISTRY_RESOURCEID(IDR_PROPERTYSHEETSHELLEX)
+DECLARE_REGISTRY_RESOURCEID(IDR_LAUNCHPADSHELLEX)
 
 DECLARE_PROTECT_FINAL_CONSTRUCT()
 
-BEGIN_COM_MAP(CPropertySheetShellEx)
+BEGIN_COM_MAP(CLaunchPadShellEx)
 	COM_INTERFACE_ENTRY(IShellExtInit)
 	COM_INTERFACE_ENTRY(IShellPropSheetExt)
 END_COM_MAP()
@@ -41,4 +41,4 @@ protected:
   CArray<CString,LPCTSTR> m_fileNames;
 };
 
-#endif //__PROPERTYSHEETSHELLEX_H_
+#endif //__LAUNCHPADSHELLEX_H_

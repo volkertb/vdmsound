@@ -280,7 +280,7 @@ SOURCE=.\LaunchPad.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\PropertySheetShellEx.cpp
+SOURCE=.\LaunchPadShellEx.cpp
 # End Source File
 # Begin Source File
 
@@ -293,7 +293,7 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\PropertySheetShellEx.h
+SOURCE=.\LaunchPadShellEx.h
 # End Source File
 # Begin Source File
 
@@ -309,7 +309,7 @@ SOURCE=.\LaunchPad.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\PropertySheetShellEx.rgs
+SOURCE=.\LaunchPadShellEx.rgs
 # End Source File
 # Begin Source File
 
