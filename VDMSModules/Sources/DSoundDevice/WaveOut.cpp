@@ -131,6 +131,11 @@ STDMETHODIMP CWaveOut::Destroy() {
 STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPerSample) {
   HRESULT hrThis = S_OK, hrThat = S_OK, hr;
 
+  /* TODO: first store the format (!), then check DSound and try to open the
+     device if needed, then call a Close then an Open fn. for the secondary
+     buffer
+   */
+
   if ((m_lpDirectSound == NULL) && (!DSoundOpen(false))) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
   } else {
@@ -226,7 +231,7 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
 
       // Verify whether the DirectSound buffer exists
       if (m_lpDirectSoundBuffer == NULL)
-        throw E_FAIL;
+        throw E_HANDLE;
 
       // Get an process playback indicators from the DSound buffer
       DWORD dwCurrentWriteCursor, dwCurrentReadCursor;  // safe-write and read cursors in the DSound buffer
@@ -574,6 +579,7 @@ HRESULT CWaveOut::DSoundOpenHelper(void) {
   }
 
   m_lpDirectSound = lpDirectSound;
+
   return S_OK;
 }
 
