@@ -78,12 +78,13 @@ public:
 public:
 	STDMETHOD(AddDMAHandler)(BYTE channel, IDMAHandler * handler);
 	STDMETHOD(RemoveDMAHandler)(BYTE channel, IDMAHandler * handler);
-	STDMETHOD(InitiateTransfer)(BYTE channel, LONG synchronous);
-	STDMETHOD(AbortTransfer)(BYTE channel, LONG synchronous);
+	STDMETHOD(StartTransfer)(BYTE channel, LONG synchronous);
+	STDMETHOD(StopTransfer)(BYTE channel, LONG synchronous);
 
 protected:
   CThread m_DMAThread;
   CEvent m_event;
+  CCriticalSection m_mutex;
   DWORD m_minPeriod, m_maxPeriod;
   double m_period, m_recoveryRate;
   DMAChannel m_channels[NUM_DMA_CHANNELS];

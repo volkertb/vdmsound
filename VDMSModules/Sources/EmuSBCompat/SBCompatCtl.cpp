@@ -491,8 +491,6 @@ if(xyz)fprintf(xyz," % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n", m_transferredB
     }
   }
 
-  /* TODO: find a better condition for boosting DMA; this condition should probably
-     be checked before clipping at maxData/m_DSPBlockSize */
   /* TODO: put a limit on the frequency of "need to boost DMA" warnings; logging
      them incurs up to 20ms (!) or more overhead, which is the last thing we need when
      struggling for 1-2ms in an attempt to boost DMA performance */
@@ -649,7 +647,7 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
     case TT_E2CMD:
       // We transferred what we had to transfer, now clean up
       try {
-        m_DMACtl->AbortTransfer(m_activeDMAChannel, false); // *must* be asynchronous, otherwise we deadlock
+        m_DMACtl->StopTransfer(m_activeDMAChannel, false); // *must* be asynchronous, otherwise we deadlock
       } catch (_com_error& ce) {
         CString args = Format(_T("%d"), m_activeDMAChannel);
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -693,7 +691,7 @@ void CSBCompatCtl::startTransfer(transfer_t type, char E2Reply, bool isSynchrono
 
   // Start the DMA transfer
   try {
-    m_DMACtl->InitiateTransfer(m_activeDMAChannel, isSynchronous);
+    m_DMACtl->StartTransfer(m_activeDMAChannel, isSynchronous);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d"), m_activeDMAChannel);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("InitiateTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -760,7 +758,7 @@ if(xyz)fprintf(xyz,"Starting DMA transfer (%s) on ch. %d (%s, %d samples/block):
 
   // Start the DMA transfer
   try {
-    m_DMACtl->InitiateTransfer(m_activeDMAChannel, isSynchronous);
+    m_DMACtl->StartTransfer(m_activeDMAChannel, isSynchronous);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d"), m_activeDMAChannel);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("InitiateTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -771,7 +769,7 @@ if(xyz)fprintf(xyz,"Starting DMA transfer (%s) on ch. %d (%s, %d samples/block):
    and only then stop the DMA transaction */
 void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
   try {
-    m_DMACtl->AbortTransfer(m_activeDMAChannel, isSynchronous);
+    m_DMACtl->StopTransfer(m_activeDMAChannel, isSynchronous);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d"), m_activeDMAChannel);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
