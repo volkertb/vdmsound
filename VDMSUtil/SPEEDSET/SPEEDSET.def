@@ -1,8 +1,0 @@
-; SPEEDSET.def : Declares the module parameters.
-
-LIBRARY      "SPEEDSET.DLL"
-
-EXPORTS
-	; VDD-specific exports
-	VddInitialize	PRIVATE
-	VddDispatch	PRIVATE
