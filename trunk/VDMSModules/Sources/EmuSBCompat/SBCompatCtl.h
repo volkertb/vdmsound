@@ -54,7 +54,6 @@ END_COM_MAP()
 
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
-  short getDSPVersion(void);
   void startTransfer(transfer_t type, char E2Reply, bool isSynchronous = false);
   void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous = false);
   void stopTransfer(transfer_t type, bool isSynchronous = false);
@@ -94,7 +93,6 @@ public:
 
 // Module's settings
 protected:
-  short m_DSPVersion;           // type of SoundBlaster to emulate
   int m_basePort;               // base I/O port of emulation
   int m_IRQLine;                // IRQ line used by emulation to signal to DOS applications
   int m_DMA8Channel;            // 8-bit DMA channel to be used by emulation

@@ -24,6 +24,7 @@ CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu, CSBCompatCtlMixe
   : m_hwemu(hwemu), m_sbmix(sbmix),
     m_state(DSP_S_NORMAL),          // not in high-speed mode
     m_lastCommand((char)0x00),      // no last command
+    m_DSPVersion(0x0000),           // invalid DSP version
     m_isSpeakerEna(false),          // the speaker is disabled
     m_useTimeConstant(false),       // playback rate determined by sample rate, not time constant
     m_is8BitIRQPending(false),      // no 8-bit operation IRQ pending
@@ -43,6 +44,20 @@ CSBCompatCtlDSP::~CSBCompatCtlDSP(void)
 
 /////////////////////////////////////////////////////////////////////////////
 
+
+//
+// Sets the DSP version (lower nibble = minor, upper nibble = major)
+//
+void CSBCompatCtlDSP::setDSPVersion(short DSPVersion) {
+  m_DSPVersion = DSPVersion;
+}
+
+//
+// Retrieves the DSP version (lower nibble = minor, upper nibble = major)
+//
+short CSBCompatCtlDSP::getDSPVersion(void) {
+  return m_DSPVersion;
+}
 
 //
 // Unconditionally resets the DSP
@@ -334,7 +349,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x91:  /* 091h : DMA DAC, 8-bit (High Speed) */
       /* TODO: set state to DSP_S_HIGHSPEED for cmd. 0x91 (implement when DMA single-cycle terminal count
          notification is functional, to automatically switch out of high-speed at the end of transfer) */
-      if ((command == 0x91) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x91) && (m_DSPVersion < 0x0400))   // high-speed not supported on v4.xx+
         m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x91 (DMA DAC 8-bit high-speed)");
 
       m_hwemu->startTransfer(
@@ -364,7 +379,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x1c:  /* 01Ch : Auto-Initialize DMA DAC, 8-bit */
     case 0x90:  /* 090h : Auto-Initialize DMA DAC, 8-bit (High Speed) */
-      if ((command == 0x90) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x90) && (m_DSPVersion < 0x0400))   // high-speed not supported on v4.xx+
         m_state = DSP_S_HIGHSPEED;  // set state to high-speed; can only get out by resetting the DSP
 
       m_hwemu->startTransfer(
@@ -393,7 +408,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x99:  /* 024h : DMA ADC, 8-bit (High Speed) */
       /* TODO: set state to DSP_S_HIGHSPEED for cmd. 0x91 (implement when DMA single-cycle terminal count
          notification is functional, to automatically switch out of high-speed at the end of transfer) */
-      if ((command == 0x99) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x99) && (m_DSPVersion < 0x0400))   // high-speed not supported on v4.xx+
         m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x99 (DMA ADC 8-bit high-speed)");
 
       m_hwemu->startTransfer(
@@ -413,7 +428,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x2c:  /* 02Ch : Auto-Initialize DMA ADC, 8-bit */
     case 0x98:  /* 098h : Auto-Initialize DMA ADC, 8-bit (High Speed) */
-      if ((command == 0x98) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x98) && (m_DSPVersion < 0x0400))   // high-speed not supported on v4.xx+
         m_state = DSP_S_HIGHSPEED;  // set state to high-speed; can only get out by resetting the DSP
 
       m_hwemu->startTransfer(
@@ -616,8 +631,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xe1:  /* 0E1h : DSP Version */
       /* TODO: maybe make this configurable?! */
       flushOutputBuffer();  // flush any previous replies
-      m_bufOut.push(HIBYTE(m_hwemu->getDSPVersion()));  // output reply: major version
-      m_bufOut.push(LOBYTE(m_hwemu->getDSPVersion()));  // output reply: minor version
+      m_bufOut.push(HIBYTE(m_DSPVersion));  // output reply: major version
+      m_bufOut.push(LOBYTE(m_DSPVersion));  // output reply: minor version
       return true;
 
     case 0xe2:  /* 0E2h : ??? */
@@ -654,7 +669,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       m_hwemu->logError("Attempted to use partially implemented DSP command 0xf0 (Sine generator)");
       setTimeConstant(0xc0);
 
-      if (m_hwemu->getDSPVersion() < 0x0400)
+      if (m_DSPVersion < 0x0400)
         m_isSpeakerEna = true;
 
       return true;
@@ -713,7 +728,7 @@ const char* CSBCompatCtlDSP::getCopyright(void) {
    if for commands bxh/cxh stereo/mono is also used */
 
 int CSBCompatCtlDSP::getNumChannels(void) {
-  if (m_hwemu->getDSPVersion() < 0x0400) {
+  if (m_DSPVersion < 0x0400) {
     return (m_sbmix->isStereoOutput() ? 2 : 1);
   } else {
     return 1;

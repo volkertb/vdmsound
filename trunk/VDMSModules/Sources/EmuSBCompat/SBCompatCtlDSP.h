@@ -13,7 +13,6 @@ class ISBDSPHWEmulationLayer {
     enum codec_t { CODEC_PCM, CODEC_PCM_SIGNED, CODEC_ADPCM_2, CODEC_ADPCM_3, CODEC_ADPCM_4 };
 
   public:
-    virtual short getDSPVersion(void) = 0;
     virtual void startTransfer(
         transfer_t type,        // DSP command 0xe2 (input)
         char E2Reply,           // reply byte to be written back using DMA
@@ -55,6 +54,9 @@ class CSBCompatCtlDSP {
     ~CSBCompatCtlDSP(void);
 
   public:
+    void setDSPVersion(short DSPVersion);
+    short getDSPVersion(void);
+
     void reset(void);
     void reset(char data);
     void putCommand(char data);
@@ -121,6 +123,8 @@ class CSBCompatCtlDSP {
 
     char m_E2Value;                       // control values used bye the undocumented
     int m_E2Count;                        //  0xE2 challenge/response DSP command
+
+    short m_DSPVersion;                   // type of SoundBlaster to emulate
 
     bool m_isSpeakerEna;                  // is the output muted or not (no effect on output on SB16)
     bool m_useTimeConstant;               // sample rate is defined using the alternate "time constant"/period method (as opposed to frequency)
