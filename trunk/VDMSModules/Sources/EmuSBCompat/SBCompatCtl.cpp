@@ -474,8 +474,13 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-  int bufSize;                // how much relevant data is stored in the buffer <buf>
-  BYTE buf[65536*4];          // temporary storage for processing (e.g. decompressing -- up to 4x if ADPCM2) data
+  // Allocate PCM/ADPCM intermediate storage.  A maximum of 64kB can be
+  //  trasferred at once (DMA limitation), which can then be further expanded
+  //  four times (to 256kB) if the transferred data was ADPCM2-compressed.
+  // Note: in Win2k, allocating buf on the stack causes an exception,
+  //  therefore make it static.
+  static int bufSize;         // how much relevant data is stored in the buffer <buf>
+  static BYTE buf[65536*4];   // temporary storage for processing (e.g. decompressing -- up to 4x if ADPCM2) data
 
   // Compute by how much this transfer should be boosted or diminished, based on
   //  playback performance (feedback indicating playback buffer overrun/underrun)
