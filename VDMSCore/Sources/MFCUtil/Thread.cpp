@@ -32,7 +32,13 @@ unsigned int WINAPI CThread::ThreadProc(
   try {
     status = pRunnable->Run(*pThis);
   } catch (...) {
-    MessageBox(Format(_T("Unhandled exception in thread %d (0x%08x)"), (int)(pThis->GetThreadID()), (int)(pThis->GetThreadHandle())), _T("Error"), MB_OK, MB_ICONERROR);
+    if (MessageBox(Format(_T("Unhandled exception in thread %d (0x%08x).\n\nDo you want to continue?"), (int)(pThis->GetThreadID()), (int)(pThis->GetThreadHandle())),
+                          _T("Error"),
+                   MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
+    {
+      throw;
+    }
+
     status = -1;
   }
 
