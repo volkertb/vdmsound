@@ -616,6 +616,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xe3:  /* 0E3h : DSP Copyright */
       flushOutputBuffer();  // flush any previous replies
 
+      // Enqueue the copyright string, including the terminating '\0'
       for (i = 0; i <= strlen(getCopyright()); i++)
         m_bufOut.push(getCopyright()[i]);
 
@@ -633,7 +634,11 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xf0:  /* 0F0h : Sine Generator */
       // TODO: implement
       m_hwemu->logError("Attempted to use partially implemented DSP command 0xf0 (Sine generator)");
-      m_isSpeakerEna = true;
+      setTimeConstant(0xc0);
+
+      if (m_hwemu->getDSPVersion() < 0x0400)
+        m_isSpeakerEna = true;
+
       return true;
 
     case 0xf1:  /* 0F1h : DSP Auxiliary Status (Obsolete) */

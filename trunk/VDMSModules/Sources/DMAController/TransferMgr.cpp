@@ -163,18 +163,21 @@ STDMETHODIMP CTransferMgr::RemoveDMAHandler(BYTE channel, IDMAHandler * handler)
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  AbortTransfer(channel, true);
+  StopTransfer(channel, true);
   m_channels[channel].handler = NULL;
 
   return S_OK;
 }
 
-STDMETHODIMP CTransferMgr::InitiateTransfer(BYTE channel, LONG synchronous) {
+STDMETHODIMP CTransferMgr::StartTransfer(BYTE channel, LONG synchronous) {
   if (channel >= NUM_DMA_CHANNELS)
 		return E_INVALIDARG;
 
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
+
+  // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
+  CSingleLock lock(&m_mutex, TRUE);
 
   if (m_DMAThread.PostMessage(UM_DMA_START, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -187,12 +190,15 @@ STDMETHODIMP CTransferMgr::InitiateTransfer(BYTE channel, LONG synchronous) {
   return S_OK;
 }
 
-STDMETHODIMP CTransferMgr::AbortTransfer(BYTE channel, LONG synchronous) {
+STDMETHODIMP CTransferMgr::StopTransfer(BYTE channel, LONG synchronous) {
   if (channel >= NUM_DMA_CHANNELS)
 		return E_INVALIDARG;
 
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
+
+  // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
+  CSingleLock lock(&m_mutex, TRUE);
 
   if (m_DMAThread.PostMessage(UM_DMA_STOP, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -227,11 +233,11 @@ unsigned int CTransferMgr::Run(CThread& thread) {
   bool needsAck = false;  // indicates whether someone initiated/aborted a transaction and is waiting for an acknowledgement
 
   do {
-    bool isIdle = true;   // indicates whether any channel(s) need servicing
-    bool isSlow = false;  // indicates that the activity frequency should be increased
+    bool isIdle = true;   // indicates that no DMA channel(s) need servicing
+    bool isSlow = false;  // indicates that the DMA activity frequency should be increased
 
     // For every channel see if there is any registered handler,
-    //  and if so then attempt to service it
+    //  and if so then attempt to service that channel
     for (int DMAChannel = 0; DMAChannel < NUM_DMA_CHANNELS; DMAChannel++) {
       try {
         if (m_channels[DMAChannel].handler == NULL)
@@ -246,8 +252,8 @@ unsigned int CTransferMgr::Run(CThread& thread) {
         int DREQMask  = 0x10 << (DMAChannel & 0x03);
 
         // Attempt to service channel
-        if (m_channels[DMAChannel].isActive) {      // is this channel awaiting servicing?
-          isIdle = false; // at least one channel (this one) needs servicing
+        if (m_channels[DMAChannel].isActive) {      // is this channel expecting servicing?
+          isIdle = false; // we're not idle: at least one channel (this one) needs servicing
 
 #         if _DEBUG
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Polling (active) DMA channel %d: page/offset = %04x/%04x, count = %04x (%d) ; status = %02x, mode = %02x, mask = %02x (%s)"), DMAChannel, DMAInfo.page & 0xffff, DMAInfo.addr & 0xffff, DMAInfo.count & 0xffff, DMAInfo.count & 0xffff, DMAInfo.status & 0xff, DMAInfo.mode & 0xff, DMAInfo.mask & 0xff, (DMAInfo.mask & DMAChMask) != 0 ? _T("masked") : _T("not masked")));
