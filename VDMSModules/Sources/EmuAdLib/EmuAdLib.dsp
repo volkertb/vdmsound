@@ -351,23 +351,7 @@ SOURCE=.\EmuAdLib.idl
 # Begin Source File
 
 SOURCE=.\fmopl.c
-
-!IF  "$(CFG)" == "EmuAdLib - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Debug"
-
-!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Release MinSize"
-
-!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Release MinDependency"
-
-!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Release MinSize"
-
 # PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Release MinDependency"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
