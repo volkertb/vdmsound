@@ -114,6 +114,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    IDS_MBT_ERROR           "Error"
     IDS_MBT_COMINIT         "Initialization - COM Error"
     IDS_MBT_IOERROR         "I/O Error"
     IDS_MBT_PARSINGERROR    "Parsing Error"

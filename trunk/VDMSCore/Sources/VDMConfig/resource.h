@@ -5,16 +5,17 @@
 #define IDS_PROJNAME                    100
 #define IDR_CFGQUERY                    102
 
-#define IDS_MBT_COMINIT                 200
-#define IDS_MBT_IOERROR                 201
-#define IDS_MBT_PARSINGERROR            202
-#define IDS_MBT_VALIDATIONERROR         203
-#define IDS_MBT_VALIDATIONWARNING       204
-#define IDS_MBT_DEPENDENCYERROR         205
-#define IDS_MBT_INST_COMERR             206
-#define IDS_MBT_CONFIG_COMERR           207
-#define IDS_MBT_RELEASE_COMERR          208
-#define IDS_MBT_EXCEPTION               209
+#define IDS_MBT_ERROR                   200
+#define IDS_MBT_COMINIT                 210
+#define IDS_MBT_IOERROR                 211
+#define IDS_MBT_PARSINGERROR            212
+#define IDS_MBT_VALIDATIONERROR         213
+#define IDS_MBT_VALIDATIONWARNING       214
+#define IDS_MBT_DEPENDENCYERROR         215
+#define IDS_MBT_INST_COMERR             216
+#define IDS_MBT_CONFIG_COMERR           217
+#define IDS_MBT_RELEASE_COMERR          218
+#define IDS_MBT_EXCEPTION               219
 
 #define IDS_FCE_HRESULT                 250
 #define IDS_FCE_SOURCE                  251
