@@ -1,0 +1,37 @@
+import "oaidl.idl";
+
+[
+	object,
+	uuid(A4D35830-06A0-11d5-9C73-00A024112F81),
+	helpstring(""),
+	pointer_default(unique)
+]
+interface IWaveDataConsumer : IUnknown
+{
+	[ helpstring("Sets the waveform format") ]
+	HRESULT SetFormat(
+		[in] WORD channels,                 // number of channels in the waveform-audio data. Monaural data uses one channel and stereo data uses two channels.
+		[in] DWORD samplesPerSec,           // sample rate, in samples per second (hertz), that each channel should be played or recorded
+		[in] WORD bitsPerSample );          // bits per sample
+
+	[ helpstring("Plays a packet of wave data") ]
+	HRESULT PlayData(
+		[in, size_is(length)] BYTE data[],  // wave data
+		[in] LONG length );                 // number of bytes in the wave data
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	uuid(AC7EEC20-06A0-11d5-9C73-00A024112F81),
+	version(1.0),
+	helpstring("Wave 1.0 Definition Type Library")
+]
+library IWAVELib
+{
+	interface IWaveDataConsumer;
+};

@@ -1,0 +1,46 @@
+import "oaidl.idl";
+
+import "IDMAHandlers.idl";
+
+[
+	object,
+	uuid(7573F1D0-05C6-11d5-9C72-00A024112F81),
+	helpstring(""),
+	pointer_default(unique)
+]
+interface IDMAController : IUnknown
+{
+	[ helpstring("Adds a handler for a DMA channel") ]
+	HRESULT AddDMAHandler(
+		[in] BYTE channel,                  // DMA channel
+		[in] IDMAHandler * handler );       // The handler
+
+	[ helpstring("Removes a handler from a DMA channel") ]
+	HRESULT RemoveDMAHandler(
+		[in] BYTE channel,                  // DMA channel
+		[in] IDMAHandler * handler );       // The handler
+
+	[ helpstring("Starts a DMA transfer on a channel") ]
+	HRESULT InitiateTransfer(
+		[in] BYTE channel );                // DMA channel to start transfer on
+
+	[ helpstring("Aborts an existing DMA transfer") ]
+	HRESULT AbortTransfer(
+		[in] BYTE channel );                // DMA channel to abort transfer on
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	uuid(82DD8820-05C6-11d5-9C72-00A024112F81),
+	version(1.0),
+	helpstring("DMAC 1.0 Definition Type Library")
+]
+library IDMACLib
+{
+	interface IDMAController;
+};
