@@ -36,7 +36,7 @@ void CMPU401CtlFSM::putCommand(
     case CMD_UART_MODE:
       m_hwemu->logInformation("MPU-401 Switched to UART mode");
       m_mode = M_UART;              // switched to UART mode
-      m_inBuf.putByte(0xfe);        // acknowledge command
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
       return;
 
     // REQUEST to reset (and switch to INTELLIGENT mode)
@@ -44,15 +44,31 @@ void CMPU401CtlFSM::putCommand(
       m_hwemu->logInformation("MPU-401 reset");
       m_mode = M_INTELLIGENT;       // switched to intelligent mode
       reset();                      // flush buffers
-      m_inBuf.putByte(0xfe);        // acknowledge command
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
       return;
+
+#if 0 /* doesn't fix Legend games, and wouldn't want to break other games (yet) */
+
+    case CMD_REQUEST_VERSION:
+      m_hwemu->logInformation("MPU-401 request MIDI version");
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
+      m_inBuf.putByte(0x10);        // version (bits 7-4 = major, bits 3-0 = minor)
+      return;
+
+    case CMD_REQUEST_REVISION:
+      m_hwemu->logInformation("MPU-401 request revision");
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
+      m_inBuf.putByte(0x01);        // revision number
+      return;
+
+#endif
 
     // Illegal or unsupported command
     default:
       std::ostringstream oss;
       oss << std::setbase(16) << "Illegal or unsupported MPU-401 command (0x" << (command & 0xff) << ", " << (m_mode == M_UART ? "UART" : m_mode == M_INTELLIGENT ? "intelligent" : "<unknown>") << " mode), faking acknowledge";
       m_hwemu->logError(oss.str().c_str());
-      m_inBuf.putByte(0xfe);        // acknowledge command
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
       return;
   }
 }

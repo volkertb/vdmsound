@@ -43,4 +43,4 @@ class CMPU401CtlFSM
     CMIDIOutputBuffer m_outBuf;
 };
 
-#endif __MPU401CTLFSM_H_
+#endif //__MPU401CTLFSM_H_
