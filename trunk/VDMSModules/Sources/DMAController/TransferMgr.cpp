@@ -175,9 +175,13 @@ STDMETHODIMP CTransferMgr::StartTransfer(BYTE channel, LONG synchronous) {
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  // Lock to avoid race condition in thecase of two or more concurrent *sycnhronous*
-  //   requests by ensuring that { thread.PostMessage(); event.Lock(); } is an atomic
-  CSingleLock lock(&m_mutex, synchronous);  // locking for a non-synchronous call can lead to deadlock
+  // Use a lock to avoid a race condition in the case of two or more concurrent sycnhronous
+  //  start/stop requests by ensuring that { thread.PostMessage(); event.Lock(); } is atomic;
+  // If the request is not synchronous, we do not wait on m_event, therefore no atomicity needs
+  //  to be enforced; moreover, locking m_mutex for asynchronous requests can lead to deadlock
+  //  if asynchronous requests are posted from within the DMA thread while a synchronous request
+  //  is being processed.  Therefore, we only lock m_mutex for synchronous requests!
+  CSingleLock lock(&m_mutex, synchronous != FALSE);
 
   if (m_DMAThread.PostMessage(UM_DMA_START, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -197,9 +201,13 @@ STDMETHODIMP CTransferMgr::StopTransfer(BYTE channel, LONG synchronous) {
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  // Lock to avoid race condition in thecase of two or more concurrent *sycnhronous*
-  //   requests by ensuring that { thread.PostMessage(); event.Lock(); } is an atomic
-  CSingleLock lock(&m_mutex, synchronous);  // locking for a non-synchronous call can lead to deadlock
+  // Use a lock to avoid a race condition in the case of two or more concurrent sycnhronous
+  //  start/stop requests by ensuring that { thread.PostMessage(); event.Lock(); } is atomic;
+  // If the request is not synchronous, we do not wait on m_event, therefore no atomicity needs
+  //  to be enforced; moreover, locking m_mutex for asynchronous requests can lead to deadlock
+  //  if asynchronous requests are posted from within the DMA thread while a synchronous request
+  //  is being processed.  Therefore, we only lock m_mutex for synchronous requests!
+  CSingleLock lock(&m_mutex, synchronous != FALSE);
 
   if (m_DMAThread.PostMessage(UM_DMA_STOP, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -228,10 +236,10 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
-  bool notifyLo = false,
-       notifyHi = false;  // indicates whether a one-time notification is needed regarding some aspect of DMA transfer management
+  bool notifyLo = false,  // indicates whether a one-time notification is needed when the maximum DMA servicing frequency is reached
+       notifyHi = false;  // indicates whether a one-time notification is needed when the minimum DMA servicing frequency is reached
 
-  bool needsAck = false;  // indicates whether someone initiated/aborted a transaction and is waiting for an acknowledgement
+  bool needsAck = false;  // indicates whether someone synchronously initiated/aborted a transaction and is waiting for an acknowledgement
 
   do {
     bool isIdle = true;   // indicates that no DMA channel(s) need servicing
@@ -262,26 +270,49 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
           DMAInfo.status |= DREQMask;               // set DREQ
 
-          if ((DMAInfo.mask & DMAChMask) == 0) {    // is channel enabled?
-            // The DMA base address and base count are loaded by the CPU in parallel with the
-            //  current address and current count registers; unfortunately there is no way of
-            //  being notified when such a load (OUT operation to DMA address and count registers)
-            //  occurs, so we must resort to a trick to detect when the DMA address and count
-            //  registers are reprogrammed by checking for inconsistency between the base and
-            //  current regiser sets
-            if (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount != DMAInfo.addr + DMAInfo.count) {
-              m_channels[DMAChannel].baseAddr  = DMAInfo.addr;
-              m_channels[DMAChannel].baseCount = DMAInfo.count;
-            }
+          // The DMA base address and base count are loaded by the CPU in parallel with the
+          //  current address and current count registers; unfortunately there is no way of
+          //  being notified when such a load (OUT operation to DMA address and count registers)
+          //  occurs, so we must resort to a trick to detect when the DMA address and count
+          //  registers are reprogrammed by checking for inconsistency between the base and
+          //  current regiser sets (assumes DMA direction is never changed during transfer!)
+          if (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount != DMAInfo.addr + DMAInfo.count) {
+            m_channels[DMAChannel].baseAddr  = DMAInfo.addr;
+            m_channels[DMAChannel].baseCount = DMAInfo.count;
+          }
 
+          if ((DMAInfo.mask & DMAChMask) == 0) {    // is channel enabled (not masked) ?
             bool isAutoInit = (DMAInfo.mode & 0x10) != 0;
             bool isDescending = ((DMAInfo.mode >> 5) & 0x01) != 0;
+
+            // Single-cycle transfers end as soon as terminal count (count = 0xffff) is reached;
+            //  the DMA channel must then be reprogrammed in order for a new transfer to start.
+            //  Unfortunately there is no way of being notified when the DMA is reprogrammed.
+            //  Ideally, the device using the channel will stop requesting data (stop the transfer)
+            //  when notified that terminal count was reached.  If this is not the case, we must
+            //  use a trick and not process any bytes if the count is 0xffff (terminal), even
+            //  though the device might still be asking for data.  However, there is a serious
+            //  limitation: it is possible that the DMA channel be initially programmed to transfer
+            //  65536 bytes (basecount == 0xffff), in which case our terminal-count trick will not
+            //  be able to make the difference between a reprogrammed (i.e. ready-to-be-serviced)
+            //  single-cycle transfer, and one that just finished (terminal count, i.e. should not
+            //  be serviced until reprogrammed!)  More specificaly, if the channel is programmed
+            //  to transfer 65536 bytes (count = basecount = 0xffff), and if those bytes are
+            //  transferred, terminal count will eventually be reached (count wraps back to 0xffff),
+            //  and the data transfer will be halted awaiting reprogramming.  Now, if the device
+            //  chooses to reprogram DMA with the same values (same address, same count = 0xffff),
+            //  we will never know it since we will not see any change in either the base address or
+            //  the count, or anything else for that matter, and we will keep the transfer halted!
+            if ((!isAutoInit) && (DMAInfo.count == 0xffff)) {
+              _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (m_channels[DMAChannel].baseAddr - m_channels[DMAChannel].baseCount - 1) :
+                                                             (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount + 1)));
+              continue;
+            }
+
             ULONG physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 16) | ((DMAInfo.addr & 0x7fff) << 1));
             ULONG numData = 0;
             ULONG maxData = DMAInfo.count + 1ul;
 
-            /* TODO: if single-cycle transfer but T.C. was reached then break, to avoid calling the
-               xfer callback with maxData set to 65536 *and* continually setting the T.C. status flag */
             if (m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[(DMAInfo.mode >> 2) & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending, &numData)) {
               isSlow = true;    // remember to boost the DMA activity frequency, this handler is not too happy with it as it is now
             }
@@ -298,15 +329,12 @@ unsigned int CTransferMgr::Run(CThread& thread) {
                   DMAInfo.addr  = m_channels[DMAChannel].baseAddr;
                   DMAInfo.count = m_channels[DMAChannel].baseCount;
                 } else {
+                  _ASSERTE((WORD)(DMAInfo.addr + numData - 1) == (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount));
+
                   DMAInfo.status &= (~DREQMask);    // transfer done => clear DREQ
-                  DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
+                  DMAInfo.addr  = (WORD)(isDescending ? (m_channels[DMAChannel].baseAddr - m_channels[DMAChannel].baseCount - 1) :
+                                                        (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount + 1));
                   DMAInfo.count = 0xffff;
-
-                  _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (m_channels[DMAChannel].baseAddr - m_channels[DMAChannel].baseCount - 1) :
-                                                                 (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount + 1)));
-
-                  /* TODO: get rid of this; do it by calling stopTransfer from notification function */
-                  m_channels[DMAChannel].isActive = false;  // transfer done, disable (mask) channel
                 }
 
                 m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_ALL, &DMAInfo);
@@ -344,14 +372,14 @@ unsigned int CTransferMgr::Run(CThread& thread) {
     /* TODO: optimize use of SetDMAState (do not call it if the values did not change, e.g. must assert DREQ but DREQ is already asserted, etc.) */
 
     // If someone is waiting for an acknowledgement following a start
-    //   or stop operation (by now DREQ is set properly), do so.
+    //  or stop operation (by now DREQ is set properly), do so.
     if (needsAck) {
       needsAck = false;
       m_event.SetEvent();
     }
 
     // If a handler needs more frequent DMA servicing, boost the DMA activity frequency,
-    //   otherwise slowly bring it down to the minimum possible value for minimal overhead
+    //  otherwise slowly bring it down to the minimum possible value for minimal overhead
     if (isSlow) {
       double lastPeriod = m_period;
       m_period = max(m_minPeriod, m_period * (1.0 / DMA_BOOST));
@@ -381,7 +409,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
     }
 
     // Check if any start/stop requests are pending; if no channels are
-    //   active, block until a request is received, otherwise continue
+    //  active, block until a request is received, otherwise continue
     if (thread.GetMessage(&message, isIdle)) {      // blocks if isIdle==true
       switch (message.message) {
         case WM_QUIT:
