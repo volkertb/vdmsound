@@ -17,6 +17,10 @@
 #pragma comment ( lib , "VDMUtil.lib" )
 
 /////////////////////////////////////////////////////////////////////////////
+
+int _strmcmpi(const char* templ, ... );
+
+/////////////////////////////////////////////////////////////////////////////
 // CActivityLights
 
 /////////////////////////////////////////////////////////////////////////////
@@ -56,8 +60,22 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
   IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
 
   try {
-    // Obtain MIDI-Out settings (if available)
-    ledID = CFG_Get(Config, INI_STR_LEDID, LED_SCROLLLOCK, 10, false);
+    // Obtain indicator-led settings (if available)
+    _bstr_t ledName = CFG_Get(Config, INI_STR_LEDID, "SCROLL", false);
+    switch (_strmcmpi((LPCSTR)ledName, "NUM", "CAPS", "SCROLL", "none", NULL)) {
+      case 0:
+        ledID = LED_NUMLOCK;
+        break;
+      case 1:
+        ledID = LED_CAPSLOCK;
+        break;
+      case 2:
+        ledID = LED_SCROLLLOCK;
+        break;
+      default:
+        ledID = LED_NONE;
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An invalid value ('%s') was provided for the led identifier ('%s').  Valid values are: 'NUM', 'CAPS', 'SCROLL' and 'none'.\nUsing 'none' by default."), (LPCTSTR)ledName, (LPCTSTR)CString(INI_STR_LEDID)));
+    }
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, true);   // do not complain if no such module available
@@ -73,7 +91,7 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
 
 STDMETHODIMP CActivityLights::Destroy() {
   // Reset the lights
-  if (isIndicatorOn) {
+  if ((ledID != -1) && isIndicatorOn) {
     isIndicatorOn = false;
     SetLedStatus(ledID, !GetLedStatus(ledID));
   }
@@ -95,7 +113,7 @@ STDMETHODIMP CActivityLights::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CActivityLights::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  if (isIndicatorOn) {
+  if ((ledID != -1) && isIndicatorOn) {
     isIndicatorOn = false;
     SetLedStatus(ledID, !GetLedStatus(ledID));
   }
@@ -110,8 +128,10 @@ STDMETHODIMP CActivityLights::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG le
 	if (data == NULL)
 		return E_POINTER;
 
-  isIndicatorOn = !isIndicatorOn;
-  SetLedStatus(ledID, !GetLedStatus(ledID));
+  if (ledID != -1) {
+    isIndicatorOn = !isIndicatorOn;
+    SetLedStatus(ledID, !GetLedStatus(ledID));
+  }
 
   if (m_midiOut != NULL)
     return m_midiOut->HandleSysEx(usDelta, data, length);
@@ -164,4 +184,29 @@ void CActivityLights::SetLedStatus(
                   KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,
                   0);
   }
+}
+
+int _strmcmpi(
+    const char* templ,              // the string to compare
+    ... )                           // list of strings to compare agains; NULL means end of list
+{
+  va_list args;
+  va_start(args, templ);            // Initialize variable arguments
+
+  const char* against;
+  int count = 0, match = -1;
+
+  // Go through supplied arguments until a match is found or list ends
+  while ((against = va_arg(args, const char*)) != NULL) {
+    if (_strcmpi(templ, against) == 0) {
+      match = count;
+      break;
+    } else {
+      count++;
+    }
+  }
+
+  va_end(args);                     // Reset variable arguments
+
+  return match;
 }

@@ -7,6 +7,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define LED_NONE        -1
 #define LED_NUMLOCK     VK_NUMLOCK
 #define LED_CAPSLOCK    VK_CAPITAL
 #define LED_SCROLLLOCK  VK_SCROLL
