@@ -40,6 +40,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Midi)
 	enum { IDD = IDD_ADVPROPPAGE_MIDI };
+	CEdit	m_edtMidimapbrowse;
 	CComboBox	m_cmbSysexindicator;
 	CComboBox	m_cmbMpuport;
 	CComboBox	m_cmbMpuoutdev;
@@ -67,6 +68,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnChkUsempu();
 	afx_msg void OnChkMpuoutdev();
+	afx_msg void OnButMidimapbrowse();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

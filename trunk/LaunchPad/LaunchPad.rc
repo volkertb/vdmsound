@@ -306,6 +306,7 @@ BEGIN
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&MIDI Mapping...",IDC_BUT_MIDIMAPBROWSE,147,36,62,14,
                     BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
+    EDITTEXT        IDC_EDT_MIDIMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT WS_TABSTOP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ | SS_SUNKEN,14,60,
                     196,1
     CTEXT           "&Output",IDC_STATIC,19,54,33,12,SS_CENTERIMAGE
@@ -447,6 +448,7 @@ BEGIN
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
                     BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
+    EDITTEXT        IDC_EDT_JOYMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT WS_TABSTOP
     RTEXT           "&Poll period:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     LTEXT           "(ms)",IDC_STATIC,90,37,20,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
@@ -784,11 +786,13 @@ BEGIN
     IDS_ADVPROPERTIES       "Advanced VDMSound Properties"
     IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
     IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
+    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
+    IDS_TXT_BROWSEFOLDER_TIPS "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
 END
 
 STRINGTABLE DISCARDABLE 

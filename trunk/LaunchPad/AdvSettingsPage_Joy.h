@@ -39,6 +39,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Joy)
 	enum { IDD = IDD_ADVPROPPAGE_JOY };
+	CEdit	m_edtJoymapbrowse;
 	CSpinButtonCtrl	m_spnJoyscalemin;
 	CSpinButtonCtrl	m_spnJoyscalemax;
 	CComboBox	m_cmbJoyscalemin;
@@ -66,6 +67,7 @@ protected:
 	//{{AFX_MSG(CAdvSettingsPage_Joy)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnChkUsejoy();
+	afx_msg void OnButJoymapbrowse();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -31,6 +31,7 @@ void CAdvSettingsPage_Midi::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Midi)
+	DDX_Control(pDX, IDC_EDT_MIDIMAPBROWSE, m_edtMidimapbrowse);
 	DDX_Control(pDX, IDC_CMB_SYSEXINDICATOR, m_cmbSysexindicator);
 	DDX_Control(pDX, IDC_CMB_MPUPORT, m_cmbMpuport);
 	DDX_Control(pDX, IDC_CMB_MPUOUTDEV, m_cmbMpuoutdev);
@@ -46,6 +47,7 @@ BEGIN_MESSAGE_MAP(CAdvSettingsPage_Midi, CPropertyPage)
 	//{{AFX_MSG_MAP(CAdvSettingsPage_Midi)
 	ON_BN_CLICKED(IDC_CHK_USEMPU, OnChkUsempu)
 	ON_BN_CLICKED(IDC_CHK_MPUOUTDEV, OnChkMpuoutdev)
+	ON_BN_CLICKED(IDC_BUT_MIDIMAPBROWSE, OnButMidimapbrowse)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -60,17 +62,17 @@ VOID CAdvSettingsPage_Midi::SyncGUIData(BOOL bSave) {
   //  with the settings they represent
   //
 
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"),      m_chkUsempu,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"),      m_chkUsempu,        TRUE);
   SyncGUIData_Enabled(bSave, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 }
 
 VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("port"),         m_cmbMpuport,   _T("0x330"));
-  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("IRQ"),          m_cmbMpuirq,    _T("2"));
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useDevice"),    m_chkMpuoutdev, TRUE);
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("port"),         m_cmbMpuport,       _T("0x330"));
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("IRQ"),          m_cmbMpuirq,        _T("2"));
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useDevice"),    m_chkMpuoutdev,     TRUE);
   SyncGUIData_Enabled_Device(bSave, bEnabled && (m_chkMpuoutdev.GetCheck() != BST_UNCHECKED));
 
-  // TODO: read/write sysex
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("mapFile"),      m_edtMidimapbrowse, VLPUtil::GetVDMSFilePath(_T("identity.map")));
 
   if (!bEnabled) {
     m_cmbMpuport.EnableWindow(FALSE);
@@ -158,4 +160,32 @@ void CAdvSettingsPage_Midi::OnChkMpuoutdev()
 {
   SyncGUIData_Enabled_Device(TRUE); // save current combo-box selection
   SyncGUIData_Enabled_Device(FALSE, m_chkMpuoutdev.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Midi::OnButMidimapbrowse() 
+{
+  CWaitCursor wait;
+
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
+  CString fileName;
+  m_edtMidimapbrowse.GetWindowText(fileName);
+
+  COpenMAPFileDialog dlgFile(fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), this);
+
+  switch (dlgFile.DoModal()) {
+    case IDOK:
+      m_edtMidimapbrowse.SetWindowText(dlgFile.GetPathName());
+      break;
+
+    case IDCANCEL:
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  }
 }
