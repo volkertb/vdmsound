@@ -55,14 +55,24 @@
   ////////////////////////////////////////////////////////////////////////////
 
   //
-  // Retrieves the user id given a user name
+  // Retrieves the user id given a user name, or returns the logged-in user id
+  //  if $username is NULL
   //
-  function AuthGetUserId($username) {
+  // *************************************************************************
+  // ** The user ID should not be used outside the server since it is not   **
+  // ** validated by Auth functions and may be used for SQL code injection! **
+  // *************************************************************************
+  //
+  function AuthGetUserId($username = NULL) {
+    global $auth_userid;
     ErrSetLastError();
+
+    if (is_null($username))
+      return $auth_userid;
 
     if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
       ErrSetLastError(E_AUTH_INVALID_USER_NAME);
-      return -1;
+      return NULL;
     }
 
     // Lookup the user id
@@ -73,7 +83,7 @@
       return $userid;
     } else {
       ErrSetLastError(E_AUTH_UNKNOWN_USER_NAME);
-      return -1;
+      return NULL;
     }
   }
 
@@ -87,7 +97,7 @@
     if (is_null($userid))
       $userid = $auth_userid;
 
-    if (!($result = MysqlQuery('SELECT name,type,time_created,time_updated,time_lastlogin,fullname,email FROM Users WHERE id="' . $userid . '"')))
+    if (!($result = MysqlQuery('SELECT name,type,time_created,DATE_FORMAT(time_updated,"%Y-%m-%d %H:%i%s"),time_lastlogin,fullname,email FROM Users WHERE id="' . $userid . '"')))
       return false;
 
     if ($userinfo = mysql_fetch_assoc($result)) {
@@ -278,7 +288,7 @@
   //
   // Compute an activation hash
   //
-  function AuthGetActivationHash($username) {
+  function AuthGetVerificationHash($username) {
     if (($result = MysqlQuery('SELECT UCASE(MD5(CONCAT_WS(",",id,name,type,time_created,salt))) FROM Users WHERE name="' . $username . '"')) &&
         (list($hash) = mysql_fetch_row($result)))
     {
@@ -312,6 +322,46 @@
 
       // Set type to active regular user and put a new salt in (for 'forgotten password' hash)
       return MysqlQuery('UPDATE Users SET type="1",salt="' . $salt . '" WHERE id="' . $id . '" AND name="' . $name . '"');
+    } else {
+      ErrSetLastError(E_AUTH_INVALID_HASH);
+      return false;
+    }
+  }
+
+  //
+  // Reset a user password
+  //
+  function AuthResetUserPassword($username, $hash, $newpwd1, $newpwd2) {
+    ErrSetLastError();
+
+    if (!AuthIsValidUsername($username)) {   // Check against SQL code injection
+      ErrSetLastError(E_AUTH_INVALID_USER_NAME);
+      return false;
+    }
+
+    if (!AuthIsValidHash($hash)) {
+      ErrSetLastError(E_AUTH_INVALID_HASH);
+      return false;
+    }
+
+    if (strcmp($newpwd1, $newpwd2) != 0) {
+      ErrSetLastError(E_AUTH_PASSWORD_MISMATCH);
+      return false;
+    }
+
+    if (strlen($newpwd1) < 4) {
+      ErrSetLastError(E_AUTH_INVALID_PASSWORD);
+      return false;
+    }
+
+    if (($result = MysqlQuery('SELECT id,name,type,time_created,salt FROM Users WHERE name="' . $username . '" AND UCASE(MD5(CONCAT_WS(",",id,name,type,time_created,salt)))=UCASE("' . $hash . '")')) &&
+        (list($id,$name,$type,$time_created,$salt) = mysql_fetch_row($result)))
+    {
+      AuthSRand();
+      $salt = rand();
+
+      // Reset the password and put a new salt in (for 'forgotten password' hash)
+      return MysqlQuery('UPDATE Users SET password="' . md5($newpwd1) . '",salt="' . $salt . '" WHERE id="' . $id . '" AND name="' . $name . '"');
     } else {
       ErrSetLastError(E_AUTH_INVALID_HASH);
       return false;

@@ -9,7 +9,8 @@
   // Methods
   ////////////////////////////////////////////////////////////////////////////
 
-  function SessionStart() {
+  function SessionStart($cahce = 'private') {
+    session_cache_limiter($cache);
     return session_start();
   }
 
