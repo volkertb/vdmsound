@@ -52,15 +52,21 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
 	if (configuration == NULL)
 		return E_POINTER;
 
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Obtain the Query objects (for intialization purposes)
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
-
+  // Initialize configuration and VDM services
   try {
-    // Obtain indicator-led settings (if available)
+    // Obtain the Query objects (for intialization purposes)
+    Depends = configuration;    // Dependency query object
+    Config  = configuration;    // Configuration query object
+
+    /** Get settings *******************************************************/
+
+    // Try to obtain indicator-led settings, use defaults if none specified
     _bstr_t ledName = CFG_Get(Config, INI_STR_LEDID, "SCROLL", false);
     switch (_strmcmpi((LPCSTR)ledName, "NUM", "CAPS", "SCROLL", "none", NULL)) {
       case 0:
@@ -76,6 +82,8 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
         ledID = LED_NONE;
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An invalid value ('%s') was provided for the led identifier ('%s').  Valid values are: 'NUM', 'CAPS', 'SCROLL' and 'none'.\nUsing 'none' by default."), (LPCTSTR)ledName, (LPCTSTR)CString(INI_STR_LEDID)));
     }
+
+    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, true);   // do not complain if no such module available

@@ -92,22 +92,7 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     Depends   = configuration;  // Dependency query object
     Config    = configuration;  // Configuration query object
 
-    // Obtain VDM Services instance (if available)
-    IUnknownPtr VDMServices
-              = Depends->Get(INI_STR_VDMSERVICES);
-    m_BaseSrv = VDMServices;    // Base services (registers, interrupts, etc)
-    m_IOSrv   = VDMServices;    // I/O services (I/O port hooks)
-
-    if (m_BaseSrv == NULL)
-      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMBaseServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
-    if (m_IOSrv == NULL)
-      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
-
-    // Obtain a DMA transfer management instance
-    m_DMACtl  = Depends->Get(INI_STR_DMACTL);
-
-    if (m_DMACtl == NULL)
-      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_DMACTL), _T("IDMAController")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+    /** Get settings *******************************************************/
 
     // Try to obtain the SB version to emulate (affects small details on how the DSP behaves)
     int vMajor, vMinor;
@@ -128,6 +113,27 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     m_forcedSampleRate    = CFG_Get(Config, INI_STR_FORCERATE, -1, 10);
     m_forcedBitsPerSample = CFG_Get(Config, INI_STR_FORCENUMBITS, -1, 10);
     m_forcedNumChannels   = CFG_Get(Config, INI_STR_FORCECHANNELS, -1, 10);
+
+    /** Get VDM services ***************************************************/
+
+    // Obtain VDM Services instance
+    IUnknownPtr VDMServices
+              = Depends->Get(INI_STR_VDMSERVICES);
+    m_BaseSrv = VDMServices;    // Base services (registers, interrupts, etc)
+    m_IOSrv   = VDMServices;    // I/O services (I/O port hooks)
+
+    if (m_BaseSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMBaseServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+    if (m_IOSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+
+    /** Get modules ********************************************************/
+
+    // Obtain a DMA transfer management instance
+    m_DMACtl  = Depends->Get(INI_STR_DMACTL);
+
+    if (m_DMACtl == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_DMACTL), _T("IDMAController")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
     // Try to obtain an interface to a Wave-out module, use NULL if none available
     m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);

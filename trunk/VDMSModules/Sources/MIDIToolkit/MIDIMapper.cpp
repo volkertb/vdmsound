@@ -75,19 +75,27 @@ STDMETHODIMP CMIDIMapper::Init(IUnknown * configuration) {
 
   HRESULT hr;
 
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Obtain the Query objects (for intialization purposes)
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
-
+  // Initialize configuration
   try {
+    // Obtain the Query objects (for intialization purposes)
+    Depends    = configuration; // Dependency query object
+    Config     = configuration; // Configuration query object
+
+    /** Get settings *******************************************************/
+
     // Obtain the name of the file containing the mappings
     _bstr_t mapFileName = Config->Get(INI_STR_MAPFNAME);
 
     if (FAILED(hr = loadMapping(mapFileName)))
       return hr;
+
+    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, false);   // complain if no such module available

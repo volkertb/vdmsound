@@ -62,19 +62,27 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return E_POINTER;
 
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Obtain the Query objects (for intialization purposes)
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
-
+  // Initialize configuration
   try {
-    // Obtain Wave-Out settings (if available)
+    // Obtain the Query objects (for intialization purposes)
+    Depends    = configuration; // Dependency query object
+    Config     = configuration; // Configuration query object
+
+    /** Get settings *******************************************************/
+
+    // Try to obtain Wave-Out settings, use defaults if none specified
     m_deviceID = CFG_Get(Config, INI_STR_DEVICEID, -1, 10, false);
 
-    // Obtain the buffer operating range (milliseconds)
+    // Try to obtain the buffer operating range (milliseconds), use default if none specified
     m_bufOpRange = CFG_Get(Config, INI_STR_BUFOPRANGE, 125, 10, false);
+
+    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a Wave-out module, use NULL if none available
     m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, true);   // do not complain if no such module available

@@ -58,16 +58,24 @@ STDMETHODIMP CMIDIOut::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return E_POINTER;
 
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Obtain the Query objects (for intialization purposes)
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
-
+  // Initialize configuration and VDM services
   try {
-    // Obtain MIDI-Out settings (if available)
+    // Obtain the Query objects (for intialization purposes)
+    Depends = configuration;    // Dependency query object
+    Config  = configuration;    // Configuration query object
+
+    /** Get settings *******************************************************/
+
+    // Try to obtain the MIDI-Out settings, use defaults if none specified
     m_deviceID = CFG_Get(Config, INI_STR_DEVICEID, -1, 10, false);
+
+    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut  = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, true);   // do not complain if no such module available

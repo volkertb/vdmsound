@@ -44,16 +44,22 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return E_POINTER;
 
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Obtain the Query objects (for intialization purposes)
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
-
+  // Initialize configuration
   try {
+    // Obtain the Query objects (for intialization purposes)
+    Depends = configuration;    // Dependency query object
+    Config  = configuration;    // Configuration query object
+
+    /** Get modules ********************************************************/
+
     // Try to obtain an interface to a Wave-out module, use NULL if none available
-    m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, true);   // do not complain if no such module available
+    m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, true);   // silent: do not complain if no such module available
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();                // Propagate the error

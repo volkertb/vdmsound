@@ -74,7 +74,7 @@ STDMETHODIMP CJoystickCtl::Init(IUnknown * configuration) {
 		Depends    = configuration; // Dependency query object
 		Config     = configuration; // Configuration query object
 
-		// Obtain VDM Services instance (if available)
+		// Obtain VDM Services instance
 		IUnknownPtr VDMServices
 		           = Depends->Get(INI_STR_VDMSERVICES);
 		m_BaseSrv  = VDMServices;   // Base services (registers, interrupts, etc)
@@ -110,7 +110,7 @@ STDMETHODIMP CJoystickCtl::Init(IUnknown * configuration) {
 		return ce.Error();          // Propagate the error
 	}
 
-	RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Emu Joysticks initialized")));
+	RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("JoystickCtl initialized")));
 
 	return S_OK;
 }
@@ -121,7 +121,7 @@ STDMETHODIMP CJoystickCtl::Destroy() {
 	m_BaseSrv = NULL;
 
 	// Release the runtime environment
-	RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MPU401Ctl released")));
+	RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("JoystickCtl  released")));
 	RTE_Set(m_env, NULL);
 
 	return S_OK;
@@ -142,10 +142,10 @@ STDMETHODIMP CJoystickCtl::HandleINB(USHORT inPort, BYTE * data) {
 
 	// return button state / axis bits
 	/* format of the byte to be returned:
-						  +-------------------------------+
-						  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
-						  +-------------------------------+
-							|   |   |   |   |   |   |   |
+	                      +-------------------------------+
+	                      | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	                      +-------------------------------+
+	                        |   |   |   |   |   |   |   |
 	Joystick B, Button 2 ---+   |   |   |   |   |   |   +--- Joystick A, X Axis
 	Joystick B, Button 1 -------+   |   |   |   |   +------- Joystick A, Y Axis
 	Joystick A, Button 2 -----------+   |   |   +----------- Joystick B, X Axis
