@@ -292,6 +292,10 @@ SOURCE=.\MIDIDevice.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\MIDIIn.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\MIDIOut.cpp
 # End Source File
 # Begin Source File
@@ -303,6 +307,10 @@ SOURCE=.\StdAfx.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\MIDIIn.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\MIDIOut.h
@@ -318,6 +326,10 @@ SOURCE=.\StdAfx.h
 # Begin Source File
 
 SOURCE=.\MIDIDevice.rc
+# End Source File
+# Begin Source File
+
+SOURCE=.\MIDIIn.rgs
 # End Source File
 # Begin Source File
 

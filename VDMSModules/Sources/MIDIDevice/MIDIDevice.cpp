@@ -12,12 +12,14 @@
 
 #include "MIDIDevice_i.c"
 #include "MIDIOut.h"
+#include "MIDIIn.h"
 
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_MIDIOut, CMIDIOut)
+OBJECT_ENTRY(CLSID_MIDIIn, CMIDIIn)
 END_OBJECT_MAP()
 
 class CMIDIDeviceApp : public CWinApp
