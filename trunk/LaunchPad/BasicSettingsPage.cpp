@@ -146,14 +146,17 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
     m_settings.GetValue(_T("program"), _T("workdir"), progWDir, &isIndWDir);
 
     if (isIndExec || isIndParams) {
+      CString tmpStr;
+      tmpStr.LoadString(IDS_TXT_MULTIPLEVALUES);
+
       m_edtDoscmd.EnableWindow(FALSE);
-      m_edtDoscmd.SetWindowText(_T("(multiple values)"));
+      m_edtDoscmd.SetWindowText(tmpStr);
     } else {
-      CString value = GetRelativePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
-      value.TrimLeft(); value.TrimRight();
+      CString tmpStr = GetRelativePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
+      tmpStr.TrimLeft(); tmpStr.TrimRight();
 
       m_edtDoscmd.EnableWindow(TRUE);
-      m_edtDoscmd.SetWindowText(value);
+      m_edtDoscmd.SetWindowText(tmpStr);
     }
   }
 }
@@ -231,7 +234,7 @@ BOOL CBasicSettingsPage::OnCommand(WPARAM wParam, LPARAM lParam)
       (LOWORD(wParam) != IDC_BUT_CHANGE) &&
       (LOWORD(wParam) != IDC_BUT_ADVANCED))
   {
-    SetModified();
+    SetModified();              // enable the "Apply" button to reflect the fact that changes were made
   }
 
   return CPropertyPage::OnCommand(wParam, lParam);
@@ -239,7 +242,8 @@ BOOL CBasicSettingsPage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CBasicSettingsPage::OnButChange() 
 {
-	CBasicBrowseDlg dlgBrowse;
+  CString tmpStr1, tmpStr2;
+  CBasicBrowseDlg dlgBrowse;
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
@@ -257,13 +261,17 @@ void CBasicSettingsPage::OnButChange()
 
       m_settings.SetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
 
-      SyncGUIData(FALSE);   // update the GUI to reflect any changed settings
+      SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
+
+      SetModified();            // enable the "Apply" button to reflect the fact that changes were made
       break;
 
     case IDCANCEL:
       break;
 
     default:
-      MessageBox(_T("An unknown error has occured"), _T("Error"), MB_OK | MB_ICONERROR);
+      tmpStr1.FormatMessage(IDS_ERR_UNKNOWN, GetLastError());
+      GetWindowText(tmpStr2);
+      MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONERROR);
   }
 }

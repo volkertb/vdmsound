@@ -18,8 +18,13 @@ class CChangeIconDlg : public CDialog
 public:
 	CChangeIconDlg(CWnd* pParent = NULL);   // standard constructor
 
+// Methods
 protected:
   void UpdateIconList(void);
+
+// Member variables
+protected:
+  CString m_lastEdtFile;
 
 public:
 // Dialog Data
@@ -27,6 +32,7 @@ public:
 	enum { IDD = IDD_CHANGEICON };
 	CIconListBox m_lstIcons;
 	CString	m_edtFile_val;
+	int		m_lstIcons_val;
 	//}}AFX_DATA
 
 
@@ -44,6 +50,8 @@ protected:
 	//{{AFX_MSG(CChangeIconDlg)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnKillfocusEdtFile();
+	afx_msg void OnDblclkLstIcons();
+	afx_msg void OnButFilebrowse();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

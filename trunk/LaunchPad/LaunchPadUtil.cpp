@@ -106,9 +106,14 @@ COpenDOSProgramDialog::COpenDOSProgramDialog(
   CWnd* pParentWnd)
 : CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, NULL, pParentWnd)
 {
-  m_ofn.lpstrFilter  = _T("Programs (*.exe,*.com)\0*.exe;*.com\0Batch files (*.bat)\0*.bat\0All Files (*.*)\0*.*\0\0");
-  m_ofn.nFilterIndex = 1;
+  m_strFilter.LoadString(IDS_TXT_FILTER1);
+  m_strFilter += _T('|'); // add trailing delimiter
 
+  // Change '|' delimiters to '\0'; do not call ReleaseBuffer() since the string contains '\0' characters
+  for (LPTSTR pch = m_strFilter.GetBuffer(0); (pch = _tcschr(pch, '|')) != NULL; *(pch++) = '\0');
+
+  m_ofn.lpstrFilter  = m_strFilter;
+  m_ofn.nFilterIndex = 1;
 }
 
 
@@ -384,11 +389,11 @@ void LaunchPadSettingsHelper::ParseIconLocation(
   int& iconIndex)               // icon index
 {
   iconPath = iconLocation;
-  LPTSTR iconPathBuf = iconPath.LockBuffer();
+  LPTSTR iconPathBuf = iconPath.GetBuffer(0);
 
   iconIndex = PathParseIconLocation(iconPathBuf);
 
-  iconPath.UnlockBuffer();
+  iconPath.ReleaseBuffer();
 }
 
 //
@@ -416,9 +421,12 @@ CString LaunchPadSettingsHelper::GetRelativePath(
 //
 CString LaunchPadSettingsHelper::GetDirectory(LPCTSTR filePath) {
   CString retVal(filePath);
-  LPTSTR retValBuf = retVal.LockBuffer();
+
+  LPTSTR retValBuf = retVal.GetBuffer(0);
+
   PathRemoveFileSpec(retValBuf);
-  retVal.UnlockBuffer();
+
+  retVal.ReleaseBuffer();
 
   return retVal;
 }

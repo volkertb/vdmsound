@@ -3,8 +3,14 @@
 // Used by LaunchPad.rc
 //
 #define IDS_PROJNAME                    100
+#define IDS_TXT_MULTIPLEVALUES          101
 #define IDR_LAUNCHPADSHELLEX            102
+#define IDS_ERR_UNKNOWN                 102
+#define IDS_MSG_ICONERROR               103
 #define IDD_BASICPROPPAGE               104
+#define IDS_MSG_NOICONS                 104
+#define IDS_TXT_FILTER1                 105
+#define IDS_TXT_FILTER2                 106
 #define IDC_ICO_APP                     201
 #define IDI_APPICON                     201
 #define IDC_EDT_DOSCMD                  202

@@ -22,14 +22,17 @@ CIconListBox::~CIconListBox()
 {
 }
 
-int CIconListBox::LoadIcons(LPCTSTR fName, int index) {
+int CIconListBox::LoadIcons(LPCTSTR fName) {
   int icoW = ::GetSystemMetrics(SM_CXICON);
   int icoH = ::GetSystemMetrics(SM_CYICON);
-
-  TCHAR itotBuf[20];
-  int numIcons = (int)::ExtractIcon(AfxGetInstanceHandle(), fName, -1);
+  CString tmpStr;
 
   UnloadIcons();
+
+  int numIcons = (int)::ExtractIcon(AfxGetInstanceHandle(), fName, -1);
+
+  if (GetLastError() != ERROR_SUCCESS)
+    return -1;
 
   SetRedraw(FALSE);
 
@@ -38,10 +41,9 @@ int CIconListBox::LoadIcons(LPCTSTR fName, int index) {
 
   for (int i = 0; i < numIcons; i++) {
     HICON hIcon = ExtractIcon(AfxGetInstanceHandle(), fName, i);
-    SetItemData(AddString(_itot(i, itotBuf, 10)), (DWORD)hIcon);
+    tmpStr.Format(_T("%d"), i);
+    SetItemData(AddString(tmpStr), (DWORD)hIcon);
   }
-
-  SetCurSel(abs(index));
 
   SetRedraw(TRUE);
 
@@ -76,12 +78,17 @@ void CIconListBox::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
   if (!lpDrawItemStruct)
     return;
 
-  HBRUSH hBgBrush = ::GetSysColorBrush((lpDrawItemStruct->itemState & ODS_FOCUS) ? COLOR_HIGHLIGHT : COLOR_WINDOW);
-  ::FillRect(lpDrawItemStruct->hDC, &(lpDrawItemStruct->rcItem), hBgBrush);
-  ::DrawIcon(lpDrawItemStruct->hDC, lpDrawItemStruct->rcItem.left + m_icoPadW, lpDrawItemStruct->rcItem.top + m_icoPadH, (HICON)lpDrawItemStruct->itemData);
+  if (lpDrawItemStruct->itemState & ODS_SELECTED) {
+    ::FillRect(lpDrawItemStruct->hDC, &(lpDrawItemStruct->rcItem), ::GetSysColorBrush(COLOR_HIGHLIGHT));
+  } else {
+    ::FillRect(lpDrawItemStruct->hDC, &(lpDrawItemStruct->rcItem), ::GetSysColorBrush(COLOR_WINDOW));
+  }
 
-  if (lpDrawItemStruct->itemState & ODS_SELECTED)
+  if (lpDrawItemStruct->itemState & ODS_FOCUS) {
     ::DrawFocusRect(lpDrawItemStruct->hDC, &(lpDrawItemStruct->rcItem));
+  }
+
+  ::DrawIcon(lpDrawItemStruct->hDC, lpDrawItemStruct->rcItem.left + m_icoPadW, lpDrawItemStruct->rcItem.top + m_icoPadH, (HICON)lpDrawItemStruct->itemData);
 }
 
 void CIconListBox::OnDestroy() 

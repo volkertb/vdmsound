@@ -75,6 +75,6 @@ void CBasicBrowseDlg::OnButChangeicon()
   dlgIcon.m_edtFile_val = m_iconLocation;
 
   if (dlgIcon.DoModal() == IDOK) {
-    m_iconLocation = dlgIcon.m_edtFile_val;
+    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, dlgIcon.m_lstIcons_val);
   }
 }
