@@ -48,8 +48,12 @@
   }
 
   void _vdms_trace_init(void) {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
     InitializeCriticalSection(&_vdms_lock);
-    _vdms_fLog = fopen("VDMServices.log", "wb");
+    char path[1024];
+    GetModuleFileNameA(AfxGetInstanceHandle(), path, sizeof(path) - 10);
+    strcat(path, ".log");
+    _vdms_fLog = fopen(path, "wb");
     _vdms_trace("*** begin ***\n");
   }
 
