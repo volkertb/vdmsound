@@ -1,10 +1,13 @@
 @echo off
 
-REM Install DPMI support
-lh %SystemRoot%\system32\dosx
-
 REM Free up some environment space
 set classpath=
 set include=
 set lib=
 set msdevdir=
+
+REM Install CD ROM extensions
+lh %SystemRoot%\system32\mscdexnt.exe
+
+REM Install DPMI support
+lh %SystemRoot%\system32\dosx

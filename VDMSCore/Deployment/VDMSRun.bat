@@ -13,7 +13,7 @@ set VDMSPath=
 
 REM Set the BLASTER variable
 REM [TO THE USER]: make sure it's consistent with VDMS.INI !
-set BLASTER=A220 I7 D1 H5 P330
+set BLASTER=A220 I7 D1 H5 P330 T6
 
 REM Run the game
 echo.
