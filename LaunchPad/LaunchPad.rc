@@ -149,8 +149,8 @@ BEGIN
                     IDC_CHK_CDROM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,
                     65,159,10
     GROUPBOX        "    ",IDC_STATIC,7,84,213,48
-    CONTROL         "&MIDI Emulation",IDC_CHK_USEMPU,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,84,64,10,
+    CONTROL         "&MIDI emulation",IDC_CHK_USEMPU,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,84,63,10,
                     WS_EX_TRANSPARENT
     CONTROL         "General MIDI (&GM) or GS",IDC_OPT_GMIDI,"Button",
                     BS_AUTORADIOBUTTON | WS_TABSTOP,14,96,95,10
@@ -159,8 +159,8 @@ BEGIN
     CONTROL         "Other",IDC_OPT_MIDIOTHER,"Button",BS_AUTORADIOBUTTON | 
                     WS_TABSTOP,14,118,33,10
     GROUPBOX        "    ",IDC_STATIC,7,137,213,48
-    CONTROL         "&Joystick Emulation",IDC_CHK_USEJOY,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,137,74,10,
+    CONTROL         "&Joystick emulation",IDC_CHK_USEJOY,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,137,73,10,
                     WS_EX_TRANSPARENT
     CONTROL         "Pair of &2-axis, 2-button joysticks",IDC_OPT_JOY2BUT,
                     "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,149,115,10
@@ -246,7 +246,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
     LTEXT           "VDMSound Launchpad (ver. 1,0,1,0)\nBETA 5 (bugs: ntvdm@hotmail.com)",
                     IDC_STATIC,10,173,140,18,WS_DISABLED
-    PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
+    PUSHBUTTON      "&Change icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
 
@@ -272,7 +272,7 @@ BEGIN
                     WS_GROUP
     COMBOBOX        IDC_CMB_XMS,158,32,36,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "&Protected Mode",IDC_GRP_PMODE,6,57,211,39,WS_GROUP
+    GROUPBOX        "&Protected-mode",IDC_GRP_PMODE,6,57,211,39,WS_GROUP
     CONTROL         "Enable &DPMI support (DOSX)",IDC_CHK_DPMI,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,69,109,10
     CONTROL         "Enable &CLI/POPF workaround",IDC_CHK_CLIPOPF,"Button",
@@ -330,7 +330,7 @@ BEGIN
                     WS_EX_TRANSPARENT
     CTEXT           "(multiple values)",IDC_TXT_PRIORITY_MULTI,26,65,85,10,
                     NOT WS_VISIBLE | NOT WS_GROUP,WS_EX_TRANSPARENT
-    GROUPBOX        "&DMA Servicing",IDC_STATIC,6,91,211,33,WS_GROUP
+    GROUPBOX        "&DMA servicing",IDC_STATIC,6,91,211,33,WS_GROUP
     RTEXT           "&Polling period:",IDC_STATIC,9,104,48,12,SS_CENTERIMAGE
     CTEXT           "/",IDC_STATIC,101,104,10,12,SS_CENTERIMAGE
     LTEXT           "(min / max) (ms)",IDC_STATIC,153,104,52,12,
@@ -358,17 +358,17 @@ BEGIN
     CONTROL         "&Enable MIDI (MPU-401) emulation",IDC_CHK_USEMPU,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,123,10,
                     WS_EX_TRANSPARENT
-    RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
+    RTEXT           "Base &port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_MPUPORT,52,20,36,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "IR&Q:",IDC_STATIC,89,20,21,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_MPUIRQ,115,20,25,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "SysE&x Indicator:",IDC_CHK_SYSEXINDICATOR,"Button",
+    CONTROL         "SysE&x indicator:",IDC_CHK_SYSEXINDICATOR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,37,63,12
     COMBOBOX        IDC_CMB_SYSEXINDICATOR,82,37,59,60,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&MIDI Mapping...",IDC_BUT_MIDIMAPBROWSE,147,20,62,14,
+    PUSHBUTTON      "&MIDI mapping...",IDC_BUT_MIDIMAPBROWSE,147,20,62,14,
                     BS_CENTER | BS_VCENTER | WS_GROUP
     EDITTEXT        IDC_EDT_MIDIMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
@@ -410,10 +410,10 @@ CAPTION "AdLib"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,120
-    CONTROL         "&Enable AdLib (FM) Emulation",IDC_CHK_USEFM,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,107,10,
+    CONTROL         "&Enable AdLib (FM) emulation",IDC_CHK_USEFM,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,106,10,
                     WS_EX_TRANSPARENT
-    RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
+    RTEXT           "Base &port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_FMPORT,52,20,36,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Chip setup:",IDC_STATIC,89,20,51,12,SS_CENTERIMAGE
@@ -455,10 +455,10 @@ CAPTION "SoundBlaster"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
-    CONTROL         "&Enable SoundBlaster Emulation",IDC_CHK_USESB,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,115,10,
+    CONTROL         "&Enable SoundBlaster emulation",IDC_CHK_USESB,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,114,10,
                     WS_EX_TRANSPARENT
-    RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
+    RTEXT           "Base &port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBPORT,52,20,36,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "IR&Q:",IDC_STATIC,89,20,21,12,SS_CENTERIMAGE
@@ -467,7 +467,7 @@ BEGIN
     RTEXT           "&8-bit DMA:",IDC_STATIC,144,20,39,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBDMA8,188,20,22,60,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "DSP Ve&r.:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
+    RTEXT           "DSP ve&r.:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBTYPE,52,37,89,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "1&6-bit DMA:",IDC_STATIC,144,37,39,12,SS_CENTERIMAGE
@@ -512,13 +512,13 @@ CAPTION "Joystick"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,70
-    CONTROL         "&Enable Joystick (Gameport) emulation",IDC_CHK_USEJOY,
+    CONTROL         "&Enable joystick (gameport) emulation",IDC_CHK_USEJOY,
                     "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,
-                    134,10,WS_EX_TRANSPARENT
-    RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
+                    131,10,WS_EX_TRANSPARENT
+    RTEXT           "Base &port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_JOYPORT,52,20,36,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
+    PUSHBUTTON      "Inputs &mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
                     BS_CENTER | BS_VCENTER | WS_GROUP
     EDITTEXT        IDC_EDT_JOYMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
@@ -551,13 +551,13 @@ CAPTION "Troubleshooting"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,59
-    CONTROL         "Diagnostic &Log",IDC_CHK_VDMSLOG,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,63,10,
+    CONTROL         "Diagnostic &log",IDC_CHK_VDMSLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,61,10,
                     WS_EX_TRANSPARENT
-    RTEXT           "Log &Detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
+    RTEXT           "Log &detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_LOGDETAIL,52,20,89,70,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Choose &File...",IDC_BUT_LOGBROWSE,147,20,62,14,
+    PUSHBUTTON      "Choose &file...",IDC_BUT_LOGBROWSE,147,20,62,14,
                     BS_CENTER | BS_VCENTER
     EDITTEXT        IDC_EDT_LOGBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
@@ -573,7 +573,7 @@ BEGIN
     CONTROL         "&Other modules",IDC_CHK_LOGOTHER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,100,48,61,12
     GROUPBOX        "   ",IDC_STATIC,6,71,211,71
-    CONTROL         "&Custom Configuration",IDC_CHK_VDMSINI,"Button",
+    CONTROL         "&Custom configuration",IDC_CHK_VDMSINI,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,71,83,10,
                     WS_EX_TRANSPARENT
     EDITTEXT        IDC_EDT_VDMSINI,14,84,196,50,ES_MULTILINE | 
