@@ -70,7 +70,6 @@ public:
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
 protected:
-  void DACPlay(DWORD deltaTime);
   __int64 getTimeMicros(void);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -85,11 +84,11 @@ protected:
   CThread m_playbackThread;
 
   CCriticalSection m_lock;
-  BYTE m_buffer[65536];
-  int m_bufPtr;
+  volatile BYTE m_buffer[65536];
+  volatile int m_bufPtr;
 
   __int64 m_lastTime, m_curTime;
-  double m_renderLoad;
+  volatile double m_renderLoad;
 
 // Interfaces to dependency modules
 protected:

@@ -219,7 +219,7 @@ STDMETHODIMP CPPDACCtl::HandleOUTB(USHORT outPort, BYTE data) {
       numSamples = max(0, min((int)sizeof(m_buffer) - m_bufPtr - 1, (int)(min(2.0, max(0.0, 1 / m_renderLoad)) * m_sampleRate * 1e-6 * (m_curTime - m_lastTime))));
 
       m_lock.Lock(100);
-      memset(&(m_buffer[m_bufPtr]), data & 0xff, numSamples);
+      memset((void*)(&(m_buffer[m_bufPtr])), data & 0xff, numSamples);
       m_bufPtr += numSamples;
       m_lock.Unlock();
 
@@ -309,7 +309,7 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
 
   // Set up the renderer (if any)
   if (m_waveOut != NULL) try {
-    m_waveOut->SetFormat(1, m_sampleRate, 16);
+    m_waveOut->SetFormat(1, m_sampleRate, 8);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d, %d, %d"), 1, m_sampleRate, 16);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -330,7 +330,7 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
 
       // Play the data, and update the load factor
       if (m_bufPtr > 0) try {
-        m_renderLoad = m_waveOut->PlayData(m_buffer, m_bufPtr);
+        m_renderLoad = m_waveOut->PlayData((BYTE*)(m_buffer), m_bufPtr);
       } catch (_com_error& ce) {
         CString args = Format(_T("%p, %d"), m_buffer, m_bufPtr);
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -354,38 +354,6 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
 /////////////////////////////////////////////////////////////////////////////
 // Utility functions
 /////////////////////////////////////////////////////////////////////////////
-
-//
-// This function will output a certain amount of synthesized OPL audio data
-//  to the output wave device
-//
-void CPPDACCtl::DACPlay(DWORD deltaTime) {
-  if (m_waveOut == NULL)
-    return; // why bother if no renderer is attached ?
-
-  if (m_curTime > m_lastTime) {
-/*
-    MAME::INT16 buf[65536];
-
-    // Compute by how much this transfer should be boosted or diminished, based on
-    //  playback performance (feedback indicating playback buffer overrun/underrun)
-    double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
-
-    // Compute how many samples we should transfer
-    long toTransfer = min(65536, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
-
-    MAME::YM3812UpdateOne(m_OPL, buf, toTransfer);
-
-    // Play the data, and update the load factor
-    try {
-      m_renderLoad = m_waveOut->PlayData((BYTE*)buf, toTransfer * sizeof(buf[0]));
-    } catch (_com_error& ce) {
-      CString args = Format(_T("%p, %d"), buf, toTransfer * sizeof(buf[0]));
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
-    }
-*/
-  }
-}
 
 //
 // 
