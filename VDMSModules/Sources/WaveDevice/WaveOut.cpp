@@ -387,11 +387,8 @@ bool CWaveOut::WaveOutOpen(bool isInteractive) {
     return true;
 
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
-  if ((time(NULL) - lastRetry) < WAVEOPEN_RETRY_INTERVAL) {
+  if ((time(NULL) - lastRetry) < WAVEOPEN_RETRY_INTERVAL)
     return false;           // another attempt to open the device was made very recently; don't overdo it
-  } else {
-    lastRetry = time(NULL);
-  }
 
   MMRESULT errCode;
 
@@ -420,8 +417,10 @@ bool CWaveOut::WaveOutOpen(bool isInteractive) {
   if (m_hWaveOut != NULL) { // The device was opened successfully
     isErrLog    = true;     // Next time we get an error, log it
     isErrPrompt = true;     // Next time we get an error, prompt the user (if interactive)
+    lastRetry   = 0;        // If the device is closed and reopened within WAVEOPEN_RETRY_INTERVAL, don't complain
     return true;
   } else {                  // The device could not be open, and the user did not retry
+    lastRetry = time(NULL); // Remember not to try to reopen the device within WAVEOPEN_RETRY_INTERVAL from a failure
     return false;
   }
 }
