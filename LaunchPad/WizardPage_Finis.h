@@ -26,6 +26,11 @@ public:
 	CWizardPage_Finis(WizardContainer& wizard);
 	~CWizardPage_Finis();
 
+// Helper functions
+protected:
+  void SyncWizButtons(void);
+  HRESULT MakeDesktopLink(LPCTSTR baseName, CString& result);
+
 // Member variables
 protected:
   CFont m_fntWizardtitle;
@@ -51,6 +56,7 @@ public:
 	virtual BOOL OnSetActive();
 	virtual LRESULT OnWizardNext();
 	virtual LRESULT OnWizardBack();
+	virtual BOOL OnWizardFinish();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL

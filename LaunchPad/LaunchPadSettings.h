@@ -3,34 +3,33 @@
 
 class CLaunchPadSettings {
   public:
-	  CLaunchPadSettings(const CString& fileName);
+	  CLaunchPadSettings(LPCTSTR fileName);
 	  CLaunchPadSettings(const CStringArray& fileNames);
 	  CLaunchPadSettings(const CLaunchPadSettings& settings);
 	  virtual ~CLaunchPadSettings(void);
 
   public:
     VOID GetFileNames(CStringArray& fileNames) const;
+    CString GetFileNames(LPCTSTR szSeparators = _T("\n"), int itemLimit = 0) const;
 
     HRESULT GetValue(LPCTSTR section, LPCTSTR key, CString& value, BOOL* isIndeterminate = NULL, LPCTSTR defValue = _T(""));
     HRESULT SetValue(LPCTSTR section, LPCTSTR key, LPCTSTR value, BOOL doWriteThrough = FALSE);
     HRESULT UnsetValue(LPCTSTR section, LPCTSTR key);
-    HRESULT CommitValue(LPCTSTR section, LPCTSTR key);
-    HRESULT CommitAll(void);
-    BOOL IsChanged(LPCTSTR section, LPCTSTR key);
-    BOOL IsChanged(void);
 
-    void GetAll(void);
+    HRESULT MakeDirty(LPCTSTR section, LPCTSTR key);
+    HRESULT MakeDirty(void);
 
-    void Copy(const CLaunchPadSettings& src, BOOL bValuesOnly = TRUE);
-    void Reset(BOOL bValuesOnly = TRUE);
+    HRESULT Commit(LPCTSTR section, LPCTSTR key);
+    HRESULT Commit(void);
 
-  // Utility
-  protected:
-    BOOL GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpDefault, CString& result, LPCTSTR lpFileName);
-    BOOL WritePrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpString, LPCTSTR lpFileName);
-    VOID TranslateTo(LPCTSTR plain, CString& translated);
-    VOID TranslateFrom(LPCTSTR translated, CString& plain);
-    BOOL NeedsTranslation(TCHAR tch);
+    BOOL IsDirty(LPCTSTR section, LPCTSTR key) const;
+    BOOL IsDirty(void) const;
+
+    HRESULT LoadFromTemplate(LPCTSTR templateFile);
+    HRESULT LoadFromTemplate(const CLaunchPadSettings& templateSettings);
+
+    void Copy(const CLaunchPadSettings& src);
+    void Reset(void);
 
   // Types
   protected:
@@ -63,10 +62,25 @@ class CLaunchPadSettings {
       CString m_value;
     };
 
+    typedef CMap<SettingKey,SettingKey&,SettingValue,SettingValue&> CSettingsMap;
+
+  // Utility
+  protected:
+    static BOOL GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpDefault, CString& result, LPCTSTR lpFileName);
+    static BOOL WritePrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpString, LPCTSTR lpFileName);
+    static BOOL GetPrivateProfileSectionNames(CStringArray& result, LPCTSTR lpFileName);
+    static BOOL GetPrivateProfileSection(LPCTSTR lpAppName, CStringArray& result, LPCTSTR lpFileName);
+
+    static BOOL GetAllStrings(const CStringArray& fileNames, CSettingsMap& settingsCache);
+
+    static VOID TranslateTo(LPCTSTR plain, CString& translated);
+    static VOID TranslateFrom(LPCTSTR translated, CString& plain);
+    static BOOL NeedsTranslation(TCHAR tch);
+
   // Member variables
   protected:
     CStringArray m_fileNames;
-    CMap<SettingKey,SettingKey&,SettingValue,SettingValue&> m_settingsCache;
+    CSettingsMap m_settingsCache;
 };
 
 #endif // __LAUNCHPADSETTINGS_H

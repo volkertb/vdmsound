@@ -171,7 +171,7 @@ void CAdvSettingsPage_Program::OnButDosprogrambrowse()
       m_settings.SetValue(_T("program"), _T("executable"), dlgFile.GetPathName());
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
-      if (m_settings.IsChanged())
+      if (m_settings.IsDirty())
         SetModified();      // enable the "Apply" button to reflect the fact that changes were made
 
       break;
@@ -217,7 +217,7 @@ void CAdvSettingsPage_Program::OnButDosdirbrowse()
       m_settings.SetValue(_T("program"), _T("workdir"), tmpBuf);
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
-      if (m_settings.IsChanged())
+      if (m_settings.IsDirty())
         SetModified();      // enable the "Apply" button to reflect the fact that changes were made
     } else {
       lastError = GetLastError();
@@ -260,7 +260,7 @@ void CAdvSettingsPage_Program::OnButChangeicon()
       if (iconLocation.Compare(strTmp1) != 0)
         m_settings.SetValue(_T("program"), _T("icon"), strTmp1);
 
-      if (m_settings.IsChanged())
+      if (m_settings.IsDirty())
         SetModified();      // enable the "Apply" button to reflect the fact that changes were made
 
       break;

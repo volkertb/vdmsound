@@ -14,17 +14,17 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CWizardSheet
 
-CWizardSheet::CWizardSheet(LPCTSTR exeFileName, CLaunchPadSettings& settings, UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPage)
+CWizardSheet::CWizardSheet(LPCTSTR exeFileName, UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheetEx(nIDCaption, pParentWnd, iSelectPage),
-   m_wizard(exeFileName, settings),
+   m_wizard(exeFileName),
    m_p1(m_wizard), m_p2(m_wizard), m_p3(m_wizard), m_p4(m_wizard)
 {
   Init();
 }
 
-CWizardSheet::CWizardSheet(LPCTSTR exeFileName, CLaunchPadSettings& settings, LPCTSTR pszCaption, CWnd* pParentWnd, UINT iSelectPage)
+CWizardSheet::CWizardSheet(LPCTSTR exeFileName, LPCTSTR pszCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheetEx(pszCaption, pParentWnd, iSelectPage),
-   m_wizard(exeFileName, settings),
+   m_wizard(exeFileName),
    m_p1(m_wizard), m_p2(m_wizard), m_p3(m_wizard), m_p4(m_wizard)
 {
   Init();

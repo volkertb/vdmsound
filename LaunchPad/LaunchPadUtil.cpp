@@ -179,9 +179,9 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
   if (VLPUtil::isMSDOSFile(GetPathName())) {  // valid .exe/.com file
     return FALSE;
   } else {
-    CString message;
-    message.Format(_T("The file '%s' does not appear to be a valid MS-DOS executable or batch file.\n\rDo you want to continue?"), (LPCTSTR)GetFileName());
-    return (MessageBox(message, _T("Warning"), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES);
+    CString strTmp;
+    strTmp.FormatMessage(IDS_MSG_NOEXECOMBATERR, (LPCTSTR)GetFileName());
+    return (MessageBox(strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES);
   }
 }
 
@@ -783,8 +783,8 @@ CString VLPUtil::GetRelativePath(
   TCHAR szPath[MAX_PATH + 1];
 
   try {
-    if (!PathIsRelative(baseDir) &&
-        !PathIsRelative(filePath) &&
+    if (!IsRelativePath(baseDir) &&
+        !IsRelativePath(filePath) &&
         PathRelativePathTo(szPath, baseDir, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
     {
       return CString(szPath);
@@ -814,8 +814,8 @@ CString VLPUtil::GetAbsolutePath(
   _tcscpy(szPath1, baseDir);
 
   try {
-    if (!PathIsRelative(baseDir) &&
-        PathIsRelative(filePath) &&
+    if (!IsRelativePath(baseDir) &&
+        IsRelativePath(filePath) &&
         PathAppend(szPath1, filePath) &&
         PathCanonicalize(szPath2, szPath1))
     {
@@ -881,6 +881,13 @@ BOOL VLPUtil::IsDirectory(LPCTSTR pszPath) {
 }
 
 //
+// Searches a path and determines if it is relative
+//
+BOOL VLPUtil::IsRelativePath(LPCTSTR pszPath) {
+  return PathIsRelative(pszPath);
+}
+
+//
 //
 //
 CString VLPUtil::RenameExtension(LPCTSTR filePath, LPCTSTR ext) {
@@ -927,6 +934,56 @@ BOOL VLPUtil::FileExists(LPCTSTR filePath) {
     } else {
       return FALSE;
     }
+  }
+}
+
+//
+//
+//
+HRESULT VLPUtil::GetSpecialFolderPath(CString& result, int nFolder, HWND hwndOwner) {
+  HRESULT hr;
+
+  try {
+throw 1; // TODO: remove test case
+    hr = SHGetSpecialFolderPath(hwndOwner, result.GetBuffer(MAX_PATH), nFolder, TRUE);
+    result.ReleaseBuffer();
+    return hr;
+  } catch (...) {
+    CComPtr<IMalloc> pMalloc;
+
+    if (FAILED(hr = SHGetMalloc(&pMalloc)))
+      return hr;
+
+    LPITEMIDLIST pidl;
+
+    if (FAILED(hr = SHGetSpecialFolderLocation(NULL, nFolder, &pidl)))
+      return hr;
+
+    if (!SHGetPathFromIDList(pidl, result.GetBuffer(MAX_PATH))) {
+      result.ReleaseBuffer();
+      return E_FAIL;
+    }
+
+    result.ReleaseBuffer();
+
+    pMalloc->Free(pidl);
+
+    return S_OK;
+  }
+}
+
+//
+// Expands any environment variables in the given path
+//
+CString VLPUtil::GetExpandedPath(LPCTSTR filePath) {
+  TCHAR tmpBuf[MAX_PATH + 1];
+
+  DWORD nSize = ExpandEnvironmentStrings(filePath, tmpBuf, sizeof(tmpBuf) / sizeof(tmpBuf[0]));
+
+  if ((nSize < 1) && (nSize > (sizeof(tmpBuf) / sizeof(tmpBuf[0])))) {
+    return CString(filePath);
+  } else {
+    return CString(tmpBuf);
   }
 }
 

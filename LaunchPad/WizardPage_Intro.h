@@ -26,6 +26,10 @@ public:
 	CWizardPage_Intro(WizardContainer& wizard);
 	~CWizardPage_Intro();
 
+// Helper functions
+protected:
+  void SyncWizButtons(void);
+
 // Member variables
 protected:
   CFont m_fntWizardtitle;

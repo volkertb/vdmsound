@@ -26,6 +26,10 @@ public:
 	CWizardPage_Custom_1(WizardContainer& wizard);
 	~CWizardPage_Custom_1();
 
+// Helper functions
+protected:
+  void SyncWizButtons(void);
+
 // Member variables
 protected:
   CFont m_fntBoldButtons;
@@ -62,6 +66,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnOptClicked();
 	afx_msg void OnButTemplate();
+	afx_msg void OnChangeEdtTemplate();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -193,6 +193,9 @@
 #define IDS_MSG_COMMITERR               10204
 #define IDS_MSG_SECURITYERR             10205
 #define IDS_MSG_NOFILEERR               10206
+#define IDS_MSG_NODIRERR                10207
+#define IDS_MSG_NOEXECOMBATERR          10208
+#define IDS_MSG_SHORTCUTERR             10209
 
 #define ID_RUNWITH                      32771
 #define ID_REPLACE                      32772

@@ -26,6 +26,10 @@ public:
 	CWizardPage_Custom_2(WizardContainer& wizard);
 	~CWizardPage_Custom_2();
 
+// Helper functions
+protected:
+  void SyncWizButtons(void);
+
 // Member variables
 protected:
   WizardContainer& m_wizard;

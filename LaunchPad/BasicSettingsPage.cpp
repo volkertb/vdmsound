@@ -397,7 +397,7 @@ void CBasicSettingsPage::OnButChange()
 
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
-      if (m_settings.IsChanged())
+      if (m_settings.IsDirty())
         SetModified();          // enable the "Apply" button to reflect the fact that changes were made
 
       break;
@@ -429,7 +429,7 @@ void CBasicSettingsPage::OnButAdvanced()
     case IDCANCEL:          // Settings may have been changed by "Apply" in the property sheet
       SyncGUIData(FALSE);   // update the GUI to reflect any changed settings
 
-      if (m_settings.IsChanged())
+      if (m_settings.IsDirty())
         SetModified();      // enable the "Apply" button to reflect the fact that changes were made
 
       break;
@@ -450,13 +450,17 @@ BOOL CBasicSettingsPage::OnApply()
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  if (FAILED(hr = m_settings.CommitAll())) {
-    DWORD lastError = GetLastError();
+  while (FAILED(hr = m_settings.Commit())) {
     CString strTmp1, strTmp2;
-    strTmp1.FormatMessage(IDS_MSG_COMMITERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+    strTmp1.FormatMessage(IDS_MSG_COMMITERR, hr, (LPCTSTR)VLPUtil::FormatMessage(hr, true, NULL), (LPCTSTR)(m_settings.GetFileNames(_T(", "), 2)));
     GetWindowText(strTmp2);
-    MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONWARNING);
-    return FALSE;
+
+    switch (MessageBox(strTmp1, strTmp2, MB_RETRYCANCEL | MB_DEFBUTTON1 | MB_ICONWARNING)) {
+      case IDRETRY:
+        break;
+      case IDCANCEL:
+        return FALSE;
+    }
   }
 
   m_tmpMIDIStorage.Empty();

@@ -95,8 +95,12 @@ namespace VLPUtil {
   CString GetDirectory(LPCTSTR filePath);
   CString GetFilename(LPCTSTR filePath, BOOL removeExtension = FALSE);
   BOOL IsDirectory(LPCTSTR pszPath);
+  BOOL IsRelativePath(LPCTSTR pszPath);
   CString RenameExtension(LPCTSTR filePath, LPCTSTR ext);
   BOOL FileExists(LPCTSTR filePath);
+  HRESULT GetSpecialFolderPath(CString& result, int nFolder, HWND hwndOwner = NULL);
+
+  CString GetExpandedPath(LPCTSTR filePath);
 
   HRESULT EnableAutoComplete(HWND hwndEdit);
 
