@@ -19,7 +19,7 @@
   $globStats = AppsGetGlobalStats();
   $theNews   = NewsGetItems('updated', false, 0, 5);
   $myReports = AppsGetReports(NULL, AuthGetUserId(), NULL, true,
-                              APPS_GET_USER  | APPS_GET_AS_TEXT,
+                              APPS_GET_USER  | APPS_GET_AS_ID  | APPS_GET_AS_TEXT,
                               APPS_GET_TITLE | APPS_GET_APPVER | APPS_GET_DISTRIB | APPS_GET_AS_TEXT,
                               APPS_GET_OSVER | APPS_GET_EMUVER | APPS_GET_AS_TEXT,
                               0, 'updated', false, 0, 5);

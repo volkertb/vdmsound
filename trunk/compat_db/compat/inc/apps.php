@@ -17,11 +17,9 @@
 
   define('APPS_GET_OSVER',         0x00000001);
   define('APPS_GET_EMUVER',        0x00000002);
+  define('APPS_GET_EMUCAPS',       0x00000004);
 
-  define('APPS_GET_CMIDI',         0x00000001);
-  define('APPS_GET_CSB',           0x00000002);
-  define('APPS_GET_CADLIB',        0x00000004);
-  define('APPS_GET_CJOYSTICK',     0x00000008);
+  define('APPS_GET_COMPAT',        0x00000001);
 
   ////////////////////////////////////////////////////////////////////////////
   // Includes
@@ -98,6 +96,7 @@
     array_push($tables, 'Reports');
 
     $uses_applications = false;
+    $uses_emuvertypes  = false;
 
     if ($getuserinfo & APPS_GET_COMMENT) {
       array_push($columns, 'Reports.comment AS comment_text');
@@ -163,55 +162,80 @@
       if ($getenvinfo & APPS_GET_AS_ICON)
         array_push($columns, 'EMUVerTypes.icon_URL AS emuver_icon');
 
-      array_push($tables, 'EMUVerTypes ON (Reports.EMUVerTypes_id=EMUVerTypes.id)');
+      $uses_emuvertypes = true;
     }
 
-    if ($getcompatinfo & APPS_GET_CMIDI) {
-      if ($getcompatinfo & APPS_GET_AS_ID)
-        array_push($columns, 'CompatTypes_midi.id AS cmidi_id');
-      if ($getcompatinfo & APPS_GET_AS_TEXT)
-        array_push($columns, 'CompatTypes_midi.description AS cmidi_text');
-      if ($getcompatinfo & APPS_GET_AS_ICON)
-        array_push($columns, 'CompatTypes_midi.icon_URL AS cmidi_icon');
-
-      array_push($tables, 'CompatTypes AS CompatTypes_midi ON (Reports.CompatTypes_id_midi=CompatTypes_midi.id)');
+    if ($getenvinfo & APPS_GET_EMUCAPS) {
+      array_push($columns, 'EMUVerTypes.emulates AS emucaps_text');
+      $uses_emuvertypes = true;
     }
 
-    if ($getcompatinfo & APPS_GET_CSB) {
-      if ($getcompatinfo & APPS_GET_AS_ID)
-        array_push($columns, 'CompatTypes_sb.id AS csb_id');
-      if ($getcompatinfo & APPS_GET_AS_TEXT)
-        array_push($columns, 'CompatTypes_sb.description AS csb_text');
-      if ($getcompatinfo & APPS_GET_AS_ICON)
-        array_push($columns, 'CompatTypes_sb.icon_URL AS csb_icon');
-
-      array_push($tables, 'CompatTypes AS CompatTypes_sb ON (Reports.CompatTypes_id_sb=CompatTypes_sb.id)');
-    }
-
-    if ($getcompatinfo & APPS_GET_CADLIB) {
-      if ($getcompatinfo & APPS_GET_AS_ID)
-        array_push($columns, 'CompatTypes_adlib.id AS cadlib_id');
-      if ($getcompatinfo & APPS_GET_AS_TEXT)
-        array_push($columns, 'CompatTypes_adlib.description AS cadlib_text');
-      if ($getcompatinfo & APPS_GET_AS_ICON)
-        array_push($columns, 'CompatTypes_adlib.icon_URL AS cadlib_icon');
-
-      array_push($tables, 'CompatTypes AS CompatTypes_adlib ON (Reports.CompatTypes_id_adlib=CompatTypes_adlib.id)');
-    }
-
-    if ($getcompatinfo & APPS_GET_CJOYSTICK) {
-      if ($getcompatinfo & APPS_GET_AS_ID)
+    if ($getcompatinfo & APPS_GET_COMPAT) {
+      if ($getcompatinfo & APPS_GET_AS_ID) {
+        array_push($columns, 'CompatTypes_video.id AS cvideo_id');
+        array_push($columns, 'CompatTypes_keyboard.id AS ckeyboard_id');
+        array_push($columns, 'CompatTypes_mouse.id AS cmouse_id');
         array_push($columns, 'CompatTypes_joystick.id AS cjoystick_id');
-      if ($getcompatinfo & APPS_GET_AS_TEXT)
-        array_push($columns, 'CompatTypes_joystick.description AS cjoystick_text');
-      if ($getcompatinfo & APPS_GET_AS_ICON)
-        array_push($columns, 'CompatTypes_joystick.icon_URL AS cjoystick_icon');
+        array_push($columns, 'CompatTypes_speaker.id AS cspeaker_id');
+        array_push($columns, 'CompatTypes_sb.id AS csb_id');
+        array_push($columns, 'CompatTypes_adlib.id AS cadlib_id');
+        array_push($columns, 'CompatTypes_midi.id AS cmidi_id');
+        array_push($columns, 'CompatTypes_gus.id AS cgus_id');
+        array_push($columns, 'CompatTypes_disk.id AS cdisk_id');
+        array_push($columns, 'CompatTypes_io.id AS cio_id');
+        array_push($columns, 'CompatTypes_timer.id AS ctimer_id');
+      }
 
+      if ($getcompatinfo & APPS_GET_AS_TEXT) {
+        array_push($columns, 'CompatTypes_video.description AS cvideo_text');
+        array_push($columns, 'CompatTypes_keyboard.description AS ckeyboard_text');
+        array_push($columns, 'CompatTypes_mouse.description AS cmouse_text');
+        array_push($columns, 'CompatTypes_joystick.description AS cjoystick_text');
+        array_push($columns, 'CompatTypes_speaker.description AS cspeaker_text');
+        array_push($columns, 'CompatTypes_sb.description AS csb_text');
+        array_push($columns, 'CompatTypes_adlib.description AS cadlib_text');
+        array_push($columns, 'CompatTypes_midi.description AS cmidi_text');
+        array_push($columns, 'CompatTypes_gus.description AS cgus_text');
+        array_push($columns, 'CompatTypes_disk.description AS cdisk_text');
+        array_push($columns, 'CompatTypes_io.description AS cio_text');
+        array_push($columns, 'CompatTypes_timer.description AS ctimer_text');
+      }
+
+      if ($getcompatinfo & APPS_GET_AS_ICON) {
+        array_push($columns, 'CompatTypes_video.icon_URL AS cvideo_icon');
+        array_push($columns, 'CompatTypes_keyboard.icon_URL AS ckeyboard_icon');
+        array_push($columns, 'CompatTypes_mouse.icon_URL AS cmouse_icon');
+        array_push($columns, 'CompatTypes_joystick.icon_URL AS cjoystick_icon');
+        array_push($columns, 'CompatTypes_speaker.icon_URL AS cspeaker_icon');
+        array_push($columns, 'CompatTypes_sb.icon_URL AS csb_icon');
+        array_push($columns, 'CompatTypes_adlib.icon_URL AS cadlib_icon');
+        array_push($columns, 'CompatTypes_midi.icon_URL AS cmidi_icon');
+        array_push($columns, 'CompatTypes_gus.icon_URL AS cgus_icon');
+        array_push($columns, 'CompatTypes_disk.icon_URL AS cdisk_icon');
+        array_push($columns, 'CompatTypes_io.icon_URL AS cio_icon');
+        array_push($columns, 'CompatTypes_timer.icon_URL AS ctimer_icon');
+      }
+
+      array_push($tables, 'CompatTypes AS CompatTypes_video ON (Reports.CompatTypes_id_video=CompatTypes_video.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_keyboard ON (Reports.CompatTypes_id_keyboard=CompatTypes_keyboard.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_mouse ON (Reports.CompatTypes_id_mouse=CompatTypes_mouse.id)');
       array_push($tables, 'CompatTypes AS CompatTypes_joystick ON (Reports.CompatTypes_id_joystick=CompatTypes_joystick.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_speaker ON (Reports.CompatTypes_id_speaker=CompatTypes_speaker.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_sb ON (Reports.CompatTypes_id_sb=CompatTypes_sb.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_adlib ON (Reports.CompatTypes_id_adlib=CompatTypes_adlib.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_midi ON (Reports.CompatTypes_id_midi=CompatTypes_midi.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_gus ON (Reports.CompatTypes_id_gus=CompatTypes_gus.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_disk ON (Reports.CompatTypes_id_disk=CompatTypes_disk.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_io ON (Reports.CompatTypes_id_io=CompatTypes_io.id)');
+      array_push($tables, 'CompatTypes AS CompatTypes_timer ON (Reports.CompatTypes_id_timer=CompatTypes_timer.id)');
     }
 
     if ($uses_applications) {
       array_push($tables, 'Applications ON (Reports.Applications_id=Applications.id)');
+    }
+
+    if ($uses_emuvertypes) {
+      array_push($tables, 'EMUVerTypes ON (Reports.EMUVerTypes_id=EMUVerTypes.id)');
     }
 
     if (!is_null($reportid))
@@ -357,7 +381,7 @@
     return MysqlQueryAssoc('SELECT Applications.id,Titles.name,Titles.nameSoundex FROM Titles INNER JOIN Applications ON (Titles.id=Applications.Titles_id) WHERE MATCH(Titles.name,Titles.nameSoundex) AGAINST("' . mysql_escape_string($title) . '")');
   }
 
-  function AppsAddReport(&$reportid, $title, $distrib, $version, $os, $emu, $csb, $cadlib, $cmidi, $cjoystick, $comment, $forceadd = true) {
+  function AppsAddReport(&$reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, $forceadd = true) {
     ErrSetLastError();
 
     if (is_null($reportid)) {
@@ -368,10 +392,18 @@
         (!MysqlIsValidInteger($distrib)) ||
         (!MysqlIsValidInteger($os)) ||
         (!MysqlIsValidInteger($emu)) ||
+        (!MysqlIsValidInteger($cvideo)) ||
+        (!MysqlIsValidInteger($ckeyboard)) ||
+        (!MysqlIsValidInteger($cmouse)) ||
+        (!MysqlIsValidInteger($cjoystick)) ||
+        (!MysqlIsValidInteger($cspeaker)) ||
         (!MysqlIsValidInteger($csb)) ||
         (!MysqlIsValidInteger($cadlib)) ||
         (!MysqlIsValidInteger($cmidi)) ||
-        (!MysqlIsValidInteger($cjoystick)))  // Check against SQL code injection
+        (!MysqlIsValidInteger($cgus)) ||
+        (!MysqlIsValidInteger($cdisk)) ||
+        (!MysqlIsValidInteger($cio)) ||
+        (!MysqlIsValidInteger($ctimer))) // Check against SQL code injection
     {
       ErrSetLastError(E_UNEXPECTED);
       return false;
@@ -404,13 +436,34 @@
     }
 
     if ($reportid > 0) {
-      if (!MysqlQuery('UPDATE Reports SET Applications_id=' . $Applications_id . ',comment="' . mysql_escape_string($comment) . '",CompatTypes_id_midi=' . $cmidi . ',CompatTypes_id_sb=' . $csb . ',CompatTypes_id_adlib=' . $cadlib . ',CompatTypes_id_joystick=' . $cjoystick . ',OSVerTypes_id=' . $os . ',EMUVerTypes_id=' . $emu . ' WHERE id=' . $reportid . ' AND Users_id=' . AuthGetUserId()))
+      if (!MysqlQuery('UPDATE Reports SET' .
+          'Applications_id=' .         $Applications_id . ',' .
+          'comment="' .                mysql_escape_string($comment) . '",' .
+          'CompatTypes_id_video=' .    $cvideo . ',' .
+          'CompatTypes_id_keyboard=' . $ckeyboard . ',' .
+          'CompatTypes_id_mouse=' .    $cmouse . ',' .
+          'CompatTypes_id_joystick=' . $cjoystick . ',' .
+          'CompatTypes_id_speaker=' .  $cspeaker . ',' .
+          'CompatTypes_id_sb=' .       $csb . ',' .
+          'CompatTypes_id_adlib=' .    $cadlib . ',' .
+          'CompatTypes_id_midi=' .     $cmidi . ',' .
+          'CompatTypes_id_gus=' .      $cgus . ',' .
+          'CompatTypes_id_disk=' .     $cdisk . ',' .
+          'CompatTypes_id_io=' .       $cio . ',' .
+          'CompatTypes_id_timer=' .    $ctimer . ',' .
+          'OSVerTypes_id=' .           $os . ',' .
+          'EMUVerTypes_id=' .          $emu . ' WHERE id=' . $reportid . ' AND Users_id=' . AuthGetUserId()))
+      {
         return false;
+      }
 
       return true;
     } else {
-      if (!MysqlQuery('INSERT INTO Reports (Users_id,Applications_id,time_created,comment,CompatTypes_id_midi,CompatTypes_id_sb,CompatTypes_id_adlib,CompatTypes_id_joystick,OSVerTypes_id,EMUVerTypes_id) VALUES (' . AuthGetUserId() . ',' . $Applications_id . ',NOW(),"' . mysql_escape_string($comment) . '",' . $cmidi . ',' . $csb . ',' . $cadlib . ',' . $cjoystick . ',' . $os . ',' . $emu . ')'))
+      if (!MysqlQuery('INSERT INTO Reports (Users_id,Applications_id,time_created,comment,CompatTypes_id_video,CompatTypes_id_keyboard,CompatTypes_id_mouse,CompatTypes_id_joystick,CompatTypes_id_speaker,CompatTypes_id_sb,CompatTypes_id_adlib,CompatTypes_id_midi,CompatTypes_id_gus,CompatTypes_id_disk,CompatTypes_id_io,CompatTypes_id_timer,OSVerTypes_id,EMUVerTypes_id) ' .
+          'VALUES (' . AuthGetUserId() . ',' . $Applications_id . ',NOW(),"' . mysql_escape_string($comment) . '",' . $cvideo . ',' . $ckeyboard . ',' . $cmouse . ',' . $cjoystick . ',' . $cspeaker . ',' . $csb . ',' . $cadlib . ',' . $cmidi . ',' . $cgus . ',' . $cdisk . ',' . $cio . ',' . $ctimer . ',' . $os . ',' . $emu . ')'))
+      {
         return false;
+      }
 
       $reportid = mysql_insert_id();
 

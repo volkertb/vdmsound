@@ -20,10 +20,10 @@
 
   if (isset($reportid)) {
     $myReports = AppsGetReports($reportid, NULL, NULL, true,
-                                APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
-                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT   | APPS_GET_AS_ICON,
-                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
-                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_USER   | APPS_GET_COMMENT | APPS_GET_AS_ID   | APPS_GET_AS_TEXT,
+                                APPS_GET_TITLE  | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT   | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER  | APPS_GET_EMUVER  | APPS_GET_EMUCAPS | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_COMPAT | APPS_GET_AS_TEXT | APPS_GET_AS_ID   | APPS_GET_AS_ICON,
                                 NULL, false);
 
     if ($myReports && (count($myReports) > 0)) {
@@ -36,10 +36,10 @@
     if (!isset($sortasc)) $sortasc = true;
 
     $myReports = AppsGetReports(NULL, NULL, $appid, true,
-                                APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
-                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
-                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
-                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_USER   | APPS_GET_COMMENT | APPS_GET_AS_ID   | APPS_GET_AS_TEXT,
+                                APPS_GET_TITLE  | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER  | APPS_GET_EMUVER  | APPS_GET_EMUCAPS | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_COMPAT | APPS_GET_AS_TEXT | APPS_GET_AS_ID   | APPS_GET_AS_ICON,
                                 $sortkey, $sortasc, $i, $n);
 
     if ($myReports && (count($myReports) > 0)) {
@@ -52,10 +52,10 @@
     if (!isset($sortasc)) $sortasc = true;
 
     $myReports = AppsGetReports(NULL, $userid, NULL, true,
-                                APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
-                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
-                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
-                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_USER   | APPS_GET_COMMENT | APPS_GET_AS_ID   | APPS_GET_AS_TEXT,
+                                APPS_GET_TITLE  | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER  | APPS_GET_EMUVER  | APPS_GET_EMUCAPS | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_COMPAT | APPS_GET_AS_TEXT | APPS_GET_AS_ID   | APPS_GET_AS_ICON,
                                 $sortkey, $sortasc, $i, $n);
 
     if ($myReports && (count($myReports) > 0)) {

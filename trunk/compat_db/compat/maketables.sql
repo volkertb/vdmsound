@@ -19,8 +19,7 @@ CREATE TABLE Titles (
 	name VARCHAR ( 255 ) NOT NULL,
 	nameSoundex VARCHAR ( 255 ) NOT NULL,
 	PRIMARY KEY (id),
-	UNIQUE KEY name (name),
-	FULLTEXT name_ft (name,nameSoundex)
+	UNIQUE KEY name (name)
 	);
 
 CREATE TABLE Applications (
@@ -58,6 +57,7 @@ CREATE TABLE OSVerTypes (
 CREATE TABLE EMUVerTypes (
 	id INTEGER NOT NULL,
 	description VARCHAR ( 48 ) NOT NULL,
+        emulates VARCHAR ( 128 ),
 	icon_URL VARCHAR ( 255 ),
 	PRIMARY KEY (id)
 	);
@@ -76,10 +76,18 @@ CREATE TABLE Reports (
 	time_created DATETIME NOT NULL,
 	time_updated TIMESTAMP DEFAULT NULL,
 	comment TEXT,
-	CompatTypes_id_midi SMALLINT NOT NULL,
+	CompatTypes_id_video SMALLINT NOT NULL,
+	CompatTypes_id_keyboard SMALLINT NOT NULL,
+	CompatTypes_id_mouse SMALLINT NOT NULL,
+	CompatTypes_id_joystick SMALLINT NOT NULL,
+	CompatTypes_id_speaker SMALLINT NOT NULL,
 	CompatTypes_id_sb SMALLINT NOT NULL,
 	CompatTypes_id_adlib SMALLINT NOT NULL,
-	CompatTypes_id_joystick SMALLINT NOT NULL,
+	CompatTypes_id_midi SMALLINT NOT NULL,
+	CompatTypes_id_gus SMALLINT NOT NULL,
+	CompatTypes_id_disk SMALLINT NOT NULL,
+	CompatTypes_id_io SMALLINT NOT NULL,
+	CompatTypes_id_timer SMALLINT NOT NULL,
 	OSVerTypes_id INTEGER NOT NULL,
 	EMUVerTypes_id INTEGER NOT NULL,
 	PRIMARY KEY (id),
