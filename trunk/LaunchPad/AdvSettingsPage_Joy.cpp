@@ -163,7 +163,7 @@ void CAdvSettingsPage_Joy::OnButJoymapbrowse()
   CString fileName;
   m_edtJoymapbrowse.GetWindowText(fileName);
 
-  COpenMAPFileDialog dlgFile(fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), this);
+  CFileDialog dlgFile(TRUE, NULL, fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER3), this);
 
   switch (dlgFile.DoModal()) {
     case IDOK:

@@ -66,22 +66,10 @@ class COpenDOSProgramDialog : public CFileDialog {
 
 
 //////////////////////////////////////////////////////////////////////
-// COpenMAPFileDialog
-//////////////////////////////////////////////////////////////////////
-
-class COpenMAPFileDialog : public CFileDialog {
-  public:
-    COpenMAPFileDialog(LPCTSTR lpszFileName = NULL, CWnd* pParentWnd = NULL);
-
-  protected:
-    CString m_strFilter;
-};
-
-
-
-//////////////////////////////////////////////////////////////////////
 // VLPUtil
 //////////////////////////////////////////////////////////////////////
+
+class CLaunchPadSettings;
 
 namespace VLPUtil {
   // Constants
@@ -105,6 +93,7 @@ namespace VLPUtil {
   CString GetRelativePath(LPCTSTR filePath, LPCTSTR baseDir, BOOL isPathOnly = FALSE);
   CString GetAbsolutePath(LPCTSTR filePath, LPCTSTR baseDir, BOOL isPathOnly = FALSE);
   CString GetDirectory(LPCTSTR filePath);
+  CString GetFilename(LPCTSTR filePath, BOOL removeExtension = FALSE);
   BOOL IsDirectory(LPCTSTR pszPath);
   CString RenameExtension(LPCTSTR filePath, LPCTSTR ext);
   BOOL FileExists(LPCTSTR filePath);
@@ -122,6 +111,8 @@ namespace VLPUtil {
   // Message and string formatting helper functions
   CString AFX_CDECL FormatMessage(DWORD dwMessageID, bool bFromSystem = true, HMODULE hModule = NULL, DWORD dwLanguageID = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), bool bIgnoreInserts = true, ...);
   CString AFX_CDECL FormatString(LPCTSTR lpszFormat, ...);
+
+  CString LoadString(UINT nID);
 
   // COM helper class
   // Keeps COM initialized during the lifetime of the object
