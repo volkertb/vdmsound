@@ -249,13 +249,11 @@ BOOL WINAPI ConsoleEventHandler(
 
     case 3: /* WinNT4: corresponds to typing 'exit' at the command prompt */
     case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
       unloadConfiguration();
       VDDTerminateVDM();
       return TRUE;
-
-    case CTRL_LOGOFF_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-      return FALSE;
 
     default:
       return FALSE;
