@@ -30,6 +30,14 @@ extern CComModule _Module;
 
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef _VXD_SVC
+
+#include "vxdsdll.h"
+
+#pragma comment ( lib , "vxdsdll.lib" )
+
+#else // _VXD_SVC
+
 #ifdef _M_IX86
 #define i386
 #endif
@@ -44,6 +52,8 @@ extern "C" {
 #endif
 
 #pragma comment ( lib , "ntvdm.lib" )
+
+#endif // _VXD_SVC
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
