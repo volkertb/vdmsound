@@ -5,6 +5,8 @@
 #include "resource.h"
 #include "ChangeIconDlg.h"
 
+#include "LaunchPadUtil.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -19,8 +21,19 @@ CChangeIconDlg::CChangeIconDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CChangeIconDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CChangeIconDlg)
-		// NOTE: the ClassWizard will add member initialization here
+	m_edtFile_val = _T("");
 	//}}AFX_DATA_INIT
+}
+
+void CChangeIconDlg::UpdateIconList(void) {
+  using namespace LaunchPadSettingsHelper;
+
+  UpdateData(TRUE);
+
+  CString iconPath;
+  int iconIndex;
+  ParseIconLocation(m_edtFile_val, iconPath, iconIndex);
+  m_lstIcons.LoadIcons(iconPath, iconIndex);
 }
 
 
@@ -28,16 +41,33 @@ void CChangeIconDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CChangeIconDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Control(pDX, IDC_LST_ICONS, m_lstIcons);
+	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
+	DDV_MaxChars(pDX, m_edtFile_val, 80);
 	//}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CChangeIconDlg, CDialog)
 	//{{AFX_MSG_MAP(CChangeIconDlg)
-		// NOTE: the ClassWizard will add message map macros here
+	ON_EN_KILLFOCUS(IDC_EDT_FILE, OnKillfocusEdtFile)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CChangeIconDlg message handlers
+
+BOOL CChangeIconDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+	
+	// TODO: Add extra initialization here
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CChangeIconDlg::OnKillfocusEdtFile() 
+{
+  UpdateIconList();
+}

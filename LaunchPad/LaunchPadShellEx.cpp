@@ -5,6 +5,9 @@
 
 #include "BasicSettingsPage.h"
 
+#include "LaunchPadSettings.h"
+#include "LaunchPadUtil.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // CLaunchPadShellEx
 
@@ -81,4 +84,50 @@ HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
   } catch (...) {
     return E_UNEXPECTED;
   }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IPersistFile
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::Load(LPCOLESTR pszFileName, DWORD dwMode) {
+  m_fileNames.Add(pszFileName);
+  return S_OK;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IExtractIcon
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::Extract(LPCTSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize) {
+  return S_FALSE;
+}
+
+HRESULT CLaunchPadShellEx::GetIconLocation(UINT uFlags, LPTSTR szIconFile, UINT cchMax, LPINT piIndex, UINT* pwFlags) {
+  CString iconLocation, iconPath;
+  int iconIndex;
+
+  if ((szIconFile == NULL) || (piIndex == NULL) || (pwFlags == NULL))
+    return E_POINTER;
+
+  if (cchMax <= 0)
+    return E_INVALIDARG;
+
+  CLaunchPadSettings settings(m_fileNames);
+
+  if (FAILED(settings.GetValue(_T("program"), _T("icon"), iconLocation)))
+    return S_FALSE;
+
+  LaunchPadSettingsHelper::ParseIconLocation(iconLocation, iconPath, iconIndex);
+
+  _tcsncpy(szIconFile, (LPCTSTR)iconPath, cchMax);
+
+  *piIndex = iconIndex;
+  *pwFlags = GIL_PERINSTANCE;
+
+  return S_OK;
 }

@@ -7,6 +7,8 @@
 // ChangeIconDlg.h : header file
 //
 
+#include "IconListBox.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // CChangeIconDlg dialog
 
@@ -16,10 +18,15 @@ class CChangeIconDlg : public CDialog
 public:
 	CChangeIconDlg(CWnd* pParent = NULL);   // standard constructor
 
+protected:
+  void UpdateIconList(void);
+
+public:
 // Dialog Data
 	//{{AFX_DATA(CChangeIconDlg)
 	enum { IDD = IDD_CHANGEICON };
-		// NOTE: the ClassWizard will add data members here
+	CIconListBox m_lstIcons;
+	CString	m_edtFile_val;
 	//}}AFX_DATA
 
 
@@ -35,7 +42,8 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CChangeIconDlg)
-		// NOTE: the ClassWizard will add member functions here
+	virtual BOOL OnInitDialog();
+	afx_msg void OnKillfocusEdtFile();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

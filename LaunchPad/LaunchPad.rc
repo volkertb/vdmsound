@@ -104,7 +104,9 @@ IDR_LAUNCHPADSHELLEX    REGISTRY DISCARDABLE    "LaunchPadShellEx.rgs"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON                ICON    DISCARDABLE     "VDMSound.ico"
+IDI_APPICON             ICON    DISCARDABLE     "VDMSound.ico"
+IDI_UNKNOWNICON         ICON    DISCARDABLE     "Unknown.ico"
+IDI_MULTIPLEICON        ICON    DISCARDABLE     "Multiple.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -126,8 +128,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,41,119,10
     CONTROL         "Enable basic &VESA support",IDC_CHK_VESA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,53,103,10
-    CONTROL         "Enable low-level CD-&ROM support",IDC_CHK_CDROM,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,65,123,10
+    CONTROL         "Enable low-level CD-&ROM support (MSCDEX)",
+                    IDC_CHK_CDROM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,
+                    65,159,10
     GROUPBOX        "&MIDI Emulation",IDC_STATIC,7,84,213,48,WS_GROUP
     CONTROL         "General MIDI (&GM) or GS",IDC_OPT_GMIDI,"Button",
                     BS_AUTORADIOBUTTON | WS_TABSTOP,14,96,95,10
@@ -138,9 +141,9 @@ BEGIN
     GROUPBOX        "&Joystick Emulation",IDC_STATIC,7,137,213,48,WS_GROUP
     CONTROL         "Pair of &2-button, 2-axis joysticks",IDC_OPT_JOY2BUT,
                     "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,149,115,10
-    CONTROL         "Single &4-button, 4-axis joystick with rudder and throttle",
+    CONTROL         "Single &4-button, 4-axis joystick (with rudder and throttle)",
                     IDC_OPT_JOY4BUT,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    14,160,185,10
+                    14,160,189,10
     CONTROL         "Other",IDC_OPT_JOYOTHER,"Button",BS_AUTORADIOBUTTON | 
                     WS_TABSTOP,14,171,33,10
     CONTROL         "Do not close DOS window on e&xit",IDC_CHK_CLOSE,"Button",
@@ -148,19 +151,22 @@ BEGIN
     PUSHBUTTON      "A&dvanced...",IDC_BUT_ADVANCED,170,190,50,14
 END
 
-IDD_BASICBROWSE DIALOG DISCARDABLE  0, 0, 239, 66
+IDD_BASICBROWSE DIALOGEX 0, 0, 209, 84
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Change Program Information"
 FONT 8, "MS Sans Serif"
 BEGIN
-    RTEXT           "Program:",IDC_STATIC,7,7,40,14,SS_CENTERIMAGE
-    EDITTEXT        IDC_EDT_FILE,52,7,125,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...",IDC_BUT_FILEBROWSE,182,7,50,14
-    RTEXT           "Arguments:",IDC_STATIC,7,24,40,14,SS_CENTERIMAGE
-    EDITTEXT        IDC_EDT_ARGS,52,24,125,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Change icon...",IDC_BUT_CHANGEICON,52,45,60,14
-    DEFPUSHBUTTON   "OK",IDOK,127,45,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,182,45,50,14
+    RTEXT           "&Program:",IDC_STATIC,7,7,40,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDT_FILE,52,7,136,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "&...",IDC_BUT_FILEBROWSE,188,7,14,14,NOT WS_TABSTOP,
+                    WS_EX_STATICEDGE
+    RTEXT           "&Arguments:",IDC_STATIC,7,24,40,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDT_ARGS,52,24,150,14,ES_AUTOHSCROLL
+    RTEXT           "&Run in:",IDC_STATIC,7,41,40,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDT_DIR,52,41,150,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "&Change icon...",IDC_BUT_CHANGEICON,32,63,60,14
+    DEFPUSHBUTTON   "OK",IDOK,97,63,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,152,63,50,14
 END
 
 IDD_CHANGEICON DIALOG DISCARDABLE  0, 0, 211, 199
@@ -171,7 +177,7 @@ BEGIN
     LTEXT           "&File name:",IDC_STATIC,7,7,43,10,NOT WS_GROUP
     EDITTEXT        IDC_EDT_FILE,7,17,197,14,ES_AUTOHSCROLL
     LTEXT           "&Current icon:",IDC_STATIC,7,36,79,10
-    LISTBOX         IDC_LIST3,7,47,197,41,LBS_OWNERDRAWFIXED | 
+    LISTBOX         IDC_LST_ICONS,7,47,197,125,LBS_OWNERDRAWFIXED | 
                     LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | 
                     LBS_DISABLENOSCROLL | WS_HSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,46,179,50,14
@@ -204,12 +210,13 @@ BEGIN
     IDD_BASICBROWSE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 232
+        RIGHTMARGIN, 202
         VERTGUIDE, 47
         VERTGUIDE, 52
         TOPMARGIN, 7
-        BOTTOMMARGIN, 59
+        BOTTOMMARGIN, 77
         HORZGUIDE, 24
+        HORZGUIDE, 41
     END
 
     IDD_CHANGEICON, DIALOG
@@ -218,6 +225,8 @@ BEGIN
         RIGHTMARGIN, 204
         TOPMARGIN, 7
         BOTTOMMARGIN, 192
+        HORZGUIDE, 17
+        HORZGUIDE, 47
     END
 END
 #endif    // APSTUDIO_INVOKED

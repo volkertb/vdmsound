@@ -288,6 +288,10 @@ SOURCE=.\ChangeIconDlg.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\IconListBox.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPad.cpp
 # End Source File
 # Begin Source File
@@ -325,6 +329,10 @@ SOURCE=.\ChangeIconDlg.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\IconListBox.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPadSettings.h
 # End Source File
 # Begin Source File
@@ -353,7 +361,15 @@ SOURCE=.\LaunchPadShellEx.rgs
 # End Source File
 # Begin Source File
 
+SOURCE=.\Multiple.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\Resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Unknown.ico
 # End Source File
 # Begin Source File
 

@@ -16,10 +16,14 @@ class CBasicBrowseDlg : public CDialog
 public:
 	CBasicBrowseDlg(CWnd* pParent = NULL);   // standard constructor
 
+  CString m_iconLocation;   // icon location (file name), not shown in CBasicBrowseDlg
+
 // Dialog Data
 	//{{AFX_DATA(CBasicBrowseDlg)
 	enum { IDD = IDD_BASICBROWSE };
-		// NOTE: the ClassWizard will add data members here
+	CString	m_edtArgs_val;
+	CString	m_edtFile_val;
+	CString	m_edtDir_val;
 	//}}AFX_DATA
 
 
@@ -35,7 +39,8 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CBasicBrowseDlg)
-		// NOTE: the ClassWizard will add member functions here
+	afx_msg void OnButFilebrowse();
+	afx_msg void OnButChangeicon();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
