@@ -124,7 +124,7 @@ STDMETHODIMP CMIDIOut::Destroy() {
 STDMETHODIMP CMIDIOut::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
   HRESULT hrThis = S_OK, hrThat = S_OK;
 
-  if ((m_hMidiOut == NULL) && (!MidiOutOpen())) {
+  if ((m_hMidiOut == NULL) && (!MidiOutOpen(false))) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
   } else {
     union {
@@ -152,7 +152,7 @@ STDMETHODIMP CMIDIOut::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length) {
 
   HRESULT hrThis = S_OK, hrThat = S_OK;
 
-  if ((m_hMidiOut == NULL) && (!MidiOutOpen())) {
+  if ((m_hMidiOut == NULL) && (!MidiOutOpen(false))) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
   } else {
     MIDIHDR* midiHdr = NULL;
@@ -310,6 +310,7 @@ void CALLBACK CMIDIOut::MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, D
 //
 bool CMIDIOut::MidiOutOpen(bool isInteractive) {
   static bool isErrPrompt = true;
+  static bool isErrLog    = true;
   static time_t lastRetry = 0;
 
   // Don't open the device if it's already open
@@ -327,23 +328,33 @@ bool CMIDIOut::MidiOutOpen(bool isInteractive) {
 
   // Attempt to open the MIDI-out device
   while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, (DWORD)MidiOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
-    if (!isErrPrompt)       // did the user select not to be prompted again ?
-      return false;         // stop trying
+    if (isErrLog) {         // do we log the error ?
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
+      isErrLog = false;     // only log this error once, as it will probably (re)occur several times in a row
+    }
 
     if (!isInteractive)     // do we want to pop up a message box ?
-      return false;         // stop trying
+      break;                // stop trying
+
+    if (!isErrPrompt)       // did the user select not to be prompted again ?
+      break;                // stop trying
 
     if (MessageBox(FormatMessage(MSG_ERR_E_OPENDEVICE, false, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)),
                    _T("MIDI-out Device Error"), /* TODO: LoadString(...) */
                    MB_RETRYCANCEL, MB_ICONERROR) == IDCANCEL)
     {
       isErrPrompt = false;  // the user does not whish to be prompted again !
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
-      return false;         // stop trying
+      break;                // stop trying
     }
   }
 
-  return (m_hMidiOut != NULL);
+  if (m_hMidiOut != NULL) { // The device was opened successfully
+    isErrLog    = true;     // Next time we get an error, log it
+    isErrPrompt = true;     // Next time we get an error, prompt the user (if interactive)
+    return true;
+  } else {                  // The device could not be open, and the user did not retry
+    return false;
+  }
 }
 
 //

@@ -172,7 +172,7 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
       m_waveFormat.cbSize = 0;
 
       // Open the device with the new format
-      if (!WaveOutOpen())
+      if (!WaveOutOpen(false))
         hrThis = S_FALSE;
 
       // No bytes are enqueued for playback (yet)
@@ -379,6 +379,7 @@ void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, D
 //
 bool CWaveOut::WaveOutOpen(bool isInteractive) {
   static bool isErrPrompt = true;
+  static bool isErrLog    = true;
   static time_t lastRetry = 0;
 
   // Don't open the device if it's already open
@@ -396,23 +397,33 @@ bool CWaveOut::WaveOutOpen(bool isInteractive) {
 
   // Attempt to open the Wave-out device
   while ((errCode = waveOutOpen(&m_hWaveOut, m_deviceID, &m_waveFormat, (DWORD)WaveOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
-    if (!isErrPrompt)       // did the user select not to be prompted again ?
-      return false;         // stop trying
+    if (isErrLog) {         // do we log the error ?
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
+      isErrLog = false;     // only log this error once, as it will probably (re)occur several times in a row
+    }
 
     if (!isInteractive)     // do we want to pop up a message box ?
-      return false;         // stop trying
+      break;                // stop trying
+
+    if (!isErrPrompt)       // did the user select not to be prompted again ?
+      break;                // stop trying
 
     if (MessageBox(FormatMessage(MSG_ERR_E_OPENDEVICE, false, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)),
                    _T("Wave-out Device Error"), /* TODO: LoadString(...) */
                    MB_RETRYCANCEL, MB_ICONERROR) == IDCANCEL)
     {
       isErrPrompt = false;  // the user does not whish to be prompted again !
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-      return false;         // stop trying
+      break;                // stop trying
     }
   }
 
-  return (m_hWaveOut != NULL);
+  if (m_hWaveOut != NULL) { // The device was opened successfully
+    isErrLog    = true;     // Next time we get an error, log it
+    isErrPrompt = true;     // Next time we get an error, prompt the user (if interactive)
+    return true;
+  } else {                  // The device could not be open, and the user did not retry
+    return false;
+  }
 }
 
 //
