@@ -171,7 +171,7 @@ HRESULT CMIDIMapper::loadMapping(LPCSTR fName) {
   CINIParser map;
 
   try {
-    map.load(fName);
+    map.load(SearchPathA(fName));
   } catch (CINIParser::fopen_error& foe) {
     DWORD lastError = GetLastError();
     return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_IO_OPEN, /*false, NULL, 0, */false, (LPCTSTR)CString(foe.location.c_str()), lastError, (LPCTSTR)FormatMessage(lastError)), __uuidof(IVDMBasicModule), E_ABORT);
