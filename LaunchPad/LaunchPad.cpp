@@ -11,11 +11,13 @@
 #include "LaunchPad.h"
 
 #include "LaunchPad_i.c"
+#include "PropertySheetShellEx.h"
 
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
+OBJECT_ENTRY(CLSID_PropertySheetShellEx, CPropertySheetShellEx)
 END_OBJECT_MAP()
 
 class CLaunchPadApp : public CWinApp
