@@ -11,14 +11,13 @@
 
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
+#include "ContextHelp.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CBasicSettingsPage dialog
 
 class CBasicSettingsPage : public CPropertyPage
 {
-	DECLARE_DYNCREATE(CBasicSettingsPage)
-
 // Construction
 private:
 	CBasicSettingsPage(const CStringArray& fileNames = CStringArray());
@@ -69,7 +68,6 @@ protected:
 	//{{AFX_MSG(CBasicSettingsPage)
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
-	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnButChange();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -77,6 +75,7 @@ protected:
 // Member variables
 protected:
   CLaunchPadSettings m_settings;
+  CContextHelp m_help;
 };
 
 //{{AFX_INSERT_LOCATION}}
