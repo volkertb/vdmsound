@@ -256,6 +256,10 @@ void CMPU401Ctl::logWarning(const char* message) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, (LPCTSTR)CString(message));
 }
 
+void CMPU401Ctl::logInformation(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, (LPCTSTR)CString(message));
+}
+
 void CMPU401Ctl::putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length) {
   if (m_midiOut == NULL)
     return;
@@ -264,6 +268,7 @@ void CMPU401Ctl::putEvent(unsigned char status, unsigned char data1, unsigned ch
   _ASSERTE(!IS_REALTIME_EVENT(status));
   _ASSERTE(status != MIDI_EVENT_SYSTEM_SYSEX);
   _ASSERTE(status != MIDI_EVENT_SYSTEM_EOX);
+  _ASSERTE(length + 1 == MIDI_evt_len[status & 0xff]);
 
   HRESULT hr;
 
@@ -276,7 +281,7 @@ void CMPU401Ctl::putSysEx(const unsigned char * data, long length) {
   if (m_midiOut == NULL)
     return;
 
-  _ASSERTE(length >= 4);
+  _ASSERTE(length + 1 >= MIDI_evt_len[MIDI_EVENT_SYSTEM_SYSEX]);
 
   HRESULT hr;
 

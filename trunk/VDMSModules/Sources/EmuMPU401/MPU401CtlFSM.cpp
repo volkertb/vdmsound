@@ -6,7 +6,7 @@
 CMPU401CtlFSM::CMPU401CtlFSM(IMPU401HWEmulationLayer* hwemu)
   : m_mode(M_INTELLIGENT), m_hwemu(hwemu), m_inBuf(hwemu), m_outBuf(hwemu)
 {
-  ASSERT(m_hwemu != NULL);
+  _ASSERTE(m_hwemu != NULL);
 }
 
 CMPU401CtlFSM::~CMPU401CtlFSM(void)
@@ -31,15 +31,17 @@ void CMPU401CtlFSM::reset(void) {
 void CMPU401CtlFSM::putCommand(
     char command)
 {
-  switch (command) {
+  switch (command & 0xff) {
     // REQUEST to switch to UART mode
     case CMD_UART_MODE:
+      m_hwemu->logInformation("MPU-401 Switched to UART mode");
       m_mode = M_UART;              // switched to UART mode
       m_inBuf.putByte(0xfe);        // acknowledge command
       return;
 
     // REQUEST to reset (and switch to INTELLIGENT mode)
     case CMD_RESET:
+      m_hwemu->logInformation("MPU-401 reset");
       m_mode = M_INTELLIGENT;       // switched to intelligent mode
       reset();                      // flush buffers
       m_inBuf.putByte(0xfe);        // acknowledge command
@@ -47,6 +49,9 @@ void CMPU401CtlFSM::putCommand(
 
     // Illegal or unsupported command
     default:
+      std::ostringstream oss;
+      oss << std::setbase(16) << "Illegal or unsupported MPU-401 command (0x" << (command & 0xff) << ", " << (m_mode == M_UART ? "UART" : m_mode == M_INTELLIGENT ? "intelligent" : "<unknown>") << " mode), faking acknowledge";
+      m_hwemu->logError(oss.str().c_str());
       m_inBuf.putByte(0xfe);        // acknowledge command
       return;
   }
@@ -73,6 +78,10 @@ void CMPU401CtlFSM::putData(
 //
 char CMPU401CtlFSM::getData(void) {
   BYTE data = 0xff;
-  m_inBuf.getByte(&data);           // Input (buffered) data from the MIDI device
+
+  if (!m_inBuf.getByte(&data)) {    // Input (buffered) data from the MIDI device
+    m_hwemu->logError("Attempted to read from empty MPU-401 inbound FIFO");
+  }
+
   return data;
 }

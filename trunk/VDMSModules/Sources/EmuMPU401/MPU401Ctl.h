@@ -52,6 +52,7 @@ public:
   void generateInterrupt(void);
   void logError(const char* message);
   void logWarning(const char* message);
+  void logInformation(const char* message);
   void putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length);
   void putSysEx(const unsigned char * data, long length);
   void putRealTime(unsigned char data);
