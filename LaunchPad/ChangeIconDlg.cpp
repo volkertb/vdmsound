@@ -133,13 +133,9 @@ void CChangeIconDlg::OnButIcobrowse()
 {
   CWaitCursor wait;
 
-  CString strFilter;
-  strFilter.LoadString(IDS_TXT_FILTER2);
-  strFilter += _T('|');
-
   UpdateData(TRUE);     // save all changes that occured in the GUI
 
-  CFileDialog dlgFile(TRUE, NULL, m_edtIcofile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, strFilter, this);
+  CFileDialog dlgFile(TRUE, NULL, m_edtIcofile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER2), this);
 
   if (dlgFile.DoModal() == IDOK) {
     m_edtIcofile_val = dlgFile.GetPathName();

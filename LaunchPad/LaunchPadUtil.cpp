@@ -166,16 +166,8 @@ UINT CDIBitmap::SetDIBits(CDC* pdc, UINT uStartScan, UINT cScanLines, CONST VOID
 COpenDOSProgramDialog::COpenDOSProgramDialog(
   LPCTSTR lpszFileName,
   CWnd* pParentWnd)
-: CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, NULL, pParentWnd)
+ : CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER1), pParentWnd)
 {
-  m_strFilter.LoadString(IDS_TXT_FILTER1);
-  m_strFilter += _T('|'); // add trailing delimiter
-
-  // Change '|' delimiters to '\0'; do not call ReleaseBuffer() since the string contains '\0' characters
-  for (LPTSTR pch = m_strFilter.GetBuffer(0); (pch = _tcschr(pch, '|')) != NULL; *(pch++) = '\0');
-
-  m_ofn.lpstrFilter  = m_strFilter;
-  m_ofn.nFilterIndex = 1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -191,33 +183,6 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
     message.Format(_T("The file '%s' does not appear to be a valid MS-DOS executable or batch file.\n\rDo you want to continue?"), (LPCTSTR)GetFileName());
     return (MessageBox(message, _T("Warning"), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES);
   }
-}
-
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// COpenMAPFileDialog
-//
-//////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-COpenMAPFileDialog::COpenMAPFileDialog(
-  LPCTSTR lpszFileName,
-  CWnd* pParentWnd)
-: CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, NULL, pParentWnd)
-{
-  m_strFilter.LoadString(IDS_TXT_FILTER3);
-  m_strFilter += _T('|'); // add trailing delimiter
-
-  // Change '|' delimiters to '\0'; do not call ReleaseBuffer() since the string contains '\0' characters
-  for (LPTSTR pch = m_strFilter.GetBuffer(0); (pch = _tcschr(pch, '|')) != NULL; *(pch++) = '\0');
-
-  m_ofn.lpstrFilter  = m_strFilter;
-  m_ofn.nFilterIndex = 1;
 }
 
 
@@ -263,19 +228,19 @@ LWSTDAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags);
 //
 //
 //
-BOOL StrSplit(LPCTSTR szSrc, TCHAR sep, CString& lhs, CString& rhs, BOOL fromBeginning = TRUE) {
+BOOL StrSplit(LPCTSTR szSrc, TCHAR sep, CString& lhs, CString& rhs, BOOL fromBeginning = TRUE, BOOL wantRHS = TRUE) {
   int splitPos;
   CString strSrc(szSrc);
   BOOL retVal = TRUE;
 
   if (fromBeginning) {
     if ((splitPos = strSrc.Find(sep)) < 0) {
-      splitPos = -1;
+      splitPos = wantRHS ? -1 : strSrc.GetLength();
       retVal = FALSE;
     }
   } else {
     if ((splitPos = strSrc.ReverseFind(sep)) < 0) {
-      splitPos = strSrc.GetLength();
+      splitPos = wantRHS ? -1 : strSrc.GetLength();
       retVal = FALSE;
     }
   }
@@ -795,9 +760,9 @@ void VLPUtil::ParseIconLocation(
   } catch (...) {
     iconPath.ReleaseBuffer();
     CString lhs, rhs;
-    StrSplit(iconPath, _T(','), lhs, rhs, FALSE);
+    StrSplit(iconPath, _T(','), lhs, rhs, FALSE, FALSE);
     iconPath = lhs;
-    iconIndex = _tcstol(rhs, NULL, 10);
+    iconIndex = _tcstol(rhs, NULL, 0);
   }
 }
 
@@ -866,17 +831,39 @@ CString VLPUtil::GetAbsolutePath(
 // Removes the trailing file name and backslash from a path, if it has them
 //
 CString VLPUtil::GetDirectory(LPCTSTR filePath) {
-  CString retVal(filePath);
-
-  LPTSTR retValBuf = retVal.GetBuffer(0);
-
   try {
-    PathRemoveFileSpec(retValBuf);
+    CString retVal(filePath);
+    PathRemoveFileSpec(retVal.GetBuffer(0));
     retVal.ReleaseBuffer();
     return retVal;
   } catch (...) {
     CString lhs, rhs;
-    StrSplit(filePath, _T('\\'), lhs, rhs, FALSE);
+    StrSplit(filePath, _T('\\'), lhs, rhs, FALSE, FALSE);
+    return lhs;
+  }
+}
+
+//
+// Returns the filename by removing any diectory or drive information
+//
+CString VLPUtil::GetFilename(LPCTSTR filePath, BOOL removeExtension) {
+  try {
+    CString retVal = PathFindFileName(filePath);
+
+    if (removeExtension) {
+      PathRemoveExtension(retVal.GetBuffer(0));
+      retVal.ReleaseBuffer();
+    }
+
+    return retVal;
+  } catch (...) {
+    CString lhs, rhs;
+    StrSplit(filePath, _T('\\'), lhs, rhs, FALSE, TRUE);
+
+    if (removeExtension) {
+      StrSplit(lhs, _T('.'), lhs, rhs, FALSE, FALSE);
+    }
+
     return lhs;
   }
 }
@@ -961,7 +948,7 @@ BOOL VLPUtil::isVLPFile(LPCTSTR fName) {
     return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0) && !PathIsDirectory(fName);
   } catch (...) {
     CString lhs, rhs;
-    StrSplit(fName, _T('.'), lhs, rhs, FALSE);
+    StrSplit(fName, _T('.'), lhs, rhs, FALSE, FALSE);
     return (rhs.CompareNoCase(_T("vlp")) == 0);
   }
 }
@@ -974,7 +961,7 @@ BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
     return (_tcsicmp(PathFindExtension(fName), _T(".bat")) == 0) || (SHGetFileInfo(fName, 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d);
   } catch (...) {
     CString lhs, rhs;
-    StrSplit(fName, _T('.'), lhs, rhs, FALSE);
+    StrSplit(fName, _T('.'), lhs, rhs, FALSE, FALSE);
     return (rhs.CompareNoCase(_T("exe")) == 0) || (rhs.CompareNoCase(_T("com")) == 0) || (rhs.CompareNoCase(_T("bat")) == 0);
   }
 }
@@ -1062,4 +1049,15 @@ CString AFX_CDECL VLPUtil::FormatString(
   Buffer.FormatV(lpszFormat, Arguments);
   va_end(Arguments);
   return Buffer;
+}
+
+//
+//
+//
+CString VLPUtil::LoadString(
+  UINT nID)
+{
+  CString result;
+  result.LoadString(nID);
+  return result;
 }

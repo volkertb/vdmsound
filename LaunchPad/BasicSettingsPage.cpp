@@ -197,11 +197,8 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
     m_settings.GetValue(_T("program"), _T("workdir"), progWDir, &isIndWDir);
 
     if (isIndExec || isIndParams) {
-      CString strTmp;
-      strTmp.LoadString(IDS_TXT_MULTIPLEVALUES);
-
       m_edtDoscmd.EnableWindow(FALSE);
-      m_edtDoscmd.SetWindowText(strTmp);
+      m_edtDoscmd.SetWindowText(VLPUtil::LoadString(IDS_TXT_MULTIPLEVALUES));
     } else {
       CString strTmp = VLPUtil::GetRelativePath(progExec, progWDir, FALSE) + _T(" ") + progParams;
       strTmp.TrimLeft(); strTmp.TrimRight();

@@ -81,9 +81,9 @@ VOID CAdvSettingsPage_Program::SyncGUIData(BOOL bSave) {
   // Windows shortcut keys
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altTab"),    m_chkWinkalttab,   TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altEsc"),    m_chkWinkaltesc,   TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("ctlEsc"),    m_chkWinkctrlesc,  TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("prscr"),     m_chkWinkprtsc,    TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altPrscr"),  m_chkWinkaltprtsc, TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("ctrlEsc"),   m_chkWinkctrlesc,  TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("prtSc"),     m_chkWinkprtsc,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altPrtSc"),  m_chkWinkaltprtsc, TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altEnter"),  m_chkWinkaltenter, TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altSpace"),  m_chkWinkaltspace, TRUE);
 }
@@ -100,6 +100,10 @@ BOOL CAdvSettingsPage_Program::OnInitDialog()
   // Enable context help
   m_help.Attach(this);
 	
+  // Enable auto-complete for file names
+  VLPUtil::EnableAutoComplete(m_edtDosprogram.GetSafeHwnd());
+  VLPUtil::EnableAutoComplete(m_edtDosdir.GetSafeHwnd());
+
   // Load the information from file into the GUI
   SyncGUIData(FALSE);
 
@@ -190,8 +194,7 @@ void CAdvSettingsPage_Program::OnButDosdirbrowse()
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  CString txtTitle;
-  txtTitle.LoadString(IDS_TXT_BROWSEFOLDER_TIPS);
+  CString txtTitle = VLPUtil::LoadString(IDS_TXT_BROWSEFOLDER_TIPS);
 
   TCHAR tmpBuf[MAX_PATH];
 

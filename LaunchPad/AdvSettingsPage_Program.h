@@ -30,6 +30,7 @@ protected:
 // Member variables
 protected:
   CLaunchPadSettings& m_settings;
+  VLPUtil::CComKeepAlive _autocomplete;    // COM must be present during the entire lifespan of any autocomplete controls
   CContextHelp m_help;
 	CString	m_edtDosargs_old;
 	CString	m_edtDosdir_old;
