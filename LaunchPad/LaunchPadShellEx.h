@@ -38,7 +38,7 @@ public:
 
 // Member variables
 protected:
-  CArray<CString,LPCTSTR> m_fileNames;
+  CStringArray m_fileNames;
 };
 
 #endif //__LAUNCHPADSHELLEX_H_
