@@ -17,6 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include <Thread.h>
+#include <string>
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -69,16 +70,19 @@ protected:
   //  one physical digital port
   struct DigitalInput {
     bool value;                   // the discrete value of the port
-    int mapJoyID;                 // the physical joystick this value should be read from
-    DigitalPortType mapPortID;    // the source digital port (button) on the physical joystick
-    int buttonID;                 // which button (or discrete POV bit) do we need
+    int numComponents;            // number of physical digital inputs that can affect this emulated digital input
+    struct {
+      int mapJoyID;               // the physical joystick this value should be read from
+      DigitalPortType mapPortID;  // the source digital port (button) on the physical joystick
+      int buttonID;               // which button (or discrete POV bit) do we need
+    } components[16];             // information about the physical digital inputs that can affect this emulated digital input
   };
 
   struct JoyEmuState {
     AnalogInput analog[4];        // emulated continuous value to be mapped on bits 0..3 (analogue) of the gameport
     DigitalInput digital[4];      // emulated discrete value to be mapped on bits 4..7 (digital) of the gameport
 
-    JoyPhysicalInfo info[2];      // physical information about the josytick(s) as seen by the host OS
+    JoyPhysicalInfo info[8];      // physical information about the josytick(s) as seen by the host OS
   };
 
 public:
@@ -129,6 +133,8 @@ protected:
   void resetJoystick(void);
   bool mapAnalogData(void);
   bool mapDigitalData(void);
+
+  static int getNextToken(const std::string& str, int lastPos, const char* separators = " \t,;\n\r");
 
 /////////////////////////////////////////////////////////////////////////////
 
