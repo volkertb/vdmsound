@@ -16,6 +16,7 @@
 #import <IVDMQuery.tlb>
 #import <IDMAC.tlb>
 #import <IWave.tlb>
+#import <IAddressable.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -136,6 +137,7 @@ protected:
   IVDMSERVICESLib::IVDMIOServicesPtr m_IOSrv;
   IDMACLib::IDMAControllerPtr m_DMACtl;
   IWAVELib::IWaveDataConsumerPtr m_waveOut;
+  IAddressableLib::IAddressablePtr m_AdLib;
 };
 
 #endif //__SBCOMPATCTL_H_
