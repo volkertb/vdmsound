@@ -49,7 +49,7 @@ public:
 // IWaveDataConsumer
 public:
   STDMETHOD(SetFormat)(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
-  STDMETHOD(PlayData)(BYTE * data, LONG length);
+  STDMETHOD(PlayData)(BYTE * data, LONG length, DOUBLE * load);
 
 protected:
   FILE* m_fOut;

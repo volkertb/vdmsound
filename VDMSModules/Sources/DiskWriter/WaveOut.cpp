@@ -95,7 +95,7 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
   return S_OK;
 }
 
-STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
+STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
   if (data == NULL)
     return E_POINTER;
 
@@ -105,7 +105,9 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
   }
 
   if (m_waveOut != NULL)
-    return m_waveOut->PlayData(data, length);
+    return m_waveOut->PlayData(data, length, load);
+
+  *load = 1.00;
 
   return S_OK;
 }
