@@ -1,0 +1,6 @@
+Action	Type	Source	Target
+s72	i2	S64	S255
+CustomAction	Action
+DIR_CA_TARGETDIR2	51	TARGETDIR	[%VDMSPath]
+ERR_CA_CANCELNEWERVERSION	19		Unable to install [ProductName]: A newer version of this product is already installed.
+ERR_CA_CANCELNOTWINNT	19		Unable to install [ProductName]: This product can only function under Windows NT 4.0, Windows 2000, Windows XP or other WinNT-based operating systems.
