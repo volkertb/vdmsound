@@ -1,0 +1,28 @@
+// VDMConfig.idl : IDL source for VDMConfig.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (VDMConfig.tlb) and marshalling code.
+
+import "oaidl.idl";
+
+[
+	uuid(B2E7B581-DFFD-11D4-9C3D-00A024112F81),
+	version(1.0),
+	helpstring("VDMConfig 1.0 Type Library")
+]
+library VDMCONFIGLib
+{
+	importlib("../Interfaces/IVDMQuery.tlb");
+
+	[
+		uuid(696A76E6-E970-11D4-9C4A-00A024112F81),
+		helpstring("CfgQuery Class")
+	]
+	coclass CfgQuery
+	{
+		interface IVDMQueryDependencies;
+		interface IVDMQueryConfiguration;
+		interface IVDMRTEnvironment;
+	};
+};
