@@ -33,12 +33,14 @@ protected:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Dialog Data
 	//{{AFX_DATA(CBasicSettingsPage)
 	enum { IDD = IDD_BASICPROPPAGE };
-	CButton	m_grpMidi;
-	CButton	m_grpJoystick;
+	CButton	m_chkUsempu;
+	CButton	m_chkUsejoy;
 	CStatic_Icon	m_icoApp;
 	CEdit	m_edtDoscmd;
 	CButton	m_chkEms;
@@ -71,6 +73,9 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	afx_msg void OnButChange();
+	afx_msg void OnButAdvanced();
+	afx_msg void OnChkUsejoy();
+	afx_msg void OnChkUsempu();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
