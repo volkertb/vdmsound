@@ -3,9 +3,9 @@
 <html>
 
 <head>
-	<title>Welcome to the VOGONS DOS COMPATIBILITY DATABASE</title>
+        <title>Welcome to the VOGONS DOS COMPATIBILITY DATABASE</title>
     <link rel="stylesheet" href="inc/default.css" type="text/css">
-	
+
 </head>
 
 <body>
@@ -34,11 +34,11 @@
 <div class="table1"><div class="table2" style="font-family: courier, arial; padding-bottom: 24px;">
 <span style="padding-bottom: 24px; font-size: 8pt; font-family: arial black, arial;">C:\REPORTS\DATABASE.EXE</span>
 <hr><center>
-# A B C D E F G H<br> 
+# A B C D E F G H<br>
 I J K L M N O P Q<br>
 R S T U V W X Y Z<br></center>
 <br>
- 
+
 <u>Search:</u>&nbsp;&nbsp;<input style="border: 1px solid #000000; width: 120px; font-family: courier, arial;" value="needle">
 
 </div></div>
@@ -97,7 +97,7 @@ This is bullshit news..
           alt="Valid HTML 4.0!" height="31" width="88"></a>
 <a href="http://jigsaw.w3.org/css-validator/">
   <img style="border:0;width:88px;height:31px"
-       src="http://jigsaw.w3.org/css-validator/images/vcss" 
+       src="http://jigsaw.w3.org/css-validator/images/vcss"
        alt="Valid CSS!">
  </a><br>
 
