@@ -189,9 +189,11 @@ int CRUNWITHVDMSThread::Run(void) {
   TRACE(_T("LaunchPad: execution thread started\n"));
 
   CPIFFile PIFFile;
+  CINIFile INIFile;
   TCHAR envBlock[MAX_ENVSIZE];
 
-  if (SetupPIF(PIFFile) &&
+  if (SetupINI(INIFile) &&
+      SetupPIF(PIFFile, INIFile) &&
       SetupEnv(envBlock, sizeof(envBlock) / sizeof(envBlock[0])))
   {
     CString strPIFFilename = PIFFile.GetFileName();
@@ -231,17 +233,178 @@ int CRUNWITHVDMSThread::Run(void) {
   return 0;
 }
 
-BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile) {
-  CString strTmp1, strTmp2;
+//
+//
+//
+BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
+  CString vdmsini;
+
+  CString vdms_debug_detail         = SettingGetString(_T("vdms.debug"), _T("detail"), _T("256"));
+  CString vdms_debug_file           = SettingGetString(_T("vdms.debug"), _T("file"), _T(".\\VDMS.LOG"));
+
+  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"), _T("enabled"), FALSE);
+  CString vdms_midi_port            = SettingGetString(_T("vdms.midi"), _T("port"), _T("0x330"));
+  CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"), _T("IRQ"), _T("2"));
+  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"), _T("mapFile"), _T("identity.map"));
+  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"), _T("device"), _T("-1"));
+  CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"), _T("showSysExLed"), _T("Scroll"));
+
+  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"), _T("enabled"), FALSE);
+  CString vdms_sb_dsp_port          = SettingGetString(_T("vdms.sb.dsp"), _T("port"), _T("0x220"));
+  CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"), _T("IRQ"), _T("7"));
+  CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"), _T("DMA8"), _T("1"));
+  CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"), _T("DMA16"), _T("5"));
+  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"), _T("version"), _T("4.15"));
+  CString vdms_sb_dsp_minDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("minDMAPeriod"), _T("5"));
+  CString vdms_sb_dsp_maxDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("maxDMAPeriod"), _T("16"));
+  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"), _T("device"), _T("-1"));
+  CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"), _T("buffer"), _T("75"));
+
+  BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"), _T("enabled"), FALSE);
+  CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"), _T("port"), _T("0x388"));
+  CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"), _T("sampleRate"), _T("11025"));
+  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"), _T("device"), _T("-1"));
+  CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"), _T("buffer"), _T("75"));
+
+  BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"), FALSE);
+  CString vdms_gameport_port        = SettingGetString(_T("vdms.gameport"), _T("port"), _T("0x201"));
+  CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"), _T("5"));
+  CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"), _T("250"));
+  CString vdms_gameport_pollPeriod  = SettingGetString(_T("vdms.gameport"), _T("pollPeriod"), _T("125"));
+  CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"), _T("joy2.map"));
+
+  //
+  // Basic settings
+  //
+  vdmsini += _T("[*.debug]\n");
+  vdmsini += _T("detail=") + vdms_debug_detail + _T("\n");
+  vdmsini += _T("file=") + vdms_debug_file + _T("\n");
+
+  vdmsini += _T("[VDMServicesProvider]\n");
+  vdmsini += _T("CLSID=VDDLoader.VDMServices\n");
+
+  //
+  // MIDI
+  //
+  if (vdms_midi_enabled) {
+    vdmsini += _T("[MPU401Controller]\n");
+    vdmsini += _T("CLSID=EmuMPU401.MPU401Ctl\n");
+    vdmsini += _T("[MPU401Controller.config]\n");
+    vdmsini += _T("port=") + vdms_midi_port + _T("\n");
+    vdmsini += _T("IRQ=") + vdms_midi_IRQ + _T("\n");
+    vdmsini += _T("[MPU401Controller.depends]\n");
+    vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+    vdmsini += _T("MidiOut=MIDIMapper\n");
+
+    vdmsini += _T("[MIDIMapper]\n");
+    vdmsini += _T("CLSID=MIDIToolkit.MIDIMapper\n");
+    vdmsini += _T("[MIDIMapper.config]\n");
+    vdmsini += _T("mapFile=") + vdms_midi_mapFile + _T("\n");
+    vdmsini += _T("[MIDIMapper.depends]\n");
+    vdmsini += _T("MidiOut=MIDIPlayer\n");
+
+    vdmsini += _T("[MIDIPlayer]\n");
+    vdmsini += _T("CLSID=MIDIDevice.MIDIOut\n");
+    vdmsini += _T("[MIDIPlayer.config]\n");
+    vdmsini += _T("device=") + vdms_midi_device + _T("\n");
+    vdmsini += _T("[MIDIPlayer.depends]\n");
+    vdmsini += _T("MidiOut=SysExIndicator\n");
+
+    vdmsini += _T("[SysExIndicator]\n");
+    vdmsini += _T("CLSID=MIDIIndicator.ActivityLights\n");
+    vdmsini += _T("[SysExIndicator.config]\n");
+    vdmsini += _T("led=") + vdms_midi_showSysExLed + _T("\n");
+  }
+
+  //
+  // SB - digital
+  //
+  if (vdms_sb_dsp_enabled) {
+    vdmsini += _T("[DMATransferManager]\n");
+    vdmsini += _T("CLSID=DMAController.TransferMgr\n");
+    vdmsini += _T("[DMATransferManager.config]\n");
+    vdmsini += _T("minDMAPeriod=") + vdms_sb_dsp_minDMAPeriod + _T("\n");
+    vdmsini += _T("maxDMAPeriod=") + vdms_sb_dsp_maxDMAPeriod + _T("\n");
+    vdmsini += _T("[DMATransferManager.depends]\n");
+    vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+
+    vdmsini += _T("[SBController]\n");
+    vdmsini += _T("CLSID=EmuSBCompat.SBCompatCtl\n");
+    vdmsini += _T("[SBController.config]\n");
+    vdmsini += _T("version=") + vdms_sb_dsp_version + _T("\n");
+    vdmsini += _T("port=") + vdms_sb_dsp_port + _T("\n");
+    vdmsini += _T("IRQ=") + vdms_sb_dsp_IRQ + _T("\n");
+    vdmsini += _T("DMA8=") + vdms_sb_dsp_DMA8 + _T("\n");
+    vdmsini += _T("DMA16=") + vdms_sb_dsp_DMA16 + _T("\n");
+    vdmsini += _T("[SBController.depends]\n");
+    vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+    vdmsini += _T("DMACtl=DMATransferManager\n");
+    vdmsini += _T("WaveOut=SBWavePlayer\n");
+
+    if (vdms_sb_fm_enabled) {
+      vdmsini += _T("AdLib=AdLibController\n");
+    }
+
+    vdmsini += _T("[SBWavePlayer]\n");
+    vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
+    vdmsini += _T("[SBWavePlayer.config]\n");
+    vdmsini += _T("device=") + vdms_sb_dsp_device + _T("\n");
+    vdmsini += _T("buffer=") + vdms_sb_dsp_buffer + _T("\n");
+  }
+
+  //
+  // SB - FM (AdLib)
+  //
+  if (vdms_sb_fm_enabled) {
+    vdmsini += _T("[AdLibController]\n");
+    vdmsini += _T("CLSID=EmuAdLib.AdLibCtl\n");
+    vdmsini += _T("[AdLibController.config]\n");
+    vdmsini += _T("port=") + vdms_sb_fm_port + _T("\n");
+    vdmsini += _T("sampleRate=") + vdms_sb_fm_sampleRate + _T("\n");
+    vdmsini += _T("[AdLibController.depends]\n");
+    vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+    vdmsini += _T("WaveOut=AdLibWavePlayer\n");
+
+    vdmsini += _T("[AdLibWavePlayer]\n");
+    vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
+    vdmsini += _T("[AdLibWavePlayer.config]\n");
+    vdmsini += _T("device=") + vdms_sb_fm_device + _T("\n");
+    vdmsini += _T("buffer=") + vdms_sb_fm_buffer + _T("\n");
+  }
+
+  //
+  // Joystick
+  //
+  if (vdms_gameport_enabled) {
+    vdmsini += _T("[JoystickController]\n");
+    vdmsini += _T("CLSID=EmuJoystick.JoystickCtl\n");
+    vdmsini += _T("[JoystickController.config]\n");
+    vdmsini += _T("port=") + vdms_gameport_port + _T("\n");
+    vdmsini += _T("minCoord=") + vdms_gameport_minCoord + _T("\n");
+    vdmsini += _T("maxCoord=") + vdms_gameport_maxCoord + _T("\n");
+    vdmsini += _T("pollPeriod=") + vdms_gameport_pollPeriod + _T("\n");
+    vdmsini += _T("mapFile=") + vdms_gameport_mapFile + _T("\n");
+    vdmsini += _T("[JoystickController.depends]\n");
+    vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+  }
+
+  return INIFile.Create(vdmsini);
+}
+
+//
+//
+//
+BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
+  CString strTmp;
 
   //
   // CONFIG
   //
   CString config;
 
-  strTmp1.Format(_T("DOS=%s,%s\r\n"), SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS")) ? _T("HIGH") : _T("LOW"),
+  strTmp.Format(_T("DOS=%s,%s\r\n"), SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS")) ? _T("HIGH") : _T("LOW"),
                                     SettingGetBool(_T("winnt.dos"), _T("useUMB")) ? _T("UMB") : _T("NOUMB"));
-  config += strTmp1;
+  config += strTmp;
 
   if (SettingGetBool(_T("winnt.dos"), _T("useUMB")) && SettingGetBool(_T("winnt.memory"), _T("useEMS"))) {
     config += _T("EMM=RAM\r\n");
@@ -251,8 +414,8 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile) {
     config += _T("DEVICE=%SYSTEMROOT%\\SYSTEM32\\HIMEM.SYS\r\n");
   }
 
-  strTmp1.Format(_T("FILES=%d\r\n"), SettingGetInt(_T("winnt.dos"), _T("files"), 40));
-  config += strTmp1;
+  strTmp.Format(_T("FILES=%d\r\n"), SettingGetInt(_T("winnt.dos"), _T("files"), 40));
+  config += strTmp;
 
   //
   // AUTOEXEC
@@ -277,6 +440,8 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\NW16\r\n");
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\VWIPXSPX\r\n");
   }
+
+  autoexec += VLPUtil::GetAbsolutePath(_T("dosdrv.exe"), _tgetenv(_T("VDMSPath"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
 
   //
   // PIF
@@ -306,9 +471,12 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile) {
   // Screen
   PIFFile.SetFullScreen(SettingGetBool(_T("winnt.video"), _T("useVESA")));
 
-  return PIFFile.Create(_T("VLP"), config, autoexec);
+  return PIFFile.Create(config, autoexec);
 }
 
+//
+//
+//
 BOOL CRUNWITHVDMSThread::SetupEnv(LPTSTR lpEnvBlock, int ncch) {
   CDOSEnv DOSEnv;
 
@@ -318,12 +486,18 @@ BOOL CRUNWITHVDMSThread::SetupEnv(LPTSTR lpEnvBlock, int ncch) {
   return DOSEnv.GetEnvBlock(lpEnvBlock, ncch);
 }
 
+//
+//
+//
 CString CRUNWITHVDMSThread::SettingGetString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue) {
   CString retVal(defValue);
   m_settings.GetValue(section, key, retVal, NULL, defValue);
   return retVal;
 }
 
+//
+//
+//
 bool CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, bool defValue) {
   CString strDefValue(defValue ? VLPUtil::T_YES : VLPUtil::T_NO);
   CString strRetVal(strDefValue);
@@ -340,6 +514,9 @@ bool CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, bool defVa
   }
 }
 
+//
+//
+//
 int CRUNWITHVDMSThread::SettingGetInt(LPCTSTR section, LPCTSTR key, int defValue) {
   long retVal;
   CString strDefValue; strDefValue.Format(_T("%d"), defValue);

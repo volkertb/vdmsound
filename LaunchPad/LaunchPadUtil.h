@@ -78,6 +78,7 @@ namespace VLPUtil {
   HRESULT SyncCheckBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
+  HRESULT SyncGroup(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
 
   HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control);
 
@@ -90,6 +91,9 @@ namespace VLPUtil {
   CString GetAbsolutePath(LPCTSTR filePath, LPCTSTR baseDir, BOOL isPathOnly = FALSE);
   CString GetDirectory(LPCTSTR filePath);
   BOOL IsDirectory(LPCTSTR pszPath);
+  CString RenameExtension(LPCTSTR filePath, LPCTSTR ext);
+  BOOL FileExists(LPCTSTR filePath);
+
   HRESULT EnableAutoComplete(HWND hwndEdit);
 
   // Other shell helper functions

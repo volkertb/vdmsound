@@ -6,6 +6,8 @@
 #include "launchpad.h"
 #include "PIFFile.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -16,6 +18,13 @@ static char THIS_FILE[]=__FILE__;
 #define _LENOF(str) (sizeof(str) / sizeof(str[0]))
 
 #define _CHANGEBIT(val, cond, mask) ((val) = ((cond) ? ((val) | (mask)) : ((val) & (~mask))))
+
+//////////////////////////////////////////////////////////////////////
+
+static LPCTSTR VLP_PREFIX    = _T("~VLP");
+static LPCTSTR PIF_EXTENSION = _T("PIF");
+static LPCTSTR NT_EXTENSION  = _T("NT");
+static LPCTSTR INI_EXTENSION = _T("INI");
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -182,15 +191,80 @@ CString CTempFile::GetFileName(void) {
 
 //////////////////////////////////////////////////////////////////////
 //
-// CPIFFile
+// CINIFile
 //
 //////////////////////////////////////////////////////////////////////
 
-#define   MAX_BUF     65536   // largest size for AUTOEXEC/CONFIG files
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
 
-LPCTSTR CPIFFile::VLP_PREFIX    = _T("~VLP");
-LPCTSTR CPIFFile::PIF_EXTENSION = _T("PIF");
-LPCTSTR CPIFFile::NT_EXTENSION  = _T("NT");
+CINIFile::CINIFile()
+{
+}
+
+CINIFile::~CINIFile()
+{
+  Delete();
+}
+
+//////////////////////////////////////////////////////////////////////
+// Methods
+//////////////////////////////////////////////////////////////////////
+
+//
+//
+//
+BOOL CINIFile::Create(
+  LPCTSTR vdmsini)
+{
+  Delete();
+
+  if (vdmsini != NULL) {
+    CArray<CHAR,CHAR> szVdmsIniBuf;
+    szVdmsIniBuf.SetSize(_tcslen(vdmsini));
+
+    CharToOemBuff(vdmsini, szVdmsIniBuf.GetData(), szVdmsIniBuf.GetSize());
+
+    if (!m_INIFile.Create(VLP_PREFIX, INI_EXTENSION) ||
+        !m_INIFile.Write(szVdmsIniBuf.GetData(), szVdmsIniBuf.GetSize()) ||
+        !m_INIFile.Close())
+    {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
+//
+//
+//
+BOOL CINIFile::Delete(void) {
+  if (m_INIFile.Exists()) {
+    return m_INIFile.Delete();
+  } else {
+    return TRUE;
+  }
+}
+
+//
+//
+//
+CString CINIFile::GetFileName(void) {
+  if (!m_INIFile.Exists())
+    return _T("");
+
+  return m_INIFile.GetFileName();
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// CPIFFile
+//
+//////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -214,19 +288,19 @@ CPIFFile::~CPIFFile()
 //
 //
 BOOL CPIFFile::Create(
-  LPCTSTR prefix,
   LPCTSTR config,
   LPCTSTR autoexec)
 {
-  CHAR szBuf[MAX_BUF];
-
   Delete();
 
   if (config != NULL) {
-    ToANSI(config, szBuf, _LENOF(szBuf));
+    CArray<CHAR,CHAR> szConfigBuf;
+    szConfigBuf.SetSize(_tcslen(config));
+
+    CharToOemBuff(config, szConfigBuf.GetData(), szConfigBuf.GetSize());
 
     if (!m_configFile.Create(VLP_PREFIX, NT_EXTENSION) ||
-        !m_configFile.Write(szBuf, strlen(szBuf)) ||
+        !m_configFile.Write(szConfigBuf.GetData(), szConfigBuf.GetSize()) ||
         !m_configFile.Close())
     {
       return FALSE;
@@ -236,10 +310,13 @@ BOOL CPIFFile::Create(
   }
 
   if (autoexec != NULL) {
-    ToANSI(autoexec, szBuf, _LENOF(szBuf));
+    CArray<CHAR,CHAR> szAutoexecBuf;
+    szAutoexecBuf.SetSize(_tcslen(autoexec));
+
+    CharToOemBuff(autoexec, szAutoexecBuf.GetData(), szAutoexecBuf.GetSize());
 
     if (!m_autoexecFile.Create(VLP_PREFIX, NT_EXTENSION) ||
-        !m_autoexecFile.Write(szBuf, strlen(szBuf)) ||
+        !m_autoexecFile.Write(szAutoexecBuf.GetData(), szAutoexecBuf.GetSize()) ||
         !m_autoexecFile.Close())
     {
       return FALSE;

@@ -43,11 +43,9 @@
 #define IDC_EDT_DOSARGS                 303
 #define IDC_EDT_DOSDIR                  304
 #define IDC_BUT_CHANGEICON              305
-#define IDR_MNU_WHATSTHIS               400
 #define IDC_EDT_ICOFILE                 401
 #define IDC_LST_ICONS                   402
 #define IDC_BUT_ICOBROWSE               403
-#define ID_WHATSTHIS                    32769
 
 // Next default values for new objects
 // 

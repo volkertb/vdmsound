@@ -37,6 +37,8 @@ protected:
 // Dialog Data
 	//{{AFX_DATA(CBasicSettingsPage)
 	enum { IDD = IDD_BASICPROPPAGE };
+	CButton	m_grpMidi;
+	CButton	m_grpJoystick;
 	CStatic_Icon	m_icoApp;
 	CEdit	m_edtDoscmd;
 	CButton	m_chkEms;

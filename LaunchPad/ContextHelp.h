@@ -26,8 +26,8 @@ protected:
   static CMap<HWND,HWND,CContextHelp*,CContextHelp*> ownershipMap;
 
 protected:
+  BOOL BuildWinHelpMap(HWND hWndParent, CDWordArray& winHelpMap);
   void OnContextMenu(CWnd* pWnd, CPoint point);
-  void OnWhatsthis();
   BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 
 protected:

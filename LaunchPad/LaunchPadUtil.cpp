@@ -371,10 +371,10 @@ HRESULT VLPUtil::SyncCheckBox(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((!control.IsWindowEnabled()) || (control.GetState() == BST_INDETERMINATE))
+    if ((!control.IsWindowEnabled()) || ((control.GetState() & 0x3) == BST_INDETERMINATE))
       return settings.UnsetValue(section, key);
 
-    switch (control.GetState()) {
+    switch (control.GetState() & 0x3) {
       case BST_CHECKED:
         return settings.SetValue(section, key, yesValue);
       case BST_UNCHECKED:
@@ -437,7 +437,7 @@ HRESULT VLPUtil::SyncRadioButton(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((control.IsWindowEnabled()) && (control.GetState() == BST_CHECKED)) {
+    if ((control.IsWindowEnabled()) && ((control.GetState() & 0x3) == BST_CHECKED)) {
       return settings.SetValue(section, key, selValue);
     } else {
       return S_OK;
@@ -495,7 +495,7 @@ HRESULT VLPUtil::SyncRadioButton(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((control.IsWindowEnabled()) && (control.GetState() == BST_CHECKED)) {
+    if ((control.IsWindowEnabled()) && ((control.GetState() & 0x3) == BST_CHECKED)) {
       return settings.UnsetValue(section, key);
     } else {
       return S_OK;
@@ -527,6 +527,62 @@ HRESULT VLPUtil::SyncRadioButton(
     control.SetCheck(isEnabled ? BST_CHECKED : BST_UNCHECKED);
 
     va_end(argList);
+
+    return hr;
+  }
+}
+
+//
+// Synchronizes the state of a Win32 radio-button with its corresponding
+//  setting.
+//  This function deals with 'regular' radio buttons (that represent
+//  meaningful settings).
+//
+HRESULT VLPUtil::SyncGroup(
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  CLaunchPadSettings& settings,                       // settings store
+  LPCTSTR section,                                    // ini section
+  LPCTSTR key,                                        // key (string) under the given section
+  CButton& control,                                   // button control with which the data must be synchronized
+  BOOL defState,                                      // default group enable state assumed if none is defined
+  LPCTSTR yesValue,                                   // ini value corresponding to an enabled state
+  LPCTSTR noValue)                                    // ini value corresponding to a disabled state
+{
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(yesValue != NULL);
+  ASSERT(noValue != NULL);
+
+  ASSERT_VALID(&control);
+
+  if (control.m_hWnd == NULL)
+    return E_INVALIDARG;
+
+  if (bSave) {
+    return S_FALSE;
+  } else {
+    HRESULT hr = S_OK;
+    LPCTSTR defValue = defState ? yesValue : noValue; // default value based on default state
+    BOOL isIndeterminate = FALSE;
+    CString value = defValue;
+
+    hr = settings.GetValue(section, key, value, &isIndeterminate, defValue);
+    value.TrimLeft(); value.TrimRight();
+
+    if (value.CollateNoCase(noValue) == 0) {
+      CWnd* pGroupWnd = &control, * pLastGroupWnd = NULL;
+      CWnd* pParentWnd = control.GetParent();
+
+      ASSERT_VALID(pParentWnd);
+
+      do {
+        ASSERT_VALID(pGroupWnd);
+
+        pGroupWnd->EnableWindow(FALSE);
+        pLastGroupWnd = pGroupWnd;
+        pGroupWnd = pParentWnd->GetNextDlgGroupItem(pGroupWnd);
+      } while((pGroupWnd->GetSafeHwnd() != NULL) && (pGroupWnd->GetSafeHwnd() != pLastGroupWnd->GetSafeHwnd()) && (pGroupWnd->GetSafeHwnd() != control.GetSafeHwnd()));
+    }
 
     return hr;
   }
@@ -734,6 +790,56 @@ BOOL VLPUtil::IsDirectory(LPCTSTR pszPath) {
     return PathIsDirectory(pszPath);
   } catch (...) {
     return (GetFileAttributes(pszPath) & FILE_ATTRIBUTE_DIRECTORY);
+  }
+}
+
+//
+//
+//
+CString VLPUtil::RenameExtension(LPCTSTR filePath, LPCTSTR ext) {
+  ASSERT(filePath != NULL);
+  ASSERT(ext != NULL);
+  ASSERT(_tcslen(filePath) < MAX_PATH);
+  ASSERT(_tcslen(ext) < MAX_PATH);
+
+  TCHAR szPath1[MAX_PATH + 1];
+
+  _tcscpy(szPath1, filePath);
+
+  try {
+    return PathRenameExtension(szPath1, ext) ? szPath1 : _T("");
+  } catch (...) {
+    TCHAR* split = _tcsrchr(szPath1, _T('.'));
+
+    if (split != NULL) {
+      *split = _T('\0');
+    } else {
+      split = &(szPath1[_tcslen(szPath1)]);
+    }
+
+    _tcscat(szPath1, ext);
+
+    return szPath1;
+  }
+}
+
+//
+//
+//
+BOOL VLPUtil::FileExists(LPCTSTR filePath) {
+  if (filePath[0] == _T('\0'))
+    return FALSE;
+
+  try {
+    return PathFileExists(filePath);
+  } catch (...) {
+    HANDLE hFile = CreateFile(filePath, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hFile !=  INVALID_HANDLE_VALUE) {
+      CloseHandle(hFile);
+      return TRUE;
+    } else {
+      return FALSE;
+    }
   }
 }
 

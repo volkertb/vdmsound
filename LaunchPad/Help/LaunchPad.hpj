@@ -6,6 +6,7 @@ REPORT=Yes
 TITLE=VDMSound LaunchPad
 COPYRIGHT=VDMSound LaunchPad %date
 HLP=LaunchPad.hlp
+COMPRESS=0x12
 
 [FILES]
 LaunchPad.rtf

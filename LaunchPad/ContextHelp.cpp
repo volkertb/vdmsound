@@ -90,51 +90,48 @@ BOOL CContextHelp::Detach(void) {
 
 
 //////////////////////////////////////////////////////////////////////
+// Utility methods
+//////////////////////////////////////////////////////////////////////
+
+BOOL CContextHelp::BuildWinHelpMap(HWND hWndParent, CDWordArray& winHelpMap) {
+  try {
+    for (HWND hWndChild = GetTopWindow(hWndParent); hWndChild != NULL; hWndChild = GetNextWindow(hWndChild, GW_HWNDNEXT)) {
+      int ctlId;
+      if ((ctlId = GetDlgCtrlID(hWndChild)) != -1) {
+        winHelpMap.Add((DWORD)ctlId);
+        winHelpMap.Add((DWORD)ctlId);
+      }
+    }
+
+    winHelpMap.Add((DWORD)0);
+    winHelpMap.Add((DWORD)0);
+
+    return TRUE;
+  } catch (CMemoryException* /*cme*/) {
+    return FALSE;
+  }
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
 // WM_xxx message handlers
 //////////////////////////////////////////////////////////////////////
 
 void CContextHelp::OnContextMenu(CWnd* pWnd, CPoint point) {
-  CPoint clientPoint(point);
-  HWND hHitWnd = WindowFromPoint(point);
-  ScreenToClient(hHitWnd, &clientPoint);
-  m_ctxHlpWnd   = ChildWindowFromPointEx(hHitWnd, clientPoint, CWP_ALL);
-  m_ctxHlpPoint = point;
+  CWinApp* pApp = AfxGetApp();
 
-  ASSERT(IsWindow(m_ctxHlpWnd));
+  ASSERT(pApp != NULL);
+  ASSERT_VALID(pWnd);
 
-  if ((m_ctxHlpWnd == NULL) || (m_pWnd->m_hWnd == m_ctxHlpWnd))
+  if ((pApp == NULL) || (pWnd == NULL))
     return;
 
-  CMenu menu;
+  CDWordArray winHelpMap;
 
-  if (!menu.LoadMenu(IDR_MNU_WHATSTHIS))
-    return;
-
-  CMenu* pPopup = menu.GetSubMenu(0);
-
-  ASSERT(pPopup != NULL);
-
-  if (pPopup == NULL)
-    return;
-
-  pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, m_pWnd);
-}
-
-void CContextHelp::OnWhatsthis() {
-  ASSERT(IsWindow(m_ctxHlpWnd));
-
-  if (m_ctxHlpWnd == NULL)
-    return;
-
-  HELPINFO helpInfo;
-  helpInfo.cbSize       = sizeof(helpInfo);
-  helpInfo.iContextType = HELPINFO_WINDOW;
-  helpInfo.iCtrlId      = GetDlgCtrlID(m_ctxHlpWnd);
-  helpInfo.hItemHandle  = m_ctxHlpWnd;
-  helpInfo.dwContextId  = 0;
-  helpInfo.MousePos     = m_ctxHlpPoint;
-
-  SendMessage(m_pWnd->m_hWnd, WM_HELP, (WPARAM)0, (LPARAM)(&helpInfo));
+  if (BuildWinHelpMap(pWnd->m_hWnd, winHelpMap)) {
+    WinHelp(pWnd->m_hWnd, pApp->m_pszHelpFilePath, HELP_CONTEXTMENU, (DWORD)(winHelpMap.GetData()));
+  }
 }
 
 BOOL CContextHelp::OnHelpInfo(HELPINFO* pHelpInfo) {
@@ -144,30 +141,23 @@ BOOL CContextHelp::OnHelpInfo(HELPINFO* pHelpInfo) {
   ASSERT(pHelpInfo != NULL);
   ASSERT(pHelpInfo->cbSize >= sizeof(HELPINFO));
 
-  HELPINFO helpInfo;
-  memset(&helpInfo, 0, sizeof(helpInfo));
-  memcpy(&helpInfo, pHelpInfo, min(sizeof(helpInfo), pHelpInfo->cbSize));
+  HWND hWndChild = (HWND)(pHelpInfo->hItemHandle);
+  ASSERT(IsWindow(hWndChild));
 
-  if (helpInfo.iContextType == HELPINFO_WINDOW) {
-    // Obtain the coordinates of the relevant control in order to position
-    //  the help popup window
-    RECT wndRect = { helpInfo.MousePos.x, helpInfo.MousePos.y,
-                     helpInfo.MousePos.x, helpInfo.MousePos.y };
-    ::GetWindowRect((HWND)(pHelpInfo->hItemHandle), &wndRect);
+  HWND hWndParent = GetParent((HWND)(pHelpInfo->hItemHandle));
+  ASSERT(IsWindow(hWndParent));
 
-    // Static controls don't have help associated with them, so we try to locate the next
-    //  non-static control in order to obtain its help description
-    for (int retry = 0; (helpInfo.iCtrlId == IDC_STATIC) && (retry < 100); retry++) {
-      helpInfo.hItemHandle = GetNextDlgTabItem(m_pWnd->m_hWnd, (HWND)(helpInfo.hItemHandle), FALSE);
-      helpInfo.iCtrlId = GetDlgCtrlID((HWND)(helpInfo.hItemHandle));
-    }
+  if ((pApp == NULL) || (hWndChild == NULL) || (hWndParent == NULL))
+    return FALSE;
 
-    // Position and show popup help window
-    pApp->WinHelp(MAKELONG((wndRect.left + wndRect.left) / 2, (wndRect.top + wndRect.bottom) / 2), HELP_SETPOPUP_POS);
-    pApp->WinHelp(helpInfo.iCtrlId, HELP_CONTEXTPOPUP);
+  CDWordArray winHelpMap;
+
+  if (BuildWinHelpMap(hWndParent, winHelpMap)) {
+    WinHelp(hWndChild, pApp->m_pszHelpFilePath, HELP_WM_HELP, (DWORD)(winHelpMap.GetData()));
+    return TRUE;
+  } else {
+    return FALSE;
   }
-
-  return TRUE;
 }
 
 
@@ -197,12 +187,6 @@ LRESULT CALLBACK CContextHelp::ContextHelpWndProc(
       case WM_CONTEXTMENU:
         pOwner->OnContextMenu(CWnd::FromHandle(hWnd), CPoint(LOWORD(lParam), HIWORD(lParam)));
         return 0;
-
-      case WM_COMMAND:
-        if ((HIWORD(wParam) == 0) && (LOWORD(wParam) == ID_WHATSTHIS)) {
-          pOwner->OnWhatsthis();
-          return 0;
-        } break;
 
       case WM_HELP:
         return pOwner->OnHelpInfo((HELPINFO*)lParam);

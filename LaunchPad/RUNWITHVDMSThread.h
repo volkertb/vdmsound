@@ -11,6 +11,7 @@
 #include "LaunchPadUtil.h"
 
 class CPIFFile;
+class CINIFile;
 
 /////////////////////////////////////////////////////////////////////////////
 // CDOSEnv class
@@ -55,7 +56,8 @@ protected:
 
 // Utility functions
 protected:
-  BOOL SetupPIF(CPIFFile& PIFFile);
+  BOOL SetupINI(CINIFile& INIFile);
+  BOOL SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile);
   BOOL SetupEnv(LPTSTR lpEnvBlock, int ncch);
 
   CString SettingGetString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue = _T(""));
