@@ -6,6 +6,10 @@
 #include "resource.h"       // main symbols
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include "LaunchPadUtil.h"
+
+/////////////////////////////////////////////////////////////////////////////
 // CLaunchPadShellEx
 class ATL_NO_VTABLE CLaunchPadShellEx : 
 	public CComObjectRootEx<CComSingleThreadModel>,
@@ -78,7 +82,7 @@ public:
     
 // Member variables
 protected:
-  CBitmap m_contextMenuBmp;
+  CDIBitmap m_contextMenuBmp;
   CStringArray m_fileNames;
 };
 

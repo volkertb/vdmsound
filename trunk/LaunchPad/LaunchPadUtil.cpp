@@ -18,20 +18,18 @@ static char THIS_FILE[]=__FILE__;
 
 //////////////////////////////////////////////////////////////////////
 //
-// CIcon
+// CStatic_Icon
 //
 //////////////////////////////////////////////////////////////////////
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CIcon::CIcon(void) : CStatic(), m_hIcon(NULL), m_bAttached(FALSE) {
+CStatic_Icon::CStatic_Icon(void) : CStatic(), m_hIcon(NULL), m_bAttached(FALSE) {
 }
 
-CIcon::~CIcon(void) {
+CStatic_Icon::~CStatic_Icon(void) {
   if (m_bAttached)
     DeleteIcon();
 
@@ -44,7 +42,7 @@ CIcon::~CIcon(void) {
 // Methods
 //////////////////////////////////////////////////////////////////////
 
-HRESULT CIcon::LoadIcon(HINSTANCE hInstance, LPCTSTR lpIconName) {
+HRESULT CStatic_Icon::LoadIcon(HINSTANCE hInstance, LPCTSTR lpIconName) {
   HICON hIcon;
 
   if (m_bAttached)
@@ -61,7 +59,7 @@ HRESULT CIcon::LoadIcon(HINSTANCE hInstance, LPCTSTR lpIconName) {
   return S_OK;
 }
 
-HRESULT CIcon::ExtractIcon(HINSTANCE hInstance, LPCTSTR lpszExeFileName, UINT nIconIndex) {
+HRESULT CStatic_Icon::ExtractIcon(HINSTANCE hInstance, LPCTSTR lpszExeFileName, UINT nIconIndex) {
   HICON hIcon;
 
   if (m_bAttached)
@@ -78,7 +76,7 @@ HRESULT CIcon::ExtractIcon(HINSTANCE hInstance, LPCTSTR lpszExeFileName, UINT nI
   return S_OK;
 }
 
-BOOL CIcon::DeleteIcon(void) {
+BOOL CStatic_Icon::DeleteIcon(void) {
 	if (m_hIcon == NULL)
 		return FALSE;
 
@@ -96,11 +94,68 @@ BOOL CIcon::DeleteIcon(void) {
 
 //////////////////////////////////////////////////////////////////////
 //
-// COpenDOSProgramDialog
+// CDIBitmap
 //
 //////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
 
+CDIBitmap::CDIBitmap(void) : CBitmap() {
+}
+
+//////////////////////////////////////////////////////////////////////
+// Methods
+//////////////////////////////////////////////////////////////////////
+
+BOOL CDIBitmap::CreateDIBitmap(CDC* pdc, const LPBITMAPINFOHEADER lpbmih, LPCVOID lpbInit, const LPBITMAPINFO lpbmi, UINT fuUsage) {
+  ASSERT(lpbmih != NULL);
+
+  if (lpbmih == NULL)
+    return FALSE;
+
+  return Attach(::CreateDIBitmap(pdc->GetSafeHdc(), lpbmih, lpbInit != NULL, lpbInit, lpbmi, fuUsage));
+}
+
+BOOL CDIBitmap::CreateDIBitmap(int nWidth, int nHeight, UINT nBitcount, int numColors) {
+  ASSERT(!((numColors < 0) || (numColors > 256)));
+
+  BITMAPINFOHEADER bmih;
+
+  bmih.biSize          = sizeof(BITMAPINFOHEADER);
+  bmih.biWidth         = nWidth;
+  bmih.biHeight        = nHeight;
+  bmih.biPlanes        = 1;
+  bmih.biBitCount      = nBitcount;
+  bmih.biCompression   = nBitcount >= 16 ? BI_RGB : BI_BITFIELDS;
+  bmih.biSizeImage     = 0;
+  bmih.biXPelsPerMeter = 0;
+  bmih.biYPelsPerMeter = 0;
+  bmih.biClrUsed       = numColors;
+  bmih.biClrImportant  = numColors;
+
+  CDC tmpDC;
+  tmpDC.Attach(GetDC(NULL));
+
+  return CreateDIBitmap(&tmpDC, &bmih, NULL, NULL);
+}
+
+UINT CDIBitmap::SetDIBColorTable(CDC* pdc, UINT uStartIndex, UINT cEntries, CONST RGBQUAD *pColors) {
+  return ::SetDIBColorTable(pdc->GetSafeHdc(), uStartIndex, cEntries, pColors);
+}
+
+UINT CDIBitmap::SetDIBits(CDC* pdc, UINT uStartScan, UINT cScanLines, CONST VOID *lpvBits, CONST BITMAPINFO *lpbmi, UINT fuColorUse) {
+  return ::SetDIBits(pdc->GetSafeHdc(), (HBITMAP)GetSafeHandle(), uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse);
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// COpenDOSProgramDialog
+//
+//////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -120,8 +175,6 @@ COpenDOSProgramDialog::COpenDOSProgramDialog(
   m_ofn.lpstrFilter  = m_strFilter;
   m_ofn.nFilterIndex = 1;
 }
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Overridables
@@ -146,16 +199,12 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 //
 //////////////////////////////////////////////////////////////////////
 
-
-
 //////////////////////////////////////////////////////////////////////
 // Constants
 //////////////////////////////////////////////////////////////////////
 
 LPCTSTR VLPUtil::T_YES = _T("yes");
 LPCTSTR VLPUtil::T_NO = _T("no");
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Methods
@@ -351,7 +400,7 @@ HRESULT VLPUtil::LoadIconCtl(
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
-  CIcon& control)                                     // static control with which the data must be synchronized
+  CStatic_Icon& control)                              // static control with which the data must be synchronized
 {
   ASSERT(section != NULL);
   ASSERT(key != NULL);
@@ -379,6 +428,50 @@ HRESULT VLPUtil::LoadIconCtl(
 
   if (FAILED(control.ExtractIcon(AfxGetInstanceHandle(), (LPCTSTR)iconPath, iconIndex)))
     return control.LoadIcon(hShInstance, MAKEINTRESOURCE(IDI_SH_UNKNOWN));
+
+  return S_OK;
+}
+
+//
+// Loads and scales an icon into a true-color DIB
+//
+HRESULT VLPUtil::LoadDIBFromIcon(
+  CDIBitmap& bmp,
+  HINSTANCE hInstance,
+  LPCTSTR lpIconName,
+  HBRUSH hBgBrush,
+  UINT cx,
+  UINT cy)
+{
+  CDC memDC;
+  CBrush bgBrush;
+  HICON hIcon;
+
+  if ((HBITMAP)bmp != NULL)
+    bmp.DeleteObject();
+
+  if (!bmp.CreateDIBitmap(cx, cy, 24, 0))
+    return HRESULT_FROM_WIN32(GetLastError());
+
+  if (!memDC.CreateCompatibleDC(NULL))
+    return HRESULT_FROM_WIN32(GetLastError());
+
+  CBitmap* oldBmp = memDC.SelectObject(&bmp);
+
+  if (!bgBrush.Attach(hBgBrush))
+    return E_HANDLE;
+
+  memDC.FillRect(CRect(0, 0, cx, cy), &bgBrush);
+
+  bgBrush.Detach();
+
+  if ((hIcon = (HICON)::LoadImage(hInstance, lpIconName, IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR))== NULL)
+    return HRESULT_FROM_WIN32(GetLastError());
+
+  ::DrawIconEx(memDC.m_hDC, 0, 0, hIcon, cx, cy, 0, NULL, DI_NORMAL);
+  ::DestroyIcon(hIcon);
+
+  memDC.SelectObject(oldBmp);
 
   return S_OK;
 }

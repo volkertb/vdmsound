@@ -154,12 +154,15 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
     if (!VLPUtil::isVLPFile(m_fileNames.GetAt(0)) && !VLPUtil::isMSDOSFile(m_fileNames.GetAt(0)))
       return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
-    ASSERT((HBITMAP)m_contextMenuBmp == NULL);
-
-    m_contextMenuBmp.LoadBitmap(IDB_MENUICON2);
-
     CString strRunWithVDMS;
     strRunWithVDMS.LoadString(IDS_TXT_RUNWITHVDMS);
+
+    int chkW = GetSystemMetrics(SM_CXMENUCHECK);
+    int chkH = GetSystemMetrics(SM_CYMENUCHECK);
+
+    ASSERT((HBITMAP)m_contextMenuBmp == NULL);
+
+    VLPUtil::LoadDIBFromIcon(m_contextMenuBmp, AfxGetResourceHandle(), MAKEINTRESOURCE(IDI_APPICON), CBrush(0xffffff), chkW, chkH);
 
     InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS);
     SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
