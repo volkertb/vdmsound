@@ -110,9 +110,9 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     m_DMA16Channel = CFG_Get(Config, INI_STR_DMA16CHANNEL, 5, 10, false);
 
     // These settings can be used for debugging inaccurate sound output
-    m_forcedSampleRate    = CFG_Get(Config, INI_STR_FORCERATE, -1, 10);
-    m_forcedBitsPerSample = CFG_Get(Config, INI_STR_FORCENUMBITS, -1, 10);
-    m_forcedNumChannels   = CFG_Get(Config, INI_STR_FORCECHANNELS, -1, 10);
+    m_forcedSampleRate    = CFG_Get(Config, INI_STR_FORCERATE, -1, 10, true);
+    m_forcedBitsPerSample = CFG_Get(Config, INI_STR_FORCENUMBITS, -1, 10, true);
+    m_forcedNumChannels   = CFG_Get(Config, INI_STR_FORCECHANNELS, -1, 10, true);
 
     /** Get VDM services ***************************************************/
 
