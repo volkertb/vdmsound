@@ -24,7 +24,7 @@
     $subj  = "DOS Compatibility Database Account Registration";
     $text  = "Thank you for registering on the DOS Compatibility Database web site.\n\n";
     $text .= "In order to complete your registration, visit the following URL:\n\n";
-    $text .= "http://" . $SERVER_NAME . $SCRIPT_NAME . "?action=activate&username=" . $username . "&hash=" . $hash . "\n\n";
+    $text .= "http://" . $SERVER_NAME . $SCRIPT_NAME . "?action=activate&usrname=" . $username . "&hash=" . $hash . "\n\n";
     $text .= "Enjoy.\n";
 
     if (mail($mailto, $subj, $text)) {
@@ -52,7 +52,7 @@
     $text .= "requested a password change through email verification. If this\n";
     $text .= "was not you, ignore this message and nothing will happen.\n\n";
     $text .= "If you requested this verification, visit the following URL:\n\n";
-    $text .= "http://" . $SERVER_NAME . $SCRIPT_NAME . "?action=pwreset&username=" . $username . "&hash=" . $hash . "\n\n";
+    $text .= "http://" . $SERVER_NAME . $SCRIPT_NAME . "?action=pwreset&usrname=" . $username . "&hash=" . $hash . "\n\n";
     $text .= "Good luck.\n";
 
     if (mail($mailto, $subj, $text)) {

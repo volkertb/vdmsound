@@ -75,4 +75,25 @@
       return $result;
     }
   }
+
+  //
+  // Perform an SQL query on the mysql database and puts the result into
+  //  an array of associative arrays
+  //
+  function MysqlQueryAssoc($query) {
+    global $mysql_linkid;
+    ErrSetLastError();
+
+    $retval  = Array();
+
+    if (!($result = MysqlQuery($query))) {
+      return false;
+    }
+
+    while ($row = mysql_fetch_assoc($result)) {
+      array_push($retval, $row);
+    }
+
+    return $retval;
+  }
 ?>

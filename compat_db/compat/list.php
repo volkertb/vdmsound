@@ -15,49 +15,56 @@
 <?php HtmlBeginBody(); ?>
 
 <?php
+  if (!isset($i)) $i = 0;
+  if (!isset($n)) $n = 10;
+
   if (isset($reportid)) {
     $myReports = AppsGetReports($reportid, NULL, NULL, true,
                                 APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
-                                APPS_GET_TITLE | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT,
-                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT,
-                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT,
-                                NULL, false, 0, 10);
+                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT   | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                NULL, false);
 
-    echo('<table border="0" cellspacing="2" cellpadding="5">');
-
-    if (count($myReports) > 0) {
-      foreach ($myReports as $myReport) {
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Title:</td>');
-        echo('<td align="left">' . $myReport['title_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Version:</td>');
-        echo('<td align="left">' . $myReport['appver_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Distributed as:</td>');
-        echo('<td align="left">' . $myReport['distrib_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Operating system used:</td>');
-        echo('<td align="left">' . $myReport['osver_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Emulator used:</td>');
-        echo('<td align="left">' . $myReport['emuver_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Submitted by:</td>');
-        echo('<td align="left">' . $myReport['user_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Comment:</td>');
-        echo('<td align="left">' . $myReport['comment_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">MIDI compatibility:</td>');
-        echo('<td align="left">' . $myReport['cmidi_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">SoundBlaster compatibility:</td>');
-        echo('<td align="left">' . $myReport['csb_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">AdLib compatibility:</td>');
-        echo('<td align="left">' . $myReport['cadlib_text'] . '</td></tr>');
-        echo('<tr bgcolor="#5f5f5f" valign="middle"><td align="right">Joystick compatibility:</td>');
-        echo('<td align="left">' . $myReport['cjoystick_text'] . '</td></tr>');
-      }
+    if ($myReports && (count($myReports) > 0)) {
+      HtmlSendReportList($myReports, $loggedin, false);
     } else {
-      echo('Error');
+      echo('<h2 class="normal">No compatibility report matching the given ID exists</h2>');
     }
+  } else if (isset($appid)) {
+    if (!isset($sortkey)) $sortkey = 'updated';
+    if (!isset($sortasc)) $sortasc = true;
 
-    echo('</table>');
+    $myReports = AppsGetReports(NULL, NULL, $appid, true,
+                                APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
+                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                $sortkey, $sortasc, $i, $n);
 
+    if ($myReports && (count($myReports) > 0)) {
+      HtmlSendReportList($myReports, $loggedin, false);
+    } else {
+      echo('<h2 class="normal">No compatibility report(s) matching the given ID exist(s)</h2>');
+    }
+  } else if (isset($userid)) {
+    if (!isset($sortkey)) $sortkey = 'app_id';
+    if (!isset($sortasc)) $sortasc = true;
+
+    $myReports = AppsGetReports(NULL, $userid, NULL, true,
+                                APPS_GET_USER  | APPS_GET_COMMENT | APPS_GET_AS_TEXT,
+                                APPS_GET_TITLE | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
+                                $sortkey, $sortasc, $i, $n);
+
+    if ($myReports && (count($myReports) > 0)) {
+      HtmlSendReportList($myReports, $loggedin, false);
+    } else {
+      echo('<h2 class="normal">No compatibility reports were submitted by the given user</h2>');
+    }
   } else {
-   echo('blank');
+   echo('TODO: stuff');
   }
 ?>
 
