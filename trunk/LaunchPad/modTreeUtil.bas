@@ -29,7 +29,8 @@ Public Function AddNode( _
     Set tvNode = tvDupeNode  ' return, the existing node
   End If
 
-  tvNode.Sorted = tvTree.Sorted
+  If tvNode.Parent Is Nothing Then tvTree.Sorted = tvTree.Sorted Else tvNode.Parent.Sorted = tvTree.Sorted ' Resort the siblings
+
   Set AddNode = tvNode
 End Function
 
@@ -53,6 +54,8 @@ Public Function RenameNode( _
   '  or if attempting to change the case of the same node's spelling
   If (dupeNode Is Nothing) Or (dupeNode Is tvNode) Then
     tvNode.Text = strNewText
+    If tvNode.Parent Is Nothing Then tvTree.Sorted = tvTree.Sorted Else tvNode.Parent.Sorted = tvTree.Sorted ' Resort the siblings
+
     RenameNode = 0  ' return
   Else
     RenameNode = 1  ' return
@@ -66,6 +69,7 @@ Public Sub RemoveNode( _
   tvTree As TreeView, _
   tvNode As Node _
 )
+
   Debug.Assert Not tvNode Is Nothing
 
   Dim tvChildNode As Node
@@ -155,5 +159,3 @@ Public Sub ExpandCollapseAllNodes( _
 
   tvNode.Expanded = isExpanded
 End Sub
-
-
