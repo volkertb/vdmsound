@@ -138,7 +138,7 @@ STDAPI CfgInitialize(char* INIFiles) {
       return E_FAIL;
     }
 
-    // Perform a quick structural check (spots most spelling errors)
+    // Perform a quick .ini structural check (spots most spelling errors)
     try {
       config.validate();
     } catch (CINIConfig::modulename_error& mne) {
@@ -155,7 +155,7 @@ STDAPI CfgInitialize(char* INIFiles) {
       }
     }
 
-    // Get the order module should be initialized in
+    // Get the order modules should be initialized in
     try {
       config.getModuleOrder(orderedNames);
     } catch (CINIConfig::cyclic_error& ce) {
