@@ -1,0 +1,313 @@
+import "oaidl.idl";
+
+import "IVDMHandlers.idl";
+
+
+[
+	object,
+	uuid(AAE68F00-E3B2-11d4-9C43-00A024112F81),
+	helpstring("Base VDM services: register & memory manipulation"),
+	pointer_default(unique)
+]
+interface IVDMBaseServices : IUnknown
+{
+	typedef [ helpstring("Registers that can be read from and written to") ] enum
+	{
+		REG_EAX     = 0x00,
+		REG_AX      = 0x01,
+		REG_AL      = 0x02,
+		REG_AH      = 0x03,
+
+		REG_EBX     = 0x04,
+		REG_BX      = 0x05,
+		REG_BL      = 0x06,
+		REG_BH      = 0x07,
+
+		REG_ECX     = 0x08,
+		REG_CX      = 0x09,
+		REG_CL      = 0x0a,
+		REG_CH      = 0x0b,
+
+		REG_EDX     = 0x0c,
+		REG_DX      = 0x0d,
+		REG_DL      = 0x0e,
+		REG_DH      = 0x0f,
+
+		REG_SS      = 0x10,
+		REG_ESP     = 0x11,
+		REG_SP      = 0x12,
+		REG_EBP     = 0x13,
+		REG_BP      = 0x14,
+
+		REG_DS      = 0x15,
+		REG_ESI     = 0x16,
+		REG_SI      = 0x17,
+
+		REG_ES      = 0x18,
+		REG_EDI     = 0x19,
+		REG_DI      = 0x1a,
+
+		REG_CS      = 0x1b,
+		REG_EIP     = 0x1c,
+		REG_IP      = 0x1d
+	} REGISTER_T;
+
+	typedef [ helpstring("Flags that can be examined and modified") ] enum
+	{
+		FLAG_CARRY  = 0x00,
+		FLAG_PARITY = 0x01,
+		FLAG_AUX    = 0x02,
+		FLAG_ZERO   = 0x03,
+		FLAG_SIGN   = 0x04,
+		FLAG_TRAP   = 0x05,
+		FLAG_INT    = 0x06,
+		FLAG_DIR    = 0x07,
+		FLAG_OFLOW  = 0x08,
+	} FLAG_T;
+
+
+
+	typedef [ helpstring("Interrupt master/slave") ] enum
+	{
+		INT_MASTER  = 0x00,
+		INT_SLAVE   = 0x01
+	} INTERRUPT_T;
+
+
+
+	typedef [ helpstring("Addressing mode, Protected Mode or V86") ] enum
+	{
+		ADDR_PM     = 0x00,
+		ADDR_V86    = 0x01
+	} ADDRMODE_T;
+
+
+
+	/******************************************************
+	*	Register manipulation functions
+	******************************************************/
+
+	[ helpstring("Retrieves data from a register") ]
+	HRESULT GetRegister(
+		[in] REGISTER_T reg,                   // Specifies the register data is to be read from
+		[out, retval] ULONG * value );         // The data read from the register
+
+	[ helpstring("Sets data in a register") ]
+	HRESULT SetRegister(
+		[in] REGISTER_T reg,                   // Specifies the register data is to be written to
+		[in] ULONG value );                    // The data written to the register
+
+	[ helpstring("Retrieves a flag from the flags register") ]
+	HRESULT GetFlag(
+		[in] FLAG_T flag,                      // Specifies the flag to be examined
+		[out, retval] ULONG * value );         // The value of the flag
+
+	[ helpstring("Sets a flag in the flags register") ]
+	HRESULT SetFlag(
+		[in] FLAG_T flag,                      // Specifies the flag to be written
+		[in] ULONG value );                    // The value assigned to the flag
+
+
+
+	/******************************************************
+	*	Memory manipulation functions
+	******************************************************/
+
+	[ helpstring("Retrieves data from memory") ]
+	HRESULT GetMemory(
+		[in] WORD segment,                      // The segment or selector
+		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
+		[out, size_is(length)] BYTE buffer[],   // Points to the buffer where a copy of the data should be stored
+		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
+
+	[ helpstring("Sets data in memory") ]
+	HRESULT SetMemory(
+		[in] WORD segment,                      // The segment or selector
+		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
+		[in, size_is(length)] BYTE buffer[],    // Points to the buffer where data should be taken from
+		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
+
+
+
+	/******************************************************
+	*	Interrupt functions
+	******************************************************/
+
+	[ helpstring("Simulates an interrupt to the VDM to support applications that expect an interrupt to signal the end of an operation") ]
+	HRESULT SimulateInterrupt(
+		[in] INTERRUPT_T type,                  // Either master or slave, as appropriate
+		[in] BYTE line,                         // Specifies the interrupt line
+		[in] USHORT count );                    // Allows a set of interrupts to be delivered; normally there is only one interrupt
+
+
+
+	/******************************************************
+	*	VDM functions
+	******************************************************/
+
+	[ helpstring("Terminates the VDM in which the DOS application is running") ]
+	HRESULT TerminateVDM( );
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	object,
+	uuid(AAE68F01-E3B2-11d4-9C43-00A024112F81),
+	helpstring("Base VDM services: register & memory manipulation"),
+	pointer_default(unique)
+]
+interface IVDMIOServices : IUnknown
+{
+	typedef [ helpstring("Type of operations directly supported by handler") ] enum
+	{
+		OP_NONE        = 0,                    // Don't notify
+		OP_SINGLE_BYTE = 1 << 0,               // Supports INB/OUTB
+		OP_SINGLE_WORD = 1 << 1,               // Supports INW/OUTW
+		OP_STRING_BYTE = 1 << 2,               // Supports INSB/OUTSB
+		OP_STRING_WORD = 1 << 3                // Supports INSW/OUTSW
+	} OPERATIONS_T;
+
+
+
+	/******************************************************
+	*	Port-mapped I/O services
+	******************************************************/
+
+	[ helpstring("Hooks the I/O Ports for the responsible handler") ]
+	HRESULT AddIOHook(
+		[in] WORD basePort,                    // The beginning address of the dedicated port memory range
+		[in] WORD portRange,                   // Number of consecutive addresses to hook
+		[in] OPERATIONS_T inOps,               // Type of operations to be supported for IN instructions
+		[in] OPERATIONS_T outOps,              // Type of operations to be supported for OUT instructions
+		[in] IIOHandler * handler );           // The handler for the port memory range
+
+	[ helpstring("Unhooks the I/O ports previously hooked by a handler") ]
+	HRESULT RemoveIOHook(
+		[in] WORD basePort,                    // The beginning address of the dedicated port memory range
+		[in] WORD portRange,                   // Number of consecutive addresses to unhook
+		[in] IIOHandler * handler );           // The handler for the port memory range
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	object,
+	uuid(AAE68F02-E3B2-11d4-9C43-00A024112F81),
+	helpstring("Base VDM services: register & memory manipulation"),
+	pointer_default(unique)
+]
+interface IVDMMemServices : IUnknown
+{
+	/******************************************************
+	*	Memory-mapped I/O services
+	******************************************************/
+
+	[ helpstring("Allocates a range of memory-mapped I/O addresses") ]
+	HRESULT AddMemHook(
+		[in] DWORD baseAddr,                   // Points to the starting linear address of the range
+		[in] DWORD addrRange,                  // Identifies the number of bytes of mapped memory that are being used
+		[in] IMemHandler * handler );          // The handler for the memory address range
+
+	[ helpstring("Releases a range of memory-mapped I/O addresses previously allocated") ]
+	HRESULT RemoveMemHook(
+		[in] DWORD baseAddr,                   // Points to the starting linear address of the range
+		[in] DWORD addrRange );                // Identifies the number of bytes of mapped memory that are being used
+
+	[ helpstring("Allocates memory at a given virtual address") ]
+	HRESULT AllocMem(
+		[in] DWORD address,                    // Specifies the address between 640K and 1MB where memory will be allocated
+		[in] DWORD size );                     // Specifies the number of bytes of memory to allocate
+
+	[ helpstring("Releases previously allocated memory at a given virtual address") ]
+	HRESULT FreeMem(
+		[in] DWORD address,                    // Specifies the address where memory will be freed
+		[in] DWORD size );                     // Specifies the number of bytes of memory to free
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	object,
+	uuid(AAE68F03-E3B2-11d4-9C43-00A024112F81),
+	helpstring("Base VDM services: register & memory manipulation"),
+	pointer_default(unique)
+]
+interface IVDMDMAServices : IUnknown
+{
+	typedef [ helpstring("DMA transfer status") ] struct
+	{
+		WORD addr;
+		WORD count;
+		WORD page;
+		BYTE status;
+		BYTE mode;
+		BYTE mask;
+	} DMA_INFO_T;
+
+	typedef [ helpstring("Different DMA transfer status indicators") ] enum
+	{
+		UPDATE_NONE   = 0,
+		UPDATE_ADDR   = 1 << 0,
+		UPDATE_COUNT  = 1 << 1,
+		UPDATE_PAGE   = 1 << 2,
+		UPDATE_STATUS = 1 << 3,
+		UPDATE_ALL    = UPDATE_ADDR | UPDATE_COUNT | UPDATE_PAGE | UPDATE_STATUS
+	} DMA_INFO_SEL_T;
+
+
+
+	/******************************************************
+	*	DMA-related functions
+	******************************************************/
+
+	[ helpstring("Provides DMA data") ]
+	HRESULT QueryDMA(
+		[in] WORD channel,                      // Specifies the DMA channel to query
+		[out] DMA_INFO_T * DMAInfo );           // Specifies the buffer location where information will be returned
+
+	[ helpstring("Resets the state of the virtual DMA controller after a DMA operation that used QueryDMA") ]
+	HRESULT SetDMA(
+		[in] WORD channel,                      // Specifies the DMA channel to set
+		[in] DMA_INFO_SEL_T flags,              // Provides bitmask indicating what must be set
+		[in] DMA_INFO_T * DMAInfo );            // Specifies the buffer location of the DMA data
+
+	[ helpstring("Requests a DMA transfer") ]
+	HRESULT RequestDMA(
+		[in] WORD channel,                      // Specifies the DMA channel for the transfer operation
+		[in, size_is(length)] BYTE buffer[],    // Points to the buffer to or from which the data is transferred
+		[in] DWORD length );                    // Specifies the size in bytes of the transfer count
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	uuid(3CA54600-E4D4-11d4-9C44-00A024112F81),
+	version(1.0),
+	helpstring("VDMServices 1.0 Definition Type Library")
+]
+library IVDMSERVICESLib
+{
+	interface IVDMBaseServices;
+	interface IVDMIOServices;
+	interface IVDMMemServices;
+	interface IVDMDMAServices;
+};

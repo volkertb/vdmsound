@@ -1,0 +1,81 @@
+import "oaidl.idl";
+
+
+[
+	object,
+	uuid(41DB5E00-E4EC-11d4-9C44-00A024112F81),
+	helpstring("Dependency query: obtain references to other instantiated COM modules"),
+	pointer_default(unique)
+]
+interface IVDMQueryDependencies : IUnknown
+{
+	[ helpstring("Get the COM module instance from the reference labeled with the given name") ]
+	HRESULT Get(
+		[in] BSTR name,                           // name of dependency to find
+		[out, retval] IUnknown ** dependency );   // pointer to dependency associated with <name>
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	object,
+	uuid(41DB5E01-E4EC-11d4-9C44-00A024112F81),
+	helpstring("Configuration query: obtain configuration properties"),
+	pointer_default(unique)
+]
+interface IVDMQueryConfiguration : IUnknown
+{
+	[ helpstring("Get the property labeled with the given name") ]
+	HRESULT Get(
+		[in] BSTR name,                    // name of property to find
+		[out, retval] BSTR * value );      // property string
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	object,
+	uuid(41DB5E02-E4EC-11d4-9C44-00A024112F81),
+	helpstring("Runtime environment"),
+	pointer_default(unique)
+]
+interface IVDMRTEnvironment : IUnknown
+{
+	typedef [ helpstring("Event types") ] enum
+	{
+		LOG_INFORMATION = 0x00,
+		LOG_WARNING     = 0x01,
+		LOG_ERROR       = 0x02
+	} LOGENTRY_T;
+
+	[ helpstring("Get the property labeled with the given name") ]
+	HRESULT RecordLogEntry(
+		[in] LOGENTRY_T type,
+		[in] BSTR message );               // name of property to find
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	uuid(61345700-E4F4-11d4-9C44-00A024112F81),
+	version(1.0),
+	helpstring("VDMQuery 1.0 Definition Type Library")
+]
+library IVDMQUERYLib
+{
+	interface IVDMQueryDependencies;
+	interface IVDMQueryConfiguration;
+	interface IVDMRTEnvironment;
+};

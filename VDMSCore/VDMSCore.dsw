@@ -1,0 +1,135 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "INIParser"=.\Sources\INIParser\INIParser.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/INIParser", KJAAAAAA
+    .\sources\iniparser
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Interfaces"=.\Sources\Interfaces\Interfaces.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/Interfaces", MDAAAAAA
+    .\sources\interfaces
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "MFCUtil"=.\Sources\MFCUtil\MFCUtil.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/MFCUtil", LEAAAAAA
+    .\sources\mfcutil
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "VDDLoader"=.\Sources\VDDLoader\VDDLoader.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/VDDLoader", LDAAAAAA
+    .\sources\vddloader
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "VDMConfig"=.\sources\VDMConfig\VDMConfig.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/VDMConfig", EFAAAAAA
+    .\sources\vdmconfig
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name INIParser
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "VDMUtil"=.\Sources\VDMUtil\VDMUtil.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore/Sources/VDMUtil", AIAAAAAA
+    .\sources\vdmutil
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSCore", BBAAAAAA
+    .
+    end source code control
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

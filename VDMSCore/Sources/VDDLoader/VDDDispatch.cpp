@@ -1,0 +1,263 @@
+#include "stdafx.h"
+
+#include "DOSDrv.h"
+
+/////////////////////////////////////////////////////////////////////////////
+
+#include <MFCUtil.h>
+#pragma comment ( lib , "MFCUtil.lib" )
+
+/////////////////////////////////////////////////////////////////////////////
+
+HMODULE g_hCfgLib = NULL;
+LONG g_lInstanceCount = 0;
+
+int loadConfiguration(void);
+int unloadConfiguration(void);
+
+void SignalVDMSStatus(bool);
+
+BOOL WINAPI ConsoleEventHandler(DWORD);
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+//
+// Initialization routine; called right after NTVDM.EXE loads VDDLoader.DLL
+//   in its memory space
+//
+STDAPI_(void) VddInitialize(void) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  setCF(0);
+}
+
+//
+// Dispatch routine; allows DOS applications to send commands to the 32-bit
+//   environemnt.
+// Parameters:
+//   BX    = Command ID
+//   DS:SI = Pointer to user-data buffer
+//   DX    = User-data buffer length
+//
+STDAPI_(void) VddDispatch(void) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  WORD dispCmd     = getBX();
+  WORD paramSeg    = getDS();
+  WORD paramOffset = getSI();
+  WORD paramLen    = getDX();
+
+  int retVal;
+
+  switch (dispCmd) {
+    case CMD_VDD_INIT:
+      retVal = loadConfiguration();
+      break;
+
+    case CMD_VDD_DESTROY:
+      retVal = unloadConfiguration();
+      break;
+
+    default:
+      retVal = -1;
+      break;
+  }
+
+  setAX(retVal);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+//
+// Loads the VDMConfig DLL, and calls its initialization routine in order to
+//   parse the configuration files and in turn load the sub-modules that
+//   provide the emulation
+//
+int loadConfiguration(void) {
+  try {
+    // Check if first instance
+    if ((++g_lInstanceCount) > 1) {
+      MessageBox(FormatMessage(_T("Program is already loaded (VDDLoader.DLL).%n%nPlease unload before attempting to reload.")),
+                 FormatMessage(_T("VDD Error")),
+                 MB_OK, MB_ICONERROR);
+      return 0x80;        // Initialization already occured (1)?
+    }
+
+    if (g_hCfgLib != NULL) {
+      MessageBox(FormatMessage(_T("Program is already loaded (VDMConfig.DLL).%n%nPlease unload before attempting to reload.")),
+                 FormatMessage(_T("VDD Error")),
+                 MB_OK, MB_ICONERROR);
+      return 0x81;        // Initialization already occured (2)?
+    }
+
+    // Load library
+    g_hCfgLib = LoadLibrary(_T("VDMConfig.dll"));
+
+    if (g_hCfgLib == NULL) {
+      DWORD lastError = GetLastError();
+      MessageBox(FormatMessage(_T("Failed to load configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is in the current directory or that its location is in the PATH, and that it is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+                 FormatMessage(_T("VDD Error")),
+                 MB_OK, MB_ICONERROR);
+      return 0x90;        // Could not load DLL
+    }
+
+    // Try to invoke initialization code
+    FARPROC lpInitProc;
+
+    lpInitProc = GetProcAddress(g_hCfgLib, "CfgInitialize");
+
+    if (lpInitProc == NULL) {
+      DWORD lastError = GetLastError();
+      MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgInitialize' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+                 FormatMessage(_T("VDD Error")),
+                 MB_OK, MB_ICONERROR);
+      return 0xa0;        // Could not find procedure in DLL
+    }
+
+    if (FAILED(lpInitProc())) {
+      return 0xf0;        // Initialization failed, or aborted by user
+    }
+
+    // Successful load & initialization
+    SignalVDMSStatus(true);
+
+    // Hook console events, for clean shutdowns (hook automatically calls
+    //   unloadConfiguration on console close)
+    if (!SetConsoleCtrlHandler(ConsoleEventHandler, TRUE)) {
+      DWORD lastError = GetLastError();
+      if (MessageBox(FormatMessage(_T("Failed to register an event handler with the console window.  This means that the VDD will be unable to automatically unload in a clean manner when the console window closes, which will probably lead to a protection fault.%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nDo you want to continue?"), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+                     FormatMessage(_T("VDD Error")),
+                     MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
+      {
+        return 0xb0;        // Could not register console hook
+      }
+    }
+  } catch (...) {
+    MessageBox(FormatMessage(_T("Unhandled exception encountered while loading")),
+               FormatMessage(_T("Fatal Error")),
+               MB_OK, MB_ICONERROR);
+    return 0xff;            // Catastrophic failure
+  }
+
+  return 0;                 // Success
+}
+
+
+//
+// Unloads the VDMConfig DLL, but not before calling its initialization
+//   cleanup routine in order to unload the sub-modules that provide the
+//   emulation
+//
+int unloadConfiguration(void) {
+  int retVal = 0;
+
+  try {
+    // Unloading old instance
+    g_lInstanceCount--;
+    // Check if first instance
+    if (g_lInstanceCount > 0)
+      return 0;           // Don't need to do anything more if we were not the first instance
+    if (g_lInstanceCount < 0) {
+      g_lInstanceCount = 0;
+      return 0x88;        // Initialization did not occur (1)?
+    }
+
+    if (g_hCfgLib == NULL)
+      return 0x89;        // Initialization did not occur (2), or DLL load failed?
+
+    FARPROC lpDestroyProc;
+
+    lpDestroyProc = GetProcAddress(g_hCfgLib, "CfgDestroy");
+
+    if (lpDestroyProc == NULL) {
+      DWORD lastError = GetLastError();
+      MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgDestroy' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+                 FormatMessage(_T("VDD Error")),
+                 MB_OK, MB_ICONERROR);
+      retVal = 0xa8;      // Could not find procedure in DLL, but proceed with unloading the library before returning
+    } else {
+      lpDestroyProc();
+    }
+
+    if (!FreeLibrary(g_hCfgLib)) {
+      retVal = 0x98;      // Could not unload DLL
+    }
+
+    // Remove handler, since this DLL is about to unload
+    SetConsoleCtrlHandler(ConsoleEventHandler, FALSE);
+
+    g_hCfgLib = NULL;
+
+    // Done unloading
+    SignalVDMSStatus(false);
+  } catch (...) {
+    MessageBox(FormatMessage(_T("Unhandled exception encountered while unloading")),
+               FormatMessage(_T("Fatal Error")),
+               MB_OK, MB_ICONERROR);
+    return 0xff;            // Catastrophic failure
+  }
+
+  return retVal;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+//
+// Give audio feedback with regard to VDMS's status (loading/unloading).
+//
+void SignalVDMSStatus(bool isLoaded) {
+  if (isLoaded) {
+    Beep(1000,50);
+    Beep(2000,60);
+    Beep(4000,80);
+  } else {
+    Beep(4000,50);
+    Beep(2000,60);
+    Beep(1000,80);
+  }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+//
+// Automatically unloads the configuration module (and, implictly, all
+// emulation modules) when the DOS (console) window is closed.
+//
+BOOL WINAPI ConsoleEventHandler(
+  DWORD dwCtrlType )    // control signal type
+{
+  CString msg;
+
+  switch (dwCtrlType) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+      return FALSE;
+
+    case 3: /* WinNT4: corresponds to typing 'exit' at the command prompt */
+    case CTRL_CLOSE_EVENT:
+      unloadConfiguration();
+      VDDTerminateVDM();
+      return TRUE;
+
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+      return FALSE;
+
+    default:
+      return FALSE;
+  }
+}
