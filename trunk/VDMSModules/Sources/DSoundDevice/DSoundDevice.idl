@@ -1,0 +1,28 @@
+// DSoundDevice.idl : IDL source for DSoundDevice.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (DSoundDevice.tlb) and marshalling code.
+
+import "oaidl.idl";
+
+[
+	uuid(D2CF6601-4A54-11D5-9D41-00A024112F81),
+	version(1.0),
+	helpstring("DSoundDevice 1.0 Type Library")
+]
+library DSOUNDDEVICELib
+{
+	import "IVDMModule.idl";
+	import "IWave.idl";
+
+	[
+		uuid(D2CF660F-4A54-11D5-9D41-00A024112F81),
+		helpstring("WaveOut Class")
+	]
+	coclass WaveOut
+	{
+		[default] interface IVDMBasicModule;
+		interface IWaveDataConsumer;
+	};
+};
