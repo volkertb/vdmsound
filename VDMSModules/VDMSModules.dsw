@@ -3,6 +3,31 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
+Project: "DMAController"=.\Sources\DMAController\DMAController.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSModules/Sources/DMAController", IKAAAAAA
+    .\sources\dmacontroller
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "EmuMPU401"=.\Sources\EmuMPU401\EmuMPU401.dsp - Package Owner=<4>
 
 Package=<5>
@@ -46,6 +71,9 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name VDMUtil
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -56,7 +84,7 @@ Package=<5>
 {{{
     begin source code control
     "$/VDMSCore/Sources/INIParser", KJAAAAAA
-    ..\VDMSCore\sources\iniparser
+    ..\vdmscore\sources\iniparser
     end source code control
 }}}
 
@@ -88,7 +116,7 @@ Package=<5>
 {{{
     begin source code control
     "$/VDMSCore/Sources/MFCUtil", LEAAAAAA
-    ..\VDMSCore\sources\mfcutil
+    ..\vdmscore\sources\mfcutil
     end source code control
 }}}
 
@@ -182,12 +210,37 @@ Package=<5>
 {{{
     begin source code control
     "$/VDMSCore/Sources/VDMUtil", LEAAAAAA
-    ..\VDMSCore\sources\vdmutil
+    ..\vdmscore\sources\vdmutil
     end source code control
 }}}
 
 Package=<4>
 {{{
+}}}
+
+###############################################################################
+
+Project: "WaveDevice"=.\Sources\WaveDevice\WaveDevice.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSModules/Sources/WaveDevice", XKAAAAAA
+    .\sources\wavedevice
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
 }}}
 
 ###############################################################################
