@@ -74,7 +74,7 @@ protected:
   static void CALLBACK WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
 
 protected:
-  void WaveOutOpen(void);
+  bool WaveOutOpen(bool isInteractive = true);
   void WaveOutClose(void);
   CString WaveOutGetName(void);
   CString WaveOutGetError(MMRESULT errCode);
