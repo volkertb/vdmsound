@@ -191,7 +191,7 @@ void CAdvSettingsPage_Program::OnButDosdirbrowse()
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
   CString txtTitle;
-  txtTitle = _T("Please select a folder where the DOS application should be run (application files will be loaded and saved here):");
+  txtTitle.LoadString(IDS_TXT_BROWSEFOLDER_TIPS);
 
   TCHAR tmpBuf[MAX_PATH];
 
