@@ -82,7 +82,7 @@ BOOL CAdvSettingsPage_Compat::SyncGUIData(BOOL bSave) {
 }
 
 BOOL CAdvSettingsPage_Compat::SyncGUIData_EMS(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.memory"), _T("memEMS"), m_cmbEms, _T("16384"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.memory"), _T("memEMS"), m_cmbEms, _T("4096"));
 
   if (!bEnabled) {
     m_cmbEms.EnableWindow(FALSE);

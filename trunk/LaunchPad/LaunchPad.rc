@@ -295,6 +295,20 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Performance"
 FONT 8, "MS Sans Serif"
 BEGIN
+    GROUPBOX        "DOS &Scheduling",IDC_STATIC,6,7,211,78,WS_GROUP
+    CONTROL         "&Cap DOS timer frequency",IDC_CHK_COMPATTIMER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,20,96,10
+    CONTROL         "Try to &reduce CPU usage:",IDC_CHK_DETECTIDLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,33,98,10
+    LTEXT           "    ",IDC_STATIC,24,46,89,30,SS_SUNKEN
+    CONTROL         "Slider1",IDC_SLI_PRIORITY,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    WS_TABSTOP,26,48,85,16,WS_EX_TRANSPARENT
+    LTEXT           "Low usage",IDC_STATIC,28,65,40,10,NOT WS_GROUP,
+                    WS_EX_TRANSPARENT
+    RTEXT           "Med. usage",IDC_STATIC,69,65,40,10,NOT WS_GROUP,
+                    WS_EX_TRANSPARENT
+    CTEXT           "(multiple values)",IDC_TXT_PRIORITY_MULTI,26,65,85,10,NOT WS_GROUP | NOT WS_VISIBLE,
+                    WS_EX_TRANSPARENT
 END
 
 IDD_ADVPROPPAGE_MIDI DIALOGEX 0, 0, 224, 198

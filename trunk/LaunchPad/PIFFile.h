@@ -80,6 +80,7 @@ public:
   void SetFastPaste(BOOL fastPaste);
   void SetWarnOnClose(BOOL warnOnClose);
   void SetWinKeys(BOOL useAltTab, BOOL useAltEsc, BOOL useCtrlEsc, BOOL usePrtSc, BOOL useAltPrtSc, BOOL useAltEnter, BOOL useAltSpace);
+  void SetScheduler(BOOL useCompatTimer, BOOL useIdleDetect, LONG idlePrio);
 
   void Reset(void);
 

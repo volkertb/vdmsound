@@ -478,6 +478,18 @@ void CPIFFile::SetWinKeys(BOOL useAltTab, BOOL useAltEsc, BOOL useCtrlEsc, BOOL 
 //
 //
 //
+void CPIFFile::SetScheduler(BOOL useCompatTimer, BOOL useIdleDetect, LONG idlePrio) {
+  _CHANGEBIT(m_PIF.winNT3.wFlags,   useCompatTimer, PIF_NT3_COMPATTIMER);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, useIdleDetect,  PIF_386_DETECT_IDLE);
+
+  m_PIF.win386.wActivePrio     = idlePrio;
+  m_PIF.win386.wBackgroundPrio = idlePrio;
+  m_PIF.winVMM.wPriority       = idlePrio;
+}
+
+//
+//
+//
 void CPIFFile::Reset(void) {
   memset(&m_PIF, 0x00, sizeof(m_PIF));
 
