@@ -31,13 +31,13 @@ class CIOPortMgr {
     struct IOHandlerInfo {
 
       IOHandlerInfo(void)
-        { }
+        { };
       IOHandlerInfo(IIOHandler* _handler)
         : handler(_handler)
-        { }
+        { };
       IOHandlerInfo(const IOHandlerInfo& src)
         : handler(src.handler)
-        { }
+        { };
       IOHandlerInfo& operator=(const IOHandlerInfo& src) {
         handler = src.handler;
         return *this;

@@ -6,23 +6,7 @@
   include_once('inc/mysql.conf');
 
   ////////////////////////////////////////////////////////////////////////////
-  // Methods - Validation
-  ////////////////////////////////////////////////////////////////////////////
-
-  function MysqlIsValidInteger($integer) {
-    return eregi('^[\+\-]*[0-9]+$', $integer);     // accept integers only
-  }
-
-  function MysqlIsValidSQLName($name) {
-    return eregi('^[\$0-9A-Z_]+$', $name);         // accept ANSI SQL only
-  }
-
-  function MysqlIsValidSQLList($name) {
-    return eregi('^[\$0-9A-Z_ ,]+$', $name);       // accept valid names separatedby spaces and commas
-  }
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Methods - General
+  // Methods
   ////////////////////////////////////////////////////////////////////////////
 
   //
@@ -68,13 +52,6 @@
   //
   // Perform an SQL query on the mysql database
   //
-  function MysqlMakeSafe($string) {
-    return mysql_escape_string($string);
-  }
-
-  //
-  // Perform an SQL query on the mysql database
-  //
   function MysqlQuery($query) {
     global $mysql_linkid;
     ErrSetLastError();
@@ -85,26 +62,5 @@
     } else {
       return $result;
     }
-  }
-
-  //
-  // Perform an SQL query on the mysql database and puts the result into
-  //  an array of associative arrays
-  //
-  function MysqlQueryAssoc($query) {
-    global $mysql_linkid;
-    ErrSetLastError();
-
-    $retval  = Array();
-
-    if (!($result = MysqlQuery($query))) {
-      return false;
-    }
-
-    while ($row = mysql_fetch_assoc($result)) {
-      array_push($retval, $row);
-    }
-
-    return $retval;
   }
 ?>

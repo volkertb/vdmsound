@@ -13,43 +13,43 @@ interface IVDMBaseServices : IUnknown
 {
 	typedef [ helpstring("Registers that can be read from and written to") ] enum
 	{
-		REG_EAX = 0x00,
-		REG_AX  = 0x01,
-		REG_AL  = 0x02,
-		REG_AH  = 0x03,
+		REG_EAX     = 0x00,
+		REG_AX      = 0x01,
+		REG_AL      = 0x02,
+		REG_AH      = 0x03,
 
-		REG_EBX = 0x04,
-		REG_BX  = 0x05,
-		REG_BL  = 0x06,
-		REG_BH  = 0x07,
+		REG_EBX     = 0x04,
+		REG_BX      = 0x05,
+		REG_BL      = 0x06,
+		REG_BH      = 0x07,
 
-		REG_ECX = 0x08,
-		REG_CX  = 0x09,
-		REG_CL  = 0x0a,
-		REG_CH  = 0x0b,
+		REG_ECX     = 0x08,
+		REG_CX      = 0x09,
+		REG_CL      = 0x0a,
+		REG_CH      = 0x0b,
 
-		REG_EDX = 0x0c,
-		REG_DX  = 0x0d,
-		REG_DL  = 0x0e,
-		REG_DH  = 0x0f,
+		REG_EDX     = 0x0c,
+		REG_DX      = 0x0d,
+		REG_DL      = 0x0e,
+		REG_DH      = 0x0f,
 
-		REG_SS  = 0x10,
-		REG_ESP = 0x11,
-		REG_SP  = 0x12,
-		REG_EBP = 0x13,
-		REG_BP  = 0x14,
+		REG_SS      = 0x10,
+		REG_ESP     = 0x11,
+		REG_SP      = 0x12,
+		REG_EBP     = 0x13,
+		REG_BP      = 0x14,
 
-		REG_DS  = 0x15,
-		REG_ESI = 0x16,
-		REG_SI  = 0x17,
+		REG_DS      = 0x15,
+		REG_ESI     = 0x16,
+		REG_SI      = 0x17,
 
-		REG_ES  = 0x18,
-		REG_EDI = 0x19,
-		REG_DI  = 0x1a,
+		REG_ES      = 0x18,
+		REG_EDI     = 0x19,
+		REG_DI      = 0x1a,
 
-		REG_CS  = 0x1b,
-		REG_EIP = 0x1c,
-		REG_IP  = 0x1d
+		REG_CS      = 0x1b,
+		REG_EIP     = 0x1c,
+		REG_IP      = 0x1d
 	} REGISTER_T;
 
 	typedef [ helpstring("Flags that can be examined and modified") ] enum
@@ -69,17 +69,16 @@ interface IVDMBaseServices : IUnknown
 
 	typedef [ helpstring("Interrupt master/slave") ] enum
 	{
-		INT_MASTER = 0x00,
-		INT_SLAVE  = 0x01
+		INT_MASTER  = 0x00,
+		INT_SLAVE   = 0x01
 	} INTERRUPT_T;
 
 
 
-	typedef [ helpstring("Addressing mode, Protected Mode, V86 or 32-bit physical address") ] enum
+	typedef [ helpstring("Addressing mode, Protected Mode or V86") ] enum
 	{
-		ADDR_PM       = 0x00,
-		ADDR_V86      = 0x01,
-		ADDR_PHYSICAL = 0x02
+		ADDR_PM     = 0x00,
+		ADDR_V86    = 0x01
 	} ADDRMODE_T;
 
 
@@ -116,17 +115,17 @@ interface IVDMBaseServices : IUnknown
 
 	[ helpstring("Retrieves data from memory") ]
 	HRESULT GetMemory(
-		[in] WORD segment,                      // The segment or selector (0 for physical addresses)
+		[in] WORD segment,                      // The segment or selector
 		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
-		[in] ADDRMODE_T mode,                   // Either ADDR_PM, ADDR_V86 or ADDR_PHYSICAL
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
 		[out, size_is(length)] BYTE buffer[],   // Points to the buffer where a copy of the data should be stored
 		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
 
 	[ helpstring("Sets data in memory") ]
 	HRESULT SetMemory(
-		[in] WORD segment,                      // The segment or selector (0 for physical addresses)
+		[in] WORD segment,                      // The segment or selector
 		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
-		[in] ADDRMODE_T mode,                   // Either ADDR_PM, ADDR_V86 or ADDR_PHYSICAL
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
 		[in, size_is(length)] BYTE buffer[],    // Points to the buffer where data should be taken from
 		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
 
@@ -252,9 +251,9 @@ interface IVDMDMAServices : IUnknown
 {
 	typedef [ helpstring("DMA transfer status") ] struct
 	{
-		WORD page;
 		WORD addr;
 		WORD count;
+		WORD page;
 		BYTE status;
 		BYTE mode;
 		BYTE mask;
@@ -263,9 +262,9 @@ interface IVDMDMAServices : IUnknown
 	typedef [ helpstring("Different DMA transfer status indicators") ] enum
 	{
 		UPDATE_NONE   = 0,
-		UPDATE_PAGE   = 1 << 0,
-		UPDATE_ADDR   = 1 << 1,
-		UPDATE_COUNT  = 1 << 2,
+		UPDATE_ADDR   = 1 << 0,
+		UPDATE_COUNT  = 1 << 1,
+		UPDATE_PAGE   = 1 << 2,
 		UPDATE_STATUS = 1 << 3,
 		UPDATE_ALL    = UPDATE_ADDR | UPDATE_COUNT | UPDATE_PAGE | UPDATE_STATUS
 	} DMA_INFO_SEL_T;
@@ -276,23 +275,22 @@ interface IVDMDMAServices : IUnknown
 	*	DMA-related functions
 	******************************************************/
 
-	[ helpstring("Gets the state of a DMA channel") ]
-	HRESULT GetDMAState(
+	[ helpstring("Provides DMA data") ]
+	HRESULT QueryDMA(
 		[in] WORD channel,                      // Specifies the DMA channel to query
 		[out] DMA_INFO_T * DMAInfo );           // Specifies the buffer location where information will be returned
 
-	[ helpstring("Modifies the state of a DMA channel") ]
-	HRESULT SetDMAState(
+	[ helpstring("Resets the state of the virtual DMA controller after a DMA operation that used QueryDMA") ]
+	HRESULT SetDMA(
 		[in] WORD channel,                      // Specifies the DMA channel to set
 		[in] DMA_INFO_SEL_T flags,              // Provides bitmask indicating what must be set
 		[in] DMA_INFO_T * DMAInfo );            // Specifies the buffer location of the DMA data
 
-	[ helpstring("Performs a DMA transfer, automatically managing channel state") ]
-	HRESULT PerformDMATransfer(
+	[ helpstring("Requests a DMA transfer") ]
+	HRESULT RequestDMA(
 		[in] WORD channel,                      // Specifies the DMA channel for the transfer operation
 		[in, size_is(length)] BYTE buffer[],    // Points to the buffer to or from which the data is transferred
-		[in] ULONG length,                      // Specifies the size in bytes of the transfer count
-		[out, retval] ULONG * transferred );    // Receives the actual number of bytes transferred
+		[in] DWORD length );                    // Specifies the size in bytes of the transfer count
 };
 
 

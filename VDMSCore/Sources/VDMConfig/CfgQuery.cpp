@@ -37,17 +37,7 @@ CCfgQuery::~CCfgQuery() {
 void CCfgQuery::Init(const CfgEnvironment& env) {
   if (m_pEnv != NULL)
     delete m_pEnv;
-
   m_pEnv = new CfgEnvironment(env);
-
-  std::string logLevelStr;
-
-  getDbgValue("file", m_logFile, "VDMS.LOG");
-  getDbgValue("detail", logLevelStr, "");
-
-  if (sscanf(logLevelStr.c_str(), "%d", &m_logLevel) != 1) {
-    m_logLevel = LOG_WARNING; // by default, don't log anything less severe than warnings
-  }
 }
 
 
@@ -164,31 +154,30 @@ STDMETHODIMP CCfgQuery::Get(BSTR name, BSTR * value) {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CCfgQuery::RecordLogEntry(LOGENTRY_T type, BSTR message) {
-  if (m_pEnv == NULL)
-    return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_QUERY_NOT_INIT, false, NULL, 0, false, m_pEnv), HLP_ERR_QUERY_NOT_INIT, ::GetHelpPath(), __uuidof(IVDMRTEnvironment), E_UNEXPECTED);
-
-  if (type < m_logLevel)
-    return S_FALSE; // do not need to log anything (filtered out)
-
   CString logEntry;
   CString entryType;
   CString logMsg = message;
   CString moduleName = (m_pEnv != NULL) ? m_pEnv->name.c_str() : "<error>";
 
-  if (type >= LOG_ERROR) {
-    entryType = _T("@E");
-  } else if (type >= LOG_WARNING) {
-    entryType = _T("@W");
-  } else if (type >= LOG_INFORMATION) {
-    entryType = _T("@I");
-  } else {
-    entryType = _T("@?");
+  switch (type) {
+    case LOG_INFORMATION:
+      entryType = _T("@I");
+      break;
+    case LOG_WARNING:
+      entryType = _T("@W");
+      break;
+    case LOG_ERROR:
+      entryType = _T("@E");
+      break;
+    default:
+      entryType = _T("@?");
+      break;
   }
 
   WrapString(logMsg, 70, _T("\t"), _T("\t"));
   logEntry.Format(_T("%s - %s - %s\n%s\n"), (LPCTSTR)entryType, (LPCTSTR)FormatTime(timeGetTime()), (LPCTSTR)moduleName, (LPCTSTR)logMsg);
 
-  FILE* fLog = fopen(m_logFile.c_str(), "at");
+  FILE* fLog = fopen("vdms.log", "at");
 
   if (fLog != NULL) {
     _fputts((LPCTSTR)logEntry, fLog);
@@ -196,30 +185,6 @@ STDMETHODIMP CCfgQuery::RecordLogEntry(LOGENTRY_T type, BSTR message) {
   }
 
   return S_OK;
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Utility functions
-/////////////////////////////////////////////////////////////////////////////
-
-bool CCfgQuery::getDbgValue(
-    const std::string& key,
-    std::string& value,
-    const std::string& defaultValue)
-{
-  try {
-    m_pEnv->config.getValue(m_pEnv->name, CVDMConfig::SEC_DEBUG, key, value);
-    return true;
-  } catch (CVDMConfig::nosection_error& /*nse*/) {
-    value = defaultValue;
-    return false;
-  } catch (CVDMConfig::nokey_error& /*nke*/) {
-    value = defaultValue;
-    return false;
-  }
-
 }
 
 CString CCfgQuery::FormatTime(DWORD millis) {
@@ -236,3 +201,8 @@ CString CCfgQuery::FormatTime(DWORD millis) {
 
 /* TODO: add true enumerator (IEnumXXX) functionality (Reset, Next) to the
    Dependency and Configuration query objects. */
+
+/* TODO: add filtering and per-module configuration to the R.T. Environment's
+   logging functions; the logging configuration (in what file, how detailed,
+   etc.) should be taken from the [ModuleName] section, i.e. the same section
+   used by the loader to get the module's CLSID and so on. */

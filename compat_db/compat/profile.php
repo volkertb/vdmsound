@@ -7,13 +7,14 @@
   SessionStart();
 
   if (!$loggedin = AuthLogin()) {
-    header('Location: ' . HtmlMakeURL('login.php', Array('redirect' => $REQUEST_URI)));
+    header('Location: login.php?redirect=' . $SCRIPT_NAME);
     exit;
   }
 ?>
 
 <?php HtmlBeginPage('Edit Your User Profile'); ?>
-<?php HtmlBeginHeader($loggedin); ?>
+<?php HtmlBeginHeader(); ?>
+<?php HtmlSendUserInfo($loggedin); ?><hr size="1" noshade>
 <?php HtmlBeginBody(); ?>
 
 <?php
@@ -38,60 +39,62 @@
   }
 ?>
 
+<center>
+
 <?php
   if ($profile) {
     if (!$success) {
-      $style = 'error';
-      $text  = ErrFormatError($error) . ' (' . $error . ')';
+      $color = '#7f4f4f';
+      $text = ErrFormatError($error) . ' (' . $error . ').';
     } else {
-      $style = 'success';
-      $text  = 'Your profile information has been updated';
+      $color = '#4f7f4f';
+      $text = 'Your profile information has been updated';
     }
   } else {
-    $style = 'normal';
-    $text  = 'Update Personal Information';
+    $color = '#5f5f5f';
+    $text = 'Update Personal Information';
   }
 
-  echo('<h1 class="' . $style . '">' . $text . '</h1>');
-
-  echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-  echo('<tr><td align="right" width="50%">User ID:</td><td align="left" width="50%">' . $userinfo['name'] . '</td></tr>');
-  echo('<tr><td align="right">Created:</td><td align="left">' . date('D M j Y', strtotime($userinfo['time_created'])) . '</td></tr>');
-  echo('<tr><td align="right">Last logged in:</td><td align="left">' . date('D M j Y', strtotime($userinfo['time_lastlogin'])) . '</td></tr>');
-  echo('<tr><td align="right">' . HtmlHighlightError('Full name:', $error == E_AUTH_INVALID_FULL_NAME) . '</td><td align="left"><input class="flat1" type="text" size="24" name="fullname" value="' . $fullname . '" maxlength="48"></td></tr>');
-  echo('<tr><td align="right">' . HtmlHighlightError('E-mail:', $error == E_AUTH_INVALID_EMAIL) . '</td><td align="left"><input class="flat1" type="text" size="24" name="email" value="' . $email . '" maxlength="64"></td></tr>');
-  echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Update">&nbsp;<input type="reset" class="flat2" value="Reset"></td></tr>');
-  HtmlFormSendSID();
-  echo('</table></form>');
+  echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
 ?>
 
-<br>
+<form method="post" action="<?php echo($SCRIPT_NAME); ?>"><table border="0" cellspacing="2" cellpadding="3" width="100%">
+  <tr><td align="right" width="50%">User:</td><td align="left" width="50%"><?php echo($userinfo['name']); ?></td></tr>
+  <tr><td align="right">Created:</td><td align="left"><?php echo(date('D M j Y', strtotime($userinfo['time_created']))); ?></td></tr>
+  <tr><td align="right">Last logged in:</td><td align="left"><?php echo(date('D M j Y', strtotime($userinfo['time_lastlogin']))); ?></td></tr>
+  <tr><td align="right"><?php echo(HtmlHighlightError('Full name:', $error == E_AUTH_INVALID_FULL_NAME)); ?></td><td align="left"><input type="text" size="24" name="fullname" value="<?php echo($fullname); ?>" maxlength="48"></td></tr>
+  <tr><td align="right"><?php echo(HtmlHighlightError('E-mail:', $error == E_AUTH_INVALID_EMAIL)); ?></td><td align="left"><input type="text" size="24" name="email" value="<?php echo($email); ?>" maxlength="64"></td></tr>
+  <tr><td align="center" colspan="2"><input type="submit" value="Update">&nbsp;<input type="reset" value="Reset"></td></tr>
+</table></form>
 
+<br>
+  
 <?php
   if ($password) {
     if (!$success) {
-      $style = 'error';
-      $text  = ErrFormatError($error) . ' (' . $error . ')';
+      $color = '#7f4f4f';
+      $text = ErrFormatError($error) . ' (' . $error . ').';
     } else {
-      $style = 'success';
-      $text  = 'Your password has been changed';
+      $color = '#4f7f4f';
+      $text = 'Your password has been changed';
     }
   } else {
-    $style = 'normal';
-    $text  = 'Change Password';
+    $color = '#5f5f5f';
+    $text = 'Change Password';
   }
 
-  echo('<h1 class="' . $style . '">' . $text . '</h1>');
-
-
-  echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-  echo('<tr><td align="right" width="50%">' . HtmlHighlightError('Old password:', $error == E_AUTH_NO_SUCH_USER_PWD) . '</td><td align="left" width="50%"><input class="flat1" type="password" size="12" name="oldpwd" value="" maxlength="16"></td></tr>');
-  echo('<tr><td align="right">' . HtmlHighlightError('New password:', $error == E_AUTH_INVALID_PASSWORD) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd1" value="" maxlength="16"></td></tr>');
-  echo('<tr><td align="right">' . HtmlHighlightError('Confirm new password:', $error == E_AUTH_PASSWORD_MISMATCH) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd2" value="" maxlength="16"></td></tr>');
-  echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Change">&nbsp;<input type="reset" class="flat2" value="Clear"></td></tr>');
-  HtmlFormSendSID();
-  echo('</table></form>');
+  echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
 ?>
 
+<form method="post" action="<?php echo($SCRIPT_NAME); ?>"><table border="0" cellspacing="2" cellpadding="3" width="100%">
+  <tr><td align="right" width="50%"><?php echo(HtmlHighlightError('Old password:', $error == E_AUTH_NO_SUCH_USER_PWD)); ?></td><td align="left" width="50%"><input type="password" size="12" name="oldpwd" value="" maxlength="16"></td></tr>
+  <tr><td align="right"><?php echo(HtmlHighlightError('New password:', $error == E_AUTH_INVALID_PASSWORD)); ?></td><td align="left"><input type="password" size="12" name="newpwd1" value="" maxlength="16"></td></tr>
+  <tr><td align="right"><?php echo(HtmlHighlightError('Confirm new password:', $error == E_AUTH_PASSWORD_MISMATCH)); ?></td><td align="left"><input type="password" size="12" name="newpwd2" value="" maxlength="16"></td></tr>
+  <tr><td align="center" colspan="2"><input type="submit" value="Change">&nbsp;<input type="reset" value="Clear"></td></tr>
+</table></form>
+
+</center>
+
 <?php HtmlBeginFooter(); ?>
+<?php HtmlSendLastModified(); ?>
 <?php HtmlEndPage(); ?>

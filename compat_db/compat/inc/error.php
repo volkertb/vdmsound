@@ -4,7 +4,6 @@
   ////////////////////////////////////////////////////////////////////////////
 
   define('E_NOERROR', 0);
-  define('E_UNEXPECTED', 10);
 
   define('E_AUTH_UNKNOWN_USER_ID',   1000);
   define('E_AUTH_UNKNOWN_USER_NAME', 1001);
@@ -27,10 +26,7 @@
 
   define('E_MAIL_SENDMAIL',          2200);
 
-
   $err_codes = Array(
-    E_NOERROR                => 'No error',
-    E_UNEXPECTED             => 'Unexpected error',
     E_AUTH_UNKNOWN_USER_ID   => 'Unknown user ID',
     E_AUTH_UNKNOWN_USER_NAME => 'Unknown user name',
     E_AUTH_INVALID_USER_ID   => 'Invalid user ID',
@@ -75,7 +71,10 @@
   // Converst error code into human-readable string
   //
   function ErrFormatError($errorcode) {
-    global $err_codes;
+    global $err_lasterrorcode, $err_codes;
+
+    if ($errorcode == E_NOERROR)
+      return '[No error]';
 
     if (is_null($errorcode) || is_null($err_codes[$errorcode]))
       return '[Unknown error]';

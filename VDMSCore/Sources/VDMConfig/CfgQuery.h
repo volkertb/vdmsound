@@ -58,13 +58,10 @@ public:
   STDMETHOD(RecordLogEntry)(LOGENTRY_T type, BSTR message);
 
 protected:
-  bool getDbgValue(const std::string& key, std::string& value, const std::string& defaultValue);
   CString FormatTime(DWORD millis);
 
 protected:
   CfgEnvironment* m_pEnv;
-  std::string m_logFile;
-  int m_logLevel;
 };
 
 #endif //__CFGQUERY_H_

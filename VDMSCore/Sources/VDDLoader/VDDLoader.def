@@ -11,4 +11,3 @@ EXPORTS
 	; VDD-specific exports
 	VddInitialize	PRIVATE
 	VddDispatch	PRIVATE
-	VddDestroy	PRIVATE

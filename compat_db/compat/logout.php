@@ -3,7 +3,7 @@
   require_once('inc/session.php');
   require_once('inc/auth.php');
 
-  SessionStart('nocache');
+  SessionStart();
 
   if (AuthLogin()) {
     $success = true;
@@ -16,17 +16,18 @@
 ?>
 
 <?php HtmlBeginPage('Log Out of the DOS Compatibility Database'); ?>
+<?php HtmlBeginHeader(); ?>
 <?php HtmlBeginBody(); ?>
 
-<?php
+<p><center><font size="4"><b><?php
   if ($success) {
-    echo('<h2 class="normal">You have been logged out.</h2>');
+    echo("You have been logged out.");
   } else {
-    echo('<h2 class="normal">You were not logged in.</h2>');
+    echo("You were not logged in.");
   }
-
-  echo('<p align="center"><b>' . HtmlMakeLink('Login', 'login.php') . '</b>&nbsp;| ' . HtmlMakeLink('Back', $HTTP_REFERER) );
-?>
+?></b></font></p>
+<p><b><?php echo(HtmlMakeLink('Login', 'login.php')); ?></b> | <?php echo(HtmlMakeLink('Back', $HTTP_REFERER)); ?></center></p>
 
 <?php HtmlBeginFooter(); ?>
+<?php HtmlSendLastModified(); ?>
 <?php HtmlEndPage(); ?>

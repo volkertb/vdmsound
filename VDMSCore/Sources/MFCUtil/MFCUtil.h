@@ -20,8 +20,4 @@ int AFXAPI MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption, UINT uButtonType, U
 
 LPCTSTR AFXAPI GetHelpPath(void);
 
-LPCSTR AFXAPI SearchPathA(LPCSTR fileName);
-
-CString GetExceptionText(DWORD dwStatus);
-
 #endif //__MFCUTIL_H_

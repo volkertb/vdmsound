@@ -24,7 +24,7 @@ std::string formatSectionInfo(
 /////////////////////////////////////////////////////////////////////////////
 
 CINIConfig::CINIConfig(void)
-  : CINIParser(), prefix_default("*"), suffix_debug("debug"), suffix_depends("depends"), suffix_config("config")
+  : CINIParser(), prefix_default("*"), suffix_depends("depends"), suffix_config("config")
 {
 }
 
@@ -52,7 +52,6 @@ void CINIConfig::validate(void) const {
 
   for (striset_t::iterator itModule = modules.begin(); itModule != modules.end(); itModule++) {
     sections.erase(getSectionName(*itModule, SEC_LOADER));
-    sections.erase(getSectionName(*itModule, SEC_DEBUG));
     sections.erase(getSectionName(*itModule, SEC_DEPENDS));
     sections.erase(getSectionName(*itModule, SEC_CONFIG));
   }
@@ -282,8 +281,6 @@ std::string CINIConfig::getSectionName(
   switch (sectionID) {
     case SEC_LOADER:
       return moduleName;
-    case SEC_DEBUG:
-      return moduleName + "." + suffix_debug;
     case SEC_DEPENDS:
       return moduleName + "." + suffix_depends;
     case SEC_CONFIG:

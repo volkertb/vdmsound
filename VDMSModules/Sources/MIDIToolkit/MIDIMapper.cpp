@@ -75,27 +75,19 @@ STDMETHODIMP CMIDIMapper::Init(IUnknown * configuration) {
 
   HRESULT hr;
 
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
-
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Initialize configuration
+  // Obtain the Query objects (for intialization purposes)
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
+
   try {
-    // Obtain the Query objects (for intialization purposes)
-    Depends    = configuration; // Dependency query object
-    Config     = configuration; // Configuration query object
-
-    /** Get settings *******************************************************/
-
     // Obtain the name of the file containing the mappings
     _bstr_t mapFileName = Config->Get(INI_STR_MAPFNAME);
 
     if (FAILED(hr = loadMapping(mapFileName)))
       return hr;
-
-    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, false);   // complain if no such module available
@@ -104,7 +96,7 @@ STDMETHODIMP CMIDIMapper::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDIMapper initialized")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDIMapper initialized")));
 
   return S_OK;
 }
@@ -114,7 +106,7 @@ STDMETHODIMP CMIDIMapper::Destroy() {
   m_midiOut = NULL;
 
   // Release the runtime environment
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDIMapper released")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDIMapper released")));
   RTE_Set(m_env, NULL);
 
   return S_OK;
@@ -127,7 +119,7 @@ STDMETHODIMP CMIDIMapper::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMIDIMapper::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  _ASSERTE(data1 < 128);
+  ASSERT(data1 < 128);
 
   if (GET_EVENT(status) == MIDI_EVENT_PROGRAM_CHANGE)
     data1 = m_patchMap[data1];      // Program change
@@ -171,7 +163,7 @@ HRESULT CMIDIMapper::loadMapping(LPCSTR fName) {
   CINIParser map;
 
   try {
-    map.load(SearchPathA(fName));
+    map.load(fName);
   } catch (CINIParser::fopen_error& foe) {
     DWORD lastError = GetLastError();
     return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_IO_OPEN, /*false, NULL, 0, */false, (LPCTSTR)CString(foe.location.c_str()), lastError, (LPCTSTR)FormatMessage(lastError)), __uuidof(IVDMBasicModule), E_ABORT);

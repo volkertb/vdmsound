@@ -51,7 +51,7 @@ class CINIParser :
       io_error(
           const std::string& _location)
         : location(_location), runtime_error(_location)
-        { }
+        { };
       const std::string location;
     };
 
@@ -60,7 +60,7 @@ class CINIParser :
       fopen_error(
           const std::string& _fName)
         : io_error(_fName)
-        { }
+        { };
     };
 
     // Generic parser error
@@ -68,7 +68,7 @@ class CINIParser :
       parse_error(
           const std::string& _location)
         : location(_location), logic_error(_location)
-        { }
+        { };
       const std::string location;
     };
 
@@ -77,7 +77,7 @@ class CINIParser :
       format_error(
           const std::string& _location)
         : parse_error(_location)
-        { }
+        { };
     };
 
     // Syntax error
@@ -87,7 +87,7 @@ class CINIParser :
           const std::string& _offender,
           const std::string& _expected)
         : parse_error(_location), offender(_offender), expected(_expected)
-        { }
+        { };
       const std::string offender;
       const std::string expected;
     };
@@ -99,7 +99,7 @@ class CINIParser :
           const std::string& _redefined,
           const std::string& _defLocation)
         : parse_error(_location), redefined(_redefined), defLocation(_defLocation)
-        { }
+        { };
       const std::string redefined;
       const std::string defLocation;
     };
@@ -110,10 +110,10 @@ class CINIParser :
     struct INIKey {
       INIKey(const std::string& _key = "", const std::string& _file = "", int _line = -1)
         : key(_key), file(_file), line(_line)
-        { }
+        { };
       INIKey(const INIKey& src)
         : key(src.key), file(src.file), line(src.line)
-        { }
+        { };
       INIKey& operator=(const INIKey& src) {
         key  = src.key;
         file = src.file;

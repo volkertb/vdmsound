@@ -7,7 +7,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define LED_NONE        -1
 #define LED_NUMLOCK     VK_NUMLOCK
 #define LED_CAPSLOCK    VK_CAPITAL
 #define LED_SCROLLLOCK  VK_SCROLL
@@ -31,7 +30,7 @@ class ATL_NO_VTABLE CActivityLights :
 {
 public:
 	CActivityLights()
-    : m_ledID(LED_SCROLLLOCK), m_isIndicatorOn(false)
+    : ledID(LED_SCROLLLOCK), isIndicatorOn(false)
   {	};
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ACTIVITYLIGHTS)
@@ -65,17 +64,10 @@ protected:
   static bool GetLedStatus(int ledID);
   static void SetLedStatus(int ledID, bool isLedOn);
 
-/////////////////////////////////////////////////////////////////////////////
-
-// Module's settings
 protected:
-  int m_ledID;
+  int ledID;
+  bool isIndicatorOn;
 
-// Other member variables
-protected:
-  bool m_isIndicatorOn;
-
-// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IMIDIEventHandlerPtr m_midiOut;

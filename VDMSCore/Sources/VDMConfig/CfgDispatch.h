@@ -12,13 +12,13 @@ struct CfgEnvironment {
   CfgEnvironment(
       const CfgEnvironment& src)
     : name(src.name), config(src.config), modules(src.modules)
-    { }
+    { };
   CfgEnvironment(
       const std::string& _name,
       const CVDMConfig& _config,
-      const modulemap_t& _modules )
+      const modulemap_t& _modules)
     : name(_name), config(_config), modules(_modules)
-    { }
+    { };
 
   const std::string& name;
   const CVDMConfig& config;

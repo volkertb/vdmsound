@@ -3,118 +3,14 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "DMAController"=.\Sources\DMAController\DMAController.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "DSoundDevice"=.\Sources\DSoundDevice\DSoundDevice.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "DiskWriter"=.\Sources\DiskWriter\DiskWriter.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "EmuAdLib"=.\Sources\EmuAdLib\EmuAdLib.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "EmuJoystick"=.\Sources\EmuJoystick\EmuJoystick.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name INIParser
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "EmuMPU401"=.\Sources\EmuMPU401\EmuMPU401.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules/Sources/EmuMPU401", JGAAAAAA
+    .\sources\emumpu401
+    end source code control
 }}}
 
 Package=<4>
@@ -127,39 +23,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name VDMUtil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "EmuPPDAC"=.\Sources\EmuPPDAC\EmuPPDAC.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "EmuSBCompat"=.\Sources\EmuSBCompat\EmuSBCompat.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
     End Project Dependency
 }}}
 
@@ -169,6 +32,10 @@ Project: "INIParser"=..\VDMSCore\Sources\INIParser\INIParser.dsp - Package Owner
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSCore/Sources/INIParser", KJAAAAAA
+    ..\VDMSCore\sources\iniparser
+    end source code control
 }}}
 
 Package=<4>
@@ -181,6 +48,10 @@ Project: "Interfaces"=.\Sources\Interfaces\Interfaces.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules/Sources/Interfaces", HHAAAAAA
+    .\sources\interfaces
+    end source code control
 }}}
 
 Package=<4>
@@ -193,6 +64,10 @@ Project: "MFCUtil"=..\VDMSCore\Sources\MFCUtil\MFCUtil.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSCore/Sources/MFCUtil", LEAAAAAA
+    ..\VDMSCore\sources\mfcutil
+    end source code control
 }}}
 
 Package=<4>
@@ -205,6 +80,10 @@ Project: "MIDIDevice"=.\Sources\MIDIDevice\MIDIDevice.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules/Sources/MIDIDevice", KHAAAAAA
+    .\sources\mididevice
+    end source code control
 }}}
 
 Package=<4>
@@ -226,6 +105,10 @@ Project: "MIDIIndicator"=.\Sources\MIDIIndicator\MIDIIndicator.dsp - Package Own
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules/Sources/MIDIIndicator", HIAAAAAA
+    .\sources\midiindicator
+    end source code control
 }}}
 
 Package=<4>
@@ -247,6 +130,10 @@ Project: "MIDIToolkit"=.\Sources\MIDIToolkit\MIDIToolkit.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules/Sources/MIDIToolkit", VIAAAAAA
+    .\sources\miditoolkit
+    end source code control
 }}}
 
 Package=<4>
@@ -271,31 +158,14 @@ Project: "VDMUtil"=..\VDMSCore\Sources\VDMUtil\VDMUtil.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSCore/Sources/VDMUtil", LEAAAAAA
+    ..\VDMSCore\sources\vdmutil
+    end source code control
 }}}
 
 Package=<4>
 {{{
-}}}
-
-###############################################################################
-
-Project: "WaveDevice"=.\Sources\WaveDevice\WaveDevice.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Interfaces
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name MFCUtil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name VDMUtil
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -304,6 +174,10 @@ Global:
 
 Package=<5>
 {{{
+    begin source code control
+    "$/VDMSModules", HGAAAAAA
+    .
+    end source code control
 }}}
 
 Package=<3>

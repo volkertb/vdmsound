@@ -17,7 +17,7 @@ void AFXAPI RTE_Set(
 {
   try {
     environment = configuration;
-  } catch (_com_error& /*ce*/) { }
+  } catch (_com_error& /*ce*/) { };
 }
 
 //
@@ -31,7 +31,7 @@ void AFXAPI RTE_RecordLogEntry(
 {
   try {
     environment->RecordLogEntry(type, message);
-  } catch (_com_error& /*ce*/) { }
+  } catch (_com_error& /*ce*/) { };
 }
 
 

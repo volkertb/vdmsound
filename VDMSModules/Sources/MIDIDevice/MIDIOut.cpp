@@ -16,10 +16,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define UM_MOM_ERROR      (WM_USER + 0x100)
-
-/////////////////////////////////////////////////////////////////////////////
-
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
@@ -58,24 +54,16 @@ STDMETHODIMP CMIDIOut::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return E_POINTER;
 
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
-
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Initialize configuration and VDM services
+  // Obtain the Query objects (for intialization purposes)
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
+
   try {
-    // Obtain the Query objects (for intialization purposes)
-    Depends = configuration;    // Dependency query object
-    Config  = configuration;    // Configuration query object
-
-    /** Get settings *******************************************************/
-
-    // Try to obtain the MIDI-Out settings, use defaults if none specified
+    // Obtain MIDI-Out settings (if available)
     m_deviceID = CFG_Get(Config, INI_STR_DEVICEID, -1, 10, false);
-
-    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut  = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, true);   // do not complain if no such module available
@@ -87,9 +75,9 @@ STDMETHODIMP CMIDIOut::Init(IUnknown * configuration) {
   m_deviceName = MidiOutGetName();    // Obtain information about the device (its name)
 
   // Create the garbage-collector thread (frees up memory allocated during asynchronous MIDI SysEx uploads)
-  m_gcThread.Create(this, _T("MIDI-Out Garbage Collector"), true);      /* TODO: check that creation was successful */
-  m_gcThread.SetPriority(THREAD_PRIORITY_LOWEST);
-  m_gcThread.Resume();
+  gcThread.Create(this, true);
+  gcThread.SetPriority(THREAD_PRIORITY_LOWEST);
+  gcThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDIOut initialized (device ID = %d, '%s')"), m_deviceID, (LPCTSTR)m_deviceName));
 
@@ -102,8 +90,7 @@ STDMETHODIMP CMIDIOut::Destroy() {
     MidiOutClose();
 
   // Signal the GC thread to quit
-  if (m_gcThread.GetThreadHandle() != NULL)
-    m_gcThread.Cancel();
+  gcThread.Cancel();
 
   // Release the MIDI-out module
   m_midiOut = NULL;
@@ -122,87 +109,77 @@ STDMETHODIMP CMIDIOut::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMIDIOut::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  HRESULT hrThis = S_OK, hrThat = S_OK;
+  if (m_hMidiOut == NULL)
+    MidiOutOpen();
 
-  if ((m_hMidiOut == NULL) && (!MidiOutOpen(false))) {
-    hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
-  } else {
-    union {
-      DWORD dwData;
-      BYTE bData[4];
-    } data;
+  union {
+    DWORD dwData;
+    BYTE bData[4];
+  } data;
 
-    data.bData[0] = status;   // MIDI status byte
-    data.bData[1] = data1;    // first MIDI data byte
-    data.bData[2] = data2;    // second MIDI data byte
-    data.bData[3] = 0;
+  data.bData[0] = status;   // MIDI status byte
+  data.bData[1] = data1;    // first MIDI data byte
+  data.bData[2] = data2;    // second MIDI data byte
+  data.bData[3] = 0;
 
-    midiOutShortMsg(m_hMidiOut, data.dwData);
-  }
+  midiOutShortMsg(m_hMidiOut, data.dwData);
 
   if (m_midiOut != NULL)
-    hrThat = m_midiOut->HandleEvent(usDelta, status, data1, data2, length);
+    return m_midiOut->HandleEvent(usDelta, status, data1, data2, length);
 
-  return (hrThat == S_OK ? hrThis : hrThat);
+  return S_OK;
 }
 
 STDMETHODIMP CMIDIOut::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length) {
   if (data == NULL)
     return E_POINTER;
 
-  HRESULT hrThis = S_OK, hrThat = S_OK;
+  if (m_hMidiOut == NULL)
+    MidiOutOpen();
 
-  if ((m_hMidiOut == NULL) && (!MidiOutOpen(false))) {
-    hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
-  } else {
-    MIDIHDR* midiHdr = NULL;
-    LPSTR sysExMsg = NULL;
+  MIDIHDR* midiHdr = NULL;
+  LPSTR sysExMsg = NULL;
 
-    try {
-      midiHdr  = new MIDIHDR;
-      sysExMsg = new CHAR[length + 2];
+  try {
+    midiHdr  = new MIDIHDR;
+    sysExMsg = new CHAR[length + 2];
 
-      sysExMsg[0] = (char)(0xf0);           // SYSEX event
-      memcpy(&(sysExMsg[1]), data, length); // the actual SysEx data
-      sysExMsg[length + 1] = (char)(0xf7);  // EOX event
+    sysExMsg[0] = (char)(0xf0);           // SYSEX event
+    memcpy(&(sysExMsg[1]), data, length); // the actual SysEx data
+    sysExMsg[length + 1] = (char)(0xf7);  // EOX event
 
-      midiHdr->lpData = sysExMsg;
-      midiHdr->dwBufferLength = length + 2;
-      midiHdr->dwBytesRecorded = 0;
-      midiHdr->dwUser = (DWORD)midiHdr;
-      midiHdr->dwFlags = 0;
+    midiHdr->lpData = sysExMsg;
+    midiHdr->dwBufferLength = length + 2;
+    midiHdr->dwBytesRecorded = 0;
+    midiHdr->dwUser = (DWORD)midiHdr;
+    midiHdr->dwFlags = 0;
 
-      MMRESULT errCode;
+    MMRESULT errCode;
 
-      if ((errCode = midiOutPrepareHeader(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-        CString args = Format(_T("0x%08x, %p, %d"), m_hMidiOut, midiHdr, sizeof(*midiHdr));
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
-        AfxThrowUserException();
-      }
-
-      if ((errCode = midiOutLongMsg(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-        CString args = Format(_T("0x%08x, %p, %d"), m_hMidiOut, midiHdr, sizeof(*midiHdr));
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutLongMsg(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
-        AfxThrowUserException();
-      }
-    } catch (CMemoryException * pme) {
-      TCHAR errMsg[1024] = _T("<no description available>");
-      pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An unexpected out-of-memory condition was encountered while handling a MIDI system-exclusive message:\nmidiHdr  = %p (%d bytes)\nsysExMsg = %p (%d bytes)\n%s"), midiHdr, sizeof(*midiHdr), sysExMsg, length + 2, errMsg));
-      delete midiHdr;
-      delete[] sysExMsg;
-      hrThis = S_FALSE;
-    } catch (CUserException * /*pue*/) {
-      delete midiHdr;
-      delete[] sysExMsg;
-      hrThis = S_FALSE;
+    if ((errCode = midiOutPrepareHeader(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
+      AfxThrowUserException();
     }
+
+    if ((errCode = midiOutLongMsg(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
+      AfxThrowUserException();
+    }
+  } catch (CMemoryException * pme) {
+    TCHAR errMsg[1024] = _T("<no description available>");
+    pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An unexpected out-of-memory condition was encountered while handling a MIDI system-exclusive message:\nmidiHdr  = %p (%d bytes)\nsysExMsg = %p (%d bytes)\n%s"), midiHdr, sizeof(*midiHdr), sysExMsg, length + 2, errMsg));
+    delete midiHdr;
+    delete[] sysExMsg;
+  } catch (CUserException * /*pue*/) {
+    delete midiHdr;
+    delete[] sysExMsg;
   }
 
   if (m_midiOut != NULL)
-    hrThat = m_midiOut->HandleSysEx(usDelta, data, length);
+    return m_midiOut->HandleSysEx(usDelta, data, length);
 
-  return (hrThat == S_OK ? hrThis : hrThat);
+  return S_OK;
 }
 
 STDMETHODIMP CMIDIOut::HandleRealTime(LONGLONG usDelta, BYTE data) {
@@ -221,14 +198,12 @@ STDMETHODIMP CMIDIOut::HandleRealTime(LONGLONG usDelta, BYTE data) {
 unsigned int CMIDIOut::Run(CThread& thread) {
   MSG message;
 
-  _ASSERTE(thread.GetThreadID() == m_gcThread.GetThreadID());
-
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)gcThread.GetThreadHandle(), (int)gcThread.GetThreadID()));
 
   while (thread.GetMessage(&message)) {
+    MMRESULT errCode;
     HMIDIOUT hMidiOut = (HMIDIOUT)(message.wParam);
     MIDIHDR* midiHdr = (MIDIHDR*)(message.lParam);
-    MMRESULT errCode = (MMRESULT)(message.lParam);
 
     switch (message.message) {
       case WM_QUIT:
@@ -244,26 +219,27 @@ unsigned int CMIDIOut::Run(CThread& thread) {
         break;
 
       case MM_MOM_DONE:
+        _ASSERTE(hMidiOut == m_hMidiOut);
         _ASSERTE(midiHdr != NULL);
         _ASSERTE(midiHdr->lpData != NULL);
         _ASSERTE(midiHdr->dwUser != NULL);
-        _ASSERTE((midiHdr->dwFlags & MHDR_DONE) == MHDR_DONE);
+        _ASSERTE(midiHdr->dwFlags & MHDR_DONE == MHDR_DONE);
+
+        if ((errCode = midiOutUnprepareHeader(hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutUnprepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
+        }
 
         delete[] (CHAR*)(midiHdr->lpData);
         delete (MIDIHDR*)(midiHdr->dwUser);
-        break;
-
-      case UM_MOM_ERROR:
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("MidiOut (hMidiOut = 0x%08x) error on device %d ('%s'): 0x%08x - %s"), hMidiOut, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
         break;
 
       default:
         break;
     }
   }
-
+  
   DWORD lastError = GetLastError();
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encountered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
 
   return -2;  // abnormal thread termination (error in message fetch)
 }
@@ -275,67 +251,27 @@ unsigned int CMIDIOut::Run(CThread& thread) {
 /////////////////////////////////////////////////////////////////////////////
 
 //
-// Callback function invoked by MIDI driver when the device is opened/closed,
-//  or when a (SysEx) buffer finishes playing.
-//
-void CALLBACK CMIDIOut::MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2) {
-  MMRESULT errCode;
-  CMIDIOut* pThis = (CMIDIOut*)dwInstance;
-  MIDIHDR* midiHdr = (MIDIHDR*)(dwParam1);
-
-  _ASSERTE(pThis != NULL);
-
-  try {
-    switch (wMsg) {
-      case MOM_OPEN:
-        pThis->m_gcThread.PostMessage(MM_MOM_OPEN, (WPARAM)hmo, NULL);
-        break;
-      case MOM_CLOSE:
-        pThis->m_gcThread.PostMessage(MM_MOM_CLOSE, (WPARAM)hmo, NULL);
-        break;
-      case MOM_DONE:
-        _ASSERTE(hmo == pThis->m_hMidiOut);
-        _ASSERTE(midiHdr != NULL);
-        if ((errCode = midiOutUnprepareHeader(hmo, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-          pThis->m_gcThread.PostMessage(UM_MOM_ERROR, (WPARAM)hmo, (LPARAM)errCode);
-        } else {
-          pThis->m_gcThread.PostMessage(MM_MOM_DONE, (WPARAM)hmo, (LPARAM)dwParam1);
-        } break;
-    }
-  } catch (...) { }
-}
-
-//
 // Opens the MIDI device specified in the module's settings
 //
-bool CMIDIOut::MidiOutOpen(bool isInteractive) {
+void CMIDIOut::MidiOutOpen(void) {
   static bool isErrPrompt = true;
-  static bool isErrLog    = true;
   static time_t lastRetry = 0;
 
-  // Don't open the device if it's already open
-  if (m_hMidiOut != NULL)
-    return true;
-
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
-  if ((time(NULL) - lastRetry) < MIDIOUT_OPEN_RETRY_INTERVAL) {
-    return false;           // another attempt to open the device was made very recently; don't overdo it
+  if ((time(NULL) - lastRetry) < MIDIOPEN_RETRY_INTERVAL) {
+    return;   // another attempt to open the device was made very recently; don't overdo it
   } else {
     lastRetry = time(NULL);
   }
 
+  // Don't open the device if it's already open
+  if (m_hMidiOut != NULL)
+    return;
+
   MMRESULT errCode;
 
   // Attempt to open the MIDI-out device
-  while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, (DWORD)MidiOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
-    if (isErrLog) {         // do we log the error ?
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
-      isErrLog = false;     // only log this error once, as it will probably (re)occur several times in a row
-    }
-
-    if (!isInteractive)     // do we want to pop up a message box ?
-      break;                // stop trying
-
+  while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, gcThread.GetThreadID(), (DWORD)(this), CALLBACK_THREAD)) != MMSYSERR_NOERROR) {
     if (!isErrPrompt)       // did the user select not to be prompted again ?
       break;                // stop trying
 
@@ -344,16 +280,9 @@ bool CMIDIOut::MidiOutOpen(bool isInteractive) {
                    MB_RETRYCANCEL, MB_ICONERROR) == IDCANCEL)
     {
       isErrPrompt = false;  // the user does not whish to be prompted again !
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
       break;                // stop trying
     }
-  }
-
-  if (m_hMidiOut != NULL) { // The device was opened successfully
-    isErrLog    = true;     // Next time we get an error, log it
-    isErrPrompt = true;     // Next time we get an error, prompt the user (if interactive)
-    return true;
-  } else {                  // The device could not be open, and the user did not retry
-    return false;
   }
 }
 

@@ -30,16 +30,15 @@ void InitializeModule(const std::string&, const CVDMConfig&, const modulemap_t&,
 void DestroyModule(const IUnknownPtr&);
 CString StringFromGUID(const GUID& guid);
 CString FormatCOMError(const _com_error& ce);
-BOOL ShowTips(const CString&);
 
 class CInstantiationError : public CException {
   public:
     CInstantiationError(const CInstantiationError& src)
       : m_errText(src.m_errText), m_defaultText(src.m_defaultText)
-    { }
+    { };
     CInstantiationError(const CString& defaultText = _T(""))
       : CException(FALSE), m_defaultText(defaultText + "\n")
-    { }
+    { };
     void AddError(
         const CString& location,
         HRESULT errCode)
@@ -81,7 +80,7 @@ strvector_t orderedNames;
 //
 // Load and initialize all emulation modules
 //
-STDAPI CfgInitialize(char* INIFiles) {
+STDAPI CfgInitialize(void) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   HRESULT hr;
@@ -98,12 +97,7 @@ STDAPI CfgInitialize(char* INIFiles) {
   try {
     // Parse the configuration (INI) file
     try {
-      char* INIFileName = INIFiles;
-
-      while (INIFileName[0] != '\0') {
-        config.load(SearchPathA(INIFileName));
-        INIFileName = INIFileName + strlen(INIFileName) + 1;
-      }
+      config.load("vdms.ini");
     } catch (CINIParser::fopen_error& foe) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(MSG_ERR_IO_OPEN, false, NULL, 0, false, (LPCTSTR)CString(foe.location.c_str()), lastError, (LPCTSTR)FormatMessage(lastError)),
@@ -138,7 +132,7 @@ STDAPI CfgInitialize(char* INIFiles) {
       return E_FAIL;
     }
 
-    // Perform a quick .ini structural check (spots most spelling errors)
+    // Perform a quick structural check (spots most spelling errors)
     try {
       config.validate();
     } catch (CINIConfig::modulename_error& mne) {
@@ -155,7 +149,7 @@ STDAPI CfgInitialize(char* INIFiles) {
       }
     }
 
-    // Get the order modules should be initialized in
+    // Get the order module should be initialized in
     try {
       config.getModuleOrder(orderedNames);
     } catch (CINIConfig::cyclic_error& ce) {
@@ -197,16 +191,6 @@ STDAPI CfgInitialize(char* INIFiles) {
                MB_OK, MB_ICONERROR);
     return E_FAIL;
   }
-
-#if 0 /* Disable "Tip of the day" in order not to interfere with LaunchPad */
-  // Show the tip of the day
-  if (!ShowTips(_T("/Software/Freeware/VDMSound"))) {
-      DWORD lastError = GetLastError();
-      MessageBox(FormatMessage(MSG_ERR_TIPS, false, NULL, 0, false, lastError, (LPCTSTR)FormatMessage(lastError)),
-                 LoadString(IDS_MBT_ERROR),
-                 MB_OK, MB_ICONEXCLAMATION);
-  }
-#endif
 
   return S_OK;
 }
@@ -254,8 +238,7 @@ STDAPI CfgDestroy(void) {
 /////////////////////////////////////////////////////////////////////////////
 
 //
-// Attempts to instantiate a COM emulation module using one of several
-//   methods
+// Attempts to instantiate a COM emulation module using one or more methods
 //
 void InstantiateModule(
     const std::string& moduleName,
@@ -277,7 +260,7 @@ void InstantiateModule(
       config.getLocation(moduleName, CVDMConfig::SEC_LOADER, "CLSID", location);
       errorMsg.AddError(CString(location.c_str()), hr);
     }
-  } catch (CVDMConfig::nokey_error& /*nke*/) { }
+  } catch (CVDMConfig::nokey_error& /*nke*/) { };
 
   /* TODO: try other loading methods (e.g. explicitly call LoadLibrary,
      GetProcAddress(DllGetClassObject), DllGetClassObject */
@@ -298,8 +281,9 @@ void InitializeModule(
   pModule = ptr;
 
   // Check if IVDMBasicModule interface was supported
-  if (pModule == NULL)
-    return; // it's OK, but don't continue: this module can't accept a CfgQuery object
+  if (pModule == NULL) {
+    return;
+  }
 
   // Create query object, and pass to module
   HRESULT hr;
@@ -327,7 +311,7 @@ void InitializeModule(
       // Release query object (avoid memory leaks)
       pQuery->Release();
       // Module failed Init, give it a chance to cleanup
-      try { pModule->Destroy(); } catch (_com_error& /*ce*/) { }
+      try { pModule->Destroy(); } catch (_com_error& /*ce*/) { };
     } else if (pCQ != NULL) {
       // Object was allocated but not AddRef'ed, so must delete manually
       delete pCQ;
@@ -405,67 +389,3 @@ CString FormatCOMError(
   return retVal;
 }
 
-//
-// Shows the "Tip of the Day" dialog
-//
-
-typedef BOOL (WINAPI* LPFNTODINITIALIZE)(LPCTSTR);
-typedef BOOL (WINAPI* LPFNTODTODISENABLED)(BOOL*);
-typedef BOOL (WINAPI* LPFNTODSHOWTIPS)(VOID);
-
-BOOL ShowTips(
-    const CString& regPath)
-{
-  HMODULE hCfgLib;
-  LPFNTODINITIALIZE lpfnTODInitialize;
-  LPFNTODTODISENABLED lpfnTODIsEnabled;
-  LPFNTODSHOWTIPS lpfnTODShowTips;
-
-#ifdef _UNICODE
-  static LPCSTR lpszTODInitializeName = "TODInitializeW";
-#else
-  static LPCSTR lpszTODInitializeName = "TODInitializeA";
-#endif
-
-  hCfgLib = LoadLibrary(_T("TipOfDay.dll"));
-
-  if (hCfgLib == NULL)
-    return FALSE;       // error loading library
-
-  // Initialize
-
-  lpfnTODInitialize = (LPFNTODINITIALIZE)GetProcAddress(hCfgLib, lpszTODInitializeName);
-
-  if (lpfnTODInitialize == NULL)
-    return FALSE;       // error loading function
-
-  if (!((*lpfnTODInitialize)(regPath)))
-    return FALSE;       // error in function
-
-  // Check if tips should be shown
-
-  BOOL isEnabled = FALSE;
-
-  lpfnTODIsEnabled = (LPFNTODTODISENABLED)GetProcAddress(hCfgLib, "TODIsEnabled");
-
-  if (lpfnTODIsEnabled == NULL)
-    return FALSE;       // error loading function
-
-  if (!((*lpfnTODIsEnabled)(&isEnabled)))
-    return FALSE;       // error in function
-
-  if (!isEnabled)
-    return TRUE;        // user chose not to show the tips, but no error was encountered
-
-  // Show the tips
-
-  lpfnTODShowTips = (LPFNTODSHOWTIPS)GetProcAddress(hCfgLib, "TODShowTips");
-
-  if (lpfnTODShowTips == NULL)
-    return FALSE;       // error loading function
-
-  if (!((*lpfnTODShowTips)()))
-    return FALSE;       // error in function
-
-  return TRUE;
-}

@@ -44,12 +44,11 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -57,7 +56,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(VDMSCorePath)/Sources/MFCUtil/Debug" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/Debug" /libpath:"$(VDMSCorePath)/Sources/INIParser/Debug"
+# ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(VDMSPath)/Sources/MFCUtil/Debug" /libpath:"$(VDMSPath)/Sources/VDMUtil/Debug" /libpath:"$(VDMSPath)/Sources/INIParser/Debug"
 # Begin Custom Build - Performing registration
 OutDir=.\Debug
 TargetPath=.\Debug\MIDIToolkit.dll
@@ -81,12 +80,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "DebugU"
 # PROP Intermediate_Dir "DebugU"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -94,7 +92,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(VDMSCorePath)/Sources/MFCUtil/DebugU" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/DebugU" /libpath:"$(VDMSCorePath)/Sources/INIParser/Debug"
+# ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(VDMSPath)/Sources/MFCUtil/DebugU" /libpath:"$(VDMSPath)/Sources/VDMUtil/DebugU" /libpath:"$(VDMSPath)/Sources/INIParser/Debug"
 # Begin Custom Build - Performing registration
 OutDir=.\DebugU
 TargetPath=.\DebugU\MIDIToolkit.dll
@@ -124,12 +122,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ReleaseMinSize"
 # PROP Intermediate_Dir "ReleaseMinSize"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -137,7 +134,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSCorePath)/Sources/MFCUtil/Release" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/Release" /libpath:"$(VDMSCorePath)/Sources/INIParser/Release"
+# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSPath)/Sources/MFCUtil/Release" /libpath:"$(VDMSPath)/Sources/VDMUtil/Release" /libpath:"$(VDMSPath)/Sources/INIParser/Release"
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseMinSize
 TargetPath=.\ReleaseMinSize\MIDIToolkit.dll
@@ -161,12 +158,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ReleaseMinDependency"
 # PROP Intermediate_Dir "ReleaseMinDependency"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -174,7 +170,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSCorePath)/Sources/MFCUtil/Release" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/Release" /libpath:"$(VDMSCorePath)/Sources/INIParser/Release"
+# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSPath)/Sources/MFCUtil/Release" /libpath:"$(VDMSPath)/Sources/VDMUtil/Release" /libpath:"$(VDMSPath)/Sources/INIParser/Release"
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseMinDependency
 TargetPath=.\ReleaseMinDependency\MIDIToolkit.dll
@@ -198,12 +194,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ReleaseUMinSize"
 # PROP Intermediate_Dir "ReleaseUMinSize"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -211,7 +206,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSCorePath)/Sources/MFCUtil/ReleaseU" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/ReleaseU" /libpath:"$(VDMSCorePath)/Sources/INIParser/Release"
+# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSPath)/Sources/MFCUtil/ReleaseU" /libpath:"$(VDMSPath)/Sources/VDMUtil/ReleaseU" /libpath:"$(VDMSPath)/Sources/INIParser/Release"
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseUMinSize
 TargetPath=.\ReleaseUMinSize\MIDIToolkit.dll
@@ -241,12 +236,11 @@ SOURCE="$(InputPath)"
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "ReleaseUMinDependency"
 # PROP Intermediate_Dir "ReleaseUMinDependency"
-# PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces" /I "$(VDMSCorePath)/Sources/MFCUtil" /I "$(VDMSCorePath)/Sources/VDMUtil" /I "$(VDMSCorePath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /I "$(VDMSPath)/Sources/INIParser" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD MTL /I "../Interfaces" /I "$(VDMSCorePath)/Sources/Interfaces"
+# ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
@@ -254,7 +248,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSCorePath)/Sources/MFCUtil/ReleaseU" /libpath:"$(VDMSCorePath)/Sources/VDMUtil/ReleaseU" /libpath:"$(VDMSCorePath)/Sources/INIParser/Release"
+# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(VDMSPath)/Sources/MFCUtil/ReleaseU" /libpath:"$(VDMSPath)/Sources/VDMUtil/ReleaseU" /libpath:"$(VDMSPath)/Sources/INIParser/Release"
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseUMinDependency
 TargetPath=.\ReleaseUMinDependency\MIDIToolkit.dll
@@ -288,10 +282,6 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\MIDIDelay.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\MIDIMapper.cpp
 # End Source File
 # Begin Source File
@@ -313,10 +303,6 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\MIDIDelay.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\MIDIMapper.h
 # End Source File
 # Begin Source File
@@ -331,10 +317,6 @@ SOURCE=.\StdAfx.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# Begin Source File
-
-SOURCE=.\MIDIDelay.rgs
-# End Source File
 # Begin Source File
 
 SOURCE=.\MIDIMapper.rgs

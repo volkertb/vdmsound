@@ -2,8 +2,6 @@
 
 #include "DOSDrv.h"
 
-#include "ApiHook.h"
-
 /////////////////////////////////////////////////////////////////////////////
 
 #include <MFCUtil.h>
@@ -14,33 +12,20 @@
 HMODULE g_hCfgLib = NULL;
 LONG g_lInstanceCount = 0;
 
-int loadConfiguration(LPVOID lpParam, WORD uParamLen);
-int unloadConfiguration(LPVOID lpParam, WORD uParamLen);
+int loadConfiguration(void);
+int unloadConfiguration(void);
 
 void SignalVDMSStatus(bool);
 
-/////////////////////////////////////////////////////////////////////////////
-
-#ifdef _NTVDM_SVC
-
-typedef VOID (WINAPI* LPFNEXITPROCESS)(UINT);
-
-VOID WINAPI ExitProcess_Surrogate(UINT);
-LPFNEXITPROCESS ExitProcess_Original = NULL;
-
-#endif //_NTVDM_SVC
+BOOL WINAPI ConsoleEventHandler(DWORD);
 
 /////////////////////////////////////////////////////////////////////////////
 
-typedef HRESULT (WINAPI* LPFNCFGINITIALIZE)(char*);
-typedef HRESULT (WINAPI* LPFNCFGDESTROY)(void);
-
-/////////////////////////////////////////////////////////////////////////////
 
 
 //
-// Initialization routine; called right after NTVDM.EXE or equivalent loads
-//   VDDLoader.DLL in its memory space
+// Initialization routine; called right after NTVDM.EXE loads VDDLoader.DLL
+//   in its memory space
 //
 STDAPI_(void) VddInitialize(void) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -64,17 +49,15 @@ STDAPI_(void) VddDispatch(void) {
   WORD paramOffset = getSI();
   WORD paramLen    = getDX();
 
-  LPVOID param = GetVDMPointer(MAKELONG(paramOffset, paramSeg), paramLen, FALSE);
-
   int retVal;
 
   switch (dispCmd) {
     case CMD_VDD_INIT:
-      retVal = loadConfiguration(param, paramLen);
+      retVal = loadConfiguration();
       break;
 
     case CMD_VDD_DESTROY:
-      retVal = unloadConfiguration(param, paramLen);
+      retVal = unloadConfiguration();
       break;
 
     default:
@@ -82,16 +65,7 @@ STDAPI_(void) VddDispatch(void) {
       break;
   }
 
-  FreeVDMPointer(MAKELONG(paramOffset, paramSeg), paramLen, param, FALSE);
-
   setAX(retVal);
-}
-
-//
-// Cleanup routine; allows VDMSound to free any associated resources, etc.
-//
-STDAPI_(void) VddDestroy(void) {
-  unloadConfiguration(NULL, 0);
 }
 
 
@@ -105,7 +79,7 @@ STDAPI_(void) VddDestroy(void) {
 //   parse the configuration files and in turn load the sub-modules that
 //   provide the emulation
 //
-int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
+int loadConfiguration(void) {
   try {
     // Check if first instance
     if ((++g_lInstanceCount) > 1) {
@@ -133,21 +107,12 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
       return 0x90;        // Could not load DLL
     }
 
-    // Obtain initialization information
-    char* INIFiles;
-
-    if ((lpParam == NULL) || (uParamLen < 1) || (((char*)lpParam)[0] == '\0')) {
-      INIFiles = "VDMS.INI";   // use a default value
-    } else {
-      INIFiles = (char*)lpParam;  // information provided by DOS loader
-    }
-
     // Try to invoke initialization code
-    LPFNCFGINITIALIZE lpfnInitProc;
+    FARPROC lpInitProc;
 
-    lpfnInitProc = (LPFNCFGINITIALIZE)GetProcAddress(g_hCfgLib, "CfgInitialize");
+    lpInitProc = GetProcAddress(g_hCfgLib, "CfgInitialize");
 
-    if (lpfnInitProc == NULL) {
+    if (lpInitProc == NULL) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgInitialize' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                  FormatMessage(_T("VDD Error")),
@@ -155,31 +120,24 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
       return 0xa0;        // Could not find procedure in DLL
     }
 
-    if (FAILED((*lpfnInitProc)(INIFiles))) {
+    if (FAILED(lpInitProc())) {
       return 0xf0;        // Initialization failed, or aborted by user
     }
 
     // Successful load & initialization
     SignalVDMSStatus(true);
 
-#ifdef _NTVDM_SVC
-
-    // Hook ExitProcess, for clean shutdowns (hook automatically calls
-    //   unloadConfiguration when NTVDM.EXE ends normally)
-    ExitProcess_Original = (LPFNEXITPROCESS)HookProcByName(GetModuleHandleA("NTVDM.EXE"), "KERNEL32.DLL", "ExitProcess", (FARPROC)ExitProcess_Surrogate);
-
-    if (ExitProcess_Original == NULL) {
+    // Hook console events, for clean shutdowns (hook automatically calls
+    //   unloadConfiguration on console close)
+    if (!SetConsoleCtrlHandler(ConsoleEventHandler, TRUE)) {
       DWORD lastError = GetLastError();
-      if (MessageBox(FormatMessage(_T("Failed to hook ExitProcess() in KERNEL32.DLL.  This means that the VDD will be unable to automatically unload in a clean manner when the console window closes, which will probably lead to a protection fault.%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nDo you want to continue?"), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+      if (MessageBox(FormatMessage(_T("Failed to register an event handler with the console window.  This means that the VDD will be unable to automatically unload in a clean manner when the console window closes, which will probably lead to a protection fault.%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nDo you want to continue?"), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                      FormatMessage(_T("VDD Error")),
                      MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
       {
-        return 0xb0;        // Could not hook function
+        return 0xb0;        // Could not register console hook
       }
     }
-
-#endif //_NTVDM_SVC
-
   } catch (...) {
     MessageBox(FormatMessage(_T("Unhandled exception encountered while loading")),
                FormatMessage(_T("Fatal Error")),
@@ -196,7 +154,7 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
 //   cleanup routine in order to unload the sub-modules that provide the
 //   emulation
 //
-int unloadConfiguration(LPVOID lpParam, WORD uParamLen) {
+int unloadConfiguration(void) {
   int retVal = 0;
 
   try {
@@ -213,29 +171,27 @@ int unloadConfiguration(LPVOID lpParam, WORD uParamLen) {
     if (g_hCfgLib == NULL)
       return 0x89;        // Initialization did not occur (2), or DLL load failed?
 
-    // Try to invoke cleanup code
-    LPFNCFGDESTROY lpfnDestroyProc;
+    FARPROC lpDestroyProc;
 
-    lpfnDestroyProc = (LPFNCFGDESTROY)GetProcAddress(g_hCfgLib, "CfgDestroy");
+    lpDestroyProc = GetProcAddress(g_hCfgLib, "CfgDestroy");
 
-    if (lpfnDestroyProc == NULL) {
+    if (lpDestroyProc == NULL) {
       DWORD lastError = GetLastError();
       MessageBox(FormatMessage(_T("Failed to locate exported function 'CfgDestroy' in configuration library (VDMConfig.DLL).%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nPlease make sure that VDMConfig.DLL is a valid image."), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                  FormatMessage(_T("VDD Error")),
                  MB_OK, MB_ICONERROR);
       retVal = 0xa8;      // Could not find procedure in DLL, but proceed with unloading the library before returning
     } else {
-      (*lpfnDestroyProc)();
+      lpDestroyProc();
     }
 
     if (!FreeLibrary(g_hCfgLib)) {
       retVal = 0x98;      // Could not unload DLL
     }
 
-    // Note: No need to remove the ExitProcess hook because the process
-    //  is about to exit anyway
+    // Remove handler, since this DLL is about to unload
+    SetConsoleCtrlHandler(ConsoleEventHandler, FALSE);
 
-    // Clean up handles
     g_hCfgLib = NULL;
 
     // Done unloading
@@ -260,9 +216,6 @@ int unloadConfiguration(LPVOID lpParam, WORD uParamLen) {
 // Give audio feedback with regard to VDMS's status (loading/unloading).
 //
 void SignalVDMSStatus(bool isLoaded) {
-
-# if 0
-
   if (isLoaded) {
     Beep(1000,50);
     Beep(2000,60);
@@ -272,9 +225,6 @@ void SignalVDMSStatus(bool isLoaded) {
     Beep(2000,60);
     Beep(1000,80);
   }
-
-# endif
-
 }
 
 
@@ -282,20 +232,32 @@ void SignalVDMSStatus(bool isLoaded) {
 /////////////////////////////////////////////////////////////////////////////
 
 
-#ifdef _NTVDM_SVC
 
 //
 // Automatically unloads the configuration module (and, implictly, all
-// emulation modules) when the process is about to exit.
+// emulation modules) when the DOS (console) window is closed.
 //
-VOID WINAPI ExitProcess_Surrogate(UINT uExitCode) {
-  VddDestroy();
+BOOL WINAPI ConsoleEventHandler(
+  DWORD dwCtrlType )    // control signal type
+{
+  CString msg;
 
-  if ((ExitProcess_Original != NULL) &&                 // avoid protection fault
-      (ExitProcess_Original != ExitProcess_Surrogate))  // avoid infinite recursion
-  {
-    (*ExitProcess_Original)(uExitCode);
+  switch (dwCtrlType) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+      return FALSE;
+
+    case 3: /* WinNT4: corresponds to typing 'exit' at the command prompt */
+    case CTRL_CLOSE_EVENT:
+      unloadConfiguration();
+      VDDTerminateVDM();
+      return TRUE;
+
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+      return FALSE;
+
+    default:
+      return FALSE;
   }
 }
-
-#endif //_NTVDM_SVC

@@ -9,21 +9,24 @@
 ?>
 
 <?php HtmlBeginPage('Account Management'); ?>
+<?php HtmlBeginHeader(); ?>
 <?php HtmlBeginBody(); ?>
 
 <?php $userinfo = AuthGetUserInformation(); ?>
 
+<center>
+
 <?php
   if ($action == 'create') {
-    if (isset($usrname, $fullname, $email, $newpwd1, $newpwd2)) {
+    if (isset($username, $fullname, $email, $newpwd1, $newpwd2)) {
       $tried   = true;
-      $success = AuthCreateUser($usrname, $fullname, $email, $newpwd1, $newpwd2);
+      $success = AuthCreateUser($username, $fullname, $email, $newpwd1, $newpwd2);
 
-      if ($success && !MailSendActivationCode($email, $usrname, AuthGetVerificationHash($usrname))) {
+      if ($success && !MailSendActivationCode($email, $username, AuthGetActivationHash($username))) {
         $success = false;
         $error = ErrGetLastError();
 
-        AuthDeleteUser($usrname, $newpwd1, 0);  // rollback user creation
+        AuthDeleteUser($username, $newpwd1, 0);  // rollback user creation
       } else {
         $error = ErrGetLastError();
       }
@@ -32,138 +35,66 @@
     }
 
     if ($tried && $success) {
-      echo('<h2 class="normal">Your account has been created.</h2>');
-      echo('<p align="center">You will shortly receive an e-mail containing your activation code.</p>');
-      echo('<p align="center"><b>' . HtmlMakeLink('Activate', $SCRIPT_NAME, Array('action' => 'activate')) . '</b>&nbsp;| ' . HtmlMakeLink('Main', 'index.php') . '</p>');
+      echo('<p><font size="4"><b>Your account has been created.</b></font></p>');
+      echo('<p>You will shortly receive an e-mail containing your activation code.</p>');
+      echo('<p><b>' . HtmlMakeLink('Activate', $SCRIPT_NAME . '?action=activate') . '</b></a> | ' . HtmlMakeLink('Main', 'index.php') . '</b>');
     } else {
       if ($tried && !$success) {
-        $style = 'error';
-        $text  = ErrFormatError($error) . ' (' . $error . ')';
+        $color = '#7f4f4f';
+        $text = ErrFormatError($error) . ' (' . $error . ').';
       } else {
-        $style = 'normal';
-        $text  = 'Create an account';
+        $color = '#4f7f4f';
+        $text = 'Create an account';
       }
 
-      echo('<h1 class="' . $style . '">' . $text . '</h1>');
+      echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
 
       echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User ID:', ($error == E_AUTH_INVALID_USER_NAME) || ($error == E_AUTH_INUSE_NAME)) . '</td><td align="left" width="50%"><input class="flat1" type="text" size="12" name="usrname" value="' . $usrname . '" maxlength="12"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Full name:', $error == E_AUTH_INVALID_FULL_NAME) . '</td><td align="left"><input class="flat1" type="text" size="24" name="fullname" value="' . $fullname . '" maxlength="48"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('E-mail:', $error == E_AUTH_INVALID_EMAIL) . '</td><td align="left"><input class="flat1" type="text" size="24" name="email" value="' . $email. '" maxlength="64"></td></tr>');
-      echo('<tr><td align="right"></td><td align="left"><table border="0" cellspacing="0" cellpadding="5" width="50%"><tr class="note"><td><b>Please enter a valid e-mail address.</b><br>You must provide a valid e-mail address before your account can be activated.</td></tr></table></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Password:', $error == E_AUTH_INVALID_PASSWORD) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd1" value="" maxlength="16"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Confirm password:', $error == E_AUTH_PASSWORD_MISMATCH) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd2" value="" maxlength="16"></td></tr>');
-      echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Create">&nbsp;<input type="reset" class="flat2" value="Reset"></td></tr>');
-      echo('</table>');
-      HtmlFormSendSID();
-      echo('<input type="hidden" name="action" value="create"></form>');
+      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User:', ($error == E_AUTH_INVALID_USER_NAME) || ($error == E_AUTH_INUSE_NAME)) . '</td><td align="left" width="50%"><input type="text" size="12" name="username" value="' . $username . '" maxlength="12"></td></tr>');
+      echo('<tr><td align="right">' . HtmlHighlightError('Full name:', $error == E_AUTH_INVALID_FULL_NAME) . '</td><td align="left"><input type="text" size="24" name="fullname" value="' . $fullname . '" maxlength="48"></td></tr>');
+      echo('<tr><td align="right">' . HtmlHighlightError('E-mail:', $error == E_AUTH_INVALID_EMAIL) . '</td><td align="left"><input type="text" size="24" name="email" value="' . $email. '" maxlength="64"></td></tr>');
+      echo('<tr><td align="right"></td><td align="left"><table border="0" cellspacing="0" cellpadding="5" width="50%"><tr bgcolor="#7f7f5f"><td><font size="2"><b>Please enter a valid e-mail address.</b><br>You must provide a valid e-mail address before your account can be activated.</font></td></tr></table></td></tr>');
+      echo('<tr><td align="right">' . HtmlHighlightError('Password:', $error == E_AUTH_INVALID_PASSWORD) . '</td><td align="left"><input type="password" size="12" name="newpwd1" value="" maxlength="16"></td></tr>');
+      echo('<tr><td align="right">' . HtmlHighlightError('Confirm password:', $error == E_AUTH_PASSWORD_MISMATCH) . '</td><td align="left"><input type="password" size="12" name="newpwd2" value="" maxlength="16"></td></tr>');
+      echo('<tr><td align="center" colspan="2"><input type="submit" value="Create">&nbsp;<input type="reset" value="Reset"></td></tr>');
+      echo('</table><input type="hidden" name="action" value="create"></form>');
     }
   } else if ($action == 'activate') {
-    if (isset($usrname, $hash)) {
+    if (isset($username, $hash)) {
       $tried   = true;
-      $success = AuthActivateUser($usrname, $hash);
+      $success = AuthActivateUser($username, $hash);
       $error   = ErrGetLastError();
     } else {
       $tried   = false;
     }
 
     if ($tried && $success) {
-      echo('<h2 class="normal">Your account has been activated.</h2>');
-      echo('<p align="center"><b>' . HtmlMakeLink('Login', 'login.php', Array('usrname' => $usrname)) . '</b>&nbsp;| ' . HtmlMakeLink('Main', 'index.php') . '</p>');
+      echo('<p><font size="4"><b>Your account has been activated.</b></font></p>');
+      echo('<p><b>' . HtmlMakeLink('Login', 'login.php') . '</b></a> | ' . HtmlMakeLink('Main', 'index.php') . '</b>');
     } else {
       if ($tried && !$success) {
-        $style = 'error';
-        $text  = ErrFormatError($error) . ' (' . $error . ')';
+        $color = '#7f4f4f';
+        $text = ErrFormatError($error) . ' (' . $error . ').';
       } else {
-        $style = 'normal';
-        $text  = 'Activate your account';
+        $color = '#4f7f4f';
+        $text = 'Activate your account';
       }
 
-      echo('<h1 class="' . $style . '">' . $text . '</h1>');
+      echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
 
       echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User ID:', $error == E_AUTH_INVALID_USER_NAME) . '</td><td align="left" width="50%"><input class="flat1" type="text" size="12" name="usrname" value="' . $usrname . '" maxlength="12"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Activation code:', $error == E_AUTH_INVALID_HASH) . '</td><td align="left"><input class="flat1" type="text" size="24" name="hash" value="' . $hash . '" maxlength="32"></td></tr>');
-      echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Activate">&nbsp;<input type="reset" class="flat2" value="Reset"></td></tr>');
-      echo('</table>');
-      HtmlFormSendSID();
-      echo('<input type="hidden" name="action" value="activate"></form>');
+      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User:', $error == E_AUTH_INVALID_USER_NAME) . '</td><td align="left" width="50%"><input type="text" size="12" name="username" value="' . $username . '" maxlength="12"></td></tr>');
+      echo('<tr><td align="right">' . HtmlHighlightError('Activation code:', $error == E_AUTH_INVALID_HASH) . '</td><td align="left"><input type="text" size="24" name="hash" value="' . $hash . '" maxlength="32"></td></tr>');
+      echo('<tr><td align="center" colspan="2"><input type="submit" value="Activate">&nbsp;<input type="reset" value="Reset"></td></tr>');
+      echo('</table><input type="hidden" name="action" value="activate"></form>');
     }
-  } else if ($action == 'forgot') {
-    if (isset($usrname)) {
-      $tried   = true;
+  } else if ($action == 'activate') {
 
-      if ((($userid = AuthGetUserId($usrname)) > 0) &&
-          ($userinfo = AuthGetUserInformation($userid)) &&
-          (MailSendPasswordResetCode($userinfo['email'], $userinfo['name'], AuthGetVerificationHash($userinfo['name']))))
-      {
-        $success = true;
-      } else {
-        $success = false;
-        $error = ErrGetLastError();
-      }
-    } else {
-      $tried   = false;
-    }
-
-    if ($tried && $success) {
-      echo('<h2 class="normal">Your request has been processed.</h2>');
-      echo('<p align="center">You will shortly receive an e-mail containing your password reset verification code needed in <cite>step 2</cite>.</p>');
-      echo('<p align="center"><b>' . HtmlMakeLink('Reset password (step 2)', $SCRIPT_NAME, Array('action' => 'pwreset')) . '</b>&nbsp;| ' . HtmlMakeLink('Main', 'index.php') . '</p>');
-    } else {
-      if ($tried && !$success) {
-        $style = 'error';
-        $text  = ErrFormatError($error) . ' (' . $error . ')';
-      } else {
-        $style = 'normal';
-        $text  = 'Reset password (step 1)';
-      }
-
-      echo('<h1 class="' . $style . '">' . $text . '</h1>');
-
-      echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User ID:', ($error == E_AUTH_INVALID_USER_NAME) || ($error == E_AUTH_INUSE_NAME)) . '</td><td align="left" width="50%"><input class="flat1" type="text" size="12" name="usrname" value="' . $usrname . '" maxlength="12"></td></tr>');
-      echo('<tr><td align="right"></td><td align="left"><table border="0" cellspacing="0" cellpadding="5" width="50%"><tr class="note"><td>Provide the same user ID that you would normally enter at the database\'s login prompt.</td></tr></table></td></tr>');
-      echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Proceed">&nbsp;<input type="reset" class="flat2" value="Reset"></td></tr>');
-      echo('</table>');
-      HtmlFormSendSID();
-      echo('<input type="hidden" name="action" value="forgot"></form>');
-    }
-  } else if ($action == 'pwreset') {
-    if (isset($usrname, $hash, $newpwd1, $newpwd2)) {
-      $tried   = true;
-      $success = AuthResetUserPassword($usrname, $hash, $newpwd1, $newpwd2);
-      $error   = ErrGetLastError();
-    } else {
-      $tried   = false;
-    }
-
-    if ($tried && $success) {
-      echo('<h2 class="normal">Your password has been changed.</h2>');
-      echo('<p align="center"><b>' . HtmlMakeLink('Login', 'login.php') . '</b>&nbsp;| ' . HtmlMakeLink('Main', 'index.php') . '</p>');
-    } else {
-      if ($tried && !$success) {
-        $style = 'error';
-        $text  = ErrFormatError($error) . ' (' . $error . ')';
-      } else {
-        $style = 'normal';
-        $text  = 'Reset password (step 2)';
-      }
-
-      echo('<h1 class="' . $style . '">' . $text . '</h1>');
-
-      echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
-      echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User ID:', $error == E_AUTH_INVALID_USER_NAME) . '</td><td align="left" width="50%"><input class="flat1" type="text" size="12" name="usrname" value="' . $usrname . '" maxlength="12"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Activation code:', $error == E_AUTH_INVALID_HASH) . '</td><td align="left"><input class="flat1" type="text" size="24" name="hash" value="' . $hash . '" maxlength="32"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('New password:', $error == E_AUTH_INVALID_PASSWORD) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd1" value="" maxlength="16"></td></tr>');
-      echo('<tr><td align="right">' . HtmlHighlightError('Confirm new password:', $error == E_AUTH_PASSWORD_MISMATCH) . '</td><td align="left"><input class="flat1" type="password" size="12" name="newpwd2" value="" maxlength="16"></td></tr>');
-      echo('<tr><td align="center" colspan="2"><input type="submit" class="flat2" value="Set password">&nbsp;<input type="reset" class="flat2" value="Reset"></td></tr>');
-      echo('</table>');
-      HtmlFormSendSID();
-      echo('<input type="hidden" name="action" value="pwreset"></form>');
-    }
   }
 ?>
 
+</center>
+
 <?php HtmlBeginFooter(); ?>
+<?php HtmlSendLastModified(); ?>
 <?php HtmlEndPage(); ?>

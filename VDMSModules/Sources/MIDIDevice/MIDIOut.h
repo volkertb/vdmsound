@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /* TODO: put this in the .INI file ? */
-#define MIDIOUT_OPEN_RETRY_INTERVAL   2
+#define MIDIOPEN_RETRY_INTERVAL   2
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +35,7 @@ class ATL_NO_VTABLE CMIDIOut :
 public:
   CMIDIOut()
     : m_hMidiOut(NULL), m_deviceName(_T("<unknown>"))
-    { }
+    { };
 
 DECLARE_REGISTRY_RESOURCEID(IDR_MIDIOUT)
 DECLARE_NOT_AGGREGATABLE(CMIDIOut)
@@ -68,27 +68,17 @@ public:
   STDMETHOD(HandleRealTime)(LONGLONG usDelta, BYTE data);
 
 protected:
-  static void CALLBACK MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-protected:
-  bool MidiOutOpen(bool isInteractive = true);
+  void MidiOutOpen(void);
   void MidiOutClose(void);
   CString MidiOutGetName(void);
   CString MidiOutGetError(MMRESULT errCode);
 
-/////////////////////////////////////////////////////////////////////////////
-
-// Module's settings
 protected:
   int m_deviceID;
-
-// Other member variables
-protected:
   CString m_deviceName;
   HMIDIOUT m_hMidiOut;
-  CThread m_gcThread;
+  CThread gcThread;
 
-// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IMIDIEventHandlerPtr m_midiOut;

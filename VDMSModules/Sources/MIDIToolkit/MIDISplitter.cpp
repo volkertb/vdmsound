@@ -43,25 +43,21 @@ STDMETHODIMP CMIDISplitter::Init(IUnknown * configuration) {
 	if (configuration == NULL)
 		return E_POINTER;
 
-  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
-  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
-
   // Grab a copy of the runtime environment (useful for logging, etc.)
   RTE_Set(m_env, configuration);
 
-  // Initialize configuration
-  try {
-    // Obtain the Query objects (for intialization purposes)
-    Depends    = configuration; // Dependency query object
-    Config     = configuration; // Configuration query object
+  // Obtain the Query objects (for intialization purposes)
+  IVDMQUERYLib::IVDMQueryDependenciesPtr Depends(configuration);  // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config(configuration);  // Configuration query object
 
+  try {
     /* TODO: try to obtain interfaces to one or more MIDI-out modules */
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();                // Propagate the error
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDISplitter initialized")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDISplitter initialized")));
 
   return S_OK;
 }
@@ -70,7 +66,7 @@ STDMETHODIMP CMIDISplitter::Destroy() {
   /* TODO: Release the MIDI-out module */
 
   // Release the runtime environment
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDISplitter released")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDISplitter released")));
   RTE_Set(m_env, NULL);
 
   return S_OK;

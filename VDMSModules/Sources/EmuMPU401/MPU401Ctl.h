@@ -25,7 +25,6 @@ class ATL_NO_VTABLE CMPU401Ctl :
   public CComObjectRootEx<CComMultiThreadModel>,
   public CComCoClass<CMPU401Ctl, &CLSID_MPU401Ctl>,
   public IMPU401HWEmulationLayer,
-  public IRunnable,
   public ISupportErrorInfo,
   public IVDMBasicModule,
   public IIOHandler,
@@ -33,8 +32,8 @@ class ATL_NO_VTABLE CMPU401Ctl :
 {
 public:
   CMPU401Ctl()
-    : m_MPUFSM(this), m_period(0)
-    { }
+    : m_MPUFSM(this)
+    { };
 
 DECLARE_REGISTRY_RESOURCEID(IDR_MPU401CTL)
 DECLARE_NOT_AGGREGATABLE(CMPU401Ctl)
@@ -51,17 +50,10 @@ END_COM_MAP()
 // IMPU401HWEmulationLayer
 public:
   void generateInterrupt(void);
-  void logError(const char* message);
-  void logWarning(const char* message);
-  void logInformation(const char* message);
+  void logMessage(msgType type, const char* message);
   void putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length);
   void putSysEx(const unsigned char * data, long length);
   void putRealTime(unsigned char data);
-  void setTimerPeriod(long period);
-
-// IRunnable
-public:
-  unsigned int Run(CThread& thread);
 
 // ISupportsErrorInfo
 public:
@@ -89,24 +81,11 @@ public:
   STDMETHOD(HandleSysEx)(LONGLONG usDelta, BYTE * data, LONG length);
   STDMETHOD(HandleRealTime)(LONGLONG usDelta, BYTE data);
 
-/////////////////////////////////////////////////////////////////////////////
-
-// Module's settings
 protected:
+  CMPU401CtlFSM m_MPUFSM;
   int m_basePort;
   int m_IRQLine;
 
-// Other member variables
-protected:
-  CThread m_TimerThread;
-  CCriticalSection m_mutex;
-  long m_period;
-
-// Platform-independent classes
-protected:
-  CMPU401CtlFSM m_MPUFSM;
-
-// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;
