@@ -175,6 +175,5 @@ void CThread::ThreadSETranslator(
   unsigned int exCode,
   EXCEPTION_POINTERS* pExInfo)
 {
-//MessageBox((LPCTSTR)FormatMessage(_T("%1!08x!/%2!08x!"), false, pExInfo->ExceptionRecord->ExceptionCode, pExInfo->ExceptionRecord->ExceptionAddress), _T("BUUUU"), MB_OK);
   throw new CWin32StdException(TRUE, pExInfo ? pExInfo->ExceptionRecord : NULL);
 }
