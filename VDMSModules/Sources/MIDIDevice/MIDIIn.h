@@ -33,8 +33,8 @@ class ATL_NO_VTABLE CMIDIIn :
 {
 public:
 	CMIDIIn()
-	{
-	}
+    : m_hMidiIn(NULL), m_deviceName(_T("<unknown>"))
+    { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_MIDIIN)
 DECLARE_NOT_AGGREGATABLE(CMIDIIn)
