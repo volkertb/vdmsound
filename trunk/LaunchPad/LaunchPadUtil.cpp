@@ -197,13 +197,9 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 // Delayed imports
 //////////////////////////////////////////////////////////////////////
 
-#if (_WIN32_IE < 0x0500)
+#ifndef SHACF_DEFAULT
 // Force declaration even for older versions of IE; the delayed imports binding
 //  wil take care of any problems with missing exports or dll's etc. at runtime.
-// Do it this way in order to provide prototypes for older versions of VC because
-//  VC7's shlwapi.h is the first one to declare these.
-// TODO: switch to VC7 and define _WIN32_IE = 0x0500 before including shlwapi.h
-//  instead of keeping the declarations below
 
 #define SHACF_DEFAULT                   0x00000000  // Currently (SHACF_FILESYSTEM | SHACF_URLALL)
 #define SHACF_FILESYSTEM                0x00000001  // This includes the File System as well as the rest of the shell (Desktop\My Computer\Control Panel\)

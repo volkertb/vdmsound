@@ -45,11 +45,11 @@ class CRUNWITHVDMSThread : protected CWinThread
 {
 // Construction
 private:
-	CRUNWITHVDMSThread(LPCTSTR vlpFileName, LPCTSTR exeFileName);
+	CRUNWITHVDMSThread(LPCTSTR displayName, const CLaunchPadSettings& settings, LPCTSTR exeFileName);
 	~CRUNWITHVDMSThread();
 
 public:
-  static HRESULT CreateThread(LPCTSTR vlpFileName, LPCTSTR exeFileName = NULL);
+  static HRESULT CreateThread(LPCTSTR displayName, const CLaunchPadSettings& settings, LPCTSTR exeFileName = NULL);
 
 // Callback functions
 protected:
@@ -70,7 +70,7 @@ protected:
 
 // Member variables
 protected:
-  CString m_vlpFileName, m_exeFileName;
+  CString m_displayName, m_exeFileName;
   CLaunchPadSettings m_settings;
 };
 

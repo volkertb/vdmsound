@@ -149,7 +149,7 @@ BOOL CDOSEnv::AppendEnvBlockEntry(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) : CWinThread(), m_vlpFileName(vlpFileName), m_exeFileName(exeFileName), m_settings(vlpFileName)
+CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR displayName, const CLaunchPadSettings& settings, LPCTSTR exeFileName) : CWinThread(), m_displayName(displayName), m_exeFileName(exeFileName), m_settings(settings)
 {
   m_bAutoDelete = TRUE;     // let the thread manage its own life cycle
 
@@ -166,18 +166,18 @@ CRUNWITHVDMSThread::~CRUNWITHVDMSThread()
 {
 }
 
-HRESULT CRUNWITHVDMSThread::CreateThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) {
+HRESULT CRUNWITHVDMSThread::CreateThread(LPCTSTR displayName, const CLaunchPadSettings& settings, LPCTSTR exeFileName) {
   // Create a self-destroying instance of CBasicSettingsPage
-  CRUNWITHVDMSThread* pRUNWITHVDMSThread = new CRUNWITHVDMSThread(vlpFileName, exeFileName);
+  CRUNWITHVDMSThread* pRUNWITHVDMSThread = new CRUNWITHVDMSThread(displayName, settings, exeFileName);
 
   ASSERT_VALID(pRUNWITHVDMSThread);
 
   if (!pRUNWITHVDMSThread)
     return E_OUTOFMEMORY;
 
-  _Module.Lock();               // prevent the DLL from being unloaded while the property sheet is active
+  _Module.Lock();               // prevent the DLL from being unloaded while the "Run with VDMS" thread is active
 
-  TRACE(_T("LaunchPad: about to start execution thread for '%s' ('%s')\n"), vlpFileName, exeFileName ? exeFileName : _T("<not specified>"));
+  TRACE(_T("LaunchPad: about to start execution thread for '%s' ('%s')\n"), displayName, exeFileName ? exeFileName : _T("<not specified>"));
   TRACE(_T("LaunchPad: module lock count at start of execution thread is %d\n"), _Module.GetLockCount());
 
   if (!((CWinThread*)pRUNWITHVDMSThread)->CreateThread()) {
@@ -205,6 +205,9 @@ int CRUNWITHVDMSThread::Run(void) {
       SetupEnv(envBlock, sizeof(envBlock) / sizeof(envBlock[0])))
   {
     CString strPIFFilename = PIFFile.GetFileName();
+
+    // TODO: disable VDMSound tip-of-the-day from registry
+    //  (to be restored when the temporary files are deleted)
 
     PROCESS_INFORMATION pi;
     memset(&pi, 0, sizeof(pi));
@@ -538,7 +541,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   //
   // PIF
   //
-  PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), VLPUtil::GetFilename(m_vlpFileName, TRUE)));
+  PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), m_displayName));
 
   // Program
   PIFFile.SetProgram(

@@ -8,6 +8,10 @@
 #define IDI_APPICON                     201
 #define IDI_ICON1                       202
 #define IDI_ICON2                       203
+#define IDB_WIZ_BACK_16                 204
+#define IDB_WIZ_BACK_256                205
+#define IDB_WIZ_HEAD_16                 206
+#define IDB_WIZ_HEAD_256                207
 
 #define IDD_BASICPROPPAGE               301
 #define IDD_BASICBROWSE                 302
@@ -21,6 +25,10 @@
 #define IDD_ADVPROPPAGE_SB              310
 #define IDD_ADVPROPPAGE_JOY             311
 #define IDD_ADVPROPPAGE_DEBUG           312
+#define IDD_WIZPROPPAGE_INTRO           313
+#define IDD_WIZPROPPAGE_CUSTOM_1        314
+#define IDD_WIZPROPPAGE_CUSTOM_2        315
+#define IDD_WIZPROPPAGE_FINIS           316
 
 #define IDC_ICO_APP                     1001
 #define IDC_EDT_DOSCMD                  1002
@@ -150,9 +158,21 @@
 #define IDC_CHK_VDMSINI                 1910
 #define IDC_EDT_VDMSINI                 1911
 
-#define IDC_EDT_ICOFILE                 2101
-#define IDC_LST_ICONS                   2102
-#define IDC_BUT_ICOBROWSE               2103
+#define IDC_EDT_ICOFILE                 2001
+#define IDC_LST_ICONS                   2002
+#define IDC_BUT_ICOBROWSE               2003
+
+#define IDC_TXT_WIZARDTITLE             2101
+#define IDC_OPT_USEDEFAULT              2102
+#define IDC_OPT_USECUSTOM               2103
+
+#define IDC_OPT_MAKENEW                 2201
+#define IDC_OPT_USETEMPLATE             2202
+#define IDC_EDT_TEMPLATE                2203
+#define IDC_BUT_TEMPLATE                2204
+
+#define IDC_CHK_SAVESETTINGS            2401
+#define IDC_CHK_DESKTOPSHORT            2402
 
 #define IDS_PROJNAME                    10100
 #define IDS_ADVPROPERTIES               10101
@@ -161,6 +181,7 @@
 #define IDS_TXT_FILTER3                 10112
 #define IDS_TXT_FILTER4                 10113
 #define IDS_TXT_FILTER4_DEFEXT          10114
+#define IDS_TXT_FILTER5                 10115
 #define IDS_TXT_MULTIPLEVALUES          10120
 #define IDS_TXT_BROWSEFOLDER_TIPS       10121
 #define IDS_TXT_RUNWITHVDMS             10130
@@ -171,6 +192,7 @@
 #define IDS_MSG_SHTOOLTIP               10203
 #define IDS_MSG_COMMITERR               10204
 #define IDS_MSG_SECURITYERR             10205
+#define IDS_MSG_NOFILEERR               10206
 
 #define ID_RUNWITH                      32771
 #define ID_REPLACE                      32772

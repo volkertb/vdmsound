@@ -104,9 +104,13 @@ IDR_LAUNCHPADSHELLEX    REGISTRY DISCARDABLE    "LaunchPadShellEx.rgs"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_APPICON             ICON    DISCARDABLE     "VDMSound.ico"
-IDI_ICON1               ICON    DISCARDABLE     "icon1.ico"
-IDI_ICON2               ICON    DISCARDABLE     "icon2.ico"
+IDI_APPICON             ICON    DISCARDABLE     "Resources/VDMSound.ico"
+IDI_ICON1               ICON    DISCARDABLE     "Resources/icon1.ico"
+IDI_ICON2               ICON    DISCARDABLE     "Resources/icon2.ico"
+IDB_WIZ_BACK_16         BITMAP  DISCARDABLE     "Resources/wizard_back_16.bmp"
+IDB_WIZ_BACK_256        BITMAP  DISCARDABLE     "Resources/wizard_back_256.bmp"
+IDB_WIZ_HEAD_16         BITMAP  DISCARDABLE     "Resources/wizard_head_16.bmp"
+IDB_WIZ_HEAD_256        BITMAP  DISCARDABLE     "Resources/wizard_head_256.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -545,6 +549,86 @@ BEGIN
 END
 
 
+IDD_WIZPROPPAGE_INTRO DIALOG DISCARDABLE 0, 0, 317, 200
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "VDMSound Configuration Wizard"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Welcome to the VDMSound Configuration Wizard",IDC_TXT_WIZARDTITLE,
+                    123,7,194,40
+    LTEXT           "The application you are currently attempting to run has not yet been configured for use with VDMSound.",
+                    IDC_STATIC,123,48,194,16
+    LTEXT           "What would you like to do?",IDC_STATIC,123,71,194,8
+    LTEXT           "Run the application using a default emulation setup that works with most DOS programs.",
+                    IDC_STATIC,135,96,182,16
+    LTEXT           "Run the application using a custom setup that is specifically tailored to the application's needs. Use this option with programs that have special requirements.",
+                    IDC_STATIC,135,129,182,32
+    CONTROL         "Use a &default configuration",IDC_OPT_USEDEFAULT,"Button",
+                    BS_AUTORADIOBUTTON | BS_FLAT | WS_GROUP | 
+                    WS_TABSTOP,123,86,194,10
+    CONTROL         "Set up a &custom configuration",IDC_OPT_USECUSTOM,"Button",
+                    BS_AUTORADIOBUTTON | BS_FLAT | WS_TABSTOP,123,
+                    119,194,10
+    LTEXT           "To continue, click Next.",
+                    IDC_STATIC,123,173,194,8
+END
+
+IDD_WIZPROPPAGE_CUSTOM_1 DIALOG DISCARDABLE 0, 0, 317, 143
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "VDMSound Configuration Wizard"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "You can create a new configuration from scratch, or you can reuse one by specifying an existing VDMSound shortcut that will then be used as a template.",
+                    IDC_STATIC,21,1,275,16
+    LTEXT           "What would you like to do now?",IDC_STATIC,21,24,275,8
+    LTEXT           "The wizard will assist you through the entire process of creating a custom VDMSound configuration.",
+                    IDC_STATIC,33,50,263,16
+    LTEXT           "A new configuration will be created based on settings taken from an existing VDMSound shortcut.  You will still be able to alter the new configuration as needed.",
+                    IDC_STATIC,33,84,263,24
+    CONTROL         "&Create a new configuration from scratch",IDC_OPT_MAKENEW,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,21,39,275,10
+    CONTROL         "&Reuse an existing configuration",IDC_OPT_USETEMPLATE,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,21,73,275,10
+    LTEXT           "Enter the location of the VDMSound shortcut that you want to use as a template:",
+                    IDC_STATIC,33,112,263,8
+    EDITTEXT        IDC_EDT_TEMPLATE,33,126,208,14,ES_AUTOHSCROLL | WS_GROUP
+    PUSHBUTTON      "Browse...",IDC_BUT_TEMPLATE,246,126,50,14
+END
+
+IDD_WIZPROPPAGE_CUSTOM_2 DIALOG DISCARDABLE 0, 0, 317, 143
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "VDMSound Configuration Wizard"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "TODO: add stuff here",
+                    IDC_STATIC,21,1,275,16
+    PUSHBUTTON      "Ad&vanced...",IDC_BUT_ADVANCED,246,126,50,14
+END
+
+IDD_WIZPROPPAGE_FINIS DIALOG DISCARDABLE 0, 0, 317, 200
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "VDMSound Configuration Wizard"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Completing the VDMSound Configuration Wizard",IDC_TXT_WIZARDTITLE,
+                    123,7,194,40
+    LTEXT           "You have successfully configured the DOS application for use with VDMSound.",
+                    IDC_STATIC,123,48,194,16
+    LTEXT           "If you want VDMSound to recall this configuration the next time you run the application, tick the check box below. This will create a VDMSound shortcut in the application's folder.",
+                    IDC_STATIC,123,71,194,24
+    CONTROL         "&Remember my settings",IDC_CHK_SAVESETTINGS,"Button",
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_GROUP | WS_TABSTOP,123,
+                    102,182,10
+    LTEXT           "You can, at any point, change emulation settings by editing the properties of VDMSound shortcuts in Explorer.",
+                    IDC_STATIC,123,119,194,16
+    LTEXT           "To run the configured DOS application, click Finish.",
+                    IDC_STATIC,123,142,194,8
+    CONTROL         "Add a VDMSound &shortcut to my desktop",IDC_CHK_DESKTOPSHORT,
+                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_GROUP | 
+                    WS_TABSTOP,123,173,182,10
+END
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
@@ -738,6 +822,65 @@ BEGIN
         HORZGUIDE, 37
         HORZGUIDE, 54
     END
+
+    IDD_WIZPROPPAGE_INTRO, DIALOG
+    BEGIN
+        VERTGUIDE, 103
+        VERTGUIDE, 123
+        VERTGUIDE, 135
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 183
+        HORZGUIDE, 48
+        HORZGUIDE, 71
+        HORZGUIDE, 86
+        HORZGUIDE, 96
+        HORZGUIDE, 119
+        HORZGUIDE, 129
+        HORZGUIDE, 175
+    END
+
+    IDD_WIZPROPPAGE_CUSTOM_1, DIALOG
+    BEGIN
+        LEFTMARGIN, 21
+        RIGHTMARGIN, 296
+        VERTGUIDE, 33
+        VERTGUIDE, 241
+        VERTGUIDE, 284
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 140
+        HORZGUIDE, 24
+        HORZGUIDE, 39
+        HORZGUIDE, 50
+        HORZGUIDE, 73
+        HORZGUIDE, 84
+        HORZGUIDE, 112
+        HORZGUIDE, 126
+    END
+
+    IDD_WIZPROPPAGE_CUSTOM_2, DIALOG
+    BEGIN
+        LEFTMARGIN, 21
+        RIGHTMARGIN, 296
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 140
+        HORZGUIDE, 24
+        HORZGUIDE, 126
+    END
+
+    IDD_WIZPROPPAGE_FINIS, DIALOG
+    BEGIN
+        VERTGUIDE, 103
+        VERTGUIDE, 123
+        VERTGUIDE, 135
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 183
+        HORZGUIDE, 48
+        HORZGUIDE, 71
+        HORZGUIDE, 102
+        HORZGUIDE, 119
+        HORZGUIDE, 142
+        HORZGUIDE, 173
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -911,6 +1054,7 @@ BEGIN
     IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*||"
     IDS_TXT_FILTER4         "Log Files (*.log)|*.log|All Files (*.*)|*.*||"
     IDS_TXT_FILTER4_DEFEXT  "log"
+    IDS_TXT_FILTER5         "VDMSound Shortcut Files (*.vlp)|*.vlp||"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -934,6 +1078,7 @@ BEGIN
     IDS_MSG_SHTOOLTIP       "Program: %1"
     IDS_MSG_COMMITERR       "Could not commit all changes:%n%2 (0x%1!08x!)"
     IDS_MSG_SECURITYERR     "%1%nCould not gain full access to the specified file(s) because of insufficient security privileges.%nYou may encounter access problems when displaying and/or saving your changes."
+    IDS_MSG_NOFILEERR       "The file '%1' does not exist.%nPlease specify a valid file name."
 END
 
 #endif    // English (U.S.) resources

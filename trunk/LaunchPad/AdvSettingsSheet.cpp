@@ -16,7 +16,8 @@ static char THIS_FILE[] = __FILE__;
 
 CAdvSettingsSheet::CAdvSettingsSheet(CLaunchPadSettings& settings, UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheet(nIDCaption, pParentWnd, iSelectPage),
-   CSettingsContainer(settings),
+   m_settingsOriginal(settings),
+   m_settings(settings),
    m_p1(m_settings), m_p2(m_settings), m_p3(m_settings), m_p4(m_settings), m_p5(m_settings),
    m_p6(m_settings), m_p7(m_settings), m_p8(m_settings), m_p9(m_settings)
 {
@@ -25,7 +26,8 @@ CAdvSettingsSheet::CAdvSettingsSheet(CLaunchPadSettings& settings, UINT nIDCapti
 
 CAdvSettingsSheet::CAdvSettingsSheet(CLaunchPadSettings& settings, LPCTSTR pszCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheet(pszCaption, pParentWnd, iSelectPage),
-   CSettingsContainer(settings),
+   m_settingsOriginal(settings),
+   m_settings(settings),
    m_p1(m_settings), m_p2(m_settings), m_p3(m_settings), m_p4(m_settings), m_p5(m_settings),
    m_p6(m_settings), m_p7(m_settings), m_p8(m_settings), m_p9(m_settings)
 {
@@ -70,7 +72,7 @@ BOOL CAdvSettingsSheet::OnInitDialog()
 
 LRESULT CAdvSettingsSheet::OnSaveSettings(WPARAM wParam, LPARAM lParam)
 {
-  Save();
+  m_settingsOriginal.Copy(m_settings);
 
   return 0;
 }
