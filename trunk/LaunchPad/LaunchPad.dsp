@@ -314,6 +314,10 @@ SOURCE=.\LaunchPadUtil.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\PIFFile.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\RUNWITHVDMSThread.cpp
 # End Source File
 # Begin Source File
@@ -352,6 +356,10 @@ SOURCE=.\LaunchPadShellEx.h
 # Begin Source File
 
 SOURCE=.\LaunchPadUtil.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\PIFFile.h
 # End Source File
 # Begin Source File
 
