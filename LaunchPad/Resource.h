@@ -116,15 +116,16 @@
 
 #define IDC_CHK_USEFM                   1601
 #define IDC_CMB_FMPORT                  1602
-#define IDC_CMB_FMSYNTHRATE             1603
-#define IDC_CHK_FMOUTDEV                1604
-#define IDC_CMB_FMOUTDEV                1605
-#define IDC_CMB_FMOUTDEVBUF             1606
-#define IDC_SPN_FMOUTDEVBUF             1607
-#define IDC_BUT_FMOUTDEV                1608
-#define IDC_CHK_FMOUTFILE               1609
-#define IDC_EDT_FMOUTFILE               1610
-#define IDC_BUT_FMOUTFILEBROWSE         1611
+#define IDC_CMB_OPLMODE                 1603
+#define IDC_CMB_FMSYNTHRATE             1604
+#define IDC_CHK_FMOUTDEV                1605
+#define IDC_CMB_FMOUTDEV                1606
+#define IDC_CMB_FMOUTDEVBUF             1607
+#define IDC_SPN_FMOUTDEVBUF             1608
+#define IDC_BUT_FMOUTDEV                1609
+#define IDC_CHK_FMOUTFILE               1610
+#define IDC_EDT_FMOUTFILE               1611
+#define IDC_BUT_FMOUTFILEBROWSE         1612
 
 #define IDC_CHK_USESB                   1701
 #define IDC_CMB_SBPORT                  1702
