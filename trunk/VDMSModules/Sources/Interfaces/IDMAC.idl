@@ -22,11 +22,13 @@ interface IDMAController : IUnknown
 
 	[ helpstring("Starts a DMA transfer on a channel") ]
 	HRESULT InitiateTransfer(
-		[in] BYTE channel );                // DMA channel to start transfer on
+		[in] BYTE channel,                  // DMA channel to start transfer on
+		[in] BOOL synchronous );            // Indicates whether the operation should be synchronous
 
 	[ helpstring("Aborts an existing DMA transfer") ]
 	HRESULT AbortTransfer(
-		[in] BYTE channel );                // DMA channel to abort transfer on
+		[in] BYTE channel,                  // DMA channel to abort transfer on
+		[in] BOOL synchronous );            // Indicates whether the operation should be synchronous
 };
 
 
