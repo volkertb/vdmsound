@@ -73,7 +73,15 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
     Depends    = configuration; // Dependency query object
     Config     = configuration; // Configuration query object
 
-    // Obtain VDM Services instance (if available)
+    /** Get settings *******************************************************/
+
+    // Try to obtain the MPU-401 settings, use defaults if none specified
+    m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x330, 16, false);
+    m_IRQLine  = CFG_Get(Config, INI_STR_IRQLINE, 2, 10, false);
+
+    /** Get VDM services ***************************************************/
+
+    // Obtain VDM Services instance
     IUnknownPtr VDMServices
                = Depends->Get(INI_STR_VDMSERVICES);
     m_BaseSrv  = VDMServices;   // Base services (registers, interrupts, etc)
@@ -84,9 +92,7 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
     if (m_IOSrv == NULL)
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
-    // Try to obtain the MPU-401 settings, use defaults if none specified
-    m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x330, 16, false);
-    m_IRQLine  = CFG_Get(Config, INI_STR_IRQLINE, 2, 10, false);
+    /** Get modules ********************************************************/
 
     // Try to obtain an interface to a MIDI-out module, use NULL if none available
     m_midiOut  = DEP_Get(Depends, INI_STR_MIDIOUT, NULL, false);

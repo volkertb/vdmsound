@@ -70,12 +70,11 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return E_POINTER;
 
-  // Grab a copy of the runtime environment (useful for logging, etc.)
-  RTE_Set(m_env, configuration);
-
-  // Obtain the Query objects (for intialization purposes)
   IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
   IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+
+  // Grab a copy of the runtime environment (useful for logging, etc.)
+  RTE_Set(m_env, configuration);
 
   // Initialize configuration and VDM services
   try {
@@ -83,13 +82,18 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
     Depends = configuration;    // Dependency query object
     Config  = configuration;    // Configuration query object
 
-    // Obtain VDM Services instance (if available)
-    if ((m_DMASrv = Depends->Get(INI_STR_VDMSERVICES)) == NULL) // DMA services
-      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMDMAServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+    /** Get settings *******************************************************/
 
     // Try to obtain the DMA engine settings, use defaults if none specified
     m_minPeriod = CFG_Get(Config, INI_STR_MINPERIOD,  5, 10, false);
     m_maxPeriod = CFG_Get(Config, INI_STR_MAXPERIOD, 20, 10, false);
+
+    /** Get VDM services ***************************************************/
+
+    // Obtain VDM Services instance
+    if ((m_DMASrv = Depends->Get(INI_STR_VDMSERVICES)) == NULL) // DMA services
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMDMAServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
