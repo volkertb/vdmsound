@@ -1,0 +1,7 @@
+:Base VDMConfig.hlp
+:Title VDMSound Configuration
+1 Contents=HLP_CONTENTS
+1 Configuration file
+1 Error Messages
+2 Initialization
+3 Query object not properly initialized=HLP_ERR_QUERY_NOT_INIT
