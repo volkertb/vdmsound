@@ -24,6 +24,10 @@ Classes
 				val ThreadingModel = s 'Apartment'
 			}
 			'TypeLib' = s '{5397AA66-C386-4F77-B625-7A34EB12B576}'
+			ShellEx
+			{
+				MayChangeDefaultMenu
+			}
 		}
 	}
 	ForceRemove .vlp = s 'vdms.vlpfile'
