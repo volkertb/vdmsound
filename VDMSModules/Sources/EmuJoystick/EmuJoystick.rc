@@ -118,7 +118,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // REGISTRY
 //
 
-IDR_EMUJOYSTICKS        REGISTRY DISCARDABLE    "EmuJoysticks.rgs"
+IDR_JOYSTICKCTL        REGISTRY DISCARDABLE    "JoystickCtl.rgs"
 #endif    // Englisch (USA) resources
 /////////////////////////////////////////////////////////////////////////////
 

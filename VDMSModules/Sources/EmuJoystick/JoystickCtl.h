@@ -1,7 +1,7 @@
-// EmuJoysticks.h : Deklaration von CEmuJoysticks
+// JoystickCtl.h : Deklaration von CJoystickCtl
 
-#ifndef __EMUJOYSTICKS_H_
-#define __EMUJOYSTICKS_H_
+#ifndef __JOYSTICKCTL_H_
+#define __JOYSTICKCTL_H_
 
 #include "resource.h"       // Hauptsymbole
 
@@ -14,16 +14,16 @@
 #import <IVDMServices.tlb>
 #import <IVDMQuery.tlb>
 /////////////////////////////////////////////////////////////////////////////
-// CEmuJoysticks
-class ATL_NO_VTABLE CEmuJoysticks : 
+// CJoystickCtl
+class ATL_NO_VTABLE CJoystickCtl : 
 	public CComObjectRootEx<CComMultiThreadModel>,
-	public CComCoClass<CEmuJoysticks, &CLSID_EmuJoysticks>,
+	public CComCoClass<CJoystickCtl, &CLSID_JoystickCtl>,
 	public ISupportErrorInfo,
 	public IVDMBasicModule,
 	public IIOHandler
 {
 public:
-	CEmuJoysticks()
+	CJoystickCtl()
 	{
 		m_J1XCountdown = 0;
 		m_J1YCountdown = 0;
@@ -35,12 +35,12 @@ public:
 		m_J2Button2 = 0;
 	}
 
-DECLARE_REGISTRY_RESOURCEID(IDR_EMUJOYSTICKS)
-DECLARE_NOT_AGGREGATABLE(CEmuJoysticks)
+DECLARE_REGISTRY_RESOURCEID(IDR_JOYSTICKCTL)
+DECLARE_NOT_AGGREGATABLE(CJoystickCtl)
 
 DECLARE_PROTECT_FINAL_CONSTRUCT()
 
-BEGIN_COM_MAP(CEmuJoysticks)
+BEGIN_COM_MAP(CJoystickCtl)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
   COM_INTERFACE_ENTRY(IIOHandler)
 	COM_INTERFACE_ENTRY(ISupportErrorInfo)
@@ -76,4 +76,4 @@ protected:
 	int m_J1Button1, m_J1Button2, m_J2Button1, m_J2Button2;
 };
 
-#endif //__EMUJOYSTICKS_H_
+#endif //__JOYSTICKCTL_H_
