@@ -5,12 +5,36 @@ Begin VB.Form frmMain
    ClientHeight    =   5775
    ClientLeft      =   165
    ClientTop       =   735
-   ClientWidth     =   7935
+   ClientWidth     =   7845
    Icon            =   "frmMain.frx":0000
    LinkTopic       =   "Form1"
    ScaleHeight     =   5775
-   ScaleWidth      =   7935
+   ScaleWidth      =   7845
    StartUpPosition =   3  'Windows Default
+   Begin MSComctlLib.ImageList imgListViewIcons32 
+      Left            =   6120
+      Top             =   0
+      _ExtentX        =   1005
+      _ExtentY        =   1005
+      BackColor       =   -2147483643
+      ImageWidth      =   32
+      ImageHeight     =   32
+      MaskColor       =   12632256
+      UseMaskColor    =   0   'False
+      _Version        =   393216
+   End
+   Begin MSComctlLib.ImageList imgListViewIcons16 
+      Left            =   5520
+      Top             =   0
+      _ExtentX        =   1005
+      _ExtentY        =   1005
+      BackColor       =   -2147483643
+      ImageWidth      =   16
+      ImageHeight     =   16
+      MaskColor       =   12632256
+      UseMaskColor    =   0   'False
+      _Version        =   393216
+   End
    Begin MSComctlLib.ImageList imlTreeIcons 
       Left            =   4920
       Top             =   0
@@ -20,6 +44,7 @@ Begin VB.Form frmMain
       ImageWidth      =   16
       ImageHeight     =   16
       MaskColor       =   12632256
+      UseMaskColor    =   0   'False
       _Version        =   393216
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   2
@@ -118,6 +143,7 @@ Begin VB.Form frmMain
       Indentation     =   0
       LineStyle       =   1
       PathSeparator   =   "."
+      Sorted          =   -1  'True
       Style           =   7
       ImageList       =   "imlTreeIcons"
       Appearance      =   1
@@ -131,14 +157,24 @@ Begin VB.Form frmMain
       Width           =   5610
       _ExtentX        =   9895
       _ExtentY        =   8467
+      Arrange         =   2
+      Sorted          =   -1  'True
       LabelWrap       =   -1  'True
       HideSelection   =   -1  'True
+      FullRowSelect   =   -1  'True
       _Version        =   393217
+      Icons           =   "imgListViewIcons"
+      SmallIcons      =   "imgListViewIcons"
       ForeColor       =   -2147483640
       BackColor       =   -2147483643
       BorderStyle     =   1
       Appearance      =   1
-      NumItems        =   0
+      NumItems        =   1
+      BeginProperty ColumnHeader(1) {BDD1F052-858B-11D1-B16A-00C0F0283628} 
+         Key             =   "name"
+         Text            =   "Name"
+         Object.Width           =   2540
+      EndProperty
    End
    Begin VB.PictureBox picTitles 
       Align           =   1  'Align Top
@@ -148,11 +184,11 @@ Begin VB.Form frmMain
       Height          =   300
       Left            =   0
       ScaleHeight     =   300
-      ScaleWidth      =   7935
+      ScaleWidth      =   7845
       TabIndex        =   2
       TabStop         =   0   'False
       Top             =   420
-      Width           =   7935
+      Width           =   7845
       Begin VB.Label lblTitle 
          BorderStyle     =   1  'Fixed Single
          Caption         =   "Applications"
@@ -182,8 +218,8 @@ Begin VB.Form frmMain
       Left            =   0
       TabIndex        =   1
       Top             =   0
-      Width           =   7935
-      _ExtentX        =   13996
+      Width           =   7845
+      _ExtentX        =   13838
       _ExtentY        =   741
       ButtonWidth     =   609
       ButtonHeight    =   582
@@ -271,29 +307,43 @@ Begin VB.Form frmMain
       Left            =   0
       TabIndex        =   0
       Top             =   5505
-      Width           =   7935
-      _ExtentX        =   13996
+      Width           =   7845
+      _ExtentX        =   13838
       _ExtentY        =   476
       _Version        =   393216
       BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
          NumPanels       =   3
          BeginProperty Panel1 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             AutoSize        =   1
-            Object.Width           =   8440
+            Object.Width           =   8281
             Text            =   "Status"
             TextSave        =   "Status"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "2/10/01"
+            TextSave        =   "6/10/01"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "06:15 AM"
+            TextSave        =   "00:51 AM"
          EndProperty
       EndProperty
+   End
+   Begin VB.Image icoMSDOS32 
+      Height          =   480
+      Left            =   8280
+      Picture         =   "frmMain.frx":1744
+      Top             =   2040
+      Width           =   480
+   End
+   Begin VB.Image icoMSDOS16 
+      Height          =   240
+      Left            =   8280
+      Picture         =   "frmMain.frx":1A4E
+      Top             =   1680
+      Width           =   240
    End
    Begin VB.Image imgSplitter 
       Height          =   4785
@@ -425,10 +475,10 @@ Private Sub Form_Load()
   Me.Top = GetSetting(App.Title, "Settings", "MainTop", 1000)
   Me.Width = GetSetting(App.Title, "Settings", "MainWidth", 6500)
   Me.Height = GetSetting(App.Title, "Settings", "MainHeight", 6500)
+  lvListView.View = Val(GetSetting(App.Title, "Settings", "ViewMode", "0"))
 End Sub
 
 Private Sub Form_Paint()
-  lvListView.View = Val(GetSetting(App.Title, "Settings", "ViewMode", "0"))
   Select Case lvListView.View
     Case lvwIcon
       tbToolBar.Buttons(LISTVIEW_MODE0).Value = tbrPressed
@@ -448,7 +498,7 @@ Private Sub Form_Unload(Cancel As Integer)
   For i = Forms.Count - 1 To 1 Step -1
     Unload Forms(i)
   Next
-  If Me.WindowState <> vbMinimized Then
+  If Me.WindowState = vbNormal Then
     SaveSetting App.Title, "Settings", "MainLeft", Me.Left
     SaveSetting App.Title, "Settings", "MainTop", Me.Top
     SaveSetting App.Title, "Settings", "MainWidth", Me.Width
@@ -703,10 +753,13 @@ Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
 End Sub
 
 Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
-  If modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString) <> 0 Then
-    MsgBox "The category '" & NewString & "' already exists.  Please choose another name."
-    Cancel = 1
-  Else
-    Cancel = 0
-  End If
+  Select Case modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString)
+    Case 0
+      Cancel = 0
+    Case 1
+      MsgBox "The category '" & NewString & "' already exists.  Please choose another name."
+      Cancel = 1
+    Case Else
+      Cancel = 1
+  End Select
 End Sub
