@@ -1,7 +1,0 @@
-Action	Condition	Sequence
-s72	S255	I2
-InstallExecuteSequence	Action
-ERR_CA_CANCELNOTWINNT	NOT VersionNT	10
-FindRelatedProducts		450
-ERR_CA_CANCELNEWERVERSION	NEWERPRODUCTFOUND	455
-RemoveExistingProducts		1510

@@ -1,5 +1,0 @@
-UpgradeCode	VersionMin	VersionMax	Language	Attributes	Remove	ActionProperty
-s38	S20	S20	S255	i4	S255	s72
-Upgrade	UpgradeCode	VersionMin	VersionMax	Language	Attributes
-{DCBCB993-3788-11D5-9D2B-00A024112F81}	1.0.0	2.0.4		256		PREVIOUSVERSIONSINSTALLED
-{DCBCB993-3788-11D5-9D2B-00A024112F81}	2.0.4			258		NEWERPRODUCTFOUND
