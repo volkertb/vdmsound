@@ -5,27 +5,6 @@
 // produce the type library (MIDIToolkit.tlb) and marshalling code.
 
 import "oaidl.idl";
-import "ocidl.idl";
-	[
-		object,
-		uuid(2C220FE0-0125-11D5-9C68-00A024112F81),
-	
-		helpstring("IMIDIMapper Interface"),
-		pointer_default(unique)
-	]
-	interface IMIDIMapper : IUnknown
-	{
-	};
-	[
-		object,
-		uuid(2C220FE2-0125-11D5-9C68-00A024112F81),
-	
-		helpstring("IMIDISplitter Interface"),
-		pointer_default(unique)
-	]
-	interface IMIDISplitter : IUnknown
-	{
-	};
 
 [
 	uuid(2C220FD1-0125-11D5-9C68-00A024112F81),
@@ -34,8 +13,8 @@ import "ocidl.idl";
 ]
 library MIDITOOLKITLib
 {
-	importlib("stdole32.tlb");
-	importlib("stdole2.tlb");
+	import "IVDMModule.idl";
+	import "IMIDI.idl";
 
 	[
 		uuid(2C220FDF-0125-11D5-9C68-00A024112F81),
@@ -43,7 +22,8 @@ library MIDITOOLKITLib
 	]
 	coclass MIDIMapper
 	{
-		[default] interface IMIDIMapper;
+		[default] interface IVDMBasicModule;
+		interface IMIDIEventHandler;
 	};
 	[
 		uuid(2C220FE3-0125-11D5-9C68-00A024112F81),
@@ -51,6 +31,7 @@ library MIDITOOLKITLib
 	]
 	coclass MIDISplitter
 	{
-		[default] interface IMIDISplitter;
+		[default] interface IVDMBasicModule;
+		interface IMIDIEventHandler;
 	};
 };
