@@ -23,7 +23,13 @@
 //Sie sollten jedoch den Namen von _Module nicht ändern
 extern CComModule _Module;
 #include <atlcom.h>
+
+//
+
+#include <afxmt.h>
+
 #include <mmsystem.h>
+#pragma comment ( lib , "winmm.lib" )
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ fügt unmittelbar vor der vorhergehenden Zeile zusätzliche Deklarationen ein.
