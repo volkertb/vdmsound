@@ -28,7 +28,7 @@ Begin VB.Form frmMain
             Key             =   "Folder Closed"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0D1C
+            Picture         =   "frmMain.frx":0A24
             Key             =   "Folder Open"
          EndProperty
       EndProperty
@@ -46,47 +46,47 @@ Begin VB.Form frmMain
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   11
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":116E
+            Picture         =   "frmMain.frx":0B7E
             Key             =   "Back"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1280
+            Picture         =   "frmMain.frx":0C90
             Key             =   "Forward"
          EndProperty
          BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1392
+            Picture         =   "frmMain.frx":0DA2
             Key             =   "Cut"
          EndProperty
          BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":14A4
+            Picture         =   "frmMain.frx":0EB4
             Key             =   "Copy"
          EndProperty
          BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":15B6
+            Picture         =   "frmMain.frx":0FC6
             Key             =   "Paste"
          EndProperty
          BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":16C8
+            Picture         =   "frmMain.frx":10D8
             Key             =   "Delete"
          EndProperty
          BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":17DA
+            Picture         =   "frmMain.frx":11EA
             Key             =   "Properties"
          EndProperty
          BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":18EC
+            Picture         =   "frmMain.frx":12FC
             Key             =   "View Large Icons"
          EndProperty
          BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":19FE
+            Picture         =   "frmMain.frx":140E
             Key             =   "View Small Icons"
          EndProperty
          BeginProperty ListImage10 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1B10
+            Picture         =   "frmMain.frx":1520
             Key             =   "View List"
          EndProperty
          BeginProperty ListImage11 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1C22
+            Picture         =   "frmMain.frx":1632
             Key             =   "View Details"
          EndProperty
       EndProperty
@@ -109,6 +109,7 @@ Begin VB.Form frmMain
       Height          =   4800
       Left            =   0
       TabIndex        =   6
+      Tag             =   "CtlCategories"
       Top             =   705
       Width           =   2370
       _ExtentX        =   4180
@@ -125,6 +126,7 @@ Begin VB.Form frmMain
       Height          =   4800
       Left            =   2415
       TabIndex        =   5
+      Tag             =   "CtlApplications"
       Top             =   705
       Width           =   5610
       _ExtentX        =   9895
@@ -284,12 +286,12 @@ Begin VB.Form frmMain
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "1/10/01"
+            TextSave        =   "2/10/01"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "20:28 PM"
+            TextSave        =   "02:05 AM"
          EndProperty
       EndProperty
    End
@@ -316,6 +318,12 @@ Begin VB.Form frmMain
       End
       Begin VB.Menu mnuFileCreateshortcut 
          Caption         =   "Create &Shortcut"
+      End
+      Begin VB.Menu mnuFileRename 
+         Caption         =   "Rena&me"
+      End
+      Begin VB.Menu mnuFileDelete 
+         Caption         =   "&Delete"
       End
       Begin VB.Menu mnuFileBar1 
          Caption         =   "-"
@@ -485,10 +493,6 @@ Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, x As Single
   mbMoving = False
 End Sub
 
-Private Sub mnuTreeViewRename_Click()
-  tvTreeView.StartLabelEdit
-End Sub
-
 Private Sub tvTreeView_DragDrop(Source As Control, x As Single, y As Single)
   If Source = imgSplitter Then
     SizeControls x
@@ -601,7 +605,6 @@ Private Sub mnuHelpContents_Click()
 
 End Sub
 
-
 Private Sub mnuViewWebBrowser_Click()
   'ToDo: Add 'mnuViewWebBrowser_Click' code.
   MsgBox "Add 'mnuViewWebBrowser_Click' code."
@@ -616,7 +619,6 @@ Private Sub mnuViewRefresh_Click()
   'ToDo: Add 'mnuViewRefresh_Click' code.
   MsgBox "Add 'mnuViewRefresh_Click' code."
 End Sub
-
 
 Private Sub mnuVAIByDate_Click()
   'ToDo: Add 'mnuVAIByDate_Click' code.
@@ -655,11 +657,6 @@ Private Sub mnuFileClose_Click()
   Unload Me
 End Sub
 
-Private Sub mnuFileRename_Click()
-  'ToDo: Add 'mnuFileRename_Click' code.
-  MsgBox "Add 'mnuFileRename_Click' code."
-End Sub
-
 Private Sub mnuFileOpen_Click()
   Dim sFile As String
 
@@ -678,6 +675,22 @@ Private Sub mnuFileOpen_Click()
 
 End Sub
 
+'
+' Custom code
+'
+
+Private Sub mnuFileRename_Click()
+  Select Case modMain.fMainForm.ActiveControl.Tag
+     Case "CtlCategories"
+      mnuTreeViewRename_Click
+    Case "CtlApplications"
+  End Select
+End Sub
+
+Private Sub mnuTreeViewRename_Click()
+  tvTreeView.StartLabelEdit
+End Sub
+
 Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
   If Button = 2 Then  ' Check if right mouse button was clicked.
     PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton
@@ -685,5 +698,14 @@ Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single,
 End Sub
 
 Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
-  sbStatusBar.Panels.Item(1).Text = Node.FullPath
+  sbStatusBar.Panels.Item(1).Text = Node.Key
+End Sub
+
+Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
+  If modConfig.RenameCategory(tvTreeView.SelectedItem, NewString) <> 0 Then
+    MsgBox "The category '" & NewString & "' already exists.  Please choose another name."
+    Cancel = 1
+  Else
+    Cancel = 0
+  End If
 End Sub

@@ -2,74 +2,126 @@ Attribute VB_Name = "modConfig"
 '
 ' Loads the main .ini file and initializes the application accordingly
 '
-Public Sub Initialize(fMainForm As frmMain)
+Public Sub LoadCategories(fMainForm As frmMain)
   Dim iniFileName As String
   iniFileName = modIniFile.MakeIniPathStr(App.Path, "LaunchPad.ini")
   modIniFile.EnsurePathExists iniFileName
 
-  LoadCategories fMainForm, iniFileName
-End Sub
-
-'
-'
-'
-Private Sub LoadCategories(fMainForm As frmMain, strIni As String)
+  ' Get the number of categories that exist
   Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, "categories", "count"))
 
-  numItems = Val(modIniFile.ReadIniString(strIni, "categories", "count"))
-
+  ' Create each category
   For i = 0 To numItems - 1
     Dim itemName As String
     Dim itemValue As String
     itemName = "item" & Format$(i)
-    itemValue = modIniFile.ReadIniString(strIni, "categories", itemName)
-    AddNode fMainForm.tvTreeView, itemValue
+    itemValue = modIniFile.ReadIniString(iniFileName, "categories", itemName)
+
+    LoadCategoryBranch fMainForm.tvTreeView, itemValue
   Next
 End Sub
 
 '
+' Given an absolute path, this function will create an entire
+'  branch of categories.
 '
+Public Function LoadCategoryBranch(tvTree As TreeView, _
+  ByVal strFullPath As String) As Node
+
+  Dim splitPos As Long
+  splitPos = InStrRev(strFullPath, ".")
+
+  If splitPos > 0 Then
+    Dim tvParentNode As Node
+    Set tvParentNode = LoadCategoryBranch(tvTree, Left$(strFullPath, splitPos - 1))
+    Set LoadCategoryBranch = AddNode(tvTree, tvParentNode, Mid$(strFullPath, splitPos + 1)) ' return
+  Else
+    Set LoadCategoryBranch = AddNode(tvTree, Nothing, strFullPath)  ' return
+  End If
+End Function
+
+'
+' Attempts to rename a category.  The category's key (as well as
+'  the keys of its children) are updated.  If the function is
+'  successful, the function returns zero, otherwise (e.g. if the
+'  key/category name already exists), it returns a non-zero value.
+' If the renaming is successful, it is mirrored in the configuration file.
+'
+Public Function RenameCategory(tvNode As Node, _
+  ByVal strNewNodeText As String) As Integer
+
+  If RenameNode(tvNode, strNewNodeText) <> 0 Then
+    RenameCategory = 1  ' return
+  Else
+    'TODO: rename category inside .ini file
+
+    If tvNode.Children > 0 Then
+      Dim curNode As Node
+      Set curNode = tvNode.Child
+
+      Do Until curNode Is Nothing
+        RenameCategory curNode, curNode.Text
+        Set curNode = curNode.Next
+      Loop
+    End If
+
+    RenameCategory = 0  ' return
+  End If
+End Function
+
+'
+' Adds a node to the given tree.  If the node already
+'  exists thena  reference to an existing node is returned,
+'  otherwise a reference to the new node is returned.
 '
 Private Function AddNode(tvTree As TreeView, _
-  ByVal strPath As String) As Node
+  tvParentNode As Node, _
+  ByVal strNodeName As String) As Node
 
-  Dim strTmpPath As String
-  Dim strNodeName As String
-  Dim strNodeParent As String
+  Dim strFullNodeName As String
 
-  strTmpPath = ""
+  On Error GoTo KeyExists
 
-  While Len(strPath) > 0
-    Dim splitPos As Long
-    splitPos = InStr(1, strPath, ".")
+  If tvParentNode Is Nothing Then
+    strFullNodeName = strNodeName
+    Set AddNode = tvTree.Nodes.Add(, , strFullNodeName, StrDecode(strNodeName), "Folder Closed", "Folder Open") ' return
+  Else
+    strFullNodeName = tvParentNode.Key & "." & strNodeName
+    Set AddNode = tvTree.Nodes.Add(tvParentNode.Key, tvwChild, strFullNodeName, StrDecode(strNodeName), "Folder Closed", "Folder Open") ' return
+  End If
+  Exit Function
 
-    ' Grab the next '.'-delimited element in the given path
-    If splitPos > 0 Then
-      strNodeName = Left$(strPath, splitPos - 1)
-      strPath = Mid$(strPath, splitPos + 1)
-    Else
-      strNodeName = strPath
-      strPath = ""
-    End If
+KeyExists:
+  Set AddNode = tvTree.Nodes.Item(strFullNodeName)  ' return
 
-    ' Remember below whom we will add the current node
-    strNodeParent = strTmpPath
+End Function
 
-    ' Now build the full path of the current node
-    If Len(strTmpPath) = 0 Then
-      strTmpPath = strNodeName
-    Else
-      strTmpPath = strTmpPath + "." + strNodeName
-    End If
+'
+' Renames a node (both human-readable text and encoded key).
+'  If another (sibling) node with the same name exists then the
+'  function returns a non-zero value, otherwise the node is
+'  renamed and zero is returned.
+'
+Private Function RenameNode(tvNode As Node, _
+  ByVal strNewText As String) As Integer
 
-    ' Add the current node to the tree
-    On Error Resume Next            ' if the node already exists, ignore the ensueing error
-    If Len(strNodeParent) = 0 Then  ' the node hangs off the root
-      tvTree.Nodes.Add , , strTmpPath, StrDecode(strNodeName), "Folder Closed", "Folder Open"
-    Else                            ' the node hangs off another node
-      tvTree.Nodes.Add strNodeParent, tvwChild, strTmpPath, StrDecode(strNodeName), "Folder Closed", "Folder Open"
-    End If
-  Wend
+  On Error GoTo KeyExists
+  
+  If tvNode.Parent Is Nothing Then
+    tvNode.Key = StrEncode(strNewText)
+  Else
+    tvNode.Key = tvNode.Parent.Key & "." & StrEncode(strNewText)
+  End If
+
+  tvNode.Text = strNewText
+
+  RenameNode = 0  ' return
+  Exit Function
+
+KeyExists:
+  RenameNode = 1  ' return
+
 End Function
 
 '
@@ -125,4 +177,19 @@ Public Function StrDecode(ByVal strSrc As String) As String
   Next
 
   StrDecode = retVal    ' return
+End Function
+
+'
+'
+'
+Public Function Node2ASCII(leafNode As Node) As String
+  Node2ASCII = Node2ASCII_Helper(leafNode, "")  ' return
+End Function
+
+Private Function Node2ASCII_Helper(leafNode As Node, suffix As String) As String
+  If leafNode.Parent Is Nothing Then
+    Node2ASCII_Helper = StrEncode(leafNode.Text) & suffix ' return
+  Else
+    Node2ASCII_Helper = Node2ASCII_Helper(leafNode.Parent, "." & StrEncode(leafNode.Text) & suffix) ' return
+  End If
 End Function
