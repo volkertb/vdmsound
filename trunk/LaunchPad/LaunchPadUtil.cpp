@@ -1160,7 +1160,7 @@ HRESULT VLPUtil::GetEffectiveRights(
   ASSERT(pObjectName != NULL);
   ASSERT(pAccessRights != NULL);
 
-  HRESULT hr;
+  HRESULT hr = S_OK;
   PSID psidOwner;
   PACL pDacl = NULL;
   PSECURITY_DESCRIPTOR pPrcSD = NULL;

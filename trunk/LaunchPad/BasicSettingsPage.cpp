@@ -297,13 +297,13 @@ BOOL CBasicSettingsPage::OnInitDialog()
   int i, numFailures;
   CStringArray fileNames;
   CString failedFiles(_T(""));
-  ACCESS_MASK effectiveRights;
+  ACCESS_MASK effectiveRights = 0;
 
   m_settings.GetFileNames(fileNames);
 
   for (i = 0, numFailures = 0; i < fileNames.GetSize(); i++) {
     if (SUCCEEDED(VLPUtil::GetEffectiveRights(fileNames.GetAt(i), SE_FILE_OBJECT, &effectiveRights))) {
-      if ((effectiveRights & GENERIC_ALL) != GENERIC_ALL) {
+      if ((effectiveRights & READ_CONTROL) != READ_CONTROL) {
         if (numFailures < 10) {
           failedFiles += fileNames.GetAt(i) + _T("\n\r");
         } else {
