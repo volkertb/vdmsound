@@ -22,7 +22,7 @@
                               APPS_GET_USER  | APPS_GET_AS_ID  | APPS_GET_AS_TEXT,
                               APPS_GET_TITLE | APPS_GET_APPVER | APPS_GET_DISTRIB | APPS_GET_AS_TEXT,
                               APPS_GET_OSVER | APPS_GET_EMUVER | APPS_GET_AS_TEXT,
-                              0, 'updated', false, 0, 5);
+                              0, 'updated', false, 0, 5, true);
 
   echo('<table border="0" cellspacing="0" cellpadding="7" width="100%"><tr valign="top">');
 
@@ -45,7 +45,7 @@
     array_push($index, chr($i));
   }
 
-  echo('<tr class="opaque1"><td class="opaque1_bevel"><div style="margin-bottom: 0.5em">Browse:</div>');
+  echo('<tr class="opaque1"><td class="opaque1_bevel"><div style="margin-bottom: 0.5em">Browse applications:</div>');
   echo('<table border="0" cellspacing="0" cellpadding="1" width="100%" style="font-family: monospace">');
 
   for ($i = 0; $i < count($index); $i++) {
@@ -90,15 +90,18 @@
 
   if ($loggedin) {
     $hdr = 'My compatibility reports';
+    $ftr = 'All my reports';
   } else {
     $hdr = 'Latest compatibility reports';
+    $ftr = 'All reports';
   }
 
   echo('</td><td align="right" width="40%">');
   echo('<h1 class="normal"><nobr> ' . $hdr . ' </nobr></h1>');
 
   if ($myReports && (count($myReports) > 0)) {
-    HtmlSendReportList($myReports, $loggedin, true);
+    $myReports_fullCount = AppsGetLastNumRows();
+    HtmlSendReportList($myReports, $loggedin, true, ($myReports_fullCount > count($myReports)) ? HtmlMakeLink($ftr . '...', 'list.php', Array('userid' => AuthGetUserId(), 'sortkey' => 'updated', 'sortasc' => false)) : NULL);
   } else {
     if ($loggedin) {
       $errMsg = 'You have not yet submitted any compatibility reports';

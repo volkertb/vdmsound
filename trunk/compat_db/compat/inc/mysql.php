@@ -17,6 +17,10 @@
     return eregi('^[\$0-9A-Z_]+$', $name);         // accept ANSI SQL only
   }
 
+  function MysqlIsValidSQLList($name) {
+    return eregi('^[\$0-9A-Z_ ,]+$', $name);       // accept valid names separatedby spaces and commas
+  }
+
   ////////////////////////////////////////////////////////////////////////////
   // Methods - General
   ////////////////////////////////////////////////////////////////////////////

@@ -45,18 +45,12 @@
   function AppsGetGlobalStats() {
     $retval = Array();
 
-    // Count all the applications
-    if ($result = MysqlQuery('SELECT COUNT(DISTINCT(Titles_id)) FROM Applications')) {
-      $retval['apps'] = mysql_result($result, 0, 0);
+    // Count all reports and all applications that have reports
+    if ($result = MysqlQuery('SELECT COUNT(*) AS reports, COUNT(DISTINCT Reports.Applications_id) AS apps FROM Reports INNER JOIN Applications ON (Reports.Applications_id=Applications.id)')) {
+      $retval = mysql_fetch_assoc($result);  // fill in the 'apps' and 'reports' fields
     } else {
-      $retval['apps'] = 0;
-    }
-
-    // Count all the reports
-    if ($result = MysqlQuery('SELECT COUNT(*) FROM Reports')) {
-      $retval['reports'] = mysql_result($result, 0, 0);
-    } else {
-      $retval['reports'] = 0;
+      $retval['apps']    = '(?)';
+      $retval['reports'] = '(?)';
     }
 
     return $retval;
@@ -98,7 +92,7 @@
     if ((!is_null($reportid) && !MysqlIsValidInteger($reportid)) ||
         (!is_null($userid)   && !MysqlIsValidInteger($userid))   ||
         (!is_null($appid)    && !MysqlIsValidInteger($appid))    ||
-        (!is_null($sortkey)  && !MysqlIsValidSQLName($sortkey))  ||
+        (!is_null($sortkey)  && !MysqlIsValidSQLList($sortkey))  ||
         (!MysqlIsValidInteger($start)) ||
         (!MysqlIsValidInteger($limit)))  // Check against SQL code injection
     {
@@ -268,7 +262,8 @@
       array_push($filters, 'Applications.Titles_id=' . $titleid);
 
     if ($countrows && ($limit > 0)) {
-      $querystr = 'SELECT CALC_FOUND_ROWS ';
+//    $querystr = 'SELECT CALC_FOUND_ROWS ';	// vladr: Not supported by older versions of MYSQL
+$querystr = 'SELECT ';
     } else {
       $querystr = 'SELECT ';
     }
@@ -305,7 +300,11 @@
 
     if ($countrows) {
       if ($limit > 0) {
-        $result = MysqlQuery('SELECT FOUND_ROWS()');
+// Warning: SELECT FOUND_ROWS() may fail (race condition) if using a persistent MySql connection (mysql_pconnect)
+//      $result = MysqlQuery('SELECT FOUND_ROWS()');	// vladr: Not supported by older versions of MYSQL
+$tmp_1_=strpos($querystr, ' FROM ');
+$tmp_2_=(!is_null($sortkey))?strpos($querystr, ' ORDER BY '):(($limit > 0)?strpos($querystr, ' LIMIT '):strlen($querystr));
+$result=MysqlQuery('SELECT COUNT(*) ' . substr($querystr,$tmp_1_,$tmp_2_-$tmp_1_));
         if ($result) {
           $apps_lastnumrows = mysql_result($result, 0, 0);
         } else {
@@ -349,14 +348,14 @@
                          $start = 0,
                          $limit = -1,
                          $countrows = false )
-{
+  {
     global $apps_lastnumrows;
 
     ErrSetLastError();
 
     $filters = Array();
 
-    if ((!is_null($sortkey) && !MysqlIsValidSQLName($sortkey))  ||
+    if ((!is_null($sortkey) && !MysqlIsValidSQLList($sortkey))  ||
         (!MysqlIsValidInteger($start)) ||
         (!MysqlIsValidInteger($limit)))  // Check against SQL code injection
     {
@@ -368,7 +367,8 @@
       $appnames = Array($appnames);
 
     if ($countrows && ($limit > 0)) {
-      $querystr = 'SELECT CALC_FOUND_ROWS ';
+//    $querystr = 'SELECT CALC_FOUND_ROWS ';	// vladr: Not supported by older versions of MYSQL
+$querystr = 'SELECT ';
     } else {
       $querystr = 'SELECT ';
     }
@@ -406,7 +406,11 @@
 
     if ($countrows) {
       if ($limit > 0) {
-        $result = MysqlQuery('SELECT FOUND_ROWS()');
+// Warning: SELECT FOUND_ROWS() may fail (race condition) if using a persistent MySql connection (mysql_pconnect)
+//      $result = MysqlQuery('SELECT FOUND_ROWS()');	// vladr: Not supported by older versions of MYSQL
+$tmp_1_=strpos($querystr, ' FROM ');
+$tmp_2_=strpos($querystr, ' GROUP BY ');
+$result=MysqlQuery('SELECT COUNT(DISTINCT Reports.Applications_id) ' . substr($querystr,$tmp_1_,$tmp_2_-$tmp_1_));
         if ($result) {
           $apps_lastnumrows = mysql_result($result, 0, 0);
         } else {
@@ -488,6 +492,7 @@
 
     if ($apps && (count($apps) == 1)) {
       $Applications_id = $apps[0]['id'];
+      MysqlQuery('UPDATE Applications SET time_updated=NULL WHERE id=' . $Applications_id); // 'Touch' application to make it as recent as the latest report
     } else if ($forceadd) {
       if (!MysqlQuery('INSERT INTO Applications (Titles_id,version,time_created,DistributionTypes_id) VALUES (' . $Titles_id . ',"' . MysqlMakeSafe($version) . '",NOW(),' . $distrib . ')'))
         return false;

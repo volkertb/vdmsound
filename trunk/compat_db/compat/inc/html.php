@@ -6,7 +6,7 @@
   require_once('inc/auth.php');
 
   ////////////////////////////////////////////////////////////////////////////
-  // 
+  //
   ////////////////////////////////////////////////////////////////////////////
 
   $html_uses_header = false;
@@ -97,7 +97,7 @@
   //
   // Makes an '<img src="...">
   //
-  function HtmlMakeImage($url, $alt = NULL, $border = 0, $hspace = 0, $vspace = 0, $align = NULL) {
+  function HtmlMakeImage($url, $alt = NULL, $border = 0, $hspace = 0, $vspace = 0, $align = NULL, $style = NULL) {
     if (strlen($url) < 1)
       return NULL;
 
@@ -109,11 +109,14 @@
     if (!is_null($align))
       $result .= ' align="' . $align . '"';
 
+    if (!is_null($style))
+      $result .= ' style="' . $style . '"';
+
     return $result . ' border="' . $border . '" hspace="' . $hspace . '" vspace="' . $vspace . '">';
   }
 
   //
-  // Makes an '<img src="...">
+  // Makes an "n out of m" results control
   //
   function HtmlMakeResultsInfo($start, $limit, $total, $itemName, $url) {
     if (!($limit > 0))
@@ -122,7 +125,7 @@
     $retval = Array();
 
     if ($limit < $total) {
-      array_push($retval, $itemName . ' ' . $start . '-' . ($start + $limit - 1) . ' of ' . $total);
+      array_push($retval, $itemName . ' ' . ($start + 1) . '-' . ($start + $limit) . ' of ' . $total);
     }
 
     HtmlUnmakeUrl($url, $baseURL, $params);
@@ -130,13 +133,13 @@
     if ($start > 0) {
       $i = max(0, $start - $limit);
       $n = $start - $i;
-      array_push($retval, HtmlMakeLink('previous ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $n))));
+      array_push($retval, HtmlMakeLink('previous ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $limit))));
     }
 
     if ($start + $limit < $total) {
       $i = min($total - 2, $start + $limit);
       $n = min($limit, $total - $i);
-      array_push($retval, HtmlMakeLink('next ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $n))));
+      array_push($retval, HtmlMakeLink('next ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $limit))));
     }
 
     if (count($retval > 0)) {
@@ -331,23 +334,32 @@
     echo('</table>');
   }
 
-  function HtmlSendAppsList($appsList, $footer = NULL) {
+  function HtmlSendAppsList($appsList, $footer = NULL, $url = NULL, $sortkey = NULL, $sortasc = false) {
     echo('<table border="0" cellspacing="0" cellpadding="5" width="100%">');
 
-    echo('<tr><th align="left">Title</th><th align="center">Compatibility</th><th></th><th align="center">Description</th><th align="center">Download</th></tr>');
+    $numCols = 6;
+
+    echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'reports_num' => 'number of reports', 'updated' => 'last update time'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% applications by %sortkey% %sortasc%</div></th>') . '</tr>');
+
+    echo('<tr>' .
+      '<th align="left">Title' . __HtmlMakeSortKeyInline($url, 'title_text', $sortkey, $sortasc) . '</th>' .
+      '<th align="center">Compatibility' . __HtmlMakeSortKeyInline($url, 'reports_num', $sortkey, $sortasc) . '</th>' .
+      '<th align="center">Latest report' . __HtmlMakeSortKeyInline($url, 'updated', $sortkey, $sortasc) . '</th>' .
+      '<th></th><th align="center">Description</th><th align="center">Download</th></tr>');
 
     foreach ($appsList as $appItem) {
       echo('<tr class="opaque1">');
       echo('<td class="opaque1_bevel" align="left"><b>' . $appItem['title_text'] . '</b> ' . $appItem['appver_text'] . ' <i><small>(' . $appItem['distrib_text'] . ')</small></i></td>');
       echo('<td class="opaque1_bevel" align="center">' . HtmlMakeLink('<b>' . $appItem['reports_num'] . ' report(s)</b>', 'list.php', Array('appid' => $appItem['app_id'])) . '</td>');
+      echo('<td class="opaque1_bevel" align="center">' . date('Y/m/d', strtotime($appItem['updated'])) . '</td>');
       echo('<td class="opaque1_bevel opaque1_tearoff_v" width="10">&nbsp;</td>');
       echo('<td class="opaque1_bevel" align="center">' . HtmlMakeLink('view specs', 'http://www.mobygames.com/search/quick', Array('quickSearch' => $appItem['title_text']), '_blank') . '</td>');
-      echo('<td class="opaque1_bevel" align="center">' . HtmlMakeLink('search 1', 'http://olesgames.virtualave.net/search2/search.cgi', Array('game' => $appItem['title_text']), '_blank') . ' / ' . HtmlMakeLink('search 2', 'http://www.freeoldies.com/search.php3', Array('keyword' => $appItem['title_text'])) . '</td>');
+      echo('<td class="opaque1_bevel" align="center">' . HtmlMakeLink('search 1', 'http://olesgames.virtualave.net/search2/search.cgi', Array('game' => $appItem['title_text']), '_blank') . ' / ' . HtmlMakeLink('2', 'http://www.freeoldies.com/search.php3', Array('keyword' => $appItem['title_text'])) . '</td>');
       echo('</tr>');
     }
 
     if (!is_null($footer)) {
-      echo('<tr><td colspan="3" align="right">' . $footer . '</td></tr>');
+      echo('<tr><td colspan="' . $numCols . '" align="right">' . $footer . '</td></tr>');
     }
 
     echo('</table>');
@@ -361,7 +373,58 @@
     }
   }
 
-  function HtmlSendReportList($reportList, $loggedIn, $briefFmt=true, $footer = NULL) {
+  function __HtmlMakeSortKeyInline($url, $key, $sortkey, $sortasc) {
+    if (is_null($url) || is_null($sortkey))
+      return '';
+
+    if ($key == $sortkey) {
+      $pic = $sortasc ? 'pics/sort_asc.gif' : 'pics/sort_desc.gif';
+      $alt = $sortasc ? 'Sorted (ascending)' : 'Sorted (descending)';
+      $asc = !$sortasc;
+    } else {
+      $pic = 'pics/sort.gif';
+      $alt = 'Not sorted';
+      $asc = true;
+    }
+
+    HtmlUnmakeUrl($url, $baseURL, $params);
+
+    return '&nbsp;' . HtmlMakeLink(HtmlMakeImage($pic, $alt), $baseURL, array_merge($params, Array('sortkey' => $key, 'sortasc' => $asc)));
+  }
+
+  function __HtmlMakeSortKeyDropdown($url, $keys, $sortkey, $sortasc, $template) {
+    if (is_null($url) || is_null($sortkey))
+      return '';
+
+    HtmlUnmakeUrl($url, $baseURL, $params);
+
+    $form_params = '';
+    foreach ($params as $key => $value) {
+      if (($key != 'sortkey') && ($key != 'sortasc')) {
+        $form_params .= '<input type="hidden" name="' . $key . '" value="' . $value . '">';
+      }
+    }
+
+    $form_sortkey = '<select class="flat3" name="sortkey">';
+    foreach ($keys as $key => $label) {
+      $form_sortkey .= '<option value="' . $key . '"';
+      if ($key == $sortkey) $form_sortkey .= ' SELECTED';
+      $form_sortkey .= '>' . $label . '</option>';
+    }
+    $form_sortkey .= '</select>';
+    $form_sortasc = '<label accesskey="a"><input type="radio" name="sortasc" value="1"' . ((!is_null($sortasc) && $sortasc) ? ' CHECKED' : '') . '> ascending</label>&nbsp;&nbsp;<label accesskey="a"><input type="radio" name="sortasc" value="0"' . ((!is_null($sortasc) && !$sortasc) ? ' CHECKED' : '') . '> descending</label>';
+    $form_go = '<input type="submit" class="flat3" value="\\1">';
+
+    $template = str_replace('%sortkey%', $form_sortkey, $template);
+    $template = str_replace('%sortasc%', $form_sortasc, $template);
+    $template = ereg_replace('%go!([^%]+)%', $form_go, $template);
+
+    $retVal = '<form method="get" action="' . $baseURL . '">' . $form_params . $template . '</form>';
+
+    return $retVal;
+  }
+
+  function HtmlSendReportList($reportList, $loggedIn, $briefFmt=true, $footer = NULL, $url = NULL, $sortkey = NULL, $sortasc = false) {
     echo('<table border="0" cellspacing="0" cellpadding="5" width="100%">');
 
     $lastAppID = NULL;
@@ -371,6 +434,8 @@
     } else {
       $numCols = 4;
     }
+
+    echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('updated' => 'last update time', 'user_text' => 'report contributor', 'title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'osver_text' => 'operating system', 'emuver_text' => 'emulator'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% reports by %sortkey% %sortasc%</div></th>') . '</tr>');
 
     if ($loggedIn) {
       $userinfo = AuthGetUserInformation();
