@@ -7,6 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
+LPCTSTR szSeparators = _T("\n\r\t ");
+
 //
 // Formats a CString message.
 //
@@ -60,7 +62,7 @@ HRESULT __FormatMessage(
   }
 
   if (bFromSystem) {
-    Buffer.TrimRight(_T("\n\r\t "));
+    Buffer.TrimRight(szSeparators);
   }
 
   return S_OK;
@@ -358,4 +360,19 @@ LPCSTR AFXAPI SearchPathA(
   } else {
     return buf;
   }
+}
+
+CString GetExceptionText(DWORD dwStatus) {
+  // WinNT: attempt to get the status code name and description from NTDLL's message table
+  CString message = FormatMessage(dwStatus, false, GetModuleHandle(_T("NTDLL")));
+
+  // Remove {}'s
+  message.Remove(_T('{'));
+  message.Remove(_T('}'));
+
+  // Remove leading and trailing spaces
+  message.TrimLeft(szSeparators);
+  message.TrimRight(szSeparators);
+
+  return message;
 }
