@@ -7,6 +7,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+/* TODO: put this in the .INI file ? */
+#define WAVEOPEN_RETRY_INTERVAL   2
+
+/////////////////////////////////////////////////////////////////////////////
+
 #pragma warning ( disable : 4192 )
 #import <IVDMModule.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 #import <IWave.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
@@ -24,8 +29,12 @@ class ATL_NO_VTABLE CWaveOut :
 {
 public:
 	CWaveOut()
-    : m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_lpDirectSound(NULL), m_bufferPos(0)
-  { }
+    : m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_lpDirectSound(NULL), m_lpDirectSoundBuffer(0), m_bufferPos(0)
+  {
+    m_waveFormat.nChannels = 0;
+    m_waveFormat.nSamplesPerSec = 0;
+    m_waveFormat.wBitsPerSample = 0;
+  }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_WAVEOUT)
 DECLARE_NOT_AGGREGATABLE(CWaveOut)
@@ -56,7 +65,10 @@ protected:
   static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCTSTR lpcstrDescription, LPCTSTR lpcstrModule, LPVOID lpContext);
 
 protected:
-  HRESULT DSoundInit(void);
+  bool DSoundOpen(bool isInteractive = true);
+  void DSoundClose(void);
+  HRESULT DSoundOpenHelper(void);
+  CString DSoundGetName(LPGUID lpGUID = NULL);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -95,9 +107,12 @@ protected:
   CString m_deviceName;
   GUID m_deviceGUID;
   LPDIRECTSOUND m_lpDirectSound;
+  LPDIRECTSOUNDBUFFER m_lpDirectSoundBuffer;
+  WAVEFORMATEX m_waveFormat;
 
   LONG m_bufferLen, m_bufferPos;
   LONG m_bufferedLo, m_bufferedHi;
+  LONG m_DSoundLatency;
 
 // Interfaces to dependency modules
 protected:
