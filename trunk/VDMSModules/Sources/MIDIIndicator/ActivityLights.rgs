@@ -1,0 +1,25 @@
+HKCR
+{
+	MIDIIndicator.ActivityLights.1 = s 'ActivityLights Class'
+	{
+		CLSID = s '{C7A8FCB6-FEA8-11D4-9C65-00A024112F81}'
+	}
+	MIDIIndicator.ActivityLights = s 'ActivityLights Class'
+	{
+		CLSID = s '{C7A8FCB6-FEA8-11D4-9C65-00A024112F81}'
+		CurVer = s 'MIDIIndicator.ActivityLights.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {C7A8FCB6-FEA8-11D4-9C65-00A024112F81} = s 'ActivityLights Class'
+		{
+			ProgID = s 'MIDIIndicator.ActivityLights.1'
+			VersionIndependentProgID = s 'MIDIIndicator.ActivityLights'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{C7A8FCA8-FEA8-11D4-9C65-00A024112F81}'
+		}
+	}
+}

@@ -1,0 +1,25 @@
+HKCR
+{
+	MIDIToolkit.MIDISplitter.1 = s 'MIDISplitter Class'
+	{
+		CLSID = s '{2C220FE3-0125-11D5-9C68-00A024112F81}'
+	}
+	MIDIToolkit.MIDISplitter = s 'MIDISplitter Class'
+	{
+		CLSID = s '{2C220FE3-0125-11D5-9C68-00A024112F81}'
+		CurVer = s 'MIDIToolkit.MIDISplitter.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {2C220FE3-0125-11D5-9C68-00A024112F81} = s 'MIDISplitter Class'
+		{
+			ProgID = s 'MIDIToolkit.MIDISplitter.1'
+			VersionIndependentProgID = s 'MIDIToolkit.MIDISplitter'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{2C220FD1-0125-11D5-9C68-00A024112F81}'
+		}
+	}
+}
