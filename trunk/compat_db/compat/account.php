@@ -14,8 +14,6 @@
 
 <?php $userinfo = AuthGetUserInformation(); ?>
 
-<center>
-
 <?php
   if ($action == 'create') {
     if (isset($username, $fullname, $email, $newpwd1, $newpwd2)) {
@@ -35,19 +33,19 @@
     }
 
     if ($tried && $success) {
-      echo('<p><font size="4"><b>Your account has been created.</b></font></p>');
+      echo('<h2 class="normal">Your account has been created.</h2>');
       echo('<p>You will shortly receive an e-mail containing your activation code.</p>');
-      echo('<p><b>' . HtmlMakeLink('Activate', $SCRIPT_NAME . '?action=activate') . '</b></a> | ' . HtmlMakeLink('Main', 'index.php') . '</b>');
+      echo('<p><b>' . HtmlMakeLink('Activate', $SCRIPT_NAME . '?action=activate') . '</b> | ' . HtmlMakeLink('Main', 'index.php') . '</p>');
     } else {
       if ($tried && !$success) {
-        $color = '#7f4f4f';
-        $text = ErrFormatError($error) . ' (' . $error . ').';
+        $style = 'error';
+        $text  = ErrFormatError($error) . ' (' . $error . ').';
       } else {
-        $color = '#4f7f4f';
-        $text = 'Create an account';
+        $style = 'normal';
+        $text  = 'Create an account';
       }
 
-      echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
+      echo('<h1 class="' . $style . '">' . $text . '</h1>');
 
       echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
       echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User:', ($error == E_AUTH_INVALID_USER_NAME) || ($error == E_AUTH_INUSE_NAME)) . '</td><td align="left" width="50%"><input type="text" size="12" name="username" value="' . $username . '" maxlength="12"></td></tr>');
@@ -69,18 +67,18 @@
     }
 
     if ($tried && $success) {
-      echo('<p><font size="4"><b>Your account has been activated.</b></font></p>');
-      echo('<p><b>' . HtmlMakeLink('Login', 'login.php') . '</b></a> | ' . HtmlMakeLink('Main', 'index.php') . '</b>');
+      echo('<h2 class="normal">Your account has been activated.</h2>');
+      echo('<p align="center"><b>' . HtmlMakeLink('Login', 'login.php') . '</b> | ' . HtmlMakeLink('Main', 'index.php') . '</p>');
     } else {
       if ($tried && !$success) {
-        $color = '#7f4f4f';
-        $text = ErrFormatError($error) . ' (' . $error . ').';
+        $style = 'error';
+        $text  = ErrFormatError($error) . ' (' . $error . ').';
       } else {
-        $color = '#4f7f4f';
-        $text = 'Activate your account';
+        $style = 'normal';
+        $text  = 'Activate your account';
       }
 
-      echo('<p><table border="1" cellspacing="0" cellpadding="5" frame="hsides" width="50%"><tr align="center" bgcolor="' . $color . '"><td>' . $text . '</td></tr></table></p>');
+      echo('<h1 class="' . $style . '">' . $text . '</h1>');
 
       echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
       echo('<tr><td align="right" width="50%">' . HtmlHighlightError('User:', $error == E_AUTH_INVALID_USER_NAME) . '</td><td align="left" width="50%"><input type="text" size="12" name="username" value="' . $username . '" maxlength="12"></td></tr>');
@@ -92,8 +90,6 @@
 
   }
 ?>
-
-</center>
 
 <?php HtmlBeginFooter(); ?>
 <?php HtmlSendLastModified(); ?>

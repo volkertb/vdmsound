@@ -11,7 +11,7 @@
 
 <?php HtmlBeginPage('Browse the DOS Compatibility Database'); ?>
 <?php HtmlBeginHeader(); ?>
-<?php HtmlSendUserInfo($loggedin); ?><hr size="1" noshade>
+<?php HtmlSendUserInfo($loggedin); ?>
 <?php HtmlBeginBody(); ?>
 
 Bla bla.

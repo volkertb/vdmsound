@@ -1,0 +1,15 @@
+body       { color: #ffffff; background-color: #4f4f4f; font: monospace; margin: 0 }
+
+h1.normal  { width: 100%; color: #ffffff; background-color: #5f5f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
+h1.success { width: 100%; color: #ffffff; background-color: #5f9f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
+h1.error   { width: 100%; color: #ffffff; background-color: #9f5f5f; padding: 5; border-top: 1 solid #ffffff; border-bottom: 1 solid #ffffff; font: bold 150% monospace; text-transform: uppercase; text-align: center }
+
+h2.normal  { font: bold italic 125%; text-align: center }
+
+a:link     { color: #4fffff }
+a:visited  { color: #009f9f }
+a:active   { color: #7fff7f }
+a:hover    { color: #ffff7f }
+
+.header    { color: #ffffff; background-color: #5f5f5f; font: normal 100% sans-serif; border-bottom: 1 solid #7f7f7f }
+.footer    { color: #8f8f8f; background-color: #5f5f5f; font: normal 75% sans-serif; border-top: 1 solid #7f7f7f; text-align: center }

@@ -6,16 +6,6 @@
   require_once('inc/auth.php');
 
   ////////////////////////////////////////////////////////////////////////////
-  // One-time initial setup
-  ////////////////////////////////////////////////////////////////////////////
-
-  $html_body_bgcolor    = '#4f4f4f';
-  $html_body_fgcolor    = '#ffffff';
-  $html_body_linkcolor  = '#4fffff';
-  $html_body_vlinkcolor = '#009f9f';
-  $html_body_alinkcolor = '#7fff7f';
-
-  ////////////////////////////////////////////////////////////////////////////
   // Methods
   ////////////////////////////////////////////////////////////////////////////
 
@@ -46,22 +36,20 @@
   //
   //
   function HtmlBeginPage($title) {
-    global $html_body_bgcolor, $html_body_fgcolor, $html_body_linkcolor, $html_body_vlinkcolor, $html_body_alinkcolor;
-
     echo('<html>');
     echo('<head>');
     echo('<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">');
+    echo('<link rel="stylesheet" href="css/default.css" content="text/css">');
     echo('<title>' . $title . '</title>');
     echo('</head>');
-    echo('<body bgcolor="' . $html_body_bgcolor . '" text="' . $html_body_fgcolor . '" link="' . $html_body_linkcolor . '" vlink="' . $html_body_vlinkcolor . '" alink="' . $html_body_alinkcolor . '">');
-    echo('<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%">');
+    echo('<body><table border="0" cellspacing="0" cellpadding="7" width="100%" height="100%">');
   }
 
   //
   //
   //
   function HtmlBeginHeader() {
-    echo('<tr height="1" valign="top"><td>');
+    echo('<tr height="1" valign="top"><td class="header">');
   }
 
   //
@@ -77,7 +65,7 @@
   //
   function HtmlBeginFooter() {
     echo('</td></tr>');
-    echo('<tr height="1" valign="bottom"><td>');
+    echo('<tr height="1" valign="bottom"><td class="footer">');
   }
 
   //
@@ -85,7 +73,6 @@
   //
   function HtmlEndPage() {
     echo('</td></tr></table></body>');
-    echo('</body>');
     echo('</html>');
   }
 
@@ -96,7 +83,8 @@
   //
   function HtmlSendUserInfo($loggedin) {
     global $SCRIPT_NAME;
-    echo('<table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td align="left"><font size="2">');
+
+    echo('<div style="float: left">');
 
     if (!$loggedin) {
       echo('You are not logged in.');
@@ -106,7 +94,7 @@
       echo('Unable to determine login information: <i>' . ErrFormatError(ErrGetLastError()) . ' (' . ErrGetLastError() . ')</i>.');
     }
 
-    echo('</font></td><td align="right"><font size="2">');
+    echo('</div><div style="float: right">');
 
     if ((strstr($SCRIPT_NAME, 'index.php') == ''))
       echo(HtmlMakeLink('Main', 'index.php') . ' | ');
@@ -120,21 +108,14 @@
       echo('<b>' . HtmlMakeLink('Login', 'login.php') . '</b>');
     }
 
-    echo('</font></td></tr></table>');
+    echo('</div>');
   }
 
   //
   //
   //
   function HtmlSendLastModified() {
-    echo('<center><font size="2">Last modified on ' . date('D M j G:i:s T Y', getlastmod()) . '</font></center>');
-  }
-
-  //
-  //
-  //
-  function HtmlSendTitlesHeader() {
-    echo('<table ');
+    echo('Last modified on ' . date('D M j G:i:s T Y', getlastmod()) . '.');
   }
 
   //
@@ -144,7 +125,7 @@
     $result = $text;
 
     if ($highlight) {
-      $result = '<b><font color="#ff7f7f">' . $result . '</font></b>';
+      $result = '<div class="hilite">' . $result . '</div>';
     }
 
     return $result;
