@@ -1,5 +1,5 @@
-#ifndef __FMOPL_H_
-#define __FMOPL_H_
+#ifndef YMF262_H
+#define YMF262_H
 
 
 #define BUILD_YMF262 (HAS_YMF262)
@@ -50,4 +50,4 @@ void YMF262SetUpdateHandler(int which, OPL3_UPDATEHANDLER UpdateHandler, int par
 #endif
 
 
-#endif
+#endif /* YMF262_H */
