@@ -61,7 +61,7 @@ STDMETHODIMP CMIDISplitter::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDISplitter initialized")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDISplitter initialized")));
 
   return S_OK;
 }
@@ -70,7 +70,7 @@ STDMETHODIMP CMIDISplitter::Destroy() {
   /* TODO: Release the MIDI-out module */
 
   // Release the runtime environment
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("CMIDISplitter released")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MIDISplitter released")));
   RTE_Set(m_env, NULL);
 
   return S_OK;
