@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,5
+ FILEVERSION 1,0,0,6
  PRODUCTVERSION 2,0,5,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -72,7 +72,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "VDMSound LaunchPad Shell Extension\0"
-            VALUE "FileVersion", "1, 0, 0, 5\0"
+            VALUE "FileVersion", "1, 0, 0, 6\0"
             VALUE "InternalName", "LaunchPad\0"
             VALUE "LegalCopyright", "Copyright (C) 2001\0"
             VALUE "OriginalFilename", "LaunchPad.DLL\0"
@@ -95,7 +95,7 @@ END
 // WINDOWS XP
 //
 
-IDR_WINXP_MANIFEST      24 "LaunchPad.manifest"
+IDR_WINXP_MANIFEST      RT_MANIFEST             "LaunchPad.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -238,7 +238,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,109,153,45,10
     CONTROL         "Alt+Space",IDC_CHK_WINKALTSPACE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
-    LTEXT           "VDMSound Launchpad (ver. 1,0,0,5)\nBETA 1 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
+    LTEXT           "VDMSound Launchpad (ver. 1,0,0,6)\nBETA 1 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
     PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
@@ -321,6 +321,23 @@ BEGIN
                     WS_EX_TRANSPARENT
     CTEXT           "(multiple values)",IDC_TXT_PRIORITY_MULTI,26,65,85,10,NOT WS_GROUP | NOT WS_VISIBLE,
                     WS_EX_TRANSPARENT
+    GROUPBOX        "&DMA Servicing",IDC_STATIC,6,91,211,33,WS_GROUP
+    RTEXT           "&Polling period:",IDC_STATIC,9,104,48,12,SS_CENTERIMAGE
+    CTEXT           "/",IDC_STATIC,101,104,10,12,SS_CENTERIMAGE
+    LTEXT           "(min / max) (ms)",IDC_STATIC,153,104,52,12,
+                    SS_CENTERIMAGE | NOT WS_GROUP
+    COMBOBOX        IDC_CMB_DMAPOLLMIN,62,104,40,50,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Spin",IDC_SPN_DMAPOLLMIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,114,104,9,13,
+                    WS_EX_STATICEDGE
+    COMBOBOX        IDC_CMB_DMAPOLLMAX,111,104,40,50,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Spin",IDC_SPN_DMAPOLLMAX,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,211,104,9,13,
+                    WS_EX_STATICEDGE
 END
 
 IDD_ADVPROPPAGE_MIDI DIALOGEX 0, 0, 224, 198
@@ -530,7 +547,7 @@ BEGIN
     CONTROL         "Diagnostic &Log",IDC_CHK_VDMSLOG,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP | WS_GROUP,14,7,63,10,WS_EX_TRANSPARENT
     RTEXT           "Log &Detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE | WS_GROUP
-    COMBOBOX        IDC_CMB_LOGDETAIL,52,20,89,70,CBS_DROPDOWN | 
+    COMBOBOX        IDC_CMB_LOGDETAIL,52,20,89,70,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Choose &File...",IDC_BUT_LOGBROWSE,147,20,62,14,BS_CENTER | 
                     BS_VCENTER
@@ -920,6 +937,19 @@ BEGIN
 0x3138, 0x3239, "\000" 
     IDC_CMB_XMS, 0x403, 6, 0
 0x3631, 0x3833, 0x0034, 
+    0
+END
+
+IDD_ADVPROPPAGE_PERF DLGINIT
+BEGIN
+    IDC_CMB_DMAPOLLMIN, 0x403, 2, 0
+0x0032, 
+    IDC_CMB_DMAPOLLMIN, 0x403, 2, 0
+0x0035, 
+    IDC_CMB_DMAPOLLMAX, 0x403, 3, 0
+0x3031, "\000" 
+    IDC_CMB_DMAPOLLMAX, 0x403, 3, 0
+0x3531, "\000" 
     0
 END
 

@@ -42,6 +42,10 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Perf)
 	enum { IDD = IDD_ADVPROPPAGE_PERF };
+	CSpinButtonCtrl	m_spnDmapollmin;
+	CSpinButtonCtrl	m_spnDmapollmax;
+	CComboBox	m_cmbDmapollmin;
+	CComboBox	m_cmbDmapollmax;
 	CStatic m_txtPrioritymulti;
 	CSliderCtrl	m_sliPriority;
 	CButton	m_chkDetectidle;

@@ -3,7 +3,7 @@
 <assemblyIdentity
     name="Freeware.VDMSound.LaunchPad"
     processorArchitecture="x86"
-    version="1.0.0.3"
+    version="1.0.0.6"
     type="win32"/>
 <description>VDMSound LaunchPad Shell Extension</description>
 <dependency>

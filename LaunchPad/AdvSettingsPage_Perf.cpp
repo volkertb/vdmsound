@@ -30,6 +30,10 @@ void CAdvSettingsPage_Perf::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Perf)
+	DDX_Control(pDX, IDC_SPN_DMAPOLLMIN, m_spnDmapollmin);
+	DDX_Control(pDX, IDC_SPN_DMAPOLLMAX, m_spnDmapollmax);
+	DDX_Control(pDX, IDC_CMB_DMAPOLLMIN, m_cmbDmapollmin);
+	DDX_Control(pDX, IDC_CMB_DMAPOLLMAX, m_cmbDmapollmax);
 	DDX_Control(pDX, IDC_TXT_PRIORITY_MULTI, m_txtPrioritymulti);
 	DDX_Control(pDX, IDC_SLI_PRIORITY, m_sliPriority);
 	DDX_Control(pDX, IDC_CHK_DETECTIDLE, m_chkDetectidle);
@@ -58,6 +62,9 @@ BOOL CAdvSettingsPage_Perf::SyncGUIData(BOOL bSave) {
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.scheduling"), _T("compatHWEmu"), m_chkCompattimer, FALSE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.scheduling"), _T("detectIdle"),  m_chkDetectidle,  FALSE);
   SyncGUIData_DetectIdle(bSave, m_chkDetectidle.GetCheck() != BST_UNCHECKED);
+
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.dmac"), _T("minDMAPeriod"), m_cmbDmapollmin, _T("5"));
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.dmac"), _T("maxDMAPeriod"), m_cmbDmapollmax, _T("15"));
 
   return TRUE;
 }
@@ -134,6 +141,9 @@ BOOL CAdvSettingsPage_Perf::OnInitDialog()
   m_sliPriority.SetLineSize(10);
   m_sliPriority.SetPageSize(50);
   m_sliPriority.SetTipSide(TBTS_TOP);
+
+  m_spnDmapollmin.SetRange(0, 100);
+  m_spnDmapollmax.SetRange(1, 100);
 
   // Load the information from file into the GUI
   SyncGUIData(FALSE);

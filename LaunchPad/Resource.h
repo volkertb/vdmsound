@@ -90,6 +90,10 @@
 #define IDC_CHK_DETECTIDLE              1402
 #define IDC_SLI_PRIORITY                1403
 #define IDC_TXT_PRIORITY_MULTI          1404
+#define IDC_CMB_DMAPOLLMIN              1405
+#define IDC_SPN_DMAPOLLMIN              1406
+#define IDC_CMB_DMAPOLLMAX              1407
+#define IDC_SPN_DMAPOLLMAX              1408
 
 #define IDC_CHK_USEMPU                  1501
 #define IDC_CMB_MPUPORT                 1502
