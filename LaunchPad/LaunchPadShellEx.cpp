@@ -234,7 +234,7 @@ HRESULT CLaunchPadShellEx::GetIconLocation(UINT uFlags, LPTSTR szIconFile, UINT 
 
     CLaunchPadSettings settings(m_fileNames);
 
-    if (FAILED(settings.GetValue(_T("program"), _T("icon"), iconLocation)))
+    if (FAILED(settings.GetValue(_T("program"), _T("icon"), iconLocation, NULL, _T("%COMSPEC%"))))
       return S_FALSE;
 
     VLPUtil::ParseIconLocation(iconLocation, iconPath, iconIndex);

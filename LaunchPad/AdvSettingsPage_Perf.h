@@ -25,7 +25,7 @@ public:
 
 // Helper functions
 protected:
-  VOID SyncGUIData(BOOL bSave = TRUE);
+  BOOL SyncGUIData(BOOL bSave = TRUE);
 
 // Member variables
 protected:

@@ -25,6 +25,8 @@ class CLaunchPadSettings {
   protected:
     BOOL GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpDefault, CString& result, LPCTSTR lpFileName);
     BOOL WritePrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpString, LPCTSTR lpFileName);
+    VOID TranslateTo(LPCTSTR plain, CString& translated);
+    VOID TranslateFrom(LPCTSTR translated, CString& plain);
     BOOL NeedsTranslation(TCHAR tch);
 
   // Types

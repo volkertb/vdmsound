@@ -62,7 +62,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Program::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Program::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -86,6 +86,8 @@ VOID CAdvSettingsPage_Program::SyncGUIData(BOOL bSave) {
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altPrtSc"),  m_chkWinkaltprtsc, TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altEnter"),  m_chkWinkaltenter, TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.keys"),   _T("altSpace"),  m_chkWinkaltspace, TRUE);
+
+  return TRUE;
 }
 
 
@@ -245,12 +247,18 @@ void CAdvSettingsPage_Program::OnButChangeicon()
   CString strTmp1, strTmp2;
   CChangeIconDlg dlgIcon(this);
 
-  m_settings.GetValue(_T("program"), _T("icon"), dlgIcon.m_edtIcofile_val);
+  CString iconLocation;
+  BOOL isIconLocationIndeterm;
+  m_settings.GetValue(_T("program"), _T("icon"), iconLocation, &isIconLocationIndeterm, _T("%COMSPEC%"));
+
+  dlgIcon.m_edtIcofile_val = isIconLocationIndeterm ? _T("") : iconLocation;
 
   switch (dlgIcon.DoModal()) {
     case IDOK:
       strTmp1.Format(_T("%s,%d"), dlgIcon.m_edtIcofile_val, max(0, dlgIcon.m_lstIcons_val));
-      m_settings.SetValue(_T("program"), _T("icon"), strTmp1);
+
+      if (iconLocation.Compare(strTmp1) != 0)
+        m_settings.SetValue(_T("program"), _T("icon"), strTmp1);
 
       if (m_settings.IsChanged())
         SetModified();      // enable the "Apply" button to reflect the fact that changes were made

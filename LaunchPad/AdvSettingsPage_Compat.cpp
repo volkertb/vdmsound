@@ -55,7 +55,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Compat::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Compat::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -77,22 +77,28 @@ VOID CAdvSettingsPage_Compat::SyncGUIData(BOOL bSave) {
   // Others
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"),   m_chkCdrom,   FALSE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useNetware"), m_chkNetware, FALSE);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Compat::SyncGUIData_EMS(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Compat::SyncGUIData_EMS(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.memory"), _T("memEMS"), m_cmbEms, _T("16384"));
 
   if (!bEnabled) {
     m_cmbEms.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Compat::SyncGUIData_XMS(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Compat::SyncGUIData_XMS(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.memory"), _T("memXMS"), m_cmbXms, _T("16384"));
 
   if (!bEnabled) {
     m_cmbXms.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
 

@@ -56,7 +56,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Joy::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Joy::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -64,9 +64,11 @@ VOID CAdvSettingsPage_Joy::SyncGUIData(BOOL bSave) {
 
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"),   m_chkUsejoy,       TRUE);
   SyncGUIData_Enabled(bSave, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Joy::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Joy::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("port"),       m_cmbJoyport,      _T("0x201"));
   VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("minCoord"),   m_cmbJoyscalemin,  _T("5"));
   VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.gameport"), _T("maxCoord"),   m_cmbJoyscalemax,  _T("250"));
@@ -88,6 +90,8 @@ VOID CAdvSettingsPage_Joy::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
     m_spnJoyscalemin.EnableWindow(TRUE);
     m_spnJoyscalemax.EnableWindow(TRUE);
   }
+
+  return TRUE;
 }
 
 

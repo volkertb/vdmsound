@@ -13,6 +13,7 @@ static char THIS_FILE[]=__FILE__;
 #define TMP_BUF_SIZE  16384
 #define META_CHAR     '%'
 #define COMMENT_CHAR  ';'
+#define META_LEN      4
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -283,49 +284,22 @@ CLaunchPadSettings& CLaunchPadSettings::operator =(const CLaunchPadSettings& src
 //
 //
 BOOL CLaunchPadSettings::GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpDefault, CString& result, LPCTSTR lpFileName) {
-  int tmpStart, tmpStop;
-  CString tmpBuf;
-  WCHAR tmpWChr;
-# ifndef _UNICODE
-  CHAR tmpMBChr[8];
-# endif // _UNICODE
+  CString tmpBuf, tmpDefault;
 
-  LPTSTR szResult = result.GetBuffer(TMP_BUF_SIZE);   // obtain direct access to result's internal storage (reserve TMP_BUF_SIZE characters)
+  TranslateTo(lpDefault, tmpDefault);                 // translate from plain text
 
-  ASSERT(szResult != NULL);
+  LPTSTR szTmpBuf = tmpBuf.GetBuffer(TMP_BUF_SIZE);   // obtain direct access to result's internal storage (reserve TMP_BUF_SIZE characters)
 
-  if (szResult == NULL)
+  ASSERT(szTmpBuf != NULL);
+
+  if (szTmpBuf == NULL)
     return FALSE;
 
-  ::GetPrivateProfileString(lpAppName, lpKeyName, lpDefault, szResult, TMP_BUF_SIZE, lpFileName);
+  ::GetPrivateProfileString(lpAppName, lpKeyName, tmpDefault, szTmpBuf, TMP_BUF_SIZE, lpFileName);
 
-  result.ReleaseBuffer();                             // give tmpBuf back control of its internal storage
+  tmpBuf.ReleaseBuffer();                             // give tmpBuf back control of its internal storage
 
-  for (int i = 0; i < result.GetLength(); i++) {
-    switch (result.GetAt(i)) {
-      case _T(META_CHAR):
-        tmpStart = min(i + 1, result.GetLength() - 1);
-        tmpStop  = min(i + 4, result.GetLength() - 1);
-        tmpBuf   = result.Mid(tmpStart, tmpStop - tmpStart + 1);
-        result.Delete(i, tmpStop - i + 1);
-        tmpWChr  = (WCHAR)_tcstoul(tmpBuf, NULL, 16);
-#       ifdef _UNICODE
-        result.Insert(i, tmpWChr);
-#       else  // _UNICODE
-        memset(tmpMBChr, 0, sizeof(tmpMBChr));
-        WideCharToMultiByte(CP_ACP, 0, &tmpWChr, 1, tmpMBChr, sizeof(tmpMBChr) - 1, NULL, NULL);
-        result.Insert(i, tmpMBChr);
-#       endif // _UNICODE
-        break;
-
-      case _T(COMMENT_CHAR):
-        result.Delete(i, result.GetLength() - i);
-        break;
-
-      default:
-        break;
-    }
-  }
+  TranslateFrom(tmpBuf, result);                      // translate into plain text
 
   result.TrimLeft();                                  // trim spaces
   result.TrimRight();                                 // trim spaces
@@ -337,18 +311,78 @@ BOOL CLaunchPadSettings::GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKe
 //
 //
 BOOL CLaunchPadSettings::WritePrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpString, LPCTSTR lpFileName) {
-  CString tmpBuf1, tmpBuf2;
+  CString tmpBuf;
 
-  for (int i = 0; i < (int)_tcslen(lpString); i++) {
-    if (NeedsTranslation(lpString[i])) {
-      tmpBuf2.Format(_T("%c%04x"), _T(META_CHAR), lpString[i] & 0xffff);
-      tmpBuf1 += tmpBuf2;
+  TranslateTo(lpString, tmpBuf);                      // translate from plain text
+
+  return ::WritePrivateProfileString(lpAppName, lpKeyName, tmpBuf, lpFileName);
+}
+
+//
+//
+//
+VOID CLaunchPadSettings::TranslateTo(LPCTSTR plain, CString& translated) {
+  CString tmpBuf;
+
+  int plainLen = (int)_tcslen(plain);
+
+  translated.Empty();
+
+  for (int i = 0; i < plainLen; i++) {
+    if (NeedsTranslation(plain[i])) {
+      tmpBuf.Format(_T("%c%04x"), _T(META_CHAR), plain[i] & 0xffff);
+      translated += tmpBuf;
     } else {
-      tmpBuf1 += lpString[i];
+      translated += plain[i];
     }
   }
+}
 
-  return ::WritePrivateProfileString(lpAppName, lpKeyName, tmpBuf1, lpFileName);
+//
+//
+//
+VOID CLaunchPadSettings::TranslateFrom(LPCTSTR translated, CString& plain) {
+  int tmpStart, tmpStop;
+  WCHAR tmpWChr;
+# ifndef _UNICODE
+  CHAR tmpMBChr[8];
+# endif // _UNICODE
+
+  TCHAR tmpBuf[META_LEN + 1];
+  memset(tmpBuf, 0, sizeof(tmpBuf));
+
+  int transLen = (int)_tcslen(translated);
+
+  plain.Empty();
+
+  for (int i = 0; i < transLen; i++) {
+    switch (translated[i]) {
+      case _T(META_CHAR):
+        tmpStart = min(i + 1,        transLen - 1);
+        tmpStop  = min(i + META_LEN, transLen - 1);
+
+        _tcsncpy(tmpBuf, &(translated[tmpStart]), tmpStop - tmpStart + 1);
+
+        tmpWChr  = (WCHAR)_tcstoul(tmpBuf, NULL, 16);
+#       ifdef _UNICODE
+        plain += tmpWChr;
+#       else  // _UNICODE
+        memset(tmpMBChr, 0, sizeof(tmpMBChr));
+        WideCharToMultiByte(CP_ACP, 0, &tmpWChr, 1, tmpMBChr, sizeof(tmpMBChr) - 1, NULL, NULL);
+        plain += tmpMBChr;
+#       endif // _UNICODE
+
+        i = tmpStop;
+        break;
+
+      case _T(COMMENT_CHAR):
+        i = transLen - 1;
+        break;
+
+      default:
+        plain += translated[i];
+    }
+  }
 }
 
 //

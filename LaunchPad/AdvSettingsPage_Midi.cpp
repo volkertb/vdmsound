@@ -58,7 +58,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Midi::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Midi::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -66,9 +66,11 @@ VOID CAdvSettingsPage_Midi::SyncGUIData(BOOL bSave) {
 
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"),      m_chkUsempu,         TRUE);
   SyncGUIData_Enabled(bSave, m_chkUsempu.GetCheck() != BST_UNCHECKED);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("port"),         m_cmbMpuport,        _T("0x330"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("IRQ"),          m_cmbMpuirq,         _T("2"));
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useSysExLed"),  m_chkSysexindicator, TRUE);
@@ -89,17 +91,21 @@ VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   } else {
     m_butMidimapbrowse.EnableWindow(TRUE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.midi"), m_devInfo, m_cmbMpuoutdev, DeviceUtil::DEV_MIDI, -1);
 
   if (!bEnabled) {
     m_cmbMpuoutdev.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled) {
   const CString str_numl = _T("num");
   const CString str_caps = _T("caps");
   const CString str_scrl = _T("scroll");
@@ -136,6 +142,8 @@ VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled)
   } else {
     m_cmbSysexindicator.EnableWindow(bEnabled2);
   }
+
+  return TRUE;
 }
 
 VOID CAdvSettingsPage_Midi::InitDeviceList(void) {

@@ -25,9 +25,9 @@ public:
 
 // Helper functions
 protected:
-  VOID SyncGUIData(BOOL bSave = TRUE);
-  VOID SyncGUIData_VDMSLOG(BOOL bSave, BOOL bEnabled = TRUE);
-  VOID SyncGUIData_VDMSINI(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData(BOOL bSave = TRUE);
+  BOOL SyncGUIData_VDMSLOG(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_VDMSINI(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:

@@ -59,7 +59,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Debug::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Debug::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -70,9 +70,11 @@ VOID CAdvSettingsPage_Debug::SyncGUIData(BOOL bSave) {
 
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.debug"), _T("useCustomCfg"), m_chkVdmsini,  FALSE);
   SyncGUIData_VDMSINI(bSave, m_chkVdmsini.GetCheck() != BST_UNCHECKED);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Debug::SyncGUIData_VDMSLOG(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Debug::SyncGUIData_VDMSLOG(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.debug"), _T("logFile"),      m_edtLogbrowse, _T(".\\VDMS.LOG"));
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.debug"), _T("logMidi"),      m_chkLogmidi,   TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.debug"), _T("logAdLib"),     m_chkLogadlib,  TRUE);
@@ -131,14 +133,18 @@ VOID CAdvSettingsPage_Debug::SyncGUIData_VDMSLOG(BOOL bSave, BOOL bEnabled) {
     m_cmbLogdetail.EnableWindow(bEnabled2);
     m_butLogbrowse.EnableWindow(TRUE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Debug::SyncGUIData_VDMSINI(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Debug::SyncGUIData_VDMSINI(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.debug"),  _T("customCfg"),   m_edtVdmsini,  _T(""));
 
   if (!bEnabled) {
     m_edtVdmsini.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
 /////////////////////////////////////////////////////////////////////////////

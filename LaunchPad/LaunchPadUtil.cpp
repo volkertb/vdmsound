@@ -365,7 +365,7 @@ HRESULT VLPUtil::SyncCheckBox(
   if (bSave) {
     switch (control.GetState() & 0x3) {
       case BST_INDETERMINATE:
-      return settings.UnsetValue(section, key);
+        return settings.UnsetValue(section, key);
       case BST_CHECKED:
         return settings.SetValue(section, key, yesValue);
       case BST_UNCHECKED:
@@ -572,8 +572,6 @@ HRESULT VLPUtil::SyncEditBox(
   hr = settings.GetValue(section, key, value, &isIndeterminate, defValue);
   value.TrimLeft(); value.TrimRight();
 
-  control.EnableWindow(SUCCEEDED(hr));                // disable the control if an error occured
-
   if (bSave) {
     CString newValue;
     control.GetWindowText(newValue);
@@ -584,11 +582,13 @@ HRESULT VLPUtil::SyncEditBox(
       return settings.SetValue(section, key, newValue);
     }
   } else {
-    if (isIndeterminate) {
+    if (isIndeterminate || FAILED(hr)) {
       control.SetWindowText(_T(""));
     } else {
       control.SetWindowText(value);
     }
+
+    control.EnableWindow(SUCCEEDED(hr));              // disable the control if an error occured
 
     return hr;
   }
@@ -659,7 +659,8 @@ HRESULT VLPUtil::LoadIconCtl(
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
-  CStatic_Icon& control)                              // static control with which the data must be synchronized
+  CStatic_Icon& control,                              // static control with which the data must be synchronized
+  LPCTSTR defValue)                                   // default value
 {
   ASSERT(section != NULL);
   ASSERT(key != NULL);
@@ -674,7 +675,7 @@ HRESULT VLPUtil::LoadIconCtl(
 
   HINSTANCE hShInstance = ::GetModuleHandle(_T("SHELL32"));
 
-  if (FAILED(settings.GetValue(section, key, iconLocation, &isIndeterminate, _T(""))))
+  if (FAILED(settings.GetValue(section, key, iconLocation, &isIndeterminate, defValue)))
     return control.LoadIcon(hShInstance, MAKEINTRESOURCE(IDI_SH_UNKNOWN));
 
   if (isIndeterminate)
@@ -708,6 +709,7 @@ HRESULT VLPUtil::LoadDIBFromIcon(
   CDC memDC;
   CBrush bgBrush;
   HICON hIcon;
+  HRESULT hr = S_OK;
 
   if (stretch) {
     cx1 = cx;
@@ -735,12 +737,15 @@ HRESULT VLPUtil::LoadDIBFromIcon(
   if ((hIcon = (HICON)::LoadImage(hInstance, lpIconName, IMAGE_ICON, cx1, cy1, LR_DEFAULTCOLOR)) == NULL)
     return HRESULT_FROM_WIN32(GetLastError());
 
-  ::DrawIconEx(memDC.m_hDC, ((int)cx - (int)cx1) / 2, ((int)cy - (int)cy1) / 2, hIcon, cx1, cy1, 0, NULL, DI_NORMAL);
-  ::DestroyIcon(hIcon);
+  if (!::DrawIconEx(memDC.m_hDC, ((int)cx - (int)cx1) / 2, ((int)cy - (int)cy1) / 2, hIcon, cx1, cy1, 0, NULL, DI_NORMAL))
+    hr = HRESULT_FROM_WIN32(GetLastError());
 
-  memDC.SelectObject(oldBmp);
+  if (!::DestroyIcon(hIcon))
+    hr = HRESULT_FROM_WIN32(GetLastError());
 
-  return S_OK;
+  VERIFY(memDC.SelectObject(oldBmp)->GetSafeHandle() == bmp.m_hObject);
+
+  return hr;
 }
 
 //
@@ -984,29 +989,31 @@ HRESULT VLPUtil::GetEffectiveRights(
   ASSERT(pObjectName != NULL);
   ASSERT(pAccessRights != NULL);
 
-  DWORD err;
+  HRESULT hr;
   PSID psidOwner;
   PACL pDacl = NULL;
   PSECURITY_DESCRIPTOR pPrcSD = NULL;
   PSECURITY_DESCRIPTOR pObjSD = NULL;
 
   try {
+    DWORD err;
+
     if ((err = GetNamedSecurityInfo(const_cast<LPTSTR>(pObjectName), ObjectType, DACL_SECURITY_INFORMATION, NULL, NULL, &pDacl, NULL, &pObjSD)) != ERROR_SUCCESS)
-      goto __done;
+      throw err;
 
     if ((err = GetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT, OWNER_SECURITY_INFORMATION, &psidOwner, NULL, NULL, NULL, &pPrcSD)) != ERROR_SUCCESS)
-      goto __done;
+      throw err;
 
     TRUSTEE trustee;
     BuildTrusteeWithSid(&trustee, psidOwner);
 
     if ((err = GetEffectiveRightsFromAcl(pDacl, &trustee, pAccessRights)) != ERROR_SUCCESS)
-      goto __done;
+      throw err;
+  } catch (DWORD err) {
+    hr = HRESULT_FROM_WIN32(err);
   } catch (...) {
-    err = ERROR_DLL_NOT_FOUND;
+    hr = HRESULT_FROM_WIN32(ERROR_DLL_NOT_FOUND);
   }
-
-__done:
 
   if (pPrcSD != NULL)
     LocalFree((HLOCAL)pPrcSD);
@@ -1014,7 +1021,7 @@ __done:
   if (pObjSD != NULL)
     LocalFree((HLOCAL)pObjSD);
 
-  return HRESULT_FROM_WIN32(err);
+  return hr;
 }
 
 //

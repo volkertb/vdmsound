@@ -46,11 +46,13 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Perf::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Perf::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
   //
+
+  return TRUE;
 }
 
 

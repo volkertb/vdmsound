@@ -32,9 +32,9 @@ protected:
 
 // Helper functions
 protected:
-  VOID SyncGUIData(BOOL bSave = TRUE);
-  VOID SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled = TRUE);
-  VOID SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData(BOOL bSave = TRUE);
+  BOOL SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Dialog Data
 	//{{AFX_DATA(CBasicSettingsPage)
