@@ -134,10 +134,13 @@ STDAPI_(void) VddDispatch(void) {
       break;
 
     case CMD_VDD_START:
-      hTimer = timeSetEvent(uPeriod, uPeriod / 10, TimeProc, NULL, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
-      if (hTimer != 0) {
+      if ((timeBeginPeriod(uPeriod) == TIMERR_NOERROR) &&
+          (hTimer = timeSetEvent(uPeriod, uPeriod / 10, TimeProc, NULL, TIME_PERIODIC | TIME_CALLBACK_FUNCTION)))
+      {
         retVal = 0;
       } else {
+        Beep(2000, 250);
+        Beep(1000, 250);
         strncpy(szLastError, "Unable to create Windows timer.\r\n", sizeof(szLastError));
         retVal = 1;
       }
