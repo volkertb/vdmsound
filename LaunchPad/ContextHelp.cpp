@@ -44,9 +44,8 @@ BOOL CContextHelp::Attach(CWnd* pWnd) {
 
 #ifdef _DEBUG
   CContextHelp* pTmp;
-#endif
-
   ASSERT(!ownershipMap.Lookup(pWnd->m_hWnd, pTmp));
+#endif
 
   ownershipMap.SetAt(pWnd->m_hWnd, this);
 

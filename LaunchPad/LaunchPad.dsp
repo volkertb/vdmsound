@@ -280,6 +280,45 @@ SOURCE="$(InputPath)"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Group "Advanced Settings Source Files"
+
+# PROP Default_Filter "cpp"
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Adlib.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Compat.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Dosenv.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Joy.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Midi.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Program.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Sb.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsSheet.cpp
+# End Source File
+# End Group
+# Begin Group "Basic Settings Source Files"
+
+# PROP Default_Filter "cpp"
 # Begin Source File
 
 SOURCE=.\BasicBrowseDlg.cpp
@@ -288,18 +327,10 @@ SOURCE=.\BasicBrowseDlg.cpp
 
 SOURCE=.\BasicSettingsPage.cpp
 # End Source File
-# Begin Source File
+# End Group
+# Begin Group "Shell Extension Source Files"
 
-SOURCE=.\ChangeIconDlg.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\ContextHelp.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\IconListBox.cpp
-# End Source File
+# PROP Default_Filter "cpp"
 # Begin Source File
 
 SOURCE=.\LaunchPad.cpp
@@ -314,20 +345,37 @@ SOURCE=.\LaunchPadShellEx.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\LaunchPadUtil.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\PIFFile.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\RUNWITHVDMSDispatcher.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\RUNWITHVDMSThread.cpp
 # End Source File
+# End Group
+# Begin Group "Utility Source Files"
+
+# PROP Default_Filter "cpp"
+# Begin Source File
+
+SOURCE=.\ChangeIconDlg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ContextHelp.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IconListBox.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\LaunchPadUtil.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\PIFFile.cpp
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\StdAfx.cpp
@@ -337,6 +385,45 @@ SOURCE=.\StdAfx.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Group "Advanced Settings Header Files"
+
+# PROP Default_Filter "h"
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Adlib.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Compat.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Dosenv.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Joy.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Midi.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Program.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Sb.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsSheet.h
+# End Source File
+# End Group
+# Begin Group "Basic Settings Header Files"
+
+# PROP Default_Filter "h"
 # Begin Source File
 
 SOURCE=.\BasicBrowseDlg.h
@@ -345,6 +432,30 @@ SOURCE=.\BasicBrowseDlg.h
 
 SOURCE=.\BasicSettingsPage.h
 # End Source File
+# End Group
+# Begin Group "Shell Extension Header Files"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\LaunchPadSettings.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\LaunchPadShellEx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\RUNWITHVDMSDispatcher.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\RUNWITHVDMSThread.h
+# End Source File
+# End Group
+# Begin Group "Utility Header Files"
+
+# PROP Default_Filter "h"
 # Begin Source File
 
 SOURCE=.\ChangeIconDlg.h
@@ -359,28 +470,13 @@ SOURCE=.\IconListBox.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\LaunchPadSettings.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\LaunchPadShellEx.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\LaunchPadUtil.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\PIFFile.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\RUNWITHVDMSDispatcher.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\RUNWITHVDMSThread.h
-# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\StdAfx.h
@@ -389,6 +485,9 @@ SOURCE=.\StdAfx.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Group "Images"
+
+# PROP Default_Filter "ico;bmp"
 # Begin Source File
 
 SOURCE=.\icon1.ico
@@ -397,6 +496,11 @@ SOURCE=.\icon1.ico
 
 SOURCE=.\icon2.ico
 # End Source File
+# Begin Source File
+
+SOURCE=.\VDMSound.ico
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\LaunchPad.rc
@@ -477,10 +581,6 @@ InputPath=.\Resource.h
 
 !ENDIF 
 
-# End Source File
-# Begin Source File
-
-SOURCE=.\VDMSound.ico
 # End Source File
 # End Group
 # Begin Group "Interfaces"

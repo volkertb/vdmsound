@@ -242,31 +242,31 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   CString vdms_debug_detail         = SettingGetString(_T("vdms.debug"), _T("detail"), _T("256"));
   CString vdms_debug_file           = SettingGetString(_T("vdms.debug"), _T("file"), _T(".\\VDMS.LOG"));
 
-  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"), _T("enabled"), FALSE);
+  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"), _T("enabled"), TRUE);
   CString vdms_midi_port            = SettingGetString(_T("vdms.midi"), _T("port"), _T("0x330"));
   CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"), _T("IRQ"), _T("2"));
   CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"), _T("mapFile"), _T("identity.map"));
   CString vdms_midi_device          = SettingGetString(_T("vdms.midi"), _T("device"), _T("-1"));
   CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"), _T("showSysExLed"), _T("Scroll"));
 
-  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"), _T("enabled"), FALSE);
+  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"), _T("enabled"), TRUE);
   CString vdms_sb_dsp_port          = SettingGetString(_T("vdms.sb.dsp"), _T("port"), _T("0x220"));
   CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"), _T("IRQ"), _T("7"));
   CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"), _T("DMA8"), _T("1"));
   CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"), _T("DMA16"), _T("5"));
   CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"), _T("version"), _T("4.15"));
   CString vdms_sb_dsp_minDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("minDMAPeriod"), _T("5"));
-  CString vdms_sb_dsp_maxDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("maxDMAPeriod"), _T("16"));
+  CString vdms_sb_dsp_maxDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("maxDMAPeriod"), _T("15"));
   CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"), _T("device"), _T("-1"));
   CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"), _T("buffer"), _T("75"));
 
-  BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"), _T("enabled"), FALSE);
+  BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"), _T("enabled"), TRUE);
   CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"), _T("port"), _T("0x388"));
   CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"), _T("sampleRate"), _T("11025"));
   CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"), _T("device"), _T("-1"));
   CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"), _T("buffer"), _T("75"));
 
-  BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"), FALSE);
+  BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"), TRUE);
   CString vdms_gameport_port        = SettingGetString(_T("vdms.gameport"), _T("port"), _T("0x201"));
   CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"), _T("5"));
   CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"), _T("250"));
@@ -402,44 +402,53 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   //
   CString config;
 
-  strTmp.Format(_T("DOS=%s,%s\r\n"), SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS")) ? _T("HIGH") : _T("LOW"),
-                                    SettingGetBool(_T("winnt.dos"), _T("useUMB")) ? _T("UMB") : _T("NOUMB"));
+  BOOL vdms_winnt_dos_useHIMEM  = SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS"), TRUE);
+  BOOL vdms_winnt_dos_useUMB    = SettingGetBool(_T("winnt.dos"), _T("useUMB"), TRUE);
+  BOOL vdms_winnt_memory_useEMS = SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE);
+
+  strTmp.Format(_T("DOS=%s,%s\r\n"), vdms_winnt_dos_useHIMEM ? _T("HIGH") : _T("LOW"),
+                                     vdms_winnt_dos_useUMB   ? _T("UMB")  : _T("NOUMB"));
   config += strTmp;
 
-  if (SettingGetBool(_T("winnt.dos"), _T("useUMB")) && SettingGetBool(_T("winnt.memory"), _T("useEMS"))) {
+  if (vdms_winnt_dos_useUMB && vdms_winnt_memory_useEMS) {
     config += _T("EMM=RAM\r\n");
   }
 
-  if (SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS"))) {
+  if (vdms_winnt_dos_useHIMEM) {
     config += _T("DEVICE=%SYSTEMROOT%\\SYSTEM32\\HIMEM.SYS\r\n");
   }
 
-  strTmp.Format(_T("FILES=%d\r\n"), SettingGetInt(_T("winnt.dos"), _T("files"), 40));
-  config += strTmp;
+  // TODO: add "custom" CONFIG.SYS options from VDMS.INI to config
 
   //
   // AUTOEXEC
   //
   CString autoexec;
 
+  BOOL vdms_winnt_storage_useCDROM   = SettingGetBool(_T("winnt.storage"), _T("useCDROM"), FALSE);
+  BOOL vdms_winnt_storage_useNetware = SettingGetBool(_T("winnt.storage"), _T("useNetware"), FALSE);
+  BOOL vdms_winnt_pmode_useDPMI      = SettingGetBool(_T("winnt.pmode"), _T("useDPMI"), TRUE);
+
   autoexec += _T("@ECHO OFF\r\n");
 
-  if (SettingGetBool(_T("winnt.storage"), _T("useCDROM"))) {
+  if (vdms_winnt_storage_useCDROM) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\MSCDEXNT.EXE\r\n");
   }
 
-  if (SettingGetBool(_T("winnt.storage"), _T("useNetware"))) {
+  if (vdms_winnt_storage_useNetware) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\REDIR\r\n");
   }
 
-  if (SettingGetBool(_T("winnt.dos"), _T("useDPMI"))) {
+  if (vdms_winnt_pmode_useDPMI) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\DOSX\r\n");
   }
 
-  if (SettingGetBool(_T("winnt.storage"), _T("useNetware"))) {
+  if (vdms_winnt_storage_useNetware) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\NW16\r\n");
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\VWIPXSPX\r\n");
   }
+
+  // TODO: add "custom" AUTOEXEC.BAT options from VDMS.INI to autoexec
 
   autoexec += VLPUtil::GetAbsolutePath(_T("dosdrv.exe"), _tgetenv(_T("VDMSPath"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
 

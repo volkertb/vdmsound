@@ -292,7 +292,7 @@ CAPTION "MIDI"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
-    CONTROL         "&Enable MPU-401 (MIDI) emulation",IDC_CHK_USEMPU,"Button",
+    CONTROL         "&Enable MIDI (MPU-401) emulation",IDC_CHK_USEMPU,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,123,10,
                     WS_EX_TRANSPARENT
     RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
@@ -439,13 +439,13 @@ CAPTION "Joystick"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,70
-    CONTROL         "&Enable Gameport (Joystick) emulation",IDC_CHK_USEJOY,
+    CONTROL         "&Enable Joystick (Gameport) emulation",IDC_CHK_USEJOY,
                     "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,
                     134,10,WS_EX_TRANSPARENT
     RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_JOYPORT,52,20,36,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,143,20,67,14,
+    PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
                     BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
     RTEXT           "&Poll period:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     LTEXT           "(ms)",IDC_STATIC,90,37,20,12,SS_CENTERIMAGE | NOT 
