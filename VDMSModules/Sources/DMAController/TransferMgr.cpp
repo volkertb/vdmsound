@@ -100,7 +100,7 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
   }
 
   // Create the DMA thread (manages DMA state, performs transfers, etc. asynchronously)
-  m_DMAThread.Create(this, true);
+  m_DMAThread.Create(this, true);   /* TODO: check that creation was successful */
   m_DMAThread.SetPriority(THREAD_PRIORITY_TIME_CRITICAL);  /* TODO: make configurable in VDMS.ini file ? */
   m_DMAThread.Resume();
 
