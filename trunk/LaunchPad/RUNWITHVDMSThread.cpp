@@ -303,12 +303,13 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
 
   BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"),    _T("enabled"),      TRUE);
   LONG    vdms_sb_fm_port           = SettingGetLong  (_T("vdms.sb.fm"),    _T("port"),         0x388);
-  LONG    vdms_sb_fm_sampleRate     = SettingGetLong  (_T("vdms.sb.fm"),    _T("sampleRate"),   11025);
+  CString vdms_sb_fm_oplMode        = SettingGetString(_T("vdms.sb.fm"),    _T("oplMode"),      _T("Automatic"));
+  LONG    vdms_sb_fm_sampleRate     = SettingGetLong  (_T("vdms.sb.fm"),    _T("sampleRate"),   44100);
   BOOL    vdms_sb_fm_useDevOut      = SettingGetLong  (_T("vdms.sb.fm"),    _T("useDevOut"),    TRUE);
   LONG    vdms_sb_fm_devOutType     = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
   LONG    vdms_sb_fm_devOutID       = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutID"),     -1);
   LONG    vdms_sb_fm_buffer         = SettingGetLong  (_T("vdms.sb.fm"),    _T("buffer"),       75);
-  BOOL    vdms_sb_fm_useFileOut     = SettingGetBool  (_T("vdms.sb.fm"),    _T("useFileOut"),      FALSE);
+  BOOL    vdms_sb_fm_useFileOut     = SettingGetBool  (_T("vdms.sb.fm"),    _T("useFileOut"),   FALSE);
   CString vdms_sb_fm_fileOut        = SettingGetString(_T("vdms.sb.fm"),    _T("fileOut"),      str_vdmspath);
 
   BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"),      TRUE);
@@ -484,6 +485,7 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("[AdLibController.config]\n");
     vdmsini += _T("port=") + VLPUtil::FormatString(_T("0x%x"), vdms_sb_fm_port) + _T("\n");
     vdmsini += _T("sampleRate=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_sampleRate) + _T("\n");
+    vdmsini += _T("oplMode=") + CString(GetOPLType(vdms_sb_fm_oplMode, vdms_sb_dsp_version)) + _T("\n");
     vdmsini += _T("[AdLibController.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
 
@@ -784,6 +786,10 @@ BOOL CRUNWITHVDMSThread::SetupEnv(LPTSTR lpEnvBlock, int ncch) {
 //
 //
 CString CRUNWITHVDMSThread::SettingGetString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue) {
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(defValue != NULL);
+
   CString retVal(defValue);
   m_settings.GetValue(section, key, retVal, NULL, defValue);
   return retVal;
@@ -793,6 +799,9 @@ CString CRUNWITHVDMSThread::SettingGetString(LPCTSTR section, LPCTSTR key, LPCTS
 //
 //
 BOOL CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, BOOL defValue) {
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+
   CString strDefValue(defValue ? VLPUtil::T_YES : VLPUtil::T_NO);
   CString strRetVal(strDefValue);
 
@@ -812,6 +821,9 @@ BOOL CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, BOOL defVa
 //
 //
 LONG CRUNWITHVDMSThread::SettingGetLong(LPCTSTR section, LPCTSTR key, LONG defValue) {
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+
   LONG retVal;
   CString strDefValue; strDefValue.Format(_T("%d"), defValue);
   CString strRetVal(strDefValue);
@@ -839,5 +851,45 @@ CString CRUNWITHVDMSThread::GetDeviceID(DeviceUtil::DeviceType devType) {
       return _T("DSoundDevice");
     default:
       return _T("<unknown>");
+  }
+}
+
+CString CRUNWITHVDMSThread::GetOPLType(LPCTSTR oplMode, LPCTSTR sbVersion) {
+  ASSERT(oplMode != NULL);
+  ASSERT(sbVersion != NULL);
+
+  // Values from LaunchPad to be mapped from
+  LPCTSTR szInAuto = _T("auto");
+  LPCTSTR szInOPL2 = _T("opl2");
+  LPCTSTR szInDUAL = _T("dual");
+  LPCTSTR szInOPL3 = _T("opl3");
+
+  // Values for VDMSound to be mapped to
+  LPCTSTR szOutOPL2 = _T("opl2");
+  LPCTSTR szOutDUAL = _T("dual_opl2");
+  LPCTSTR szOutOPL3 = _T("opl3");
+
+  if (_tcsnicmp(szInOPL2, oplMode, _tcslen(szInOPL2)) == 0) {
+    return szOutOPL2;
+  } else if (_tcsnicmp(szInDUAL, oplMode, _tcslen(szInDUAL)) == 0) {
+    return szOutDUAL;
+  } else if (_tcsnicmp(szInOPL3, oplMode, _tcslen(szInOPL3)) == 0) {
+    return szOutOPL3;
+  } else {  // auto, and others
+    int vMajor, vMinor;
+    short DSPVersion;
+    if (sscanf(sbVersion, "%d.%d", &vMajor, &vMinor) != 2) {
+      DSPVersion = 0x0405;  // 4.05 (SoundBlaster 16)
+    } else {
+      DSPVersion = MAKEWORD((BYTE)vMinor, (BYTE)vMajor);
+    }
+
+    if (DSPVersion < 0x0301) {          // sb, sb2, sbpro1
+      return szOutOPL2;
+    } else if (DSPVersion < 0x0400) {   // sbpro2
+      return szOutDUAL;
+    } else {                            // sb16 and better
+      return szOutOPL3;
+    }
   }
 }

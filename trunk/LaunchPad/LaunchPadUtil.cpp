@@ -590,6 +590,52 @@ HRESULT VLPUtil::SyncEditBox(
   }
 }
 
+HRESULT VLPUtil::SyncComboBox(
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  CLaunchPadSettings& settings,                       // settings store
+  LPCTSTR section,                                    // ini section
+  LPCTSTR key,                                        // key (string) under the given section
+  CComboBox& control,                                 // combo-list control with which the data must be synchronized
+  LPCTSTR defValue)                                   // default value
+{
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(defValue != NULL);
+
+  ASSERT_VALID(&control);
+
+  if (control.m_hWnd == NULL)
+    return E_INVALIDARG;
+
+  if (bSave) {
+    int curSel = control.GetCurSel();
+
+    if (curSel != CB_ERR) {
+      CString value;
+      control.GetLBText(curSel, value);
+      return settings.SetValue(section, key, value);
+    } else {
+      return settings.UnsetValue(section, key);
+    }
+  } else {
+    CString value;
+    BOOL isValueIndeterm;
+    HRESULT hr;
+
+    hr = settings.GetValue(section, key, value, &isValueIndeterm, defValue);
+
+    if (isValueIndeterm) {
+      control.SetCurSel(-1);
+    } else {
+      control.SetCurSel(control.FindString(0, value));
+    }
+
+    control.EnableWindow(SUCCEEDED(hr));              // disable the control if an error occured
+
+    return hr;
+  }
+}
+
 #if 0
 
 //

@@ -49,6 +49,7 @@ public:
 	CEdit	m_edtFmoutfile;
 	CButton	m_chkFmoutfile;
 	CSpinButtonCtrl	m_spnFmoutdevbuf;
+	CComboBox	m_cmbOplmode;
 	CComboBox	m_cmbFmsynthrate;
 	CComboBox	m_cmbFmport;
 	CComboBox	m_cmbFmoutdevbuf;

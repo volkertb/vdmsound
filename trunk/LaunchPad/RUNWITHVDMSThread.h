@@ -66,7 +66,8 @@ protected:
   BOOL SettingGetBool(LPCTSTR section, LPCTSTR key, BOOL defValue = FALSE);
   LONG SettingGetLong(LPCTSTR section, LPCTSTR key, LONG defValue = 0);
 
-  CString GetDeviceID(DeviceUtil::DeviceType devType);
+  static CString GetDeviceID(DeviceUtil::DeviceType devType);
+  static CString GetOPLType(LPCTSTR oplMode, LPCTSTR sbVersion);
 
 // Member variables
 protected:
