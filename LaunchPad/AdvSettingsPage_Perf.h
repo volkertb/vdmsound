@@ -26,11 +26,15 @@ public:
 // Helper functions
 protected:
   BOOL SyncGUIData(BOOL bSave = TRUE);
+  BOOL SyncGUIData_DetectIdle(BOOL bSave, BOOL bEnabled = TRUE);
+
+  VOID SetSlideState(BOOL isDeterminate);
 
 // Member variables
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
+  enum { PRI_UNKNOWN, PRI_DETERMINATE, PRI_INDETERMINATE } m_sliPriorityType;
 
 // Public MFC stuff
 public:
@@ -38,8 +42,10 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Perf)
 	enum { IDD = IDD_ADVPROPPAGE_PERF };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CStatic m_txtPrioritymulti;
+	CSliderCtrl	m_sliPriority;
+	CButton	m_chkDetectidle;
+	CButton	m_chkCompattimer;
 	//}}AFX_DATA
 
 
@@ -58,6 +64,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Perf)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnChkDetectidle();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

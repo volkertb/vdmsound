@@ -294,3 +294,7 @@ HRESULT CLaunchPadShellEx::GetInfoTip(DWORD dwFlags, LPWSTR* ppwszTip) {
     return E_UNEXPECTED;
   }
 }
+
+// TODO: implement drag-n-drop of executable files over .vlp files with option to:
+//  (1) Execute with target .vlp's settings, or
+//  (2) change target .vlp's program to point to dropped program

@@ -29,24 +29,29 @@ CRUNWITHVDMSDispatcher::~CRUNWITHVDMSDispatcher()
 }
 
 HRESULT CRUNWITHVDMSDispatcher::RunWithVdms(void) {
-  CString fileName;
+  CWaitCursor wait; // use wait (and not appwait) cursor because shell is actually blocked until we are done
 
-  // If not dealing with a .vlp file then try to find an associated .vlp file
-  if (!VLPUtil::isVLPFile(m_fileName)) {
-    fileName = VLPUtil::RenameExtension(m_fileName, _T(".vlp"));
-
-    if (!VLPUtil::FileExists(fileName)) {
-      return RunWithVdms_Wizard();
-    }
-  } else {
-    fileName = m_fileName;
+  // If dealing with a .vlp file then start the program right away
+  if (VLPUtil::isVLPFile(m_fileName)) {
+    return CRUNWITHVDMSThread::CreateThread(m_fileName);  // create and start a thread that spawns the 16-bit process and waits for its termination
   }
 
-  // Create and start a thread that spawns the 16-bit process and waits for its termination
-  return CRUNWITHVDMSThread::CreateThread(fileName);
+  CString vlpFileName;
+
+  // If not dealing with a .vlp file then try to find an associated .vlp file
+  if (VLPUtil::FileExists(vlpFileName = m_fileName + _T(".vlp")) ||
+      VLPUtil::FileExists(vlpFileName = VLPUtil::RenameExtension(m_fileName, _T(".vlp"))))
+  {
+    return CRUNWITHVDMSThread::CreateThread(vlpFileName, m_fileName); // create and start a thread that spawns the 16-bit process and waits for its termination
+  }
+
+  return RunWithVdms_Wizard();
 }
 
 HRESULT CRUNWITHVDMSDispatcher::RunWithVdms_Wizard(void) {
   MessageBox(NULL, _T("of Oz"), _T("Wizard"), MB_OK);
+
+  // TODO: implement VDMS LaunchPad wizard
+
   return E_NOTIMPL;
 }

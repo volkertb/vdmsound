@@ -149,18 +149,20 @@ BOOL CDOSEnv::AppendEnvBlockEntry(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR fileName) : CWinThread(), m_fileName(fileName), m_settings(fileName)
+CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) : CWinThread(), m_vlpFileName(vlpFileName), m_exeFileName(vlpFileName), m_settings(vlpFileName)
 {
   m_bAutoDelete = TRUE;     // let the thread manage its own life cycle
+
+  // TODO: replace program name with m_exeFileName in m_settings if m_exeFileName is non-NULL/non-empty
 }
 
 CRUNWITHVDMSThread::~CRUNWITHVDMSThread()
 {
 }
 
-HRESULT CRUNWITHVDMSThread::CreateThread(LPCTSTR fileName) {
+HRESULT CRUNWITHVDMSThread::CreateThread(LPCTSTR vlpFileName, LPCTSTR exeFileName) {
   // Create a self-destroying instance of CBasicSettingsPage
-  CRUNWITHVDMSThread* pRUNWITHVDMSThread = new CRUNWITHVDMSThread(fileName);
+  CRUNWITHVDMSThread* pRUNWITHVDMSThread = new CRUNWITHVDMSThread(vlpFileName, exeFileName);
 
   ASSERT_VALID(pRUNWITHVDMSThread);
 
@@ -169,7 +171,7 @@ HRESULT CRUNWITHVDMSThread::CreateThread(LPCTSTR fileName) {
 
   _Module.Lock();               // prevent the DLL from being unloaded while the property sheet is active
 
-  TRACE(_T("LaunchPad: about to start execution thread for '%s'\n"), fileName);
+  TRACE(_T("LaunchPad: about to start execution thread for '%s' ('%s')\n"), vlpFileName, exeFileName ? exeFileName : _T("<not specified>"));
   TRACE(_T("LaunchPad: module lock count at start of execution thread is %d\n"), _Module.GetLockCount());
 
   if (!((CWinThread*)pRUNWITHVDMSThread)->CreateThread()) {
@@ -530,11 +532,12 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   //
   // PIF
   //
-  PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), VLPUtil::GetFilename(m_fileName, TRUE)));
+  PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), VLPUtil::GetFilename(m_vlpFileName, TRUE)));
 
   // Program
-  PIFFile.SetProgram(SettingGetString(_T("program"), _T("executable")),
-                     SettingGetString(_T("program"), _T("params")));
+  PIFFile.SetProgram(
+    SettingGetString(_T("program"), _T("executable")),
+    SettingGetString(_T("program"), _T("params")));
   PIFFile.SetWorkDir(SettingGetString(_T("program"), _T("workdir")));
 
   CString iconPath;
@@ -549,8 +552,9 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   PIFFile.SetFastPaste(SettingGetBool(_T("winnt.dosbox"), _T("fastPaste"), TRUE));
 
   // Memory
-  PIFFile.SetMemory(SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memEMS"), 16384) : 0,
-                    SettingGetBool(_T("winnt.memory"), _T("useXMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
+  PIFFile.SetMemory(
+    SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memEMS"), 4096)  : 0,
+    SettingGetBool(_T("winnt.memory"), _T("useXMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
 
   // Screen
   PIFFile.SetFullScreen(SettingGetBool(_T("winnt.video"), _T("useVESA"), FALSE));
@@ -565,6 +569,12 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     SettingGetBool(_T("winnt.keys"), _T("altEnter"), TRUE),
     SettingGetBool(_T("winnt.keys"), _T("altSpace"), TRUE)
   );
+
+  // Scheduling
+  PIFFile.SetScheduler(
+    SettingGetBool(_T("winnt.scheduling"), _T("compatHWEmu"), FALSE),
+    SettingGetBool(_T("winnt.scheduling"), _T("detectIdle"),  FALSE),
+    SettingGetLong(_T("winnt.scheduling"), _T("idlePrio"),    100));
 
   return PIFFile.Create(config, autoexec);
 }
