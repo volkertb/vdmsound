@@ -26,34 +26,9 @@
 #include "AdvSettingsPage_Debug.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CSettingsContainer
-
-class CSettingsContainer
-{
-// Construction
-public:
-  CSettingsContainer(CLaunchPadSettings& settings) : m_settingsOriginal(settings), m_settings(settings)
-    { }
-
-// Utility
-public:
-  void Save(void)
-    { m_settingsOriginal = m_settings; }
-
-// Member variables
-protected:
-  CLaunchPadSettings& m_settingsOriginal; // reference to original settings
-  CLaunchPadSettings  m_settings;         // working copy of settings, to be transferred to original settings when approved
-};
-
-
-
-/////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsSheet
 
-class CAdvSettingsSheet
- : public    CPropertySheet,
-   protected CSettingsContainer // pathetic hack to get m_settings constructed before m_p1...7
+class CAdvSettingsSheet : public CPropertySheet
 {
 // Construction
 public:
@@ -68,6 +43,11 @@ protected:
 protected:
   CContextHelp m_help;
 
+  // Must be declared (constructed) before m_p*
+  CLaunchPadSettings& m_settingsOriginal; // reference to original settings
+  CLaunchPadSettings  m_settings;         // working copy of settings, to be transferred to original settings when approved
+
+  // Must be declared (constructed) after m_settings*
   CAdvSettingsPage_Program m_p1;
   CAdvSettingsPage_Compat  m_p2;
   CAdvSettingsPage_Dosenv  m_p3;

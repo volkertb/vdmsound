@@ -39,7 +39,7 @@ CLaunchPadSettings::CLaunchPadSettings(const CStringArray& fileNames) {
 
 CLaunchPadSettings::CLaunchPadSettings(const CLaunchPadSettings& settings) {
   // Keep a copy of the list of file names the settings are stored in
-  *this = settings;
+  Copy(settings, FALSE);
 }
 
 CLaunchPadSettings::~CLaunchPadSettings(void) {
@@ -251,15 +251,28 @@ BOOL CLaunchPadSettings::IsChanged(void) {
 }
 
 //
+// Read in all the values from the .ini file and caches them
 //
-//
-CLaunchPadSettings& CLaunchPadSettings::operator =(const CLaunchPadSettings& src) {
-  // Keep a copy of the list of file names the settings are stored in
-  m_fileNames.Copy(src.m_fileNames);
+void CLaunchPadSettings::GetAll(void) {
+  // TODO: implement
+}
 
-  // Keep a copy of the settings
+//
+// Use this member function to copy the settings of one object to another
+//
+void CLaunchPadSettings::Copy(
+  const CLaunchPadSettings& src,                      // source object
+  BOOL bValuesOnly)                                   // if TRUE only copies the key/value pairs; if FALSE, filename information is also replaced
+{
+  // Make a copy of the list of file names the settings are stored in
+  if (!bValuesOnly)
+    m_fileNames.Copy(src.m_fileNames);
+
+  // Make a copy of the settings
   SettingKey cacheKey;                                // temporary storage for the setting key
   SettingValue cacheValue;                            // temporary storage for the setting value
+
+  m_settingsCache.RemoveAll();                        // purge the old settings
 
   POSITION pos = src.m_settingsCache.GetStartPosition();
 
@@ -267,10 +280,21 @@ CLaunchPadSettings& CLaunchPadSettings::operator =(const CLaunchPadSettings& src
     src.m_settingsCache.GetNextAssoc(pos, cacheKey, cacheValue);
     m_settingsCache.SetAt(cacheKey, cacheValue);
   }
-
-  return *this;
 }
 
+//
+// Use this member function to clear the settings
+//
+void CLaunchPadSettings::Reset(
+  BOOL bValuesOnly)                                   // if TRUE only clears the key/value pairs; if FALSE, filename information is also cleared
+{
+  // Clear the list of file names the settings are stored in
+  if (!bValuesOnly)
+    m_fileNames.RemoveAll();
+
+  // Clear the settings
+  m_settingsCache.RemoveAll();                        // purge the old settings
+}
 
 
 //////////////////////////////////////////////////////////////////////

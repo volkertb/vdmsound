@@ -18,7 +18,9 @@ public:
 public:
   static HRESULT RunWithVdms(LPCTSTR fileName);
   static HRESULT RunWithVdms(LPCTSTR vlpFileName, LPCTSTR exeFileName);
-  static HRESULT RunWithVdms_Wizard(void);
+
+protected:
+  static HRESULT RunWithVdms_Wizard(LPCTSTR exeFileName);
 };
 
 #endif // !defined(AFX_RUNWITHVDMSDISPATCHER_H__9D630F6C_BE3C_4E7C_8BA1_699264F58B3A__INCLUDED_)

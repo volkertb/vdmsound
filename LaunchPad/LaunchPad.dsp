@@ -392,6 +392,30 @@ SOURCE=.\LaunchPadUtil.cpp
 SOURCE=.\PIFFile.cpp
 # End Source File
 # End Group
+# Begin Group "Wizard Source Files"
+
+# PROP Default_Filter "cpp"
+# Begin Source File
+
+SOURCE=.\WizardPage_Custom_1.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Custom_2.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Finis.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Intro.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardSheet.cpp
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\StdAfx.cpp
@@ -513,6 +537,30 @@ SOURCE=.\PIF_FMT.H
 SOURCE=.\PIFFile.h
 # End Source File
 # End Group
+# Begin Group "Wizard Header Files"
+
+# PROP Default_Filter "h"
+# Begin Source File
+
+SOURCE=.\WizardPage_Custom_1.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Custom_2.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Finis.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardPage_Intro.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\WizardSheet.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\StdAfx.h
@@ -526,15 +574,31 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;bmp"
 # Begin Source File
 
-SOURCE=.\icon1.ico
+SOURCE=.\Resources\icon1.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\icon2.ico
+SOURCE=.\Resources\icon2.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\VDMSound.ico
+SOURCE=.\Resources\VDMSound.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resources\wizard_back_16.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resources\wizard_back_256.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resources\wizard_head_16.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resources\wizard_head_256.bmp
 # End Source File
 # End Group
 # Begin Source File

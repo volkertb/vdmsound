@@ -19,7 +19,10 @@ class CLaunchPadSettings {
     BOOL IsChanged(LPCTSTR section, LPCTSTR key);
     BOOL IsChanged(void);
 
-    CLaunchPadSettings& operator =(const CLaunchPadSettings& src);
+    void GetAll(void);
+
+    void Copy(const CLaunchPadSettings& src, BOOL bValuesOnly = TRUE);
+    void Reset(BOOL bValuesOnly = TRUE);
 
   // Utility
   protected:

@@ -8,7 +8,7 @@
 
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
-#include "RUNWITHVDMSThread.h"
+#include "RUNWITHVDMSDispatcher.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -102,7 +102,8 @@ BOOL CDragNDropFSM::DragNReplace(LPCTSTR target, LPCTSTR dropped) {
 }
 
 BOOL CDragNDropFSM::DragNRunWith(LPCTSTR target, LPCTSTR dropped) {
-  return SUCCEEDED(CRUNWITHVDMSThread::CreateThread(target, dropped));  // create and start a thread that spawns the 16-bit process and waits for its termination
+  // Create and start a thread that spawns the 16-bit process and waits for its termination
+  return SUCCEEDED(CRUNWITHVDMSDispatcher::RunWithVdms(target, dropped));
 }
 
 BOOL CDragNDropFSM::DragNPopup(POINTL pt, LPCTSTR target, LPCTSTR dropped) {
