@@ -254,8 +254,8 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       m_DSoundLatency = max(m_DSoundLatency, (LONG)(m_bufferLen + dwCurrentWriteCursor - dwCurrentReadCursor) % m_bufferLen);
       bufferedBytes = (2l * m_bufferLen + m_bufferPos - dwCurrentReadCursor - m_DSoundLatency) % m_bufferLen;
 
-      if (bufferedBytes > (m_bufferLen - m_bufferedLo))
-        bufferedBytes = 0;      // Take into account the possibility that we were left behind
+if (bufferedBytes > (m_bufferLen - m_bufferedLo))
+  bufferedBytes = 0;      // Take into account the possibility that we were left behind
 
 //if (xyz) fprintf(xyz,"%6d / %6d (%6d %6d %6d)\n",(int)bufferedBytes,(int)m_bufferLen,(int)dwCurrentReadCursor,(int)dwCurrentWriteCursor,(int)m_bufferPos);
 
@@ -503,7 +503,7 @@ HRESULT CWaveOut::DSoundOpenHelper(void) {
     _ASSERTE (lpDirectSound != NULL);
 
     // Must set the coopertaive level before working with DSound
-    if (FAILED(hr = lpDirectSound->SetCooperativeLevel(GetDesktopWindow(), DSSCL_PRIORITY)))
+    if (FAILED(hr = lpDirectSound->SetCooperativeLevel(GetForegroundWindow(), DSSCL_PRIORITY)))
       throw hr;
 
     // Obtain the device capabilities
@@ -514,7 +514,7 @@ HRESULT CWaveOut::DSoundOpenHelper(void) {
     if (SUCCEEDED(hr = lpDirectSound->GetCaps(&DSCaps))) {
       int channels      = (DSCaps.dwFlags & DSCAPS_PRIMARYSTEREO) ? 2 : 1;
       int bitsPerSample = (DSCaps.dwFlags & DSCAPS_PRIMARY16BIT) ? 16 : 8;
-      int samplesPerSec = 8000;
+      int samplesPerSec = 44100;
 
       // Obtain the primary buffer
       LPDIRECTSOUNDBUFFER lpPrimary = NULL;
