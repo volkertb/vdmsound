@@ -146,7 +146,7 @@ BEGIN
                     14,160,189,10
     CONTROL         "Other",IDC_OPT_JOYOTHER,"Button",BS_AUTORADIOBUTTON | 
                     WS_TABSTOP,14,171,33,10
-    CONTROL         "Do not close DOS window on e&xit",IDC_CHK_CLOSE,"Button",
+    CONTROL         "Close DOS window on e&xit",IDC_CHK_CLOSE,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,192,122,10
     PUSHBUTTON      "A&dvanced...",IDC_BUT_ADVANCED,170,190,50,14
 END
