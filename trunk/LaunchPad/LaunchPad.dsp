@@ -322,6 +322,10 @@ SOURCE=.\PIFFile.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\RUNWITHVDMSDispatcher.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\RUNWITHVDMSThread.cpp
 # End Source File
 # Begin Source File
@@ -368,6 +372,10 @@ SOURCE=.\LaunchPadUtil.h
 # Begin Source File
 
 SOURCE=.\PIFFile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\RUNWITHVDMSDispatcher.h
 # End Source File
 # Begin Source File
 
@@ -489,11 +497,15 @@ SOURCE=.\LaunchPad.idl
 # PROP Default_Filter "hpj;hm;rtf"
 # Begin Source File
 
+SOURCE=.\Help\LaunchPad.cnt
+# End Source File
+# Begin Source File
+
 SOURCE=.\Help\LaunchPad.hpj
 
 !IF  "$(CFG)" == "LaunchPad - Win32 Debug"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\Debug
 InputPath=.\Help\LaunchPad.hpj
@@ -514,7 +526,7 @@ InputName=LaunchPad
 
 !ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Debug"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\DebugU
 InputPath=.\Help\LaunchPad.hpj
@@ -535,7 +547,7 @@ InputName=LaunchPad
 
 !ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinSize"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\ReleaseMinSize
 InputPath=.\Help\LaunchPad.hpj
@@ -556,7 +568,7 @@ InputName=LaunchPad
 
 !ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinDependency"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\ReleaseMinDependency
 InputPath=.\Help\LaunchPad.hpj
@@ -577,7 +589,7 @@ InputName=LaunchPad
 
 !ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinSize"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\ReleaseUMinSize
 InputPath=.\Help\LaunchPad.hpj
@@ -598,7 +610,7 @@ InputName=LaunchPad
 
 !ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinDependency"
 
-USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	"Help\LaunchPad.cnt"	
 # Begin Custom Build
 OutDir=.\ReleaseUMinDependency
 InputPath=.\Help\LaunchPad.hpj

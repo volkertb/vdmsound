@@ -5,7 +5,7 @@
 
 #include "BasicSettingsPage.h"
 
-#include "RUNWITHVDMSThread.h"
+#include "RUNWITHVDMSDispatcher.h"
 
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
@@ -135,10 +135,11 @@ HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
     if (m_fileNames.GetSize() != 1)
       return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
+    CRUNWITHVDMSDispatcher dispatcher(m_fileNames.GetAt(0));
+
     switch (LOWORD(lpici->lpVerb)) {
       case 0:
-        // Create and start a thread that spawns the 16-bit process and waits for its termination
-        return CRUNWITHVDMSThread::CreateThread(m_fileNames.GetAt(0));
+        return dispatcher.RunWithVdms();
       default:
         return E_INVALIDARG;
     }

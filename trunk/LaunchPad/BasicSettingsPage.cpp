@@ -179,11 +179,13 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
+  VLPUtil::SyncGroup(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_grpMidi, FALSE);
 
   // Joystick
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
   VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
+  VLPUtil::SyncGroup(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_grpJoystick, FALSE);
 
   // Other
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"), _T("exitClose"), m_chkClose, FALSE);
@@ -229,6 +231,8 @@ void CBasicSettingsPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicSettingsPage)
+	DDX_Control(pDX, IDC_GRP_MIDI, m_grpMidi);
+	DDX_Control(pDX, IDC_GRP_JOYSTICK, m_grpJoystick);
 	DDX_Control(pDX, IDC_ICO_APP, m_icoApp);
 	DDX_Control(pDX, IDC_EDT_DOSCMD, m_edtDoscmd);
 	DDX_Control(pDX, IDC_CHK_EMS, m_chkEms);
