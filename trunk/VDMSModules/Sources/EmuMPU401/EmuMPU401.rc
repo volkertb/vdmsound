@@ -75,7 +75,7 @@ BEGIN
             VALUE "FileDescription", "EmuMPU401 Module\0"
             VALUE "FileVersion", "1, 0, 2, 2\0"
             VALUE "InternalName", "EmuMPU401\0"
-            VALUE "LegalCopyright", "Copyright 2001\0"
+            VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "EmuMPU401.DLL\0"
             VALUE "ProductName", "VDMSound\0"
             VALUE "ProductVersion", "2, 0, 2, 2\0"
