@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 namespace MAME {
+# define HAS_YM3812 1
 # include "fmopl.h"
 }
 
@@ -85,7 +86,7 @@ class ATL_NO_VTABLE CAdLibCtl :
 {
 public:
 	CAdLibCtl()
-    : m_instanceID(-1), m_OPL(NULL), m_AdLibFSM(this)
+    : m_instanceID(-1), m_AdLibFSM(this)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ADLIBCTL)
@@ -170,7 +171,6 @@ protected:
 // Platform-independent classes
 protected:
   CAdLibCtlFSM m_AdLibFSM;
-  MAME::FM_OPL* m_OPL;
 
 // Other member variables
 protected:
