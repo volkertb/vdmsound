@@ -15,6 +15,7 @@ library EMUSBCOMPATLib
 {
 	import "IVDMModule.idl";
 	import "IVDMHandlers.idl";
+	import "IDMAHandlers.idl";
 
 	[
 		uuid(93F176F5-0362-11D5-9C6D-00A024112F81),
@@ -24,5 +25,6 @@ library EMUSBCOMPATLib
 	{
 		[default] interface IVDMBasicModule;
 		interface IIOHandler;
+		interface IDMAHandler;
 	};
 };
