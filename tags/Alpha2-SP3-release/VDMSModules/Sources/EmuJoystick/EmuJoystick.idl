@@ -1,0 +1,28 @@
+// EmuJoystick.idl : IDL-Quellcode für EmuJoystick.dll
+//
+
+// Diese Datei wird mit dem MIDL-Tool bearbeitet,
+// um den Quellcode für die Typbibliothek (EmuJoystick.tlb)und die Abruffunktionen zu erzeugen.
+
+import "oaidl.idl";
+
+[
+	uuid(8CFD797F-162B-4C9A-9D68-BDBEDA3007D8),
+	version(1.0),
+	helpstring("EmuJoystick 1.0 Typbibliothek")
+]
+library EMUJOYSTICKLib
+{
+	import "IVDMModule.idl";
+	import "IVDMHandlers.idl";
+
+	[
+		uuid(F675312E-ECE0-4FD3-B96F-2E84597E6000),
+		helpstring("EmuJoysticks Class")
+	]
+	coclass EmuJoysticks
+	{
+		[default] interface IVDMBasicModule;
+		interface IIOHandler;
+	};
+};
