@@ -25,6 +25,7 @@ class ATL_NO_VTABLE CMPU401Ctl :
   public CComObjectRootEx<CComMultiThreadModel>,
   public CComCoClass<CMPU401Ctl, &CLSID_MPU401Ctl>,
   public IMPU401HWEmulationLayer,
+  public IRunnable,
   public ISupportErrorInfo,
   public IVDMBasicModule,
   public IIOHandler,
@@ -32,7 +33,7 @@ class ATL_NO_VTABLE CMPU401Ctl :
 {
 public:
   CMPU401Ctl()
-    : m_MPUFSM(this)
+    : m_MPUFSM(this), m_period(0)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_MPU401CTL)
@@ -56,6 +57,11 @@ public:
   void putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length);
   void putSysEx(const unsigned char * data, long length);
   void putRealTime(unsigned char data);
+  void setTimerPeriod(long period);
+
+// IRunnable
+public:
+  unsigned int Run(CThread& thread);
 
 // ISupportsErrorInfo
 public:
@@ -89,6 +95,12 @@ public:
 protected:
   int m_basePort;
   int m_IRQLine;
+
+// Other member variables
+protected:
+  CThread m_TimerThread;
+  CCriticalSection m_mutex;
+  long m_period;
 
 // Platform-independent classes
 protected:

@@ -121,6 +121,11 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
+  // Create the timer thread (intelligent mode)
+  m_TimerThread.Create(this, _T("MPU timer thread"), true);  /* TODO: check that creation was successful */
+  m_TimerThread.SetPriority(THREAD_PRIORITY_TIME_CRITICAL);  /* TODO: make configurable in VDMS.ini file ? */
+  // leave the timer thread suspended until the interval is set
+
   // put the MPU in a known state
   m_MPUFSM.reset();
 
@@ -132,6 +137,10 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
 STDMETHODIMP CMPU401Ctl::Destroy() {
   // put the MPU in a known state
   m_MPUFSM.reset();
+
+  // Signal the timer thread to quit
+  if (m_TimerThread.GetThreadHandle() != NULL)
+    m_TimerThread.Cancel();
 
   // Release the MIDI-out module
   m_midiOut = NULL;
@@ -307,4 +316,54 @@ void CMPU401Ctl::putRealTime(unsigned char data) {
   if (FAILED(hr = m_midiOut->HandleRealTime(-1, data))) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("HandleRealTime: 0x%08x - %s"), hr, (LPCTSTR)FormatMessage(hr)));
   }
+}
+
+void CMPU401Ctl::setTimerPeriod(long period) {
+  CSingleLock lock(&m_mutex, TRUE);
+
+  bool needs_suspend = ((m_period > 0) && (period <= 0));
+  bool needs_resume  = ((m_period <= 0) && (period > 0));
+  m_period = period;
+
+  lock.Unlock();
+
+  if (needs_suspend)
+    m_TimerThread.Suspend();
+
+  if (needs_resume)
+    m_TimerThread.Resume();
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IRunnable
+/////////////////////////////////////////////////////////////////////////////
+
+unsigned int CMPU401Ctl::Run(CThread& thread) {
+  MSG message;
+
+  _ASSERTE(thread.GetThreadID() == m_TimerThread.GetThreadID());
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MPU timer thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
+
+  do {
+    if (thread.GetMessage(&message, false)) {
+      switch (message.message) {
+        case WM_QUIT:
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MPU timer thread cancelled")));
+          return 0;
+        default:
+          break;
+      }
+    } else {
+      CSingleLock lock(&m_mutex, TRUE);
+      long period = m_period;
+      lock.Unlock();
+
+      Sleep((DWORD)period);
+
+      m_MPUFSM.timerExpired();
+    }
+  } while (true);
 }
