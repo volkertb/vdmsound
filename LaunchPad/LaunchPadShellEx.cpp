@@ -49,7 +49,7 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
         continue;
 
       // Skip over directories
-      if (PathIsDirectory(szFileName))
+      if (VLPUtil::IsDirectory(szFileName))
         continue;
 
       // Add the filename to our list of files to act on
@@ -269,7 +269,7 @@ HRESULT CLaunchPadShellEx::GetInfoTip(DWORD dwFlags, LPWSTR* ppwszTip) {
     settings.GetValue(_T("program"), _T("params"), progParams);
     settings.GetValue(_T("program"), _T("workdir"), progWDir);
 
-    strTmp = VLPUtil::GetAbsolutePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
+    strTmp = VLPUtil::GetAbsolutePath(progExec, progWDir, FALSE) + _T(" ") + progParams;
     strTmp.TrimLeft(); strTmp.TrimRight();
 
     strToolTip.FormatMessage(IDS_MSG_SHTOOLTIP, (LPCTSTR)strTmp);

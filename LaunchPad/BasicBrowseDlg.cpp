@@ -7,8 +7,6 @@
 
 #include "ChangeIconDlg.h"
 
-#include "LaunchPadUtil.h"
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -34,6 +32,8 @@ void CBasicBrowseDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicBrowseDlg)
+	DDX_Control(pDX, IDC_EDT_DIR, m_edtDir);
+	DDX_Control(pDX, IDC_EDT_FILE, m_edtFile);
 	DDX_Text(pDX, IDC_EDT_ARGS, m_edtArgs_val);
 	DDV_MaxChars(pDX, m_edtArgs_val, 63);
 	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
@@ -48,11 +48,22 @@ BEGIN_MESSAGE_MAP(CBasicBrowseDlg, CDialog)
 	//{{AFX_MSG_MAP(CBasicBrowseDlg)
 	ON_BN_CLICKED(IDC_BUT_FILEBROWSE, OnButFilebrowse)
 	ON_BN_CLICKED(IDC_BUT_CHANGEICON, OnButChangeicon)
+	ON_EN_UPDATE(IDC_EDT_FILE, OnUpdateEdtFile)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CBasicBrowseDlg message handlers
+
+BOOL CBasicBrowseDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+
+  VLPUtil::EnableAutoComplete(m_edtFile.GetSafeHwnd());
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}
 
 void CBasicBrowseDlg::OnButFilebrowse() 
 {
@@ -75,4 +86,11 @@ void CBasicBrowseDlg::OnButChangeicon()
   if (dlgIcon.DoModal() == IDOK) {
     m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
   }
+}
+
+void CBasicBrowseDlg::OnUpdateEdtFile() 
+{
+  CString strDir;
+  m_edtFile.GetWindowText(strDir);
+  m_edtDir.SetWindowText(VLPUtil::GetDirectory(strDir));
 }

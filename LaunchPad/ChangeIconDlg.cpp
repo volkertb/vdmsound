@@ -75,6 +75,7 @@ void CChangeIconDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CChangeIconDlg)
+	DDX_Control(pDX, IDC_EDT_FILE, m_edtFile);
 	DDX_Control(pDX, IDC_LST_ICONS, m_lstIcons);
 	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
 	DDV_MaxChars(pDX, m_edtFile_val, 79);
@@ -99,6 +100,8 @@ BOOL CChangeIconDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
   UpdateIconList();
+
+  VLPUtil::EnableAutoComplete(m_edtFile.GetSafeHwnd());
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE

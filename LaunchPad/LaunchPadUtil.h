@@ -82,13 +82,27 @@ namespace VLPUtil {
 
   // Shell helper functions
   void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);
-  CString GetRelativePath(LPCTSTR filePath, BOOL isPathOnly, LPCTSTR basePath);
-  CString GetAbsolutePath(LPCTSTR filePath, BOOL isPathOnly, LPCTSTR basePath);
+  CString GetRelativePath(LPCTSTR filePath, LPCTSTR basePath, BOOL isPathOnly = FALSE);
+  CString GetAbsolutePath(LPCTSTR filePath, LPCTSTR basePath, BOOL isPathOnly = FALSE);
   CString GetDirectory(LPCTSTR filePath);
+  BOOL IsDirectory(LPCTSTR pszPath);
+  HRESULT EnableAutoComplete(HWND hwndEdit);
 
   // Other shell helper functions
   BOOL isVLPFile(LPCTSTR fName);
   BOOL isMSDOSFile(LPCTSTR fName);
+
+  // COM helper class
+  // Keeps COM initialized during the lifetime of the object
+  class CComKeepAlive {
+    public:
+      CComKeepAlive(void) : m_hr(E_FAIL)
+        { m_hr = CoInitialize(NULL); }
+      ~CComKeepAlive(void)
+        { if (SUCCEEDED(m_hr)) CoUninitialize(); }
+    protected:
+      HRESULT m_hr;
+  };
 };
 
 #endif // __LAUNCHPADUTIL_H

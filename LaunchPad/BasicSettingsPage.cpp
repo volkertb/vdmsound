@@ -167,7 +167,7 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
       m_edtDoscmd.EnableWindow(FALSE);
       m_edtDoscmd.SetWindowText(tmpStr);
     } else {
-      CString tmpStr = VLPUtil::GetRelativePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
+      CString tmpStr = VLPUtil::GetRelativePath(progExec, progWDir, FALSE) + _T(" ") + progParams;
       tmpStr.TrimLeft(); tmpStr.TrimRight();
 
       m_edtDoscmd.EnableWindow(TRUE);
@@ -267,6 +267,8 @@ void CBasicSettingsPage::OnButChange()
   m_settings.GetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
 
   m_settings.GetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
+
+  dlgBrowse.m_edtFile_val = VLPUtil::GetAbsolutePath(dlgBrowse.m_edtFile_val, dlgBrowse.m_edtDir_val, FALSE);
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:
