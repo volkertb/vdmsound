@@ -30,6 +30,7 @@ extern CComModule _Module;
 #include <queue>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #include <mmsystem.h>
 #pragma comment ( lib , "winmm.lib" )
