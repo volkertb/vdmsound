@@ -8,6 +8,11 @@
 //
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include "LaunchPadSettings.h"
+#include "LaunchPadUtil.h"
+
+/////////////////////////////////////////////////////////////////////////////
 // CBasicSettingsPage dialog
 
 class CBasicSettingsPage : public CPropertyPage
@@ -16,17 +21,31 @@ class CBasicSettingsPage : public CPropertyPage
 
 // Construction
 private:
-	CBasicSettingsPage();
+	CBasicSettingsPage(const CStringArray& fileNames = CStringArray());
 	~CBasicSettingsPage();
 
 public:
   static HRESULT AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam, const CStringArray& fileNames);
 
+// Helper functions
+protected:
+  VOID SyncGUIData(BOOL isSetOp);
+
 // Dialog Data
 	//{{AFX_DATA(CBasicSettingsPage)
-	enum { IDD = IDD_PROPPAGE };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	enum { IDD = IDD_BASICPROPPAGE };
+	CIcon	m_icoApp;
+	CEdit	m_edtDoscmd;
+	CButton	m_chkEms;
+	CButton	m_chkVesa;
+	CButton	m_chkCdrom;
+	CButton	m_optGmidi;
+	CButton	m_optMt32;
+	CButton	m_optMidiother;
+	CButton	m_optJoy2but;
+	CButton	m_optJoy4but;
+	CButton	m_optJoyother;
+	CButton	m_chkClose;
 	//}}AFX_DATA
 
 
@@ -42,13 +61,15 @@ public:
 protected:
 	// Generated message map functions
 	//{{AFX_MSG(CBasicSettingsPage)
-		// NOTE: the ClassWizard will add member functions here
+	virtual BOOL OnInitDialog();
+	afx_msg void OnDestroy();
+	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 // Member variables
 protected:
-  CStringArray m_fileNames;
+  CLaunchPadSettings m_settings;
 };
 
 //{{AFX_INSERT_LOCATION}}
