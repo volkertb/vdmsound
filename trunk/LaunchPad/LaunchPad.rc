@@ -1,4 +1,4 @@
-//Microsoft Visual C++ generated resource script.
+//Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -12,11 +12,15 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-LANGUAGE 9, 1
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
+
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -41,6 +45,7 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
+
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -78,11 +83,19 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0409, 0x04B0
+        VALUE "Translation", 0x409, 1200
     END
 END
 
 #endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// REGISTRY
+//
+
+IDR_PROPERTYSHEETSHELLEX REGISTRY DISCARDABLE    "PropertySheetShellEx.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -91,13 +104,13 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-	IDS_PROJNAME					"LaunchPad"
+    IDS_PROJNAME            "LaunchPad"
 END
 
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
-#endif
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

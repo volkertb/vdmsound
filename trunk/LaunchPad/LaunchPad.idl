@@ -5,7 +5,6 @@
 // produce the type library (LaunchPad.tlb) and marshalling code.
 
 import "oaidl.idl";
-import "ocidl.idl";
 
 [
 	uuid(08E6E524-B9D0-4907-B803-504B46C07040),
@@ -17,4 +16,12 @@ library LAUNCHPADLib
 	importlib("stdole32.tlb");
 	importlib("stdole2.tlb");
 
+	[
+		uuid(2524BE3A-D262-4B1F-AE31-3127350B05A5),
+		helpstring("PropertySheetShellEx Class")
+	]
+	coclass PropertySheetShellEx
+	{
+		[default] interface IUnknown;
+	};
 };
