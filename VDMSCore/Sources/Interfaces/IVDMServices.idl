@@ -251,9 +251,9 @@ interface IVDMDMAServices : IUnknown
 {
 	typedef [ helpstring("DMA transfer status") ] struct
 	{
+		WORD page;
 		WORD addr;
 		WORD count;
-		WORD page;
 		BYTE status;
 		BYTE mode;
 		BYTE mask;
@@ -262,9 +262,9 @@ interface IVDMDMAServices : IUnknown
 	typedef [ helpstring("Different DMA transfer status indicators") ] enum
 	{
 		UPDATE_NONE   = 0,
-		UPDATE_ADDR   = 1 << 0,
-		UPDATE_COUNT  = 1 << 1,
-		UPDATE_PAGE   = 1 << 2,
+		UPDATE_PAGE   = 1 << 0,
+		UPDATE_ADDR   = 1 << 1,
+		UPDATE_COUNT  = 1 << 2,
 		UPDATE_STATUS = 1 << 3,
 		UPDATE_ALL    = UPDATE_ADDR | UPDATE_COUNT | UPDATE_PAGE | UPDATE_STATUS
 	} DMA_INFO_SEL_T;
@@ -275,22 +275,23 @@ interface IVDMDMAServices : IUnknown
 	*	DMA-related functions
 	******************************************************/
 
-	[ helpstring("Provides DMA data") ]
-	HRESULT QueryDMA(
+	[ helpstring("Gets the state of a DMA channel") ]
+	HRESULT GetDMAState(
 		[in] WORD channel,                      // Specifies the DMA channel to query
 		[out] DMA_INFO_T * DMAInfo );           // Specifies the buffer location where information will be returned
 
-	[ helpstring("Resets the state of the virtual DMA controller after a DMA operation that used QueryDMA") ]
-	HRESULT SetDMA(
+	[ helpstring("Modifies the state of a DMA channel") ]
+	HRESULT SetDMAState(
 		[in] WORD channel,                      // Specifies the DMA channel to set
 		[in] DMA_INFO_SEL_T flags,              // Provides bitmask indicating what must be set
 		[in] DMA_INFO_T * DMAInfo );            // Specifies the buffer location of the DMA data
 
-	[ helpstring("Requests a DMA transfer") ]
-	HRESULT RequestDMA(
+	[ helpstring("Performs a DMA transfer, automatically managing channel state") ]
+	HRESULT PerformDMATransfer(
 		[in] WORD channel,                      // Specifies the DMA channel for the transfer operation
 		[in, size_is(length)] BYTE buffer[],    // Points to the buffer to or from which the data is transferred
-		[in] DWORD length );                    // Specifies the size in bytes of the transfer count
+		[in] ULONG length,                      // Specifies the size in bytes of the transfer count
+		[out, retval] ULONG * transferred );    // Receives the actual number of bytes transferred
 };
 
 
