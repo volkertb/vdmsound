@@ -1,15 +1,16 @@
 Attribute VB_Name = "modConfig"
+Public iniFileName As String
+
 '
-' Loads the main .ini file and initializes the application accordingly
+' Loads categories from the main .ini file
 '
 Public Sub LoadCategories(fMainForm As frmMain)
-  Dim iniFileName As String
-  iniFileName = modIniFile.MakeIniPathStr(App.Path, "LaunchPad.ini")
-  modIniFile.EnsurePathExists iniFileName
-
   ' Get the number of categories that exist
   Dim numItems As Long
   numItems = Val(modIniFile.ReadIniString(iniFileName, "categories", "count"))
+
+  ' Empty the categories tree
+  fMainForm.tvTreeView.Nodes.Clear
 
   ' Create each category
   For i = 0 To numItems - 1
@@ -27,19 +28,59 @@ End Sub
 '  branch of categories.
 '
 Public Function LoadCategoryBranch(tvTree As TreeView, _
-  ByVal strFullPath As String) As Node
+  ByVal strNodeKey As String) As Node
 
+  ' Pick up the last separating '.' which splits the branch into
+  '  a parent-branch key and a child leaf-node key
   Dim splitPos As Long
-  splitPos = InStrRev(strFullPath, ".")
+  splitPos = InStrRev(strNodeKey, ".")
 
+  ' Recursevly create the parent-branch, then add the child leaf-node
   If splitPos > 0 Then
     Dim tvParentNode As Node
-    Set tvParentNode = LoadCategoryBranch(tvTree, Left$(strFullPath, splitPos - 1))
-    Set LoadCategoryBranch = AddNode(tvTree, tvParentNode, Mid$(strFullPath, splitPos + 1)) ' return
+    Set tvParentNode = LoadCategoryBranch(tvTree, Left$(strNodeKey, splitPos - 1))
+    Set LoadCategoryBranch = AddNode(tvTree, tvParentNode, Mid$(strNodeKey, splitPos + 1)) ' return, middle/leaf node
   Else
-    Set LoadCategoryBranch = AddNode(tvTree, Nothing, strFullPath)  ' return
+    Set LoadCategoryBranch = AddNode(tvTree, Nothing, strNodeKey)  ' return, root node
   End If
 End Function
+
+'
+' Loads list of applications for a given category from the main .ini file
+'
+Public Sub LoadApplications(fMainForm As frmMain, _
+  strNodeKey As String)
+
+  Dim strIniSection As String
+  strIniSection = "categories." & strNodeKey
+
+  ' Get the number of applications that exist
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strIniSection, "count"))
+
+  ' Empty the applications list
+  fMainForm.lvListView.ListItems.Clear
+
+  ' Create each application
+  For i = 0 To numItems - 1
+    Dim itemName As String
+    Dim itemValue As String
+    itemName = "item" & Format$(i)
+    itemValue = modIniFile.ReadIniString(iniFileName, strIniSection, itemName)
+
+    LoadApplicationPreview fMainForm.lvListView, strNodeKey, itemValue
+  Next
+End Sub
+
+'
+' Loads list of applications for a given category from the main .ini file
+'
+Public Sub LoadApplicationPreview(lvList As ListView, _
+  ByVal strNodeKey As String, _
+  ByVal strAppKey As String)
+
+  lvList.ListItems.Add , strNodeKey & "." & strAppKey, StrDecode(strAppKey)
+End Sub
 
 '
 ' Attempts to rename a category.  The category's key (as well as
@@ -48,25 +89,29 @@ End Function
 '  key/category name already exists), it returns a non-zero value.
 ' If the renaming is successful, it is mirrored in the configuration file.
 '
-Public Function RenameCategory(tvNode As Node, _
+Public Function RenameCategory(tvTree As TreeView, _
+  tvNode As Node, _
   ByVal strNewNodeText As String) As Integer
 
-  If RenameNode(tvNode, strNewNodeText) <> 0 Then
-    RenameCategory = 1  ' return
+  ' Attempt to rename the current node (assuming the new key is unique)
+  If RenameNode(tvTree, tvNode, strNewNodeText) <> 0 Then
+    RenameCategory = 1  ' return, duplicate key
   Else
     'TODO: rename category inside .ini file
 
+    ' If the renamed node has children then we  must recursively rebuild
+    '  all children's keys to take into account this node's new key
     If tvNode.Children > 0 Then
       Dim curNode As Node
       Set curNode = tvNode.Child
 
       Do Until curNode Is Nothing
-        RenameCategory curNode, curNode.Text
+        RenameCategory tvTree, curNode, curNode.Text
         Set curNode = curNode.Next
       Loop
     End If
 
-    RenameCategory = 0  ' return
+    RenameCategory = 0  ' return, the node was successfully renamed
   End If
 End Function
 
@@ -77,24 +122,30 @@ End Function
 '
 Private Function AddNode(tvTree As TreeView, _
   tvParentNode As Node, _
-  ByVal strNodeName As String) As Node
+  ByVal strPartialNodeKey As String) As Node
 
-  Dim strFullNodeName As String
-
-  On Error GoTo KeyExists
+  Dim strNodeKey As String
+  Dim tmpParent As Variant
 
   If tvParentNode Is Nothing Then
-    strFullNodeName = strNodeName
-    Set AddNode = tvTree.Nodes.Add(, , strFullNodeName, StrDecode(strNodeName), "Folder Closed", "Folder Open") ' return
+    ' Adding a node at the root
+    tmpParent = Null
+    strNodeKey = strPartialNodeKey
   Else
-    strFullNodeName = tvParentNode.Key & "." & strNodeName
-    Set AddNode = tvTree.Nodes.Add(tvParentNode.Key, tvwChild, strFullNodeName, StrDecode(strNodeName), "Folder Closed", "Folder Open") ' return
+    ' Adding a node under another node
+    tmpParent = tvParentNode
+    strNodeKey = tvParentNode.Key & "." & strPartialNodeKey
   End If
-  Exit Function
 
-KeyExists:
-  Set AddNode = tvTree.Nodes.Item(strFullNodeName)  ' return
+  ' Check if a node with this key already exists
+  Dim tmpChild As Variant
+  Set tmpChild = GetNode(tvTree, strNodeKey)
 
+  If tmpChild Is Nothing Then
+    Set AddNode = tvTree.Nodes.Add(tmpParent, tvwChild, strNodeKey, StrDecode(strPartialNodeKey), "Folder Closed", "Folder Open") ' return, new node created
+  Else
+    Set AddNode = tmpChild ' return, the existing node with the same key
+  End If
 End Function
 
 '
@@ -103,29 +154,51 @@ End Function
 '  function returns a non-zero value, otherwise the node is
 '  renamed and zero is returned.
 '
-Private Function RenameNode(tvNode As Node, _
+Private Function RenameNode(tvTree As TreeView, _
+  tvNode As Node, _
   ByVal strNewText As String) As Integer
 
-  On Error GoTo KeyExists
-  
+  Dim strNewNodeKey As String
+
   If tvNode.Parent Is Nothing Then
-    tvNode.Key = StrEncode(strNewText)
+    strNewNodeKey = StrEncode(strNewText)
   Else
-    tvNode.Key = tvNode.Parent.Key & "." & StrEncode(strNewText)
+    strNewNodeKey = tvNode.Parent.Key & "." & StrEncode(strNewText)
   End If
 
-  tvNode.Text = strNewText
+  Dim dupeNode As Node
+  Set dupeNode = GetNode(tvTree, strNewNodeKey)
 
-  RenameNode = 0  ' return
-  Exit Function
-
-KeyExists:
-  RenameNode = 1  ' return
-
+  ' Only rename node if another with the same name does *not* exist,
+  '  or if attempting to change the case of the same node's spelling
+  If (dupeNode Is Nothing) Or (dupeNode Is tvNode) Then
+    tvNode.Text = strNewText
+    tvNode.Key = strNewNodeKey
+    RenameNode = 0  ' return
+  Else
+    RenameNode = 1  ' return
+  End If
 End Function
 
 '
-' Encodes all non-ANSI non-alphanumeric characters using the
+' Looks up a node by its key (case insensitive)
+'
+Private Function GetNode(tvTree As TreeView, _
+  ByVal strNodeKey As String) As Node
+
+  strNodeKey = LCase(strNodeKey)
+
+  ' Go through all nodes
+  For i = 1 To tvTree.Nodes.Count
+    If LCase(tvTree.Nodes.Item(i).Key) = strNodeKey Then
+      Set GetNode = tvTree.Nodes.Item(i)  ' return
+      Exit Function
+    End If
+  Next
+End Function
+
+'
+' Encodes all non-ANSI, non-alphanumeric characters using the
 '  form '%xxxx', where 'xxxx' is the hexa-decimal representation
 '  of the encoded character(s)
 '
