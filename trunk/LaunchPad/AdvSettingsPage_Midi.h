@@ -50,7 +50,7 @@ public:
 	//{{AFX_DATA(CAdvSettingsPage_Midi)
 	enum { IDD = IDD_ADVPROPPAGE_MIDI };
 	CButton	m_butMpuoutfilebrowse;
-	CEdit	m_edtMpuoutfile;
+	CDDEdit	m_edtMpuoutfile;
 	CComboBox	m_cmbMpuindev;
 	CButton	m_chkMpuoutfile;
 	CButton	m_chkMpuindev;

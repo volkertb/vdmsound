@@ -42,9 +42,9 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Program)
 	enum { IDD = IDD_ADVPROPPAGE_PROGRAM };
-	CEdit	m_edtDosprogram;
-	CEdit	m_edtDosdir;
-	CEdit	m_edtDosargs;
+	CDDEdit	m_edtDosprogram;
+	CDDEdit	m_edtDosdir;
+	CDDEdit	m_edtDosargs;
 	CButton	m_chkWinkprtsc;
 	CButton	m_chkWinkctrlesc;
 	CButton	m_chkWinkalttab;

@@ -57,6 +57,7 @@ public:
 // Member variables
 protected:
   CContextHelp m_help;
+  COleDropTarget m_dropTarget;
 
   // Must be declared (constructed) after m_wizard*
   CWizardPage_Intro     m_p1;
@@ -82,7 +83,7 @@ public:
 	// Generated message map functions
 protected:
 	//{{AFX_MSG(CWizardSheet)
-		// NOTE - the ClassWizard will add and remove member functions here.
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

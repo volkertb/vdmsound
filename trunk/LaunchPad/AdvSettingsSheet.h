@@ -42,6 +42,19 @@ protected:
 // Member variables
 protected:
   CContextHelp m_help;
+//COleDropTarget m_dropTarget;
+class CBLA : public COleDropTarget  {
+DROPEFFECT OnDragEnter(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point) {
+return DROPEFFECT_COPY;
+}
+DROPEFFECT OnDragOver(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point) {
+return DROPEFFECT_COPY;
+}
+BOOL OnDrop(CWnd* pWnd, COleDataObject* pDataObject, DROPEFFECT dropEffect, CPoint point) {
+pWnd->SetWindowText(_T("BLAAAAA"));
+return FALSE;
+}
+} m_dropTarget;
 
   // Must be declared (constructed) before m_p*
   CLaunchPadSettings& m_settingsOriginal; // reference to original settings
@@ -79,6 +92,7 @@ public:
 protected:
 	//{{AFX_MSG(CAdvSettingsSheet)
 	afx_msg LRESULT OnSaveSettings(WPARAM wParam, LPARAM lParam);
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -46,7 +46,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Adlib)
 	enum { IDD = IDD_ADVPROPPAGE_ADLIB };
-	CEdit	m_edtFmoutfile;
+	CDDEdit	m_edtFmoutfile;
 	CButton	m_chkFmoutfile;
 	CSpinButtonCtrl	m_spnFmoutdevbuf;
 	CComboBox	m_cmbOplmode;

@@ -40,8 +40,8 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Dosenv)
 	enum { IDD = IDD_ADVPROPPAGE_DOSENV };
-	CEdit	m_edtConfigsys;
-	CEdit	m_edtAutoexecbat;
+	CDDEdit	m_edtConfigsys;
+	CDDEdit	m_edtAutoexecbat;
 	CButton	m_chkHimemsys;
 	CButton	m_chkDosumb;
 	CButton	m_chkConfigsys;

@@ -26,6 +26,7 @@
 #define _ATL_APARTMENT_THREADED
 
 #include <afxwin.h>
+#include <afxole.h>
 #include <afxdisp.h>
 
 #include <atlbase.h>
