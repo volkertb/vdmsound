@@ -1,0 +1,16 @@
+Table	Column	Nullable	MinValue	MaxValue	KeyTable	KeyColumn	Category	Set	Description
+s32	s32	s4	I4	I4	S255	I2	S32	S255	S255
+_Validation	Table	Column
+Environment	Component_	N			Component	1	Identifier		
+Environment	Environment	N					Identifier		
+Environment	Name	N					Text		
+Environment	Value	Y					Formatted		
+Icon	Data	N					Binary		
+Icon	Name	N					Identifier		
+Upgrade	ActionProperty	N					UpperCase		
+Upgrade	Attributes	N	0	2147483647					
+Upgrade	Language	Y					Language		
+Upgrade	Remove	Y					Formatted		
+Upgrade	UpgradeCode	N					Guid		
+Upgrade	VersionMax	Y					Text		
+Upgrade	VersionMin	Y					Text		
