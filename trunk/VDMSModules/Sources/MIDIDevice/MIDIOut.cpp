@@ -114,7 +114,7 @@ STDMETHODIMP CMIDIOut::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMIDIOut::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  HRESULT hrThis = S_OK, hrThat;
+  HRESULT hrThis = S_OK, hrThat = S_OK;
 
   if ((m_hMidiOut == NULL) && (!MidiOutOpen())) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
@@ -142,7 +142,7 @@ STDMETHODIMP CMIDIOut::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length) {
   if (data == NULL)
     return E_POINTER;
 
-  HRESULT hrThis = S_OK, hrThat;
+  HRESULT hrThis = S_OK, hrThat = S_OK;
 
   if ((m_hMidiOut == NULL) && (!MidiOutOpen())) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed

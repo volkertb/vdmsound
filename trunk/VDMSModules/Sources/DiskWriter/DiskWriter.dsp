@@ -46,8 +46,8 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ  /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ    /c
+# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -83,8 +83,8 @@ SOURCE="$(InputPath)"
 # PROP Intermediate_Dir "DebugU"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ    /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ  /c
+# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces" /I "$(VDMSPath)/Sources/MFCUtil" /I "$(VDMSPath)/Sources/VDMUtil" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces" /I "$(VDMSPath)/Sources/Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -305,10 +305,6 @@ SOURCE=.\WaveOut.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\DiskWriter.rc
-# End Source File
-# Begin Source File
-
 SOURCE=.\StdAfx.h
 # End Source File
 # Begin Source File
@@ -319,6 +315,10 @@ SOURCE=.\WaveOut.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\DiskWriter.rc
+# End Source File
 # Begin Source File
 
 SOURCE=.\Resource.h
