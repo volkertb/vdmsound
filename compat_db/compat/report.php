@@ -33,8 +33,8 @@
   if ($action == 'new') {
     $reportid = NULL;
 
-    if (isset($title, $distrib, $version, $os, $emu, $csb, $cadlib, $cmidi, $cjoystick, $comment)) {
-      if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $csb, $cadlib, $cmidi, $cjoystick, $comment, /*false*/true)) {
+    if (isset($title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment)) {
+      if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, /*false*/true)) {
         $style = 'success';
         $text  = 'Your report has been added to the database';
 
@@ -57,8 +57,8 @@
       }
     }
   } else if ($action == 'edit') {
-    if (isset($reportid, $title, $distrib, $version, $os, $emu, $csb, $cadlib, $cmidi, $cjoystick, $comment)) {
-      if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $csb, $cadlib, $cmidi, $cjoystick, $comment, /*false*/true)) {
+    if (isset($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment)) {
+      if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, /*false*/true)) {
         $style = 'success';
         $text  = 'Your report has been updated';
       } else {
@@ -74,9 +74,9 @@
       if (isset($reportid)) {
         $myReports = AppsGetReports($reportid, NULL, NULL, true,
                                     APPS_GET_COMMENT | APPS_GET_AS_TEXT,
-                                    APPS_GET_TITLE | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT   | APPS_GET_AS_ID,
-                                    APPS_GET_OSVER | APPS_GET_EMUVER  | APPS_GET_AS_ID,
-                                    APPS_GET_CMIDI | APPS_GET_CSB     | APPS_GET_CADLIB  | APPS_GET_CJOYSTICK | APPS_GET_AS_ID,
+                                    APPS_GET_TITLE   | APPS_GET_APPVER  | APPS_GET_DISTRIB | APPS_GET_AS_TEXT   | APPS_GET_AS_ID,
+                                    APPS_GET_OSVER   | APPS_GET_EMUVER  | APPS_GET_AS_ID,
+                                    APPS_GET_COMPAT  | APPS_GET_AS_ID,
                                     NULL, false);
 
         if ($myReports && (count($myReports) > 0)) {
@@ -85,10 +85,20 @@
           $version   = $myReports[0]['appver_text'];
           $os        = $myReports[0]['osver_id'];
           $emu       = $myReports[0]['emuver_id'];
+
+          $cvideo    = $myReports[0]['cvideo_id'];
+          $ckeyboard = $myReports[0]['ckeyboard_id'];
+          $cmouse    = $myReports[0]['cmouse_id'];
+          $cjoystick = $myReports[0]['cjoystick_id'];
+          $cspeaker  = $myReports[0]['cspeaker_id'];
           $csb       = $myReports[0]['csb_id'];
           $cadlib    = $myReports[0]['cadlib_id'];
           $cmidi     = $myReports[0]['cmidi_id'];
-          $cjoystick = $myReports[0]['cjoystick_id'];
+          $cgus      = $myReports[0]['cgus_id'];
+          $cdisk     = $myReports[0]['cdisk_id'];
+          $cio       = $myReports[0]['cio_id'];
+          $ctimer    = $myReports[0]['ctimer_id'];
+
           $comment   = $myReports[0]['comment_text'];
         }
       } else {
@@ -152,6 +162,21 @@
 
     echo('<tr><td colspan="2" align="center" style="font: italic bold 125% serif; padding-top: 10px">Test results</td></tr>');
 
+    echo('<tr><td align="right">Video:</td><td align="left"><select class="flat1" name="cvideo">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cvideo);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Keyboard:</td><td align="left"><select class="flat1" name="ckeyboard">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $ckeyboard);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Mouse:</td><td align="left"><select class="flat1" name="cmouse">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cmouse);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Joystick:</td><td align="left"><select class="flat1" name="cjoystick">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cjoystick);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">PC Speaker:</td><td align="left"><select class="flat1" name="cspeaker">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cspeaker);
+    echo('</select></td></tr>');
     echo('<tr><td align="right">SoundBlaster:</td><td align="left"><select class="flat1" name="csb">');
     HtmlSendOptions($compatTypes, 'id', 'description', $csb);
     echo('</select></td></tr>');
@@ -161,8 +186,17 @@
     echo('<tr><td align="right">MPU401 / MIDI:</td><td align="left"><select class="flat1" name="cmidi">');
     HtmlSendOptions($compatTypes, 'id', 'description', $cmidi);
     echo('</select></td></tr>');
-    echo('<tr><td align="right">Joystick:</td><td align="left"><select class="flat1" name="cjoystick">');
-    HtmlSendOptions($compatTypes, 'id', 'description', $cjoystick);
+    echo('<tr><td align="right">Gravis UltraSound:</td><td align="left"><select class="flat1" name="cgus">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cgus);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Disk:</td><td align="left"><select class="flat1" name="cdisk">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cdisk);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Parallel / Serial:</td><td align="left"><select class="flat1" name="cio">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $cio);
+    echo('</select></td></tr>');
+    echo('<tr><td align="right">Timer:</td><td align="left"><select class="flat1" name="ctimer">');
+    HtmlSendOptions($compatTypes, 'id', 'description', $ctimer);
     echo('</select></td></tr>');
 
     echo('<tr><td align="right">Additional comments:</td><td align="left"><textarea class="flat1" name="comment" rows="5" cols="40">' . htmlentities($comment) . '</textarea>');
@@ -187,9 +221,8 @@
     echo('<p align="center"><b>' . $myReports[0]['title_text'] . ' ' . $myReports[0]['version_text'] . ' (' . $myReports[0]['distrib_text'] . ')</b>, tested under <b>' . $myReports[0]['osver_text'] . '</b> using <b>' . $myReports[0]['emuver_text'] . '</b></p>');
 
     echo('<h2 class="normal">Do you want to proceed?</h2>');
-    echo('<p align="center">');
-    echo('<form method="get" action="' . $SCRIPT_NAME . '"><input type="hidden" name="action" value="delete"><input type="hidden" name="reportid" value="' . $reportid . '"><input type="hidden" name="confirm" value="yes"><input type="submit" class="flat2" value="Yes"></form>');
-    echo('<form method="get" action="' . $SCRIPT_NAME . '"><input type="hidden" name="action" value="edit"><input type="hidden" name="reportid" value="' . $reportid . '"><input type="submit" class="flat2" value="No"></form>');
+    echo('<form method="get" action="' . $SCRIPT_NAME . '"><p align="center"><input type="hidden" name="action" value="delete"><input type="hidden" name="reportid" value="' . $reportid . '"><input type="hidden" name="confirm" value="yes"><input type="submit" class="flat2" value="Yes"></p></form>');
+    echo('<form method="get" action="' . $SCRIPT_NAME . '"><p align="center"><input type="hidden" name="action" value="edit"><input type="hidden" name="reportid" value="' . $reportid . '"><input type="submit" class="flat2" value="No"></p></form>');
     echo('</p>');
   } else if ($gui == 3) {
     echo('<h2 class="normal">' . $text . '</h2>');

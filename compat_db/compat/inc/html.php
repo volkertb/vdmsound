@@ -212,6 +212,9 @@
   function HtmlSendUserMenu($loggedIn) {
     global $SCRIPT_NAME;
 
+    if ($loggedIn)
+      echo(HtmlMakeLink('Submit report', 'report.php', Array('action' => 'new')) . '&nbsp;< ');
+
     if ((strstr($SCRIPT_NAME, 'index.php') == ''))
       echo(HtmlMakeLink('Main', 'index.php') . '&nbsp;| ');
 
@@ -300,6 +303,14 @@
     echo('</table>');
   }
 
+  function __HtmlSendChecklistItem($label, $name, $reportItem) {
+    $caps = $reportItem['emucaps_text'];
+
+    if ((strlen($caps) == 0) || (stristr($caps, $name)) || ($reportItem['c' . $name . '_id'] > 30)) {
+      echo('<tr valign="middle"><td nowrap align="right">' . $label . ':</td><td>' . HtmlMakeImage($reportItem['c' . $name . '_icon'], '', 0, 2, 0) . '</td><td nowrap align="left">' . $reportItem['c' . $name . '_text'] . '</td></tr>');
+    }
+  }
+
   function HtmlSendReportList($reportList, $loggedIn, $briefFmt=true, $footer = NULL) {
     echo('<table border="0" cellspacing="0" cellpadding="5" width="100%">');
 
@@ -325,7 +336,7 @@
         echo('</td><td class="opaque1_bevel" align="right"><div class="compact">');
         echo(HtmlMakeLink('View', 'list.php', Array('reportid' => $reportItem['report_id'])));
 
-        if ($loggedIn) {
+        if ($loggedIn && ($reportItem['user_id'] == AuthGetUserId())) {
           echo('<br>' . HtmlMakeLink('Edit', 'report.php', Array('action' => 'edit', 'reportid' => $reportItem['report_id'])));
           echo('<br>' . HtmlMakeLink('Delete', 'report.php', Array('action' => 'delete', 'reportid' => $reportItem['report_id'])));
         }
@@ -354,16 +365,32 @@
         echo('<tr class="opaque2"><td colspan="3" class="opaque2_bevel">');
         echo('<div class="compact">' . date('D M j Y', strtotime($reportItem['updated'])) . ' &nbsp; (contributed by <i>' . $reportItem['user_text'] . '</i>)<br>');
         echo(HtmlMakeImage($reportItem['emuver_icon'], $reportItem['emuver_text'], 0, 0, 0, "right") . HtmlMakeImage($reportItem['osver_icon'], $reportItem['osver_text'], 0, 5, 0, "right"));
+
+        if ($loggedIn && ($reportItem['user_id'] == AuthGetUserId())) {
+          echo('<div style="float: right">');
+          echo(HtmlMakeLink('Edit', 'report.php', Array('action' => 'edit', 'reportid' => $reportItem['report_id'])) . '&nbsp;| ');
+          echo(HtmlMakeLink('Delete', 'report.php', Array('action' => 'delete', 'reportid' => $reportItem['report_id'])) . '&nbsp;| ');
+          echo('</div>');
+        }
+
         echo('Tested under <b>' . $reportItem['osver_text'] . '</b> using <b>' . $reportItem['emuver_text'] . '</b></div>');
         echo('</td></tr>');
 
         echo('<tr class="opaque1" valign="top"><td style="padding-left: 15px"><table border="0" cellspacing="0" cellpadding="2" class="compact">');
 
         echo('<tr><td style="padding-bottom: 10px" colspan="3"><b>Compatibility checklist:</b></td></tr>');
-        echo('<tr valign="middle"><td nowrap align="right">SoundBlaster:</td><td>' .  HtmlMakeImage($reportItem['csb_icon'], '', 0, 2, 0) .       '</td><td nowrap align="left">' . $reportItem['csb_text'] . '</td></tr>');
-        echo('<tr valign="middle"><td nowrap align="right">FM / AdLib:</td><td>' .    HtmlMakeImage($reportItem['cadlib_icon'], '', 0, 2, 0) .    '</td><td nowrap align="left">' . $reportItem['cadlib_text'] . '</td></tr>');
-        echo('<tr valign="middle"><td nowrap align="right">MPU401 / MIDI:</td><td>' . HtmlMakeImage($reportItem['cmidi_icon'], '', 0, 2, 0) .     '</td><td nowrap align="left">' . $reportItem['cmidi_text'] . '</td></tr>');
-        echo('<tr valign="middle"><td nowrap align="right">Joystick:</td><td>' .      HtmlMakeImage($reportItem['cjoystick_icon'], '', 0, 2, 0) . '</td><td nowrap align="left">' . $reportItem['cjoystick_text'] . '</td></tr>');
+        __HtmlSendChecklistItem('Video',             'video',    $reportItem);
+        __HtmlSendChecklistItem('Keyboard',          'keyboard', $reportItem);
+        __HtmlSendChecklistItem('Mouse',             'mouse',    $reportItem);
+        __HtmlSendChecklistItem('Joystick',          'joystick', $reportItem);
+        __HtmlSendChecklistItem('PC Speaker',        'speaker',  $reportItem);
+        __HtmlSendChecklistItem('SoundBlaster',      'sb',       $reportItem);
+        __HtmlSendChecklistItem('FM / AdLib',        'adlib',    $reportItem);
+        __HtmlSendChecklistItem('MPU401 / MIDI',     'midi',     $reportItem);
+        __HtmlSendChecklistItem('Gravis UltraSound', 'gus',      $reportItem);
+        __HtmlSendChecklistItem('Disk',              'disk',     $reportItem);
+        __HtmlSendChecklistItem('Parallel / Serial', 'io',       $reportItem);
+        __HtmlSendChecklistItem('Timer',             'timer',    $reportItem);
         echo('</table></td><td width="20" class="opaque1_tearoff_v">&nbsp;</td><td width="100%"><table border="0" cellspacing="0" cellpadding="2" class="compact">');
 
         echo('<tr><td style="padding-bottom: 10px"><b>User comments:</b></td></tr>');
