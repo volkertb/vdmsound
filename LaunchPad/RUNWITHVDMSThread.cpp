@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "launchpad.h"
+#include "resource.h"
 #include "RUNWITHVDMSThread.h"
 
 #include "PIFFile.h"
@@ -149,7 +149,7 @@ BOOL CDOSEnv::AppendEnvBlockEntry(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR fileName) : CWinThread(), m_settings(fileName)
+CRUNWITHVDMSThread::CRUNWITHVDMSThread(LPCTSTR fileName) : CWinThread(), m_fileName(fileName), m_settings(fileName)
 {
   m_bAutoDelete = TRUE;     // let the thread manage its own life cycle
 }
@@ -239,47 +239,76 @@ int CRUNWITHVDMSThread::Run(void) {
 BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   CString vdmsini;
 
-  CString vdms_debug_detail         = SettingGetString(_T("vdms.debug"),    _T("detail"),       _T("256"));
-  CString vdms_debug_file           = SettingGetString(_T("vdms.debug"),    _T("file"),         _T(".\\VDMS.LOG"));
+  const CString str_identity_map = VLPUtil::GetVDMSFilePath(_T("identity.map"));
+
+  const int log_none     = 256;
+  const int log_errors   = 192;
+  const int log_warnings = 128;
+  const int log_all      =   0;
+
+  BOOL    vdms_debug_logenabled     = SettingGetBool  (_T("vdms.debug"),    _T("logEnabled"),   FALSE);
+  LONG    vdms_debug_logdetail      = SettingGetLong  (_T("vdms.debug"),    _T("logDetail"),    log_all);
+  CString vdms_debug_logfile        = SettingGetString(_T("vdms.debug"),    _T("logFile"),      _T(".\\VDMS.LOG"));
+  BOOL    vdms_debug_logmidi        = SettingGetBool  (_T("vdms.debug"),    _T("logMidi"),      TRUE);
+  BOOL    vdms_debug_logadlib       = SettingGetBool  (_T("vdms.debug"),    _T("logAdLib"),     TRUE);
+  BOOL    vdms_debug_logsblaster    = SettingGetBool  (_T("vdms.debug"),    _T("logSBlaster"),  TRUE);
+  BOOL    vdms_debug_logjoystick    = SettingGetBool  (_T("vdms.debug"),    _T("logJoystick"),  TRUE);
+  BOOL    vdms_debug_logother       = SettingGetBool  (_T("vdms.debug"),    _T("logOther"),     TRUE);
+  BOOL    vdms_debug_usecustomcfg   = SettingGetBool  (_T("vdms.debug"),    _T("useCustomCfg"), TRUE);
+  CString vdms_debug_customcfg      = SettingGetString(_T("vdms.debug"),    _T("customCfg"),    _T(""));
 
   BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"),     _T("enabled"),      TRUE);
-  CString vdms_midi_port            = SettingGetString(_T("vdms.midi"),     _T("port"),         _T("0x330"));
-  CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"),     _T("IRQ"),          _T("2"));
-  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"),     _T("mapFile"),      VLPUtil::GetVDMSFilePath(_T("identity.map")));
-  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"),     _T("deviceID"),     _T("-1"));
-  CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"),     _T("showSysExLed"), _T("Scroll"));
+  LONG    vdms_midi_port            = SettingGetLong  (_T("vdms.midi"),     _T("port"),         0x330);
+  LONG    vdms_midi_IRQ             = SettingGetLong  (_T("vdms.midi"),     _T("IRQ"),          2);
+  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"),     _T("mapFile"),      str_identity_map);
+  BOOL    vdms_midi_useDevOut       = SettingGetBool  (_T("vdms.midi"),     _T("useDevOut"),    TRUE);
+  LONG    vdms_midi_devOutType      = SettingGetLong  (_T("vdms.midi"),     _T("devOutType"),   (LONG)DeviceUtil::DEV_MIDI);
+  LONG    vdms_midi_devOutID        = SettingGetLong  (_T("vdms.midi"),     _T("devOutID"),     -1);
+  BOOL    vdms_midi_useSysExLed     = SettingGetBool  (_T("vdms.midi"),     _T("useSysExLed"),  TRUE);
+  CString vdms_midi_sysExLed        = SettingGetString(_T("vdms.midi"),     _T("sysExLed"),     _T("scroll"));
 
-  CString vdms_dmac_minDMAPeriod    = SettingGetString(_T("vdms.dmac"),     _T("minDMAPeriod"), _T("5"));
-  CString vdms_dmac_maxDMAPeriod    = SettingGetString(_T("vdms.dmac"),     _T("maxDMAPeriod"), _T("15"));
+  LONG    vdms_dmac_minDMAPeriod    = SettingGetLong  (_T("vdms.dmac"),     _T("minDMAPeriod"), 5);
+  LONG    vdms_dmac_maxDMAPeriod    = SettingGetLong  (_T("vdms.dmac"),     _T("maxDMAPeriod"), 15);
 
   BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"),   _T("enabled"),      TRUE);
-  CString vdms_sb_dsp_port          = SettingGetString(_T("vdms.sb.dsp"),   _T("port"),         _T("0x220"));
-  CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"),   _T("IRQ"),          _T("7"));
-  CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA8"),         _T("1"));
-  CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA16"),        _T("5"));
+  LONG    vdms_sb_dsp_port          = SettingGetLong  (_T("vdms.sb.dsp"),   _T("port"),         0x220);
+  LONG    vdms_sb_dsp_IRQ           = SettingGetLong  (_T("vdms.sb.dsp"),   _T("IRQ"),          7);
+  LONG    vdms_sb_dsp_DMA8          = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA8"),         1);
+  LONG    vdms_sb_dsp_DMA16         = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA16"),        5);
   CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.05 (SoundBlaster 16)"));
-  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"),   _T("deviceID"),     _T("-1"));
-  CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"),   _T("buffer"),       _T("75"));
+  BOOL    vdms_sb_dsp_useDevOut     = SettingGetLong  (_T("vdms.sb.dsp"),   _T("useDevOut"),    TRUE);
+  LONG    vdms_sb_dsp_devOutType    = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
+  LONG    vdms_sb_dsp_devOutID      = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutID"),     -1);
+  LONG    vdms_sb_dsp_buffer        = SettingGetLong  (_T("vdms.sb.dsp"),   _T("buffer"),       75);
 
   BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"),    _T("enabled"),      TRUE);
-  CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"),    _T("port"),         _T("0x388"));
-  CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"),    _T("sampleRate"),   _T("11025"));
-  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"),    _T("deviceID"),     _T("-1"));
-  CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"),    _T("buffer"),       _T("75"));
+  LONG    vdms_sb_fm_port           = SettingGetLong  (_T("vdms.sb.fm"),    _T("port"),         0x388);
+  LONG    vdms_sb_fm_sampleRate     = SettingGetLong  (_T("vdms.sb.fm"),    _T("sampleRate"),   11025);
+  BOOL    vdms_sb_fm_useDevOut      = SettingGetLong  (_T("vdms.sb.fm"),    _T("useDevOut"),    TRUE);
+  LONG    vdms_sb_fm_devOutType     = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
+  LONG    vdms_sb_fm_devOutID       = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutID"),     -1);
+  LONG    vdms_sb_fm_buffer         = SettingGetLong  (_T("vdms.sb.fm"),    _T("buffer"),       75);
 
   BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"),      TRUE);
-  CString vdms_gameport_port        = SettingGetString(_T("vdms.gameport"), _T("port"),         _T("0x201"));
-  CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"),     _T("5"));
-  CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"),     _T("250"));
-  CString vdms_gameport_pollPeriod  = SettingGetString(_T("vdms.gameport"), _T("pollPeriod"),   _T("125"));
+  LONG    vdms_gameport_port        = SettingGetLong  (_T("vdms.gameport"), _T("port"),         0x201);
+  LONG    vdms_gameport_minCoord    = SettingGetLong  (_T("vdms.gameport"), _T("minCoord"),     5);
+  LONG    vdms_gameport_maxCoord    = SettingGetLong  (_T("vdms.gameport"), _T("maxCoord"),     250);
+  LONG    vdms_gameport_pollPeriod  = SettingGetLong  (_T("vdms.gameport"), _T("pollPeriod"),   125);
   CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"),      VLPUtil::GetVDMSFilePath(_T("joy2.map")));
+
+  //
+  // Custom configuration
+  //
+  if (vdms_debug_usecustomcfg) {
+    vdmsini += vdms_debug_customcfg + _T("\n");   // begin with the custom configuration so that it is easy to map line numbers in case of an error, i.e. "line 1 in VDMS.INI" is line 1 in the customCfg blob
+  }
 
   //
   // Basic settings
   //
   vdmsini += _T("[*.debug]\n");
-  vdmsini += _T("detail=") + vdms_debug_detail + _T("\n");
-  vdmsini += _T("file=") + vdms_debug_file + _T("\n");
+  vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logother) ? vdms_debug_logdetail : log_none) + _T("\n");
+  vdmsini += _T("file=") + vdms_debug_logfile + _T("\n");
 
   vdmsini += _T("[VDMServicesProvider]\n");
   vdmsini += _T("CLSID=VDDLoader.VDMServices\n");
@@ -290,37 +319,48 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   if (vdms_midi_enabled) {
     vdmsini += _T("[MPU401Controller]\n");
     vdmsini += _T("CLSID=EmuMPU401.MPU401Ctl\n");
+    vdmsini += _T("[MPU401Controller.debug]\n");
+    vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
     vdmsini += _T("[MPU401Controller.config]\n");
-    vdmsini += _T("port=") + vdms_midi_port + _T("\n");
-    vdmsini += _T("IRQ=") + vdms_midi_IRQ + _T("\n");
+    vdmsini += _T("port=") + VLPUtil::FormatString(_T("0x%x"), vdms_midi_port) + _T("\n");
+    vdmsini += _T("IRQ=") + VLPUtil::FormatString(_T("%d"), vdms_midi_IRQ) + _T("\n");
     vdmsini += _T("[MPU401Controller.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
-    vdmsini += _T("MidiOut=MIDIMapper\n");
 
-    // TODO: no mapper if using identity.map?
+    if (vdms_midi_mapFile.CompareNoCase(str_identity_map) != 0) {
+      vdmsini += _T("MidiOut=MIDIMapper\n");
 
-    vdmsini += _T("[MIDIMapper]\n");
-    vdmsini += _T("CLSID=MIDIToolkit.MIDIMapper\n");
-    vdmsini += _T("[MIDIMapper.config]\n");
-    vdmsini += _T("mapFile=") + vdms_midi_mapFile + _T("\n");
-    vdmsini += _T("[MIDIMapper.depends]\n");
-    vdmsini += _T("MidiOut=MIDIPlayer\n");
+      vdmsini += _T("[MIDIMapper]\n");
+      vdmsini += _T("CLSID=MIDIToolkit.MIDIMapper\n");
+      vdmsini += _T("[MIDIMapper.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[MIDIMapper.config]\n");
+      vdmsini += _T("mapFile=") + vdms_midi_mapFile + _T("\n");
+      vdmsini += _T("[MIDIMapper.depends]\n");
+    }
 
-    // TODO: no MIDIPlayer if useDevice=no
+    if (vdms_midi_useDevOut) {
+      vdmsini += _T("MidiOut=MIDIPlayer\n");
 
-    vdmsini += _T("[MIDIPlayer]\n");
-    vdmsini += _T("CLSID=MIDIDevice.MIDIOut\n");
-    vdmsini += _T("[MIDIPlayer.config]\n");
-    vdmsini += _T("device=") + vdms_midi_device + _T("\n");
-    vdmsini += _T("[MIDIPlayer.depends]\n");
-    vdmsini += _T("MidiOut=SysExIndicator\n");
+      vdmsini += _T("[MIDIPlayer]\n");
+      vdmsini += _T("CLSID=") + GetDeviceID((DeviceUtil::DeviceType)vdms_midi_devOutType) + _T(".MIDIOut\n");
+      vdmsini += _T("[MIDIPlayer.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[MIDIPlayer.config]\n");
+      vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_midi_devOutID) + _T("\n");
+      vdmsini += _T("[MIDIPlayer.depends]\n");
+    }
 
-    // TODO: no SysExIndicator if showSysExLed=no
+    if (vdms_midi_useSysExLed) {
+      vdmsini += _T("MidiOut=SysExIndicator\n");
 
-    vdmsini += _T("[SysExIndicator]\n");
-    vdmsini += _T("CLSID=MIDIIndicator.ActivityLights\n");
-    vdmsini += _T("[SysExIndicator.config]\n");
-    vdmsini += _T("led=") + vdms_midi_showSysExLed + _T("\n");
+      vdmsini += _T("[SysExIndicator]\n");
+      vdmsini += _T("CLSID=MIDIIndicator.ActivityLights\n");
+      vdmsini += _T("[SysExIndicator.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[SysExIndicator.config]\n");
+      vdmsini += _T("led=") + vdms_midi_sysExLed + _T("\n");
+    }
   }
 
   //
@@ -329,36 +369,43 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   if (vdms_sb_dsp_enabled) {
     vdmsini += _T("[DMATransferManager]\n");
     vdmsini += _T("CLSID=DMAController.TransferMgr\n");
+    vdmsini += _T("[DMATransferManager.debug]\n");
+    vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
     vdmsini += _T("[DMATransferManager.config]\n");
-    vdmsini += _T("minDMAPeriod=") + vdms_dmac_minDMAPeriod + _T("\n");
-    vdmsini += _T("maxDMAPeriod=") + vdms_dmac_maxDMAPeriod + _T("\n");
+    vdmsini += _T("minDMAPeriod=") + VLPUtil::FormatString(_T("%d"), vdms_dmac_minDMAPeriod) + _T("\n");
+    vdmsini += _T("maxDMAPeriod=") + VLPUtil::FormatString(_T("%d"), vdms_dmac_maxDMAPeriod) + _T("\n");
     vdmsini += _T("[DMATransferManager.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
 
     vdmsini += _T("[SBController]\n");
     vdmsini += _T("CLSID=EmuSBCompat.SBCompatCtl\n");
+    vdmsini += _T("[SBController.debug]\n");
+    vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
     vdmsini += _T("[SBController.config]\n");
     vdmsini += _T("version=") + vdms_sb_dsp_version + _T("\n");
-    vdmsini += _T("port=") + vdms_sb_dsp_port + _T("\n");
-    vdmsini += _T("IRQ=") + vdms_sb_dsp_IRQ + _T("\n");
-    vdmsini += _T("DMA8=") + vdms_sb_dsp_DMA8 + _T("\n");
-    vdmsini += _T("DMA16=") + vdms_sb_dsp_DMA16 + _T("\n");
+    vdmsini += _T("port=") + VLPUtil::FormatString(_T("0x%x"), vdms_sb_dsp_port) + _T("\n");
+    vdmsini += _T("IRQ=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_IRQ) + _T("\n");
+    vdmsini += _T("DMA8=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_DMA8) + _T("\n");
+    vdmsini += _T("DMA16=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_DMA16) + _T("\n");
     vdmsini += _T("[SBController.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
     vdmsini += _T("DMACtl=DMATransferManager\n");
-    vdmsini += _T("WaveOut=SBWavePlayer\n");
 
     if (vdms_sb_fm_enabled) {
       vdmsini += _T("AdLib=AdLibController\n");
     }
 
-    // TODO: no SBWavePlayer if useDevice=no
+    if (vdms_sb_dsp_useDevOut) {
+      vdmsini += _T("WaveOut=SBWavePlayer\n");
 
-    vdmsini += _T("[SBWavePlayer]\n");
-    vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
-    vdmsini += _T("[SBWavePlayer.config]\n");
-    vdmsini += _T("device=") + vdms_sb_dsp_device + _T("\n");
-    vdmsini += _T("buffer=") + vdms_sb_dsp_buffer + _T("\n");
+      vdmsini += _T("[SBWavePlayer]\n");
+      vdmsini += _T("CLSID=") + GetDeviceID((DeviceUtil::DeviceType)vdms_sb_dsp_devOutType) + _T(".WaveOut\n");
+      vdmsini += _T("[SBWavePlayer.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[SBWavePlayer.config]\n");
+      vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_devOutID) + _T("\n");
+      vdmsini += _T("buffer=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_buffer) + _T("\n");
+    }
   }
 
   //
@@ -367,20 +414,25 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   if (vdms_sb_fm_enabled) {
     vdmsini += _T("[AdLibController]\n");
     vdmsini += _T("CLSID=EmuAdLib.AdLibCtl\n");
+    vdmsini += _T("[AdLibController.debug]\n");
+    vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logadlib) ? vdms_debug_logdetail : log_none) + _T("\n");
     vdmsini += _T("[AdLibController.config]\n");
-    vdmsini += _T("port=") + vdms_sb_fm_port + _T("\n");
-    vdmsini += _T("sampleRate=") + vdms_sb_fm_sampleRate + _T("\n");
+    vdmsini += _T("port=") + VLPUtil::FormatString(_T("0x%x"), vdms_sb_fm_port) + _T("\n");
+    vdmsini += _T("sampleRate=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_sampleRate) + _T("\n");
     vdmsini += _T("[AdLibController.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
-    vdmsini += _T("WaveOut=AdLibWavePlayer\n");
 
-    // TODO: no AdLibWavePlayer if useDevice=no
+    if (vdms_sb_fm_useDevOut) {
+      vdmsini += _T("WaveOut=AdLibWavePlayer\n");
 
-    vdmsini += _T("[AdLibWavePlayer]\n");
-    vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
-    vdmsini += _T("[AdLibWavePlayer.config]\n");
-    vdmsini += _T("device=") + vdms_sb_fm_device + _T("\n");
-    vdmsini += _T("buffer=") + vdms_sb_fm_buffer + _T("\n");
+      vdmsini += _T("[AdLibWavePlayer]\n");
+      vdmsini += _T("CLSID=") + GetDeviceID((DeviceUtil::DeviceType)vdms_sb_fm_devOutType) + _T(".WaveOut\n");
+      vdmsini += _T("[AdLibWavePlayer.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logadlib) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[AdLibWavePlayer.config]\n");
+      vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_devOutID) + _T("\n");
+      vdmsini += _T("buffer=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_buffer) + _T("\n");
+    }
   }
 
   //
@@ -389,11 +441,13 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   if (vdms_gameport_enabled) {
     vdmsini += _T("[JoystickController]\n");
     vdmsini += _T("CLSID=EmuJoystick.JoystickCtl\n");
+    vdmsini += _T("[JoystickController.debug]\n");
+    vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logjoystick) ? vdms_debug_logdetail : log_none) + _T("\n");
     vdmsini += _T("[JoystickController.config]\n");
-    vdmsini += _T("port=") + vdms_gameport_port + _T("\n");
-    vdmsini += _T("minCoord=") + vdms_gameport_minCoord + _T("\n");
-    vdmsini += _T("maxCoord=") + vdms_gameport_maxCoord + _T("\n");
-    vdmsini += _T("pollPeriod=") + vdms_gameport_pollPeriod + _T("\n");
+    vdmsini += _T("port=") + VLPUtil::FormatString(_T("0x%x"), vdms_gameport_port) + _T("\n");
+    vdmsini += _T("minCoord=") + VLPUtil::FormatString(_T("%d"), vdms_gameport_minCoord) + _T("\n");
+    vdmsini += _T("maxCoord=") + VLPUtil::FormatString(_T("%d"), vdms_gameport_maxCoord) + _T("\n");
+    vdmsini += _T("pollPeriod=") + VLPUtil::FormatString(_T("%d"), vdms_gameport_pollPeriod) + _T("\n");
     vdmsini += _T("mapFile=") + vdms_gameport_mapFile + _T("\n");
     vdmsini += _T("[JoystickController.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
@@ -476,7 +530,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   //
   // PIF
   //
-  PIFFile.SetWindowTitle(_T("VDMS Launchpad - DOS Prompt"));
+  PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), VLPUtil::GetFilename(m_fileName, TRUE)));
 
   // Program
   PIFFile.SetProgram(SettingGetString(_T("program"), _T("executable")),
@@ -495,11 +549,22 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   PIFFile.SetFastPaste(SettingGetBool(_T("winnt.dosbox"), _T("fastPaste"), TRUE));
 
   // Memory
-  PIFFile.SetMemory(SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE) ? SettingGetInt(_T("winnt.memory"), _T("memEMS"), 16384) : 0,
-                    SettingGetBool(_T("winnt.memory"), _T("useXMS"), TRUE) ? SettingGetInt(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
+  PIFFile.SetMemory(SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memEMS"), 16384) : 0,
+                    SettingGetBool(_T("winnt.memory"), _T("useXMS"), TRUE) ? SettingGetLong(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
 
   // Screen
   PIFFile.SetFullScreen(SettingGetBool(_T("winnt.video"), _T("useVESA"), FALSE));
+
+  // Keys
+  PIFFile.SetWinKeys(
+    SettingGetBool(_T("winnt.keys"), _T("altTab"),   TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("altEsc"),   TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("ctrlEsc"),  TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("prtSc"),    TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("altPrtSc"), TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("altEnter"), TRUE),
+    SettingGetBool(_T("winnt.keys"), _T("altSpace"), TRUE)
+  );
 
   return PIFFile.Create(config, autoexec);
 }
@@ -510,8 +575,82 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
 BOOL CRUNWITHVDMSThread::SetupEnv(LPTSTR lpEnvBlock, int ncch) {
   CDOSEnv DOSEnv;
 
+#if 0
+  // Bring in the master environment
   DOSEnv.SetEnvBlock();
-  DOSEnv.SetAt(_T("BLASTER"), _T("BUUU"));
+
+#else
+  // Bring in some important variables from the master environment
+  DOSEnv.SetAt(_T("COMSPEC"),    _tgetenv(_T("COMSPEC")));
+  DOSEnv.SetAt(_T("TEMP"),       _tgetenv(_T("TEMP")));
+  DOSEnv.SetAt(_T("TMP"),        _tgetenv(_T("TMP")));
+  DOSEnv.SetAt(_T("SYSTEMROOT"), _tgetenv(_T("SYSTEMROOT")));
+
+  // Set some other variables
+  DOSEnv.SetAt(_T("PATH"), VLPUtil::FormatString(_T("%s;%s"), VLPUtil::GetDirectory(_tgetenv(_T("COMSPEC"))), _tgetenv(_T("VDMSPATH"))));
+  DOSEnv.SetAt(_T("PATHEXT"), _T(".COM;.EXE;.BAT"));
+  DOSEnv.SetAt(_T("PROMPT"), _T("$P$G"));
+
+#endif
+
+  // Set the BLASTER variable
+  CString strBLASTER(_T(""));
+
+  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"),     _T("enabled"),      TRUE);
+  LONG    vdms_midi_port            = SettingGetLong  (_T("vdms.midi"),     _T("port"),         0x330);
+
+  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"),   _T("enabled"),      TRUE);
+  LONG    vdms_sb_dsp_port          = SettingGetLong  (_T("vdms.sb.dsp"),   _T("port"),         0x220);
+  LONG    vdms_sb_dsp_IRQ           = SettingGetLong  (_T("vdms.sb.dsp"),   _T("IRQ"),          7);
+  LONG    vdms_sb_dsp_DMA8          = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA8"),         1);
+  LONG    vdms_sb_dsp_DMA16         = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA16"),        5);
+  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.05 (SoundBlaster 16)"));
+
+  int verMaj, verMin, sbType;
+  short DSPVersion;
+
+  if (_stscanf(vdms_sb_dsp_version, _T("%d.%d"), &verMaj, &verMin) != 2) {
+    DSPVersion = 0x0405; // default version (4.05)
+  } else {
+    DSPVersion = MAKEWORD((BYTE)verMin, (BYTE)verMaj);
+  }
+
+  if (DSPVersion < 0x0100) {
+    sbType = -1;  // invalid
+  } else if (DSPVersion < 0x0200) {
+    sbType = 1;   // SB 1.x
+  } else if (DSPVersion < 0x0300) {
+    sbType = 3;   // SB 2.x
+  } else if (DSPVersion < 0x0302) {
+    sbType = 2;   // SBPro
+  } else if (DSPVersion < 0x0400) {
+    sbType = 4;   // SBPro 2
+  } else {
+    sbType = 6;   // SB16, AWE32
+  }
+
+  if (vdms_sb_dsp_enabled) {
+    strBLASTER += VLPUtil::FormatString(_T("A%03x I%d D%d"), vdms_sb_dsp_port, vdms_sb_dsp_IRQ, vdms_sb_dsp_DMA8);
+  }
+
+  if (vdms_sb_dsp_enabled && (DSPVersion >= 0x0400)) {
+    strBLASTER += VLPUtil::FormatString(_T(" H%d"), vdms_sb_dsp_DMA16);
+  }
+
+  if (vdms_midi_enabled) {
+    strBLASTER += VLPUtil::FormatString(_T(" P%03x"), vdms_midi_port);
+  }
+
+  if (vdms_sb_dsp_enabled && (sbType != -1)) {
+    strBLASTER += VLPUtil::FormatString(_T(" T%d"), sbType);
+  }
+
+  strBLASTER.TrimLeft();
+  strBLASTER.TrimRight();
+
+  if (!strBLASTER.IsEmpty()) {
+    DOSEnv.SetAt(_T("BLASTER"), strBLASTER);
+  }
 
   return DOSEnv.GetEnvBlock(lpEnvBlock, ncch);
 }
@@ -528,7 +667,7 @@ CString CRUNWITHVDMSThread::SettingGetString(LPCTSTR section, LPCTSTR key, LPCTS
 //
 //
 //
-bool CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, bool defValue) {
+BOOL CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, BOOL defValue) {
   CString strDefValue(defValue ? VLPUtil::T_YES : VLPUtil::T_NO);
   CString strRetVal(strDefValue);
 
@@ -536,9 +675,9 @@ bool CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, bool defVa
   strRetVal.TrimLeft(); strRetVal.TrimRight();
 
   if (strRetVal.CompareNoCase(VLPUtil::T_YES) == 0) {
-    return true;
+    return TRUE;
   } else if (strRetVal.CompareNoCase(VLPUtil::T_NO) == 0) {
-    return false;
+    return FALSE;
   } else {
     return defValue;
   }
@@ -547,8 +686,8 @@ bool CRUNWITHVDMSThread::SettingGetBool(LPCTSTR section, LPCTSTR key, bool defVa
 //
 //
 //
-int CRUNWITHVDMSThread::SettingGetInt(LPCTSTR section, LPCTSTR key, int defValue) {
-  long retVal;
+LONG CRUNWITHVDMSThread::SettingGetLong(LPCTSTR section, LPCTSTR key, LONG defValue) {
+  LONG retVal;
   CString strDefValue; strDefValue.Format(_T("%d"), defValue);
   CString strRetVal(strDefValue);
 
@@ -562,5 +701,18 @@ int CRUNWITHVDMSThread::SettingGetInt(LPCTSTR section, LPCTSTR key, int defValue
     return retVal;
   } else {
     return defValue;
+  }
+}
+
+CString CRUNWITHVDMSThread::GetDeviceID(DeviceUtil::DeviceType devType) {
+  switch (devType) {
+    case DeviceUtil::DEV_MIDI:
+      return _T("MIDIDevice");
+    case DeviceUtil::DEV_WAVE:
+      return _T("WaveDevice");
+    case DeviceUtil::DEV_DSOUND:
+      return _T("DSoundDevice");
+    default:
+      return _T("<unknown>");
   }
 }
