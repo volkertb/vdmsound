@@ -389,6 +389,7 @@ HRESULT VLPUtil::SyncCheckBox(
     CString value = defValue;
 
     hr = settings.GetValue(section, key, value, &isIndeterminate, defValue);
+    value.TrimLeft(); value.TrimRight();
 
     control.EnableWindow(SUCCEEDED(hr));              // disable the control if an error occured
 
@@ -448,6 +449,7 @@ HRESULT VLPUtil::SyncRadioButton(
     CString value = defValue;
 
     hr = settings.GetValue(section, key, value, &isIndeterminate, defValue);
+    value.TrimLeft(); value.TrimRight();
 
     control.EnableWindow(SUCCEEDED(hr));              // disable the control if an error occured
 
@@ -507,6 +509,7 @@ HRESULT VLPUtil::SyncRadioButton(
     BOOL isIndeterminate = FALSE;
 
     hr = settings.GetValue(section, key, value, &isIndeterminate, _T(""));
+    value.TrimLeft(); value.TrimRight();
 
     BOOL isEnabled = SUCCEEDED(hr);                   // disable the control if an error occured
 
@@ -648,20 +651,20 @@ void VLPUtil::ParseIconLocation(
 //
 CString VLPUtil::GetRelativePath(
   LPCTSTR filePath,             // string that contains the path that relPath will be relative to; the relative path will point to this path
-  LPCTSTR basePath,             // string that contains the path that the returned path will be relative from; this is the path in which the relative path can be used
+  LPCTSTR baseDir,              // string that contains the path that the returned path will be relative from; this is the path in which the relative path can be used
   BOOL isPathOnly)              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
 {
   ASSERT(filePath != NULL);
-  ASSERT(basePath != NULL);
+  ASSERT(baseDir != NULL);
   ASSERT(_tcslen(filePath) < MAX_PATH);
-  ASSERT(_tcslen(basePath) < MAX_PATH);
+  ASSERT(_tcslen(baseDir) < MAX_PATH);
 
   TCHAR szPath[MAX_PATH + 1];
 
   try {
-    if (!PathIsRelative(basePath) &&
+    if (!PathIsRelative(baseDir) &&
         !PathIsRelative(filePath) &&
-        PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
+        PathRelativePathTo(szPath, baseDir, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
     {
       return CString(szPath);
     }
@@ -677,20 +680,20 @@ CString VLPUtil::GetRelativePath(
 //
 CString VLPUtil::GetAbsolutePath(
   LPCTSTR filePath,             // string that contains the relative path to be converted
-  LPCTSTR basePath,             // string that contains the path relative to which the return path is computed from
+  LPCTSTR baseDir,              // string that contains the path relative to which the return path is computed from
   BOOL isPathOnly)              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
 {
   ASSERT(filePath != NULL);
-  ASSERT(basePath != NULL);
+  ASSERT(baseDir != NULL);
   ASSERT(_tcslen(filePath) < MAX_PATH);
-  ASSERT(_tcslen(basePath) < MAX_PATH);
+  ASSERT(_tcslen(baseDir) < MAX_PATH);
 
-  TCHAR szPath1[2 * MAX_PATH + 1], szPath2[2 * MAX_PATH + 1];
+  TCHAR szPath1[MAX_PATH + MAX_PATH + 1], szPath2[MAX_PATH + MAX_PATH + 1];
 
-  _tcscpy(szPath1, basePath);
+  _tcscpy(szPath1, baseDir);
 
   try {
-    if (!PathIsRelative(basePath) &&
+    if (!PathIsRelative(baseDir) &&
         PathIsRelative(filePath) &&
         PathAppend(szPath1, filePath) &&
         PathCanonicalize(szPath2, szPath1))

@@ -86,8 +86,8 @@ namespace VLPUtil {
 
   // Shell helper functions
   void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);
-  CString GetRelativePath(LPCTSTR filePath, LPCTSTR basePath, BOOL isPathOnly = FALSE);
-  CString GetAbsolutePath(LPCTSTR filePath, LPCTSTR basePath, BOOL isPathOnly = FALSE);
+  CString GetRelativePath(LPCTSTR filePath, LPCTSTR baseDir, BOOL isPathOnly = FALSE);
+  CString GetAbsolutePath(LPCTSTR filePath, LPCTSTR baseDir, BOOL isPathOnly = FALSE);
   CString GetDirectory(LPCTSTR filePath);
   BOOL IsDirectory(LPCTSTR pszPath);
   HRESULT EnableAutoComplete(HWND hwndEdit);
