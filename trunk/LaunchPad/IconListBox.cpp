@@ -25,7 +25,7 @@ CIconListBox::~CIconListBox()
 int CIconListBox::LoadIcons(LPCTSTR fName) {
   int icoW = ::GetSystemMetrics(SM_CXICON);
   int icoH = ::GetSystemMetrics(SM_CYICON);
-  CString tmpStr;
+  CString strTmp;
 
   UnloadIcons();
 
@@ -41,8 +41,8 @@ int CIconListBox::LoadIcons(LPCTSTR fName) {
 
   for (int i = 0; i < numIcons; i++) {
     HICON hIcon = ExtractIcon(AfxGetInstanceHandle(), fName, i);
-    tmpStr.Format(_T("%d"), i);
-    SetItemData(AddString(tmpStr), (DWORD)hIcon);
+    strTmp.Format(_T("%d"), i);
+    SetItemData(AddString(strTmp), (DWORD)hIcon);
   }
 
   SetRedraw(TRUE);

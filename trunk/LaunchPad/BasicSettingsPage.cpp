@@ -161,17 +161,17 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
     m_settings.GetValue(_T("program"), _T("workdir"), progWDir, &isIndWDir);
 
     if (isIndExec || isIndParams) {
-      CString tmpStr;
-      tmpStr.LoadString(IDS_TXT_MULTIPLEVALUES);
+      CString strTmp;
+      strTmp.LoadString(IDS_TXT_MULTIPLEVALUES);
 
       m_edtDoscmd.EnableWindow(FALSE);
-      m_edtDoscmd.SetWindowText(tmpStr);
+      m_edtDoscmd.SetWindowText(strTmp);
     } else {
-      CString tmpStr = VLPUtil::GetRelativePath(progExec, progWDir, FALSE) + _T(" ") + progParams;
-      tmpStr.TrimLeft(); tmpStr.TrimRight();
+      CString strTmp = VLPUtil::GetRelativePath(progExec, progWDir, FALSE) + _T(" ") + progParams;
+      strTmp.TrimLeft(); strTmp.TrimRight();
 
       m_edtDoscmd.EnableWindow(TRUE);
-      m_edtDoscmd.SetWindowText(tmpStr);
+      m_edtDoscmd.SetWindowText(strTmp);
     }
   }
 }
@@ -217,6 +217,35 @@ BOOL CBasicSettingsPage::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
 
+  // Verify that we have the right to access the files
+  int i, numFailures;
+  CStringArray fileNames;
+  CString failedFiles(_T(""));
+  ACCESS_MASK effectiveRights;
+
+  m_settings.GetFileNames(fileNames);
+
+  for (i = 0, numFailures = 0; i < fileNames.GetSize(); i++) {
+    if (SUCCEEDED(VLPUtil::GetEffectiveRights(fileNames.GetAt(i), SE_FILE_OBJECT, &effectiveRights))) {
+      if ((effectiveRights & GENERIC_ALL) != GENERIC_ALL) {
+        if (numFailures < 10) {
+          failedFiles += fileNames.GetAt(i) + _T("\n\r");
+        } else {
+          failedFiles += _T("...\n\r");
+          break;
+        }
+      }
+    }
+  }
+
+  if (!failedFiles.IsEmpty()) {
+    CString strTmp1, strTmp2;
+    strTmp1.FormatMessage(IDS_MSG_SECURITYERR, failedFiles);
+    GetWindowText(strTmp2);
+    MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  }
+
+  // Load the information from file into the GUI
   SyncGUIData(FALSE);
 
   m_edtDoscmd.SetFocus();
@@ -257,7 +286,10 @@ BOOL CBasicSettingsPage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CBasicSettingsPage::OnButChange() 
 {
-  CString tmpStr1, tmpStr2;
+  CWaitCursor wait;
+
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
   CBasicBrowseDlg dlgBrowse;
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
@@ -292,18 +324,29 @@ void CBasicSettingsPage::OnButChange()
       break;
 
     default:
-      tmpStr1.FormatMessage(IDS_MSG_UNKNOWNERR, GetLastError());
-      GetWindowText(tmpStr2);
-      MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONERROR);
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
   }
 }
 
 BOOL CBasicSettingsPage::OnApply() 
 {
+  CWaitCursor wait;
+
+  HRESULT hr;
+
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  if (FAILED(m_settings.CommitAll()))
+  if (FAILED(hr = m_settings.CommitAll())) {
+    DWORD lastError = GetLastError();
+    CString strTmp1, strTmp2;
+    strTmp1.FormatMessage(IDS_MSG_COMMITERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+    GetWindowText(strTmp2);
+    MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONWARNING);
     return FALSE;
+  }
 
   SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 

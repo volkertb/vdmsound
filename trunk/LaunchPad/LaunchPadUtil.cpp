@@ -233,6 +233,9 @@ LWSTDAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags);
 // Private utility function(s)
 //////////////////////////////////////////////////////////////////////
 
+//
+//
+//
 BOOL StrSplit(LPCTSTR szSrc, TCHAR sep, CString& lhs, CString& rhs, BOOL fromBeginning = TRUE) {
   int splitPos;
   CString strSrc(szSrc);
@@ -254,6 +257,82 @@ BOOL StrSplit(LPCTSTR szSrc, TCHAR sep, CString& lhs, CString& rhs, BOOL fromBeg
   rhs = strSrc.Mid(min(strSrc.GetLength() - 1, splitPos + 1), max(0, strSrc.GetLength() - (splitPos + 1)));
 
   return retVal;
+}
+
+LPCTSTR szSeparators = _T("\n\r\t ");
+
+//
+// Formats a CString message.
+//
+HRESULT __FormatMessage(
+    CString& Buffer,        // buffer where string will be stored
+    BYTE nMaxSize,          // maximum size of a line after formatting; 0 for no restrictions
+    LPCTSTR lpFormat,       // literal message definition; if NULL, dwMessageID is used as a numeric message definition
+    DWORD dwMessageID,      // index into message-table resource where the message definition can be found
+    DWORD dwLanguageID,     // language to be used; meaningless when the message definition was provided in lpFormat
+    HMODULE hModule,        // module containing the message-table resources; meaningless when the message definition was provided in lpFormat; NULL means current process' application image
+    bool bFromSystem,       // use the system message-table resources instead of application-provided ones to resolve GetLastError() codes
+    bool bIgnoreInserts,    // ignore the "%..." inserts in the message definition; useful if no arguments can be provided, or if formatting is to be performed later
+    va_list* Arguments )    // arguments to be used when replacing inserts
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  DWORD   dwRetVal = 0;
+  LPCTSTR lpMsgBuf = NULL;
+  DWORD   dwFlags  = FORMAT_MESSAGE_ALLOCATE_BUFFER | (nMaxSize & FORMAT_MESSAGE_MAX_WIDTH_MASK);
+  LPCVOID lpSource = NULL;
+
+  if (lpFormat == NULL) {
+    if (bFromSystem) {
+      dwFlags |= FORMAT_MESSAGE_FROM_SYSTEM;
+    } else {
+      dwFlags |= FORMAT_MESSAGE_FROM_HMODULE;
+      if (hModule == NULL) {
+        lpSource = (LPCVOID)AfxGetInstanceHandle();
+      } else {
+        lpSource = (LPCVOID)hModule;
+      }
+    }
+  } else {
+    dwFlags |= FORMAT_MESSAGE_FROM_STRING;
+    lpSource = (LPCVOID)lpFormat;
+  }
+
+  if (bIgnoreInserts) {
+    dwFlags |= FORMAT_MESSAGE_IGNORE_INSERTS;
+  }
+
+  dwRetVal = FormatMessage(dwFlags, lpSource, dwMessageID, dwLanguageID, (LPTSTR)&lpMsgBuf, 0, Arguments);
+
+  if (lpMsgBuf != NULL) {
+    Buffer = lpMsgBuf;
+    LocalFree((LPVOID)lpMsgBuf);
+  }
+
+  if (dwRetVal == 0) {
+    return HRESULT_FROM_WIN32(GetLastError());
+  }
+
+  if (bFromSystem) {
+    Buffer.TrimRight(szSeparators);
+  }
+
+  return S_OK;
+}
+
+//
+// Formats a CString message based on a string-table resource ID
+//
+HRESULT AFXAPI FormatMessageV(
+    CString& Buffer,        // buffer where string will be stored
+    DWORD dwMessageID,      // index into message-table resource where the message definition can be found
+    bool bFromSystem,       // use the system message-table resources instead of application-provided ones to resolve GetLastError() codes
+    HMODULE hModule,        // module containing the message-table resources; NULL means current process' application image
+    DWORD dwLanguageID,     // language to be used; use 0 or MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) for default
+    bool bIgnoreInserts,    // ignore the "%..." inserts in the message definition; useful if no arguments can be provided, or if formatting is to be performed later
+    va_list* Arguments )
+{
+  return __FormatMessage(Buffer, 0, NULL, dwMessageID, dwLanguageID, hModule, bFromSystem, bIgnoreInserts, Arguments);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -671,7 +750,7 @@ HRESULT VLPUtil::EnableAutoComplete(HWND hwndEdit) {
 //
 BOOL VLPUtil::isVLPFile(LPCTSTR fName) {
   try {
-    return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0);
+    return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0) && !PathIsDirectory(fName);
   } catch (...) {
     CString lhs, rhs;
     StrSplit(fName, _T('.'), lhs, rhs, FALSE);
@@ -690,4 +769,67 @@ BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
     StrSplit(fName, _T('.'), lhs, rhs, FALSE);
     return (rhs.CompareNoCase(_T("exe")) == 0) || (rhs.CompareNoCase(_T("com")) == 0) || (rhs.CompareNoCase(_T("bat")) == 0);
   }
+}
+
+//
+//
+//
+HRESULT VLPUtil::GetEffectiveRights(
+  LPCTSTR pObjectName,          // address of string for file name
+  SE_OBJECT_TYPE ObjectType,    // type of object
+  PACCESS_MASK pAccessRights)   // receives trustee's access rights
+{
+  ASSERT(pObjectName != NULL);
+  ASSERT(pAccessRights != NULL);
+
+  DWORD err;
+  PSID psidOwner;
+  PACL pDacl = NULL;
+  PSECURITY_DESCRIPTOR pPrcSD = NULL;
+  PSECURITY_DESCRIPTOR pObjSD = NULL;
+
+  try {
+    if ((err = GetNamedSecurityInfo(const_cast<LPTSTR>(pObjectName), ObjectType, DACL_SECURITY_INFORMATION, NULL, NULL, &pDacl, NULL, &pObjSD)) != ERROR_SUCCESS)
+      goto __done;
+
+    if ((err = GetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT, OWNER_SECURITY_INFORMATION, &psidOwner, NULL, NULL, NULL, &pPrcSD)) != ERROR_SUCCESS)
+      goto __done;
+
+    TRUSTEE trustee;
+    BuildTrusteeWithSid(&trustee, psidOwner);
+
+    if ((err = GetEffectiveRightsFromAcl(pDacl, &trustee, pAccessRights)) != ERROR_SUCCESS)
+      goto __done;
+  } catch (...) {
+    err = ERROR_DLL_NOT_FOUND;
+  }
+
+__done:
+
+  if (pPrcSD != NULL)
+    LocalFree((HLOCAL)pPrcSD);
+
+  if (pObjSD != NULL)
+    LocalFree((HLOCAL)pObjSD);
+
+  return HRESULT_FROM_WIN32(err);
+}
+
+//
+//
+//
+CString AFX_CDECL VLPUtil::FormatMessage(
+    DWORD dwMessageID,          // index into message-table resource where the message definition can be found
+    bool bFromSystem,           // use the system message-table resources instead of application-provided ones to resolve GetLastError() codes
+    HMODULE hModule,            // module containing the message-table resources; NULL means current process' application image
+    DWORD dwLanguageID,         // language to be used; use 0 or MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) for default
+    bool bIgnoreInserts,        // ignore the "%..." inserts in the message definition; useful if no arguments can be provided, or if formatting is to be performed later
+    ... )
+{
+  CString Buffer;
+  va_list Arguments;
+  va_start(Arguments, bIgnoreInserts);
+  FormatMessageV(Buffer, dwMessageID, bFromSystem, hModule, dwLanguageID, bIgnoreInserts, &Arguments);
+  va_end(Arguments);
+  return Buffer;
 }

@@ -36,6 +36,12 @@ CLaunchPadSettings::~CLaunchPadSettings(void) {
 // Methods
 //////////////////////////////////////////////////////////////////////
 
+VOID CLaunchPadSettings::GetFileNames(
+  CStringArray& fileNames) const
+{
+  fileNames.Copy(m_fileNames);
+}
+
 //
 // Obtain a setting value either from the list of configuration files
 //  associated with the object at construction time.
