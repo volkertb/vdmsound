@@ -79,18 +79,24 @@ protected:
   CString WaveOutGetName(void);
   CString WaveOutGetError(MMRESULT errCode);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
   int m_deviceID;
+
+// Other member variables
+protected:
   CString m_deviceName;
   HWAVEOUT m_hWaveOut;
   WAVEFORMATEX m_waveFormat;
   CThread m_gcThread;
   int m_bufOpRange;
 
-protected:
   LONG m_bufferedBytes;
   LONG m_bufferedLo, m_bufferedHi;
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IWaveDataConsumerPtr m_waveOut;

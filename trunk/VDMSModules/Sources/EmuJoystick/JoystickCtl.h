@@ -82,17 +82,22 @@ protected:
   MMRESULT updateJoyCaps(UINT joyID, JoyInfo& joyInfo);
   MMRESULT updateJoyState(UINT joyID, JoyInfo& joyInfo, bool doCoords = true, bool doButtons = true);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
   int m_basePort;             // base port where the joystick can be accessed by DOS programs
   int m_scaleMin, m_scaleMax; // range of values for the X and Y intervals reported to DOS programs
   int m_pollInterval;         // how many milliseconds to sleep between joystick polls
 
+// Other member variables
 protected:
   CThread m_joyPollThread;    // thread that regularly polls the Windows driver
   CCriticalSection m_mutex;   // regulates concurrent access to the device data in m_joyInfo (regulate access by the poll thread + forced access by some I/O traps)
   JoyInfo m_joyInfo[2];       // joystick information
   bool m_pollRequest;
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;

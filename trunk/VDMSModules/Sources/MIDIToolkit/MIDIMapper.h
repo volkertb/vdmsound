@@ -56,10 +56,14 @@ public:
 protected:
   HRESULT loadMapping(LPCSTR fName);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Other member variables
 protected:
   /* TODO: also implement volume map, drum map, etc. */
   BYTE m_patchMap[128];
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IMIDIEventHandlerPtr m_midiOut;

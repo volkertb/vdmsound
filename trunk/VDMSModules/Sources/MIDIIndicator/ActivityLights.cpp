@@ -70,16 +70,16 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
     _bstr_t ledName = CFG_Get(Config, INI_STR_LEDID, "SCROLL", false);
     switch (_strmcmpi((LPCSTR)ledName, "NUM", "CAPS", "SCROLL", "none", NULL)) {
       case 0:
-        ledID = LED_NUMLOCK;
+        m_ledID = LED_NUMLOCK;
         break;
       case 1:
-        ledID = LED_CAPSLOCK;
+        m_ledID = LED_CAPSLOCK;
         break;
       case 2:
-        ledID = LED_SCROLLLOCK;
+        m_ledID = LED_SCROLLLOCK;
         break;
       default:
-        ledID = LED_NONE;
+        m_ledID = LED_NONE;
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An invalid value ('%s') was provided for the led identifier ('%s').  Valid values are: 'NUM', 'CAPS', 'SCROLL' and 'none'.\nUsing 'none' by default."), (LPCTSTR)ledName, (LPCTSTR)CString(INI_STR_LEDID)));
     }
 
@@ -99,9 +99,9 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
 
 STDMETHODIMP CActivityLights::Destroy() {
   // Reset the lights
-  if ((ledID != -1) && isIndicatorOn) {
-    isIndicatorOn = false;
-    SetLedStatus(ledID, !GetLedStatus(ledID));
+  if ((m_ledID != -1) && m_isIndicatorOn) {
+    m_isIndicatorOn = false;
+    SetLedStatus(m_ledID, !GetLedStatus(m_ledID));
   }
 
   // Release the MIDI-out module
@@ -121,9 +121,9 @@ STDMETHODIMP CActivityLights::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CActivityLights::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  if ((ledID != -1) && isIndicatorOn) {
-    isIndicatorOn = false;
-    SetLedStatus(ledID, !GetLedStatus(ledID));
+  if ((m_ledID != -1) && m_isIndicatorOn) {
+    m_isIndicatorOn = false;
+    SetLedStatus(m_ledID, !GetLedStatus(m_ledID));
   }
 
   if (m_midiOut != NULL)
@@ -136,9 +136,9 @@ STDMETHODIMP CActivityLights::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG le
 	if (data == NULL)
 		return E_POINTER;
 
-  if (ledID != -1) {
-    isIndicatorOn = !isIndicatorOn;
-    SetLedStatus(ledID, !GetLedStatus(ledID));
+  if (m_ledID != -1) {
+    m_isIndicatorOn = !m_isIndicatorOn;
+    SetLedStatus(m_ledID, !GetLedStatus(m_ledID));
   }
 
   if (m_midiOut != NULL)

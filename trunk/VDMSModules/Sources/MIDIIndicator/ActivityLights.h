@@ -65,10 +65,17 @@ protected:
   static bool GetLedStatus(int ledID);
   static void SetLedStatus(int ledID, bool isLedOn);
 
-protected:
-  int ledID;
-  bool isIndicatorOn;
+/////////////////////////////////////////////////////////////////////////////
 
+// Module's settings
+protected:
+  int m_ledID;
+
+// Other member variables
+protected:
+  bool m_isIndicatorOn;
+
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IMIDIEventHandlerPtr m_midiOut;

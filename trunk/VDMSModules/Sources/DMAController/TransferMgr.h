@@ -83,14 +83,21 @@ public:
 	STDMETHOD(StartTransfer)(BYTE channel, LONG synchronous);
 	STDMETHOD(StopTransfer)(BYTE channel, LONG synchronous);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
+  DWORD m_minPeriod, m_maxPeriod;
+  double m_period, m_recoveryRate;
+
+// Other member variables
+protected:
+  DMAChannel m_channels[NUM_DMA_CHANNELS];
   CThread m_DMAThread;
   CEvent m_event;
   CCriticalSection m_mutex;
-  DWORD m_minPeriod, m_maxPeriod;
-  double m_period, m_recoveryRate;
-  DMAChannel m_channels[NUM_DMA_CHANNELS];
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMDMAServicesPtr m_DMASrv;
