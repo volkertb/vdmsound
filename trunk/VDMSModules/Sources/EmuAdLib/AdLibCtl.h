@@ -136,6 +136,7 @@ protected:
 protected:
   HRESULT OPLCreate(int sampleRate);
   void OPLDestroy(void);
+  void OPLPlay(DWORD deltaTime);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -156,6 +157,7 @@ protected:
 
 // Platform-independent classes
 protected:
+  CAdLibCtlFSM m_AdLibFSM;
   MAME::FM_OPL* m_OPL;
 
 // Other member variables
@@ -168,12 +170,9 @@ protected:
   TS_Queue<OPLMessage,OPL_QUEUE_LEN> m_OPLMsgQueue; // circular queue of OPL 'events'
 
   DWORD m_lastTime, m_curTime;
+  double m_renderLoad;
 
   int m_instanceID;
-
-// Platform-independent classes
-protected:
-  CAdLibCtlFSM m_AdLibFSM;
 
 // Interfaces to dependency modules
 protected:
