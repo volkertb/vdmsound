@@ -307,6 +307,10 @@ SOURCE=.\fmopl.cpp
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
+# Begin Source File
+
+SOURCE=.\ymf262.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -364,6 +368,15 @@ SOURCE=.\fmopl.c
 # Begin Source File
 
 SOURCE=.\fmopl.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ymf262.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=.\ymf262.h
 # End Source File
 # End Group
 # Begin Source File

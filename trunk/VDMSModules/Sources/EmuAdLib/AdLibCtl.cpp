@@ -5,6 +5,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define USE_OPL2  1
+#define USE_OPL3  0
+
+/////////////////////////////////////////////////////////////////////////////
+
 /* TODO: put these in a .mc file or something */
 #define MSG_ERR_INTERFACE     _T("The dependency module '%1' does not support the '%2' interface.%0")
 #define MSG_ERR_NOINSTSLOTS   _T("Too many instances running (maximum %!d!1 allowed).%0")
@@ -20,6 +25,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define OPL_AUDIOBUF_SIZE     65536
 #define OPL_INTERNAL_FREQ     3600000   // The OPL operates at 3.6MHz
 #define OPL_NUM_CHIPS         1         // Number of OPL chips
 #define OPL_CHIP0             0
@@ -288,7 +294,11 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
 
           // Set up the renderer (if any)
           if (m_waveOut != NULL) try {
-            m_waveOut->SetFormat(1, m_sampleRate, 16);
+#if USE_OPL2
+            m_waveOut->SetFormat(1, m_sampleRate, OPL_SAMPLE_BITS);
+#elif USE_OPL3
+            m_waveOut->SetFormat(2, m_sampleRate, OPL3_SAMPLE_BITS);
+#endif
           } catch (_com_error& ce) {
             CString args = Format(_T("%d, %d, %d"), 1, m_sampleRate, 16);
             RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -300,8 +310,13 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
 
         // Program the OPL (functions will return after the UpdateHandler()
         //  callback has been called)
+#if USE_OPL2
         MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.address);
         MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
+#elif USE_OPL3
+        MAME::YMF262Write(OPL_CHIP0, 0, OPLMsg.address);
+        MAME::YMF262Write(OPL_CHIP0, 1, OPLMsg.value);
+#endif
       }
 
       // Did we process any OPL writes (was the OPL kept active) ?
@@ -364,11 +379,19 @@ HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
   instances[m_instanceID] = this;
 
   // Initialize the OPL software synthesizer, return an error if failed
+#if USE_OPL2
   if (MAME::YM3812Init(OPL_NUM_CHIPS, OPL_INTERNAL_FREQ, sampleRate))
+#elif USE_OPL3
+  if (MAME::YMF262Init(OPL_NUM_CHIPS, OPL_INTERNAL_FREQ, sampleRate))
+#endif
     return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
 
   // Install the callback handler(s)
+#if USE_OPL2
   MAME::YM3812SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
+#elif USE_OPL3
+  MAME::YMF262SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
+#endif
 
   return S_OK;
 }
@@ -381,7 +404,11 @@ void CAdLibCtl::OPLDestroy(void) {
   CSingleLock lock(&OPLMutex, TRUE);
 
   // Release the OPL software synthesizer
+#if USE_OPL2
   MAME::YM3812Shutdown();
+#elif USE_OPL3
+  MAME::YMF262Shutdown();
+#endif
 
   // Release the slot in the static instance array
   if (m_instanceID >= 0)
@@ -397,16 +424,29 @@ void CAdLibCtl::OPLPlay(DWORD deltaTime) {
     return; // why bother if no renderer is attached ?
 
   if (m_curTime > m_lastTime) {
-    MAME::INT16 buf[65536];
-
     // Compute by how much this transfer should be boosted or diminished, based on
     //  playback performance (feedback indicating playback buffer overrun/underrun)
     double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
 
     // Compute how many samples we should transfer
-    long toTransfer = min(65536, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
+    long toTransfer = min(OPL_AUDIOBUF_SIZE, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
+
+#if USE_OPL2
+    MAME::OPLSAMPLE buf[OPL_AUDIOBUF_SIZE];
 
     MAME::YM3812UpdateOne(OPL_CHIP0, buf, toTransfer);
+#elif USE_OPL3
+    MAME::OPL3SAMPLE  buf_tmp[4][OPL_AUDIOBUF_SIZE];
+    MAME::OPL3SAMPLE* buf_tbl[] = { buf_tmp[0], buf_tmp[1], buf_tmp[2], buf_tmp[3] };
+    MAME::OPL3SAMPLE* buf = buf_tmp[2];
+
+    MAME::YMF262UpdateOne(OPL_CHIP0, buf_tbl, toTransfer);
+
+    for (int i = 0; i < toTransfer; i++) {
+      buf[2 * i + 0] = buf_tmp[0][i];
+      buf[2 * i + 1] = buf_tmp[1][i];
+    }
+#endif
 
     // Play the data, and update the load factor
     try {
