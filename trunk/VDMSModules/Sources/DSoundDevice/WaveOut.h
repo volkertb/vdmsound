@@ -34,7 +34,7 @@ class ATL_NO_VTABLE CWaveOut :
 {
 public:
 	CWaveOut()
-    : m_lpDirectSound(NULL), m_lpDirectSoundBuffer(0), m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_bufferLen(0), m_bufferPos(0), m_playedBytes(0), m_sentBytes(0)
+    : m_lpDirectSound(NULL), m_lpDirectSoundBuffer(0), m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_bufferLen(0), m_bufferPos(0), m_playedBytes(0), m_sentBytes(0), m_lastPlayPos(0)
   {
     m_waveFormat.nChannels = 0;
     m_waveFormat.nSamplesPerSec = 0;
@@ -122,10 +122,11 @@ protected:
   CThread m_gcThread;
   CCriticalSection m_mutex;
 
-  LONG m_bufferDuration;              // length of audio buffer (in milliseconds)
-  LONG m_bufferLen, m_bufferPos;      // length and current write position in buffer (in bytes)
+  LONG m_bufferDuration;              // total length of audio buffer (in milliseconds)
+  LONG m_bufferLen, m_bufferPos;      // size and current write position in buffer (in bytes)
+  LONG m_DSoundLatency;               // maximum observed DSound latency (in bytes)
   LONG m_playedBytes, m_sentBytes;    // how many bytes of data were played (actually went through DSound device) to date and how many valid bytes were sent (produced)
-  LONG m_DSoundLatency;               // maximum observed DSound latncy (in bytes)
+  LONG m_lastPlayPos;                 // last known position of the play cursor (used to compute how many bytes went through the DSound device since the last check)
   LONG m_bufferedLo, m_bufferedHi;    // delimit the optimal range valid audio data should lead the play cursor by
 
 // Interfaces to dependency modules

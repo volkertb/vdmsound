@@ -17,8 +17,9 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define TOLERANCE_FREQ        10  // how much % change in frequency does not justify re-creating the DSound buffer due to format change
-#define BUF_CHUNKS            8   // how big the DSound buffer should be as a multiple of the normal audio buffering amount
+#define TOLERANCE_FREQ        10    // how much % change in frequency does not justify re-creating the DSound buffer due to format change
+#define BUF_CHUNKS            4     // how big the DSound buffer should be as a multiple of the normal audio buffering amount
+#define BUF_MINLEN            1500  // minimum buffer length (in milliseconds)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -89,8 +90,8 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
-  m_bufferDuration = BUF_CHUNKS * m_bufOpRange; // Decide how long (in milliseconds) the DSound buffer should be
-  m_deviceName = DSoundGetName(&m_deviceGUID);  // Obtain information about the device (name and GUID)
+  m_bufferDuration = max(BUF_MINLEN, BUF_CHUNKS * m_bufOpRange);  // Decide how long (in milliseconds) the DSound buffer should be
+  m_deviceName = DSoundGetName(&m_deviceGUID);                    // Obtain information about the device (name and GUID)
 
   // Create the garbage-collector thread (manages packets that have finished playing)
   m_gcThread.Create(this, true);      /* TODO: check that creation was successful */
@@ -181,14 +182,15 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
       if (FAILED(hr = m_lpDirectSound->CreateSoundBuffer(&DSBufferDesc, &m_lpDirectSoundBuffer, NULL)))
         hrThis = hr;
 
-      if ((m_lpDirectSoundBuffer != NULL) && FAILED(hr = m_lpDirectSoundBuffer->SetCurrentPosition(0)))
+      if ((m_lpDirectSoundBuffer != NULL) && FAILED(hr = m_lpDirectSoundBuffer->Play(0, 0, DSBPLAY_LOOPING)))
         hrThis = hr;
 
       // Initialize local buffer state
-      m_bufferPos = 0;      // we are at the start of the buffer (no data is enqueued yet)
       m_DSoundLatency = 0;  // the DSound latency for this audio format is unknown yet
+      m_bufferPos = 0;      // we are at the start of the buffer (no data is enqueued yet)
       m_playedBytes = 0;    // no bytes went through DSound yet
       m_sentBytes = 0;      // no bytes came from the application for playback yet
+      m_lastPlayPos = 0;    // we are at the start of the buffer (playback did not begin yet)
 
       // Compute the ideal amount of buffering (in bytes)
       m_bufferedLo = m_waveFormat.nAvgBytesPerSec * m_bufOpRange / 1000;
@@ -226,6 +228,37 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       if (m_lpDirectSoundBuffer == NULL)
         throw E_FAIL;
 
+      // Get an process playback indicators from the DSound buffer
+      DWORD dwCurrentWriteCursor, dwCurrentReadCursor;  // safe-write and read cursors in the DSound buffer
+      LONG  commitLen;  // how many bytes (the data between the safe-write and read cursors) were commited by DSound to the device and should not be touched
+
+      if (FAILED(hr = m_lpDirectSoundBuffer->GetCurrentPosition(&dwCurrentReadCursor, &dwCurrentWriteCursor)))
+        throw hr;
+
+      commitLen = (LONG)(m_bufferLen + dwCurrentWriteCursor - dwCurrentReadCursor) % m_bufferLen;
+      m_DSoundLatency = max(m_DSoundLatency, commitLen); // worst-case commit length, indicates latency in DSound mixing and output
+
+      // Work around horrible DirectSound bug, which makes the play cursor jerk
+      //  forward once in a while, then go backwards to its normal position.
+      if (((LONG)(m_bufferLen + dwCurrentReadCursor - m_lastPlayPos) % m_bufferLen) > (3 * m_bufferLen / 4)) {
+        dwCurrentReadCursor = m_lastPlayPos;  // refuse to back up the play cursor !
+        commitLen = (LONG)(m_bufferLen + dwCurrentWriteCursor - dwCurrentReadCursor) % m_bufferLen; // recompute the commit range
+      }
+
+      // Compute how many bytes were played through the DSound device to date
+      m_playedBytes += (m_bufferLen + dwCurrentReadCursor - m_lastPlayPos) % m_bufferLen;
+      m_lastPlayPos = dwCurrentReadCursor;
+
+      // Compute by how much we are leading playback
+      LONG bufferedBytes = max(0, m_sentBytes - m_playedBytes);
+
+      // If lagging, adjust write cursor to avoid writing in an area that was already played
+      //  and is a candidate for silencing, or that is in the process of being played (commited).
+      if (bufferedBytes < commitLen) {
+        m_bufferPos = (dwCurrentReadCursor + m_DSoundLatency) % m_bufferLen;  // start writing at an early, write-safe position to avoid long audio interruptions
+        m_sentBytes = m_playedBytes + m_DSoundLatency; // adjust amount of (supposedly) sent bytes to match new write position
+      }
+
       // Write the new audio data to the DirectSound buffer
       BYTE* data1, * data2;
       DWORD length1, length2;
@@ -237,34 +270,28 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       if (data1 != NULL) memcpy(data1, data, length1);
       if (data2 != NULL) memcpy(data2, data + length1, length2);
 
-      m_lpDirectSoundBuffer->Unlock(data1, length1, data2, length2);
+      if (FAILED(hr = m_lpDirectSoundBuffer->Unlock(data1, length1, data2, length2)))
+        hrThis = hr;
 
       // Make sure the buffer isn't stopped
       if (FAILED(hr = m_lpDirectSoundBuffer->Play(0, 0, DSBPLAY_LOOPING)))
         hrThis = hr;
 
-      // Compute by how much we are ahead of the buffer playback cursor
-      DWORD dwCurrentWriteCursor = 0, dwCurrentReadCursor = 0;
-      LONG  bufferedBytes;
-
-      if (FAILED(hr = m_lpDirectSoundBuffer->GetCurrentPosition(&dwCurrentReadCursor, &dwCurrentWriteCursor)))
-        hrThis = hr;
-
-      m_DSoundLatency = max(m_DSoundLatency, (LONG)(m_bufferLen + dwCurrentWriteCursor - dwCurrentReadCursor) % m_bufferLen);
-      bufferedBytes = (2l * m_bufferLen + m_bufferPos - dwCurrentReadCursor - m_DSoundLatency) % m_bufferLen;
-
-      if (bufferedBytes > (m_bufferLen - m_bufferedLo))
-        bufferedBytes = 0;      // Take into account the possibility that we were left behind
-
       // Advance our write cursor, and count the data as successfully "sent"
       m_bufferPos = (m_bufferPos + maxLength) % m_bufferLen;
       m_sentBytes += maxLength;
 
+      _ASSERTE(m_playedBytes % m_bufferLen == (LONG)dwCurrentReadCursor);
+      _ASSERTE(m_sentBytes % m_bufferLen == m_bufferPos);
+
       // Compute how off-target we are with buffering
-      if (bufferedBytes < m_bufferedLo) {
-        loadThis = (double)bufferedBytes / m_bufferedLo;
-      } else if (bufferedBytes > m_bufferedHi) {
-        loadThis = (double)bufferedBytes / m_bufferedHi;
+      LONG loMark = max(m_bufferedLo, 2 * m_DSoundLatency);
+      LONG hiMark = max(m_bufferedHi, 3 * m_DSoundLatency);
+
+      if (bufferedBytes < loMark) {
+        loadThis = (double)bufferedBytes / loMark;
+      } else if (bufferedBytes > hiMark) {
+        loadThis = (double)bufferedBytes / hiMark;
       }
     } catch (HRESULT hr) {
       hrThis = hr;              // Propagate the error
@@ -313,46 +340,37 @@ unsigned int CWaveOut::Run(CThread& thread) {
         if (m_lpDirectSoundBuffer != NULL) {
           HRESULT hr;
 
-          // First find out where in the buffer we are playing back from
-          DWORD dwCurrentReadCursor = 0;
+          // Get an process playback indicators from the DSound buffer
+          DWORD dwCurrentWriteCursor, dwCurrentReadCursor;  // safe-write and read cursors in the DSound buffer
 
-          if (FAILED(hr = m_lpDirectSoundBuffer->GetCurrentPosition(&dwCurrentReadCursor, NULL)))
+          if (FAILED(hr = m_lpDirectSoundBuffer->GetCurrentPosition(&dwCurrentReadCursor, &dwCurrentWriteCursor)))
             throw hr;
 
-          // Compute how much bytes were played back since we last checked,
-          //  and add the amount to the "played bytes" grand total
-          if (m_playedBytes == 0) {
-            m_playedBytes = dwCurrentReadCursor;  // the buffer is brand-new
-          } else {
-            m_playedBytes += (m_bufferLen + dwCurrentReadCursor - dwLastReadCursor) % m_bufferLen;
+          // Work around horrible DirectSound bug, which makes the play cursor jerk
+          //  forward once in a while, then go backwards to its normal position.
+          if (((LONG)(m_bufferLen + dwCurrentReadCursor - m_lastPlayPos) % m_bufferLen) > (3 * m_bufferLen / 4)) {
+            dwCurrentReadCursor = m_lastPlayPos;  // refuse to back up the play cursor !
           }
 
-          dwLastReadCursor = dwCurrentReadCursor; // remember this for the next check to find the "played" increment
-
-          _ASSERTE(m_playedBytes % m_bufferLen == (LONG)dwCurrentReadCursor);
-          _ASSERTE(m_sentBytes % m_bufferLen == m_bufferPos);
+          // Compute how many bytes were played through the DSound device to date
+          m_playedBytes += (m_bufferLen + dwCurrentReadCursor - m_lastPlayPos) % m_bufferLen;
+          m_lastPlayPos = dwCurrentReadCursor;
 
           // Compute what portion of the buffer has not been replenished and needs to be silenced
           LONG dirtyBytes = m_playedBytes - m_sentBytes;
 
           if (dirtyBytes > 0) {                   // if lagging, flush the buffer
-            if (false) {
-              m_lpDirectSoundBuffer->Stop();      // no new data has been available for a long time, so we stop playback
-              m_bufferPos = 0;                    // rewind the buffer
-              m_playedBytes = 0;
-              m_sentBytes = 0;
-              m_lpDirectSoundBuffer->SetCurrentPosition(0);
-            } else {
-              m_sentBytes += (m_bufferLen + dirtyBytes - (dirtyBytes % m_bufferLen)); // get rid of the huge lag, or else the condition may trigger indefinitely
-            }
             dirtyBytes = m_bufferLen;             // the buffer has been starved for too long, all data is direty and must be silenced
           } else if (dirtyBytes < -m_bufferLen) { // freak case; either playback stalled, or this thread was delayed and lost playback updates
-            dirtyBytes = -dirtyBytes;             // take the absoulute value
+            dirtyBytes = -dirtyBytes;             // take the absolute value
             m_playedBytes += (dirtyBytes - (dirtyBytes % m_bufferLen)); // get rid of the huge lag, or else the condition may trigger several times
             dirtyBytes %= m_bufferLen;            // preventively erase data between the write and (adjusted) play position
           } else {                                // in all other cases, preventively erase data between the write and play cursors
             dirtyBytes = (m_bufferLen + dirtyBytes) % m_bufferLen;
           }
+
+          _ASSERTE(m_playedBytes % m_bufferLen == (LONG)dwCurrentReadCursor);
+          _ASSERTE(m_sentBytes % m_bufferLen == m_bufferPos);
 
           if (dirtyBytes > 0) {
             // Write silence data to the DirectSound buffer
@@ -516,7 +534,7 @@ HRESULT CWaveOut::DSoundOpenHelper(void) {
     if (SUCCEEDED(hr = lpDirectSound->GetCaps(&DSCaps))) {
       int channels      = (DSCaps.dwFlags & DSCAPS_PRIMARYSTEREO) ? 2 : 1;
       int bitsPerSample = (DSCaps.dwFlags & DSCAPS_PRIMARY16BIT) ? 16 : 8;
-      int samplesPerSec = (int)(DSCaps.dwMaxSecondarySampleRate);
+      int samplesPerSec = 44100; /*(int)(DSCaps.dwMaxSecondarySampleRate);*/
 
       // Obtain the primary buffer
       LPDIRECTSOUNDBUFFER lpPrimary = NULL;
