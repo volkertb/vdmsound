@@ -185,10 +185,10 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
-  // put the DSP in a known state
+  // Put the DSP in a known state
   m_SBDSP.reset();
 
-  // put the mixer in a known state
+  // Put the mixer in a known state
   m_SBMixer.reset();
   m_SBMixer.setIRQSelect(m_IRQLine);
   m_SBMixer.setDMASelect(m_DMA8Channel, m_DMA16Channel);
@@ -199,10 +199,10 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
 }
 
 STDMETHODIMP CSBCompatCtl::Destroy() {
-  // put the mixer in a known state
+  // Put the mixer in a known state
   m_SBMixer.reset();
 
-  // put the DSP in a known state
+  // Put the DSP in a known state
   m_SBDSP.reset();
 
   // Release the Wave-out module
