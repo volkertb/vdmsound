@@ -87,6 +87,13 @@ STDAPI_(void) VddDispatch(void) {
   setAX(retVal);
 }
 
+//
+// Cleanup routine; allows VDMSound to free any associated resources, etc.
+//
+STDAPI_(void) VddDestroy(void) {
+  unloadConfiguration(NULL, 0);
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -129,7 +136,7 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
     // Obtain initialization information
     char* INIFiles;
 
-    if ((lpParam == NULL) || (((char*)lpParam)[0] == '\0')) {
+    if ((lpParam == NULL) || (uParamLen < 1) || (((char*)lpParam)[0] == '\0')) {
       INIFiles = "VDMS.INI";   // use a default value
     } else {
       INIFiles = (char*)lpParam;  // information provided by DOS loader
@@ -282,7 +289,7 @@ void SignalVDMSStatus(bool isLoaded) {
 // emulation modules) when the process is about to exit.
 //
 VOID WINAPI ExitProcess_Surrogate(UINT uExitCode) {
-  unloadConfiguration(NULL, 0);
+  VddDestroy();
 
   if ((ExitProcess_Original != NULL) &&                 // avoid protection fault
       (ExitProcess_Original != ExitProcess_Surrogate))  // avoid infinite recursion

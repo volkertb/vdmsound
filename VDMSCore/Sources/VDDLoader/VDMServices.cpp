@@ -565,7 +565,7 @@ STDMETHODIMP CVDMServices::GetDMAState(USHORT channel, DMA_INFO_T * DMAInfo) {
 
   // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
   //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
-  if (channel < 8u) {
+  if ((channel < 8u) && !m_dmaUsage[channel]) {
     VDMS_TRACE("   (hook channel %d)\n", channel);
     VDDHookDMA(channel, VDDDMAActivity);
     m_dmaUsage[channel] = TRUE;
@@ -600,7 +600,7 @@ STDMETHODIMP CVDMServices::SetDMAState(USHORT channel, DMA_INFO_SEL_T flags, DMA
 
   // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
   //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
-  if (channel < 8u) {
+  if ((channel < 8u) && !m_dmaUsage[channel]) {
     VDMS_TRACE("   (hook channel %d)\n", channel);
     VDDHookDMA(channel, VDDDMAActivity);
     m_dmaUsage[channel] = TRUE;
@@ -649,7 +649,7 @@ STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULO
 
   // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
   //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
-  if (channel < 8u) {
+  if ((channel < 8u) && !m_dmaUsage[channel]) {
     VDMS_TRACE("   (hook channel %d)\n", channel);
     VDDHookDMA(channel, VDDDMAActivity);
     m_dmaUsage[channel] = TRUE;
