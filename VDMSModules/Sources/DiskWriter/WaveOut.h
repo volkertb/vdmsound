@@ -14,6 +14,10 @@
 #import <IVDMQuery.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include "DiskUtil.h"
+
+/////////////////////////////////////////////////////////////////////////////
 // CWaveOut
 class ATL_NO_VTABLE CWaveOut : 
 	public CComObjectRootEx<CComMultiThreadModel>,
@@ -23,7 +27,7 @@ class ATL_NO_VTABLE CWaveOut :
   public IWaveDataConsumer
 {
 public:
-	CWaveOut()
+  CWaveOut() : m_dataLen(0)
 	{	}
 
 DECLARE_REGISTRY_RESOURCEID(IDR_WAVEOUT)
@@ -51,11 +55,62 @@ public:
   STDMETHOD(SetFormat)(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
   STDMETHOD(PlayData)(BYTE * data, LONG length, DOUBLE * load);
 
+protected:
+  void NewFile(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
+  void AddCue(void);
+  void WriteData(BYTE * data, LONG length);
+  void SaveFile(void);
+
+protected:
+  void InitHeader(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
+
 /////////////////////////////////////////////////////////////////////////////
 
 // Other member variables
 protected:
-  FILE* m_fOut;
+  CString m_path;
+  CSequentialFile m_fOut;
+
+  CDWordArray m_cues;
+
+# pragma pack (push, 1)
+
+  struct {
+    // RIFF chunk
+    DWORD dwRiffChunkID;
+    DWORD dwRiffChunkSize;
+
+    DWORD dwRiffFormat;
+
+    // FORMAT chunk
+    DWORD dwFmtChunkID;
+    DWORD dwFmtChunkSize;
+
+    WORD  wFormatTag;
+    WORD  nChannels;
+    DWORD nSamplesPerSec;
+    DWORD nAvgBytesPerSec;
+    WORD  nBlockAlign;
+    WORD  wBitsPerSample;
+
+    // DATA chunk
+    DWORD dwDataChunkID;
+    DWORD dwDataChunkSize;
+  } m_wavHdr;
+
+  struct {
+    // CUE chunk
+    DWORD dwCueChunkID;
+    DWORD dwCueChunkSize;
+
+    DWORD dwCuePoints;
+  } m_wavTail;
+
+# pragma pack (pop)
+
+  BYTE m_dataBuf[65536];
+  LONG m_dataLen;
+  CCriticalSection m_lock;
 
 // Interfaces to dependency modules
 protected:

@@ -15,6 +15,7 @@ library DISKWRITERLib
 {
 	import "IVDMModule.idl";
 	import "IWave.idl";
+	import "IMIDI.idl";
 
 	[
 		uuid(8633744F-0C1E-11D5-9CD3-00A024112F81),
@@ -24,5 +25,14 @@ library DISKWRITERLib
 	{
 		[default] interface IVDMBasicModule;
 		interface IWaveDataConsumer;
+	};
+	[
+		uuid(1A014742-2718-44C2-9257-C172E3C64FF0),
+		helpstring("MIDIOut Class")
+	]
+	coclass MIDIOut
+	{
+		[default] interface IVDMBasicModule;
+		interface IMIDIEventHandler;
 	};
 };
