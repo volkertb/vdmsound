@@ -88,6 +88,44 @@ HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
 
 
 /////////////////////////////////////////////////////////////////////////////
+// IContextMenu
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::GetCommandString(UINT idCmd, UINT uFlags, UINT* pwReserved, LPSTR pszName, UINT cchMax) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  // TODO: implement
+  return E_NOTIMPL;
+}
+
+HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  // TODO: implement
+  return E_NOTIMPL;
+}
+
+HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  USHORT numMenuItems = 0;
+
+  if (idCmdFirst > idCmdLast)
+    return E_INVALIDARG;
+
+  if (hMenu == NULL)
+    return E_INVALIDARG;
+
+  // TODO: use InsertMenuItem and MENUITEMINFO
+  InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, _T("Run with &VDMS"));
+  numMenuItems++;
+
+  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, numMenuItems);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 // IPersistFile
 /////////////////////////////////////////////////////////////////////////////
 

@@ -20,7 +20,7 @@ public:
 
 // Methods
 protected:
-  void UpdateIconList(void);
+  BOOL UpdateIconList(void);
 
 // Member variables
 protected:
@@ -49,9 +49,10 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CChangeIconDlg)
 	virtual BOOL OnInitDialog();
-	afx_msg void OnKillfocusEdtFile();
+	afx_msg void OnSetfocusLstIcons();
 	afx_msg void OnDblclkLstIcons();
 	afx_msg void OnButFilebrowse();
+	virtual void OnOK();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

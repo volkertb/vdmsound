@@ -10,10 +10,11 @@
 class ATL_NO_VTABLE CLaunchPadShellEx : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CLaunchPadShellEx, &CLSID_LaunchPadShellEx>,
-	public IShellExtInit,
-  public IShellPropSheetExt,
-  public IPersistFile,
-  public IExtractIcon
+  public IShellExtInit,         // Property sheet, Context menu)
+  public IShellPropSheetExt,    // Property sheet
+  public IContextMenu,          // Context menu
+  public IPersistFile,          // Icon
+  public IExtractIcon           // Icon
 {
 public:
 	CLaunchPadShellEx()
@@ -27,6 +28,7 @@ DECLARE_PROTECT_FINAL_CONSTRUCT()
 BEGIN_COM_MAP(CLaunchPadShellEx)
 	COM_INTERFACE_ENTRY(IShellExtInit)
 	COM_INTERFACE_ENTRY(IShellPropSheetExt)
+	COM_INTERFACE_ENTRY(IContextMenu)
 	COM_INTERFACE_ENTRY(IPersistFile)
 	COM_INTERFACE_ENTRY(IExtractIcon)
 END_COM_MAP()
@@ -40,6 +42,12 @@ public:
   STDMETHOD(AddPages)(LPFNADDPROPSHEETPAGE, LPARAM);
   STDMETHOD(ReplacePage)(UINT, LPFNADDPROPSHEETPAGE, LPARAM)
     { return E_NOTIMPL; }
+
+// IContextMenu
+public:
+  STDMETHOD(GetCommandString)(UINT idCmd, UINT uFlags, UINT* pwReserved, LPSTR pszName, UINT cchMax);
+  STDMETHOD(InvokeCommand)(LPCMINVOKECOMMANDINFO lpici);
+  STDMETHOD(QueryContextMenu)(HMENU hMenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags);
 
 // IPersistFile
 public:
