@@ -11,7 +11,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define INI_STR_VDMSERVICES   L"VDMSrv"
-#define INI_STR_ACTINTERVAL   L"interval"
+#define INI_STR_MINPERIOD     L"minDMAPeriod"
+#define INI_STR_MAXPERIOD     L"maxDMAPeriod"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +23,8 @@
 
 #define DMA8_PAGE_MASK    0x00ff      // supposed to be 0x0f, but some games go beyond that
 #define DMA16_PAGE_MASK   0x00ff      // 0x7f on pre-386 machines?
+
+#define RECOVERY_TIME     5000        // how many milliseconds should elapse before the DMA activity period can grow fom minimal to maximal
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -83,8 +86,9 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
     if ((m_DMASrv = Depends->Get(INI_STR_VDMSERVICES)) == NULL) // DMA services
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMDMAServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
-    // Try to obtain the SB settings, use defaults if none specified
-    m_activityInterval = CFG_Get(Config, INI_STR_ACTINTERVAL, 15, 10, false);
+    // Try to obtain the DMA engine settings, use defaults if none specified
+    m_minPeriod = CFG_Get(Config, INI_STR_MINPERIOD,  5, 10, false);
+    m_maxPeriod = CFG_Get(Config, INI_STR_MAXPERIOD, 20, 10, false);
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
@@ -95,7 +99,11 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
   m_DMAThread.SetPriority(THREAD_PRIORITY_TIME_CRITICAL);  /* TODO: make configurable in VDMS.ini file ? */
   m_DMAThread.Resume();
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("TransferMgr initialized")));
+  // Set the DMA activity period
+  m_period = m_maxPeriod;
+  m_recoveryIncrement = (m_maxPeriod * (m_maxPeriod - m_minPeriod)) / ((double)RECOVERY_TIME - m_maxPeriod + m_minPeriod);
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("TransferMgr initialized (minPeriod = %dms, maxPeriod = %dms, recovery increment = %0.3fms)"), (int)m_minPeriod, (int)m_maxPeriod, m_recoveryIncrement));
 
   return S_OK;
 }
@@ -212,17 +220,19 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
+  bool doNotify = false;  // indicates whether a one-time notification is needed regarding some aspect of DMA transfer management
   bool needsAck = false;  // indicates whether someone initiated/aborted a transaction and is waiting for an acknowledgement
 
   do {
     bool isIdle = true;   // indicates whether any channel(s) need servicing
+    bool isSlow = false;  // indicates that the activity frequency should be increased
 
     // For every channel see if there is any registered handler,
     //  and if so then attempt to service it
     for (int DMAChannel = 0; DMAChannel < NUM_DMA_CHANNELS; DMAChannel++) {
       try {
         if (m_channels[DMAChannel].handler == NULL)
-          continue;         // no one is registered with this channel, therefore don't touch it
+          continue;       // no one is registered with this channel, therefore don't touch it
 
         // Obtain the DMA information for the channel
         IVDMSERVICESLib::DMA_INFO_T DMAInfo;
@@ -234,7 +244,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
         // Attempt to service channel
         if (m_channels[DMAChannel].isActive) {      // is this channel awaiting servicing?
-          isIdle = false;   // at least one channel (this one) needs servicing
+          isIdle = false; // at least one channel (this one) needs servicing
 
 #         if _DEBUG
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Polling (active) DMA channel %d: page/offset = %04x/%04x, count = %04x (%d) ; status = %02x, mode = %02x, mask = %02x (%s)"), DMAChannel, DMAInfo.page & 0xffff, DMAInfo.addr & 0xffff, DMAInfo.count & 0xffff, DMAInfo.count & 0xffff, DMAInfo.status & 0xff, DMAInfo.mode & 0xff, DMAInfo.mask & 0xff, (DMAInfo.mask & DMAChMask) != 0 ? _T("masked") : _T("not masked")));
@@ -252,9 +262,12 @@ unsigned int CTransferMgr::Run(CThread& thread) {
             bool isAutoInit = (DMAInfo.mode & 0x10) != 0;
             bool isDescending = ((DMAInfo.mode >> 5) & 0x01) != 0;
             ULONG physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 16) | ((DMAInfo.addr & 0x7fff) << 1));
+            ULONG numData = 0;
             ULONG maxData = DMAInfo.count + 1ul;
 
-            ULONG numData = m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending);
+            if (m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending, &numData)) {
+              isSlow = true;    // remember to boost the DMA activity frequency, this handler is not too happy with it as it is now
+            }
 
             _ASSERTE(numData <= DMAInfo.count + 1ul);
 
@@ -307,10 +320,6 @@ unsigned int CTransferMgr::Run(CThread& thread) {
     }
 
     /* TODO: optimize use of SetDMAState (do not call it if the values did not change, e.g. must assert DREQ but DREQ is already asserted, etc.) */
-    /* TODO: think about it (probably overkill with no advantage): parametrize (in VDMS.ini) amount of sleep between DMA servicing, and calibrate
-       the Sleep() below (i.e. use timeGetTime() differences to deduct the time taken by all the other code in this loop) to reflect that value
-         OR
-       (much better) have feedback mechanism from DMA Handler about transfer (too fast/too slow) and adjust Sleep() accordingly by steering it up or down */
 
     // If someone is waiting for an acknowledgement following a start
     //   or stop operation (by now DREQ is set properly), do so.
@@ -319,8 +328,33 @@ unsigned int CTransferMgr::Run(CThread& thread) {
       m_event.SetEvent();
     }
 
+    // If a handler needs more frequent DMA servicing, boost the DMA activity frequency,
+    //   otherwise slowly bring it down to the minimum possible value for minimal overhead
+    if (isSlow) {
+      double lastPeriod = m_period;
+      m_period = max(m_minPeriod, m_period * 0.75);
+
+      if (m_period == lastPeriod) {   // did not change, so we probably hit the lower limit
+        if (doNotify) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Unable to further boost DMA processing rate, lower bound already met (lower bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_minPeriod, lastPeriod, m_period));
+        doNotify = false;   // notified of exceptional condition once, don't do it again if the condition persists
+      } else {
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Boosting DMA processing rate by %0.1f%% at DMA handler's request (period decreased from %0.2fms to %0.2fms)"), 100.0 * (lastPeriod/m_period - 1.0), lastPeriod, m_period));
+        doNotify = (m_period / lastPeriod < 0.80);  // if the system is changing significantly, assume we left the exceptional state, so notify as soon as it arises again (if ever)
+      }
+    } else {
+      double lastPeriod = m_period;
+      m_period = min(m_maxPeriod, m_period + m_recoveryIncrement);
+
+      if (m_period == lastPeriod) {   // did not change, so we probably hit the upper limit
+        if (doNotify) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA processing rate recovered to its normal value (upper bound = %dms, last period = %0.2fms, current period = %0.2fms"), (int)m_maxPeriod, lastPeriod, m_period));
+        doNotify = false;   // notified of this condition once, don't do it again if the condition persists
+      } else {
+        doNotify = true;    // left the condition, so notify as soon as it arises again
+      }
+    }
+
     // Check if any start/stop requests are pending; if no channels are
-    //  active, block until a request is received, otherwise continue
+    //   active, block until a request is received, otherwise continue
     if (thread.GetMessage(&message, isIdle)) {  // blocks if isIdle==true
       switch (message.message) {
         case WM_QUIT:
@@ -355,7 +389,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
           break;
       }
     } else {
-      Sleep(m_activityInterval);  // whatever amount, but not too low for too high a priority!
+      Sleep((DWORD)m_period);  // calibrated based on handler's performance feedback
     }
   } while (true);
 }
