@@ -62,9 +62,21 @@ int CWizardSheet::GetScreenBpp(void) {
 
 BEGIN_MESSAGE_MAP(CWizardSheet, CPropertySheetEx)
 	//{{AFX_MSG_MAP(CWizardSheet)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
+	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CWizardSheet message handlers
+
+int CWizardSheet::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+{
+  if (CPropertySheetEx::OnCreate(lpCreateStruct) == -1)
+    return -1;
+
+	// Register ourselves as a drop target
+  if (!m_dropTarget.Register(this))
+    return -1;
+
+  return 0;
+}

@@ -40,7 +40,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Debug)
 	enum { IDD = IDD_ADVPROPPAGE_DEBUG };
-	CEdit	m_edtVdmsini;
+	CDDEdit	m_edtVdmsini;
 	CComboBox	m_cmbLogdetail;
 	CButton	m_chkVdmslog;
 	CButton	m_chkVdmsini;

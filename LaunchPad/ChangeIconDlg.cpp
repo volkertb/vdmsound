@@ -109,6 +109,9 @@ BOOL CChangeIconDlg::OnInitDialog()
   // Enable auto-complete for file names
   VLPUtil::EnableAutoComplete(m_edtIcofile.GetSafeHwnd());
 
+  // Register drag-n-drop handlers
+  m_edtIcofile.Register();
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }

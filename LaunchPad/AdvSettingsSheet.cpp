@@ -54,6 +54,7 @@ void CAdvSettingsSheet::Init(void) {
 BEGIN_MESSAGE_MAP(CAdvSettingsSheet, CPropertySheet)
 	//{{AFX_MSG_MAP(CAdvSettingsSheet)
 	ON_MESSAGE(WM_SAVESETTINGS, OnSaveSettings)
+	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -73,6 +74,18 @@ BOOL CAdvSettingsSheet::OnInitDialog()
 LRESULT CAdvSettingsSheet::OnSaveSettings(WPARAM wParam, LPARAM lParam)
 {
   m_settingsOriginal.Copy(m_settings);
+
+  return 0;
+}
+
+int CAdvSettingsSheet::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+{
+	if (CPropertySheet::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	
+	// Register ourselves as a drop target
+  if (!m_dropTarget.Register(this))
+    return -1;
 
   return 0;
 }

@@ -31,12 +31,13 @@ void CBasicBrowseDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicBrowseDlg)
+	DDX_Control(pDX, IDC_EDT_DOSARGS, m_edtDosargs);
+	DDX_Control(pDX, IDC_EDT_DOSDIR, m_edtDosdir);
 	DDX_Control(pDX, IDC_EDT_DOSPROGRAM, m_edtDosprogram);
-	DDX_Text(pDX, IDC_EDT_DOSPROGRAM, m_edtDosprogram_val);
-	DDV_MaxChars(pDX, m_edtDosprogram_val, 63);
 	DDX_Text(pDX, IDC_EDT_DOSARGS, m_edtDosargs_val);
 	DDV_MaxChars(pDX, m_edtDosargs_val, 63);
-	DDX_Control(pDX, IDC_EDT_DOSDIR, m_edtDosdir);
+	DDX_Text(pDX, IDC_EDT_DOSPROGRAM, m_edtDosprogram_val);
+	DDV_MaxChars(pDX, m_edtDosprogram_val, 63);
 	DDX_Text(pDX, IDC_EDT_DOSDIR, m_edtDosdir_val);
 	DDV_MaxChars(pDX, m_edtDosdir_val, 63);
 	//}}AFX_DATA_MAP
@@ -63,6 +64,12 @@ BOOL CBasicBrowseDlg::OnInitDialog()
 
   // Enable auto-complete for file names
   VLPUtil::EnableAutoComplete(m_edtDosprogram.GetSafeHwnd());
+
+  // Register drag-n-drop handlers
+  m_edtDosargs.Register();
+  m_edtDosdir.Register();
+  m_edtDosprogram.Register();
+
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE

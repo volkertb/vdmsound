@@ -148,6 +148,9 @@ BOOL CAdvSettingsPage_Adlib::OnInitDialog()
   // Load the information from file into the GUI
   SyncGUIData(FALSE);
 
+  // Register drag-n-drop handlers
+  m_edtFmoutfile.Register();
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }

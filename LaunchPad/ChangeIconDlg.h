@@ -36,7 +36,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CChangeIconDlg)
 	enum { IDD = IDD_CHANGEICON };
-	CEdit	m_edtIcofile;
+	CDDEdit	m_edtIcofile;
 	CIconListBox m_lstIcons;
 	CString	m_edtIcofile_val;
 	int		m_lstIcons_val;

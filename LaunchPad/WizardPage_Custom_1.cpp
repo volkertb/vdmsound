@@ -65,8 +65,8 @@ END_MESSAGE_MAP()
 
 BOOL CWizardPage_Custom_1::OnInitDialog() 
 {
-	CPropertyPageEx::OnInitDialog();
-	
+  CPropertyPageEx::OnInitDialog();
+
   // Set up any special fonts
   CFont* pFntTmp = m_optMakenew.GetFont();
   LOGFONT logFont;
@@ -83,6 +83,9 @@ BOOL CWizardPage_Custom_1::OnInitDialog()
   // Set up the default values
   m_optMakenew.SetCheck(BST_CHECKED);
   OnOptClicked();
+
+  // Register drag-n-drop handlers
+  m_edtTemplate.Register();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE

@@ -66,6 +66,30 @@ class COpenDOSProgramDialog : public CFileDialog {
 
 
 //////////////////////////////////////////////////////////////////////
+// CDDEdit
+//////////////////////////////////////////////////////////////////////
+
+class CDDEdit : public CEdit {
+  public:
+    CDDEdit(void);
+
+  public:
+  	int Register(void);
+
+  protected:
+    class COleDropTarget : public ::COleDropTarget {
+      DROPEFFECT OnDragEnter(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point);
+      DROPEFFECT OnDragOver(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point);
+      BOOL OnDrop(CWnd* pWnd, COleDataObject* pDataObject, DROPEFFECT dropEffect, CPoint point);
+    };
+
+  protected:
+    COleDropTarget m_dropTarget;
+};
+
+
+
+//////////////////////////////////////////////////////////////////////
 // VLPUtil
 //////////////////////////////////////////////////////////////////////
 

@@ -33,8 +33,9 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CBasicBrowseDlg)
 	enum { IDD = IDD_BASICBROWSE };
-	CEdit	m_edtDosdir;
-	CEdit	m_edtDosprogram;
+	CDDEdit	m_edtDosargs;
+	CDDEdit	m_edtDosdir;
+	CDDEdit	m_edtDosprogram;
 	CString	m_edtDosargs_val;
 	CString	m_edtDosprogram_val;
 	CString	m_edtDosdir_val;

@@ -189,6 +189,82 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 
 //////////////////////////////////////////////////////////////////////
 //
+// CDDEdit
+//
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+CDDEdit::CDDEdit(void)
+ : CEdit()
+{
+}
+
+int CDDEdit::Register(void) {
+	// Register ourselves as a drop target
+  if (!m_dropTarget.Register(this))
+    return -1;
+
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Overridables
+//////////////////////////////////////////////////////////////////////
+
+DROPEFFECT CDDEdit::COleDropTarget::OnDragEnter(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point) {
+  return DROPEFFECT_COPY;
+}
+
+DROPEFFECT CDDEdit::COleDropTarget::OnDragOver(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point) {
+  return DROPEFFECT_COPY;
+}
+
+BOOL CDDEdit::COleDropTarget::OnDrop(CWnd* pWnd, COleDataObject* pDataObject, DROPEFFECT dropEffect, CPoint point) {
+  ASSERT(pWnd != NULL);
+  ASSERT(pDataObject != NULL);
+
+  pDataObject->BeginEnumFormats();
+
+  FORMATETC formatEtc = { 0 };
+
+  while (pDataObject->GetNextFormat(&formatEtc)) {
+    HANDLE hData = hData = pDataObject->GetGlobalData(formatEtc.cfFormat, NULL);
+    CString editText;
+
+    if (hData == NULL)
+      continue;
+
+    switch (formatEtc.cfFormat) {
+      case CF_HDROP:
+        DragQueryFile((HDROP)hData, 0, editText.GetBuffer(MAX_PATH), MAX_PATH);
+        editText.ReleaseBuffer();
+        pWnd->SetWindowText(editText);
+        return TRUE;
+
+      case CF_TEXT:
+        editText = (CHAR*)GlobalLock(hData);
+        pWnd->SetWindowText(editText);
+        GlobalUnlock(hData);
+        return TRUE;
+
+      case CF_UNICODETEXT:
+        editText = (WCHAR*)GlobalLock(hData);
+        pWnd->SetWindowText(editText);
+        GlobalUnlock(hData);
+        return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
 // VLPUtil
 //
 //////////////////////////////////////////////////////////////////////

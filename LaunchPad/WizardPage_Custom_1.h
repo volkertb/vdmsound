@@ -42,7 +42,7 @@ public:
 	//{{AFX_DATA(CWizardPage_Custom_1)
 	enum { IDD = IDD_WIZPROPPAGE_CUSTOM_1 };
 	CButton	m_butTemplate;
-	CEdit	m_edtTemplate;
+	CDDEdit	m_edtTemplate;
 	CButton	m_optMakenew;
 	CButton	m_optUsetemplate;
 	//}}AFX_DATA

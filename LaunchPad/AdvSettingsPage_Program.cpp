@@ -112,6 +112,11 @@ BOOL CAdvSettingsPage_Program::OnInitDialog()
   // This page was not modified yet
 //  SetModified(FALSE);           // enable the "Apply" button to reflect the fact that changes were made
 
+  // Register drag-n-drop handlers
+  m_edtDosprogram.Register();
+  m_edtDosdir.Register();
+  m_edtDosargs.Register();
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
