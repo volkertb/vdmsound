@@ -318,7 +318,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
           getNumChannels(),
           getSampleRate(),
           8,
-          MKWORD(m_bufIn[2], m_bufIn[1]) + 1,  /* TODO: how about stereo? */
+          MKWORD(m_bufIn[2], m_bufIn[1]) + 1,
           ISBDSPHWEmulationLayer::CODEC_PCM,
           false);
       return true;
@@ -358,9 +358,20 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x24:  /* 024h : DMA ADC, 8-bit */
     case 0x99:  /* 024h : DMA ADC, 8-bit (High Speed) */
-      // TODO: implement
-      m_hwemu->logError("Attempted to use unimplemented DSP commands 0x24/0x99 (DMA ADC, 8-bit [+/- high speed])");
-      return false;
+      /* TODO: set state to DSP_S_HIGHSPEED for cmd. 0x91 (implement when DMA single-cycle terminal count
+         notification is functional, to automatically switch out of high-speed at the end of transfer) */
+      if ((command == 0x99) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+        m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x99 (DMA ADC 8-bit high-speed)");
+
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_RECORD,
+          1,                /* TODO: check for stereo recording (SBPro or cmd. 0xa0/0xa8?) */
+          getSampleRate(),  /* TODO: have separate rate for playback/recording */
+          8,
+          MKWORD(m_bufIn[2], m_bufIn[1]) + 1,
+          ISBDSPHWEmulationLayer::CODEC_PCM,
+          false);
+      return true;
 
     case 0x28:  /* 028h : Direct ADC, 8-bit (Burst) */
       // TODO: implement
@@ -369,9 +380,18 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x2c:  /* 02Ch : Auto-Initialize DMA ADC, 8-bit */
     case 0x98:  /* 098h : Auto-Initialize DMA ADC, 8-bit (High Speed) */
-      // TODO: implement
-      m_hwemu->logError("Attempted to use unimplemented DSP commands 0x2c/0x98 (A/I DMA ADC, 8-bit [+/- high speed])");
-      return false;
+      if ((command == 0x98) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
+        m_state = DSP_S_HIGHSPEED;  // set state to high-speed; can only get out by resetting the DSP
+
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_RECORD,
+          1,                /* TODO: check for stereo recording (SBPro or cmd. 0xa0/0xa8?) */
+          getSampleRate(),  /* TODO: have separate rate for playback/recording */
+          8,
+          getNumSamples(),
+          ISBDSPHWEmulationLayer::CODEC_PCM,
+          true);
+      return true;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -441,6 +461,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x42:  /* 042h : Set Input Sample Rate */
       // TODO: implement (same holds as for DSP cmd. 0x41)
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x42 (Input sample rate)");
+      setSampleRate(MKWORD(m_bufIn[1], m_bufIn[2]));  // sample rate independent from number of channels
       return false;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */

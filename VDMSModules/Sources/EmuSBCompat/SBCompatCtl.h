@@ -98,7 +98,7 @@ protected:
   int m_DMA16Channel;
 
 protected:
-  DWORD m_transferStartTime;
+  DWORD m_lastTransferTime;
   DWORD m_transferPauseTime;
   long m_transferredBytes;
   long m_avgBandwidth;
@@ -108,6 +108,8 @@ protected:
   codec_t m_codec;
   bool m_isPaused;
   int m_activeDMAChannel;
+  transfer_t m_transferType;
+  double m_renderLoad;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
