@@ -26,6 +26,7 @@ extern CComModule _Module;
 
 // TODO: reference additional headers your program requires here
 
+#include <afxmt.h>
 #include <afxtempl.h>
 
 #include <mmsystem.h>

@@ -19,17 +19,22 @@
 #import <IVDMQuery.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include <Thread.h>
+
+/////////////////////////////////////////////////////////////////////////////
 // CWaveOut
 class ATL_NO_VTABLE CWaveOut : 
 	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CWaveOut, &CLSID_WaveOut>,
+  public IRunnable,
 	public ISupportErrorInfo,
   public IVDMBasicModule,
   public IWaveDataConsumer
 {
 public:
 	CWaveOut()
-    : m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_lpDirectSound(NULL), m_lpDirectSoundBuffer(0), m_bufferPos(0)
+    : m_lpDirectSound(NULL), m_lpDirectSoundBuffer(0), m_deviceGUID(GUID_NULL), m_deviceName(_T("<unknown>")), m_bufferLen(0), m_bufferPos(0), m_playedBytes(0), m_sentBytes(0)
   {
     m_waveFormat.nChannels = 0;
     m_waveFormat.nSamplesPerSec = 0;
@@ -46,6 +51,10 @@ BEGIN_COM_MAP(CWaveOut)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
   COM_INTERFACE_ENTRY(IWaveDataConsumer)
 END_COM_MAP()
+
+// IRunnable
+public:
+  unsigned int Run(CThread& thread);
 
 // ISupportsErrorInfo
 public:
@@ -110,9 +119,14 @@ protected:
   LPDIRECTSOUNDBUFFER m_lpDirectSoundBuffer;
   WAVEFORMATEX m_waveFormat;
 
-  LONG m_bufferLen, m_bufferPos;
-  LONG m_bufferedLo, m_bufferedHi;
-  LONG m_DSoundLatency;
+  CThread m_gcThread;
+  CCriticalSection m_mutex;
+
+  LONG m_bufferDuration;              // length of audio buffer (in milliseconds)
+  LONG m_bufferLen, m_bufferPos;      // length and current write position in buffer (in bytes)
+  LONG m_playedBytes, m_sentBytes;    // how many bytes of data were played (actually went through DSound device) to date and how many valid bytes were sent (produced)
+  LONG m_DSoundLatency;               // maximum observed DSound latncy (in bytes)
+  LONG m_bufferedLo, m_bufferedHi;    // delimit the optimal range valid audio data should lead the play cursor by
 
 // Interfaces to dependency modules
 protected:

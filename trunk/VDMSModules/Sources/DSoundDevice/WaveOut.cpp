@@ -50,6 +50,8 @@ STDMETHODIMP CWaveOut::InterfaceSupportsErrorInfo(REFIID riid)
 	return S_FALSE;
 }
 
+
+
 /////////////////////////////////////////////////////////////////////////////
 // IVDMBasicModule
 /////////////////////////////////////////////////////////////////////////////
@@ -89,7 +91,13 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
+  m_bufferDuration = BUF_CHUNKS * m_bufOpRange; // Decide how long (in milliseconds) the DSound buffer should be
   m_deviceName = DSoundGetName(&m_deviceGUID);  // Obtain information about the device (name and GUID)
+
+  // Create the garbage-collector thread (manages packets that have finished playing)
+  m_gcThread.Create(this, true);      /* TODO: check that creation was successful */
+  m_gcThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+  m_gcThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("WaveOut initialized (device ID = %d, '%s')"), m_deviceID, (LPCTSTR)m_deviceName));
 
@@ -101,6 +109,10 @@ STDMETHODIMP CWaveOut::Destroy() {
   // Release Directsound
   if (m_lpDirectSound != NULL)
     DSoundClose();
+
+  // Signal the GC thread to quit
+  if (m_gcThread.GetThreadHandle() != NULL)
+    m_gcThread.Cancel();
 
 if(xyz) fclose(xyz);
   // Release the Wave-out module
@@ -136,6 +148,9 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
         (m_waveFormat.nSamplesPerSec * (1.00 + TOLERANCE_FREQ / 100.0) < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
         (m_waveFormat.wBitsPerSample != bitsPerSample))
     {
+      // Gain exclusive access to the DSound buffer and related variables
+      CSingleLock lock(&m_mutex, TRUE);
+
       // If the buffer is created, try to release it first
       if (m_lpDirectSoundBuffer != NULL) {
         m_lpDirectSoundBuffer->Stop();
@@ -154,11 +169,12 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
 
       // Compute desired buffer length (in bytes), then make sure
       //  the value falls within the acceptable DirectSound bounds
-      m_bufferLen = (int)(BUF_CHUNKS * (m_bufOpRange / 1000.0) * m_waveFormat.nAvgBytesPerSec);
+      m_bufferLen = (int)((m_bufferDuration / 1000.0) * m_waveFormat.nAvgBytesPerSec);
       m_bufferLen = max(DSBSIZE_MIN, min(DSBSIZE_MAX, m_bufferLen));
 
       // Fill in the buffer-creation structure
       DSBUFFERDESC DSBufferDesc;
+      memset(&DSBufferDesc, 0, sizeof(DSBufferDesc));
       DSBufferDesc.dwSize = sizeof(DSBufferDesc);
       DSBufferDesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2;
       DSBufferDesc.dwBufferBytes = m_bufferLen;
@@ -169,9 +185,11 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
       if (FAILED(hr = m_lpDirectSound->CreateSoundBuffer(&DSBufferDesc, &m_lpDirectSoundBuffer, NULL)))
         hrThis = hr;
 
-      // No bytes are enqueued for playback (yet)
-      m_bufferPos = 0;
-      m_DSoundLatency = 0;
+      // Initialize local buffer state
+      m_bufferPos = 0;      // we are at the start of the buffer (no data is enqueued yet)
+      m_DSoundLatency = 0;  // the DSound latency for this audio format is unknown yet
+      m_playedBytes = 0;    // no bytes went through DSound yet
+      m_sentBytes = 0;      // no bytes came from the application for playback yet
 
       // Compute the ideal amount of buffering (in bytes)
       m_bufferedLo = m_waveFormat.nAvgBytesPerSec * m_bufOpRange / 1000;
@@ -202,16 +220,20 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
     _ASSERTE(m_lpDirectSound != NULL);
 
     try {
+      // Gain exclusive access to the DSound buffer and related variables
+      CSingleLock lock(&m_mutex, TRUE);
+
       // Verify whether the DirectSound buffer exists
       if (m_lpDirectSoundBuffer == NULL)
-        throw _com_error(E_FAIL);
+        throw E_FAIL;
 
       // Write the new audio data to the DirectSound buffer
       BYTE* data1, * data2;
       DWORD length1, length2;
+      DWORD maxLength = min(length, m_bufferLen);
 
-      if (FAILED(hr = m_lpDirectSoundBuffer->Lock(m_bufferPos, min(length, m_bufferLen), (LPVOID*)(&data1), &length1, (LPVOID*)(&data2), &length2, 0)))
-        throw _com_error(hr);
+      if (FAILED(hr = m_lpDirectSoundBuffer->Lock(m_bufferPos, maxLength, (LPVOID*)(&data1), &length1, (LPVOID*)(&data2), &length2, 0)))
+        throw hr;
 
       if (data1 != NULL) memcpy(data1, data, length1);
       if (data2 != NULL) memcpy(data2, data + length1, length2);
@@ -237,8 +259,9 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
 
 //if (xyz) fprintf(xyz,"%6d / %6d (%6d %6d %6d)\n",(int)bufferedBytes,(int)m_bufferLen,(int)dwCurrentReadCursor,(int)dwCurrentWriteCursor,(int)m_bufferPos);
 
-      // Advance our write cursor
-      m_bufferPos = (m_bufferPos + length) % m_bufferLen;
+      // Advance our write cursor, and count the data as successfully "sent"
+      m_bufferPos = (m_bufferPos + maxLength) % m_bufferLen;
+      m_sentBytes += maxLength;
 
       // Compute how off-target we are with buffering
       if (bufferedBytes < m_bufferedLo) {
@@ -246,9 +269,9 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       } else if (bufferedBytes > m_bufferedHi) {
         loadThis = (double)bufferedBytes / m_bufferedHi;
       }
-    } catch (_com_error& ce) {
-      hrThis = ce.Error();      // Propagate the error
-RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T(">> ERROR: 0x%08x - %s"), (int)hrThis, (LPCTSTR)FormatMessage(hrThis)));
+    } catch (HRESULT hr) {
+      hrThis = hr;              // Propagate the error
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T(">> ERROR PlayData: 0x%08x - %s"), (int)hr, (LPCTSTR)FormatMessage(hr)));
     }
   }
 
@@ -261,6 +284,105 @@ RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T(">> ERROR: 0x%08x -
 
   return (hrThat == S_OK ? hrThis : hrThat);
 }
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IRunnable
+/////////////////////////////////////////////////////////////////////////////
+
+unsigned int CWaveOut::Run(CThread& thread) {
+  MSG message;
+  DWORD dwLastReadCursor = 0;
+
+  _ASSERTE(thread.GetThreadID() == m_gcThread.GetThreadID());
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
+
+  while (true) {
+    if (thread.GetMessage(&message, false)) {       // non-blocking message-"peek"
+      switch (message.message) {
+        case WM_QUIT:
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread cancelled")));
+          return 0;
+
+        default:
+          break;
+      }
+    } else {
+      try {
+        // Gain exclusive access to the DSound buffer and related variables
+        CSingleLock lock(&m_mutex, TRUE);
+
+        if (m_lpDirectSoundBuffer != NULL) {
+          HRESULT hr;
+
+          // First find out where in the buffer we are playing back from
+          DWORD dwCurrentReadCursor = 0;
+
+          if (FAILED(hr = m_lpDirectSoundBuffer->GetCurrentPosition(&dwCurrentReadCursor, NULL)))
+            throw hr;
+
+          // Compute how much bytes were played back since we last checked,
+          //  and add the amount to the "played bytes" grand total
+          if (m_playedBytes == 0) {
+            m_playedBytes = dwCurrentReadCursor;  // the buffer is brand-new
+          } else {
+            m_playedBytes += (m_bufferLen + dwCurrentReadCursor - dwLastReadCursor) % m_bufferLen;
+          }
+
+          dwLastReadCursor = dwCurrentReadCursor; // remember this for the next check to find the "played" increment
+
+          _ASSERTE(m_playedBytes % m_bufferLen == (LONG)dwCurrentReadCursor);
+          _ASSERTE(m_sentBytes % m_bufferLen == m_bufferPos);
+
+          // Compute what portion of the buffer has not been replenished and needs to be silenced
+          LONG dirtyBytes = m_playedBytes - m_sentBytes;
+
+          if (dirtyBytes > 0) {                   // if lagging, flush the buffer
+            m_sentBytes += (m_bufferLen + dirtyBytes - (dirtyBytes % m_bufferLen)); // get rid of the huge lag, or else the condition may trigger indefinitely
+            dirtyBytes = m_bufferLen;             // the buffer has been starved for too long, all data is direty and must be silenced
+          } else if (dirtyBytes < -m_bufferLen) { // freak case; either playback stalled, or this thread was delayed and lost playback updates
+            dirtyBytes = -dirtyBytes;             // take the absoulute value
+            m_playedBytes += (dirtyBytes - (dirtyBytes % m_bufferLen)); // get rid of the huge lag, or else the condition may trigger several times
+            dirtyBytes %= m_bufferLen;            // preventively erase data between the write and (adjusted) play position
+          } else {                                // in all other cases, preventively erase data between the write and play cursors
+            dirtyBytes = (m_bufferLen + dirtyBytes) % m_bufferLen;
+          }
+
+          if (dirtyBytes > 0) {
+            // Write silence data to the DirectSound buffer
+            BYTE* data1, * data2;
+            DWORD length1, length2;
+            int silenceData = ((m_waveFormat.wBitsPerSample == 8) ? 0x80 : 0x00);
+
+            if (FAILED(hr = m_lpDirectSoundBuffer->Lock(m_bufferPos, dirtyBytes, (LPVOID*)(&data1), &length1, (LPVOID*)(&data2), &length2, 0)))
+              throw hr;
+
+            if (data1 != NULL) memset(data1, silenceData, length1);
+            if (data2 != NULL) memset(data2, silenceData, length2);
+
+            if (FAILED(hr = m_lpDirectSoundBuffer->Unlock(data1, length1, data2, length2)))
+              throw hr;
+          }
+
+if(xyz)fprintf(xyz,"> %6d %6d < [ %6d / %6d ] %9d\n",(int)m_bufferPos,(int)dwCurrentReadCursor,(int)dirtyBytes,(int)m_bufferLen,(int)(m_playedBytes - m_sentBytes));
+        }
+      } catch (HRESULT hr) {
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T(">> ERROR Run: 0x%08x - %s"), (int)hr, (LPCTSTR)FormatMessage(hr)));
+      }
+
+      Sleep(m_bufferDuration / 2);
+    }
+  }
+
+  DWORD lastError = GetLastError();
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
+
+  return -2;  // abnormal thread termination (error in message fetch)
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Utility functions
@@ -351,9 +473,14 @@ bool CWaveOut::DSoundOpen(bool isInteractive) {
 // Closes the DSound device specified in the module's settings
 //
 void CWaveOut::DSoundClose(void) {
+  if (m_lpDirectSoundBuffer != NULL) {
+    m_lpDirectSoundBuffer->Release(); // Release the COM interface
+    m_lpDirectSoundBuffer = NULL;     // Lose the pointer
+  }
+
   if (m_lpDirectSound != NULL) {
-    m_lpDirectSound->Release();
-    m_lpDirectSound = NULL;   // Lose the pointer
+    m_lpDirectSound->Release();       // Release the COM interface
+    m_lpDirectSound = NULL;           // Lose the pointer
   }
 }
 
@@ -371,21 +498,63 @@ HRESULT CWaveOut::DSoundOpenHelper(void) {
   try {
     // Initialize DirectSound
     if (FAILED(hr = DirectSoundCreate(m_deviceGUID == GUID_NULL ? NULL : &m_deviceGUID, &lpDirectSound, NULL)))
-      throw _com_error(hr);
+      throw hr;
 
     _ASSERTE (lpDirectSound != NULL);
 
     // Must set the coopertaive level before working with DSound
     if (FAILED(hr = lpDirectSound->SetCooperativeLevel(GetDesktopWindow(), DSSCL_PRIORITY)))
-      throw _com_error(hr);
+      throw hr;
 
-    /* TODO: set the pirmary buffer format to 44100Hz 16bit stereo */
-  } catch (_com_error& ce) {
+    // Obtain the device capabilities
+    DSCAPS DSCaps;
+    memset(&DSCaps, 0, sizeof(DSCaps));
+    DSCaps.dwSize = sizeof(DSCaps);
+
+    if (SUCCEEDED(hr = lpDirectSound->GetCaps(&DSCaps))) {
+      int channels      = (DSCaps.dwFlags & DSCAPS_PRIMARYSTEREO) ? 2 : 1;
+      int bitsPerSample = (DSCaps.dwFlags & DSCAPS_PRIMARY16BIT) ? 16 : 8;
+      int samplesPerSec = 8000;
+
+      // Obtain the primary buffer
+      LPDIRECTSOUNDBUFFER lpPrimary = NULL;
+
+      DSBUFFERDESC DSBufferDesc;
+      memset(&DSBufferDesc, 0, sizeof(DSBufferDesc));
+      DSBufferDesc.dwSize = sizeof(DSBufferDesc);
+      DSBufferDesc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+      DSBufferDesc.dwBufferBytes = 0;
+      DSBufferDesc.dwReserved = 0;
+      DSBufferDesc.lpwfxFormat = NULL;  // must be NULL for primary buffers
+
+      if (SUCCEEDED(hr = lpDirectSound->CreateSoundBuffer(&DSBufferDesc, &lpPrimary, NULL)) && (lpPrimary != NULL)) {
+        // Change the format
+        WAVEFORMATEX waveFormat;
+
+        waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+        waveFormat.nChannels = channels;
+        waveFormat.nSamplesPerSec = samplesPerSec;
+        waveFormat.nAvgBytesPerSec = channels * samplesPerSec * bitsPerSample / 8;
+        waveFormat.nBlockAlign = channels * bitsPerSample / 8;
+        waveFormat.wBitsPerSample = bitsPerSample;
+        waveFormat.cbSize = 0;
+
+        if (SUCCEEDED(hr = lpPrimary->SetFormat(&waveFormat))) {
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, _T("WOW!!!!"));
+        } else {
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("FuBiGa: SetFormat: %08x"), hr));
+        }
+      } else {
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("FkBlGs: CreateSoundBuffer: %08x"), hr));
+      }
+    } else {
+RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("FcBGat: GetCaps: %08x"), hr));
+    }
+  } catch (HRESULT hr) {
     if (lpDirectSound != NULL)
       lpDirectSound->Release(); // Release the (improperly initialized) interface
 
-    SetErrorInfo(0, ce.ErrorInfo());
-    return ce.Error();          // Propagate the error
+    return hr;                  // Propagate the error
   }
 
   m_lpDirectSound = lpDirectSound;
