@@ -110,41 +110,10 @@ BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
 }
 
 BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled) {
-  const CString str_numl = _T("num");
-  const CString str_caps = _T("caps");
-  const CString str_scrl = _T("scroll");
-
-  BOOL bEnabled2 = TRUE;
-
-  if (bSave) {
-    int curSel = m_cmbSysexindicator.GetCurSel();
-
-    if (curSel != CB_ERR) {
-      CString value;
-      m_cmbSysexindicator.GetLBText(curSel, value);
-      m_settings.SetValue   (_T("vdms.midi"), _T("sysExLed"), value.SpanExcluding(_T(" ")));
-    } else {
-      m_settings.UnsetValue (_T("vdms.midi"), _T("sysExLed"));
-    }
-  } else {
-    CString value;
-    BOOL isValueIndeterm;
-    HRESULT hr;
-
-    hr = m_settings.GetValue(_T("vdms.midi"), _T("sysExLed"), value, &isValueIndeterm, _T("scroll"));
-    bEnabled2 &= SUCCEEDED(hr);
-
-    if (isValueIndeterm) {
-      m_cmbSysexindicator.SetCurSel(-1);
-    } else {
-      m_cmbSysexindicator.SetCurSel(m_cmbSysexindicator.FindString(0, value));
-    }
-  }
+  VLPUtil::SyncComboBox(bSave, m_settings, _T("vdms.midi"), _T("sysExLed"), m_cmbSysexindicator, _T("scroll"));
 
   if (!bEnabled) {
     m_cmbSysexindicator.EnableWindow(FALSE);
-  } else {
-    m_cmbSysexindicator.EnableWindow(bEnabled2);
   }
 
   return TRUE;

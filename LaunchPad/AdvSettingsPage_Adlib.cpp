@@ -35,6 +35,7 @@ void CAdvSettingsPage_Adlib::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHK_FMOUTFILE, m_chkFmoutfile);
 	DDX_Control(pDX, IDC_SPN_FMOUTDEVBUF, m_spnFmoutdevbuf);
 	DDX_Control(pDX, IDC_CMB_FMSYNTHRATE, m_cmbFmsynthrate);
+	DDX_Control(pDX, IDC_CMB_OPLMODE, m_cmbOplmode);
 	DDX_Control(pDX, IDC_CMB_FMPORT, m_cmbFmport);
 	DDX_Control(pDX, IDC_CMB_FMOUTDEVBUF, m_cmbFmoutdevbuf);
 	DDX_Control(pDX, IDC_CMB_FMOUTDEV, m_cmbFmoutdev);
@@ -73,7 +74,8 @@ BOOL CAdvSettingsPage_Adlib::SyncGUIData(BOOL bSave) {
 
 BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("port"),       m_cmbFmport,      _T("0x388"));
-  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("sampleRate"), m_cmbFmsynthrate, _T("11025"));
+  VLPUtil::SyncComboBox(bSave, m_settings, _T("vdms.sb.fm"), _T("oplMode"),    m_cmbOplmode,     _T("Automatic"));
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("sampleRate"), m_cmbFmsynthrate, _T("44100"));
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.fm"), _T("useDevOut"),  m_chkFmoutdev,    TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.fm"), _T("useFileOut"), m_chkFmoutfile,   FALSE);
 
@@ -82,6 +84,7 @@ BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
 
   if (!bEnabled) {
     m_cmbFmport.EnableWindow(FALSE);
+    m_cmbOplmode.EnableWindow(FALSE);
     m_cmbFmsynthrate.EnableWindow(FALSE);
     m_chkFmoutdev.EnableWindow(FALSE);
     m_chkFmoutfile.EnableWindow(FALSE);
