@@ -30,8 +30,6 @@ BOOL CChangeIconDlg::UpdateIconList(void) {
   BOOL retVal = TRUE;
   CString tmpStr1, tmpStr2;
 
-  using namespace LaunchPadSettingsHelper;
-
   UpdateData(TRUE);
 
   if (m_edtFile_val.IsEmpty()) {
@@ -39,7 +37,7 @@ BOOL CChangeIconDlg::UpdateIconList(void) {
   } else if (m_edtFile_val.CollateNoCase(m_lastEdtFile) != 0) {
     CString iconPath;
     int iconIndex;
-    ParseIconLocation(m_edtFile_val, iconPath, iconIndex);
+    VLPUtil::ParseIconLocation(m_edtFile_val, iconPath, iconIndex);
 
     m_edtFile_val = iconPath;
     m_lastEdtFile = m_edtFile_val;

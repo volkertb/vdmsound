@@ -12,6 +12,11 @@ static char THIS_FILE[]=__FILE__;
 
 
 //////////////////////////////////////////////////////////////////////
+
+#define IDI_SH_UNKNOWN      1
+#define IDI_SH_MULTISEL   133
+
+//////////////////////////////////////////////////////////////////////
 //
 // CIcon
 //
@@ -49,9 +54,9 @@ HRESULT CIcon::LoadIcon(HINSTANCE hInstance, LPCTSTR lpIconName) {
     return HRESULT_FROM_WIN32(GetLastError());
 
   m_hIcon = hIcon;
-  m_bAttached = FALSE;
+  m_bAttached = FALSE;    // do not attach because the icon instance is shared and should not be destroyed
 
-  SetIcon(hIcon);
+  SetIcon(m_hIcon);
 
   return S_OK;
 }
@@ -66,9 +71,9 @@ HRESULT CIcon::ExtractIcon(HINSTANCE hInstance, LPCTSTR lpszExeFileName, UINT nI
     return E_FAIL;
 
   m_hIcon = hIcon;
-  m_bAttached = TRUE;
+  m_bAttached = TRUE;     // attach because the icon instance must be destroyed when we are done with it
 
-  SetIcon(hIcon);
+  SetIcon(m_hIcon);
 
   return S_OK;
 }
@@ -77,7 +82,7 @@ BOOL CIcon::DeleteIcon(void) {
 	if (m_hIcon == NULL)
 		return FALSE;
 
-  SetIcon(NULL);
+  SetIcon(NULL);          // make sure the icon is not selected in any device context
 
   BOOL retVal = ::DestroyIcon(m_hIcon);
 
@@ -124,9 +129,7 @@ COpenDOSProgramDialog::COpenDOSProgramDialog(
 
 BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
   // Check that the file is a MS-DOS .exe, .com, or .bat file
-  if ((GetFileExt().CompareNoCase(_T("BAT")) == 0) ||                                     // .bat file
-      (SHGetFileInfo((LPCTSTR)GetPathName(), 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d))   // valid .exe/.com file
-  {
+  if (VLPUtil::isMSDOSFile(GetPathName())) {  // valid .exe/.com file
     return FALSE;
   } else {
     CString message;
@@ -139,7 +142,7 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 
 //////////////////////////////////////////////////////////////////////
 //
-// LaunchPadSettingsHelper
+// VLPUtil
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -149,8 +152,8 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 // Constants
 //////////////////////////////////////////////////////////////////////
 
-LPCTSTR LaunchPadSettingsHelper::T_YES = _T("yes");
-LPCTSTR LaunchPadSettingsHelper::T_NO = _T("no");
+LPCTSTR VLPUtil::T_YES = _T("yes");
+LPCTSTR VLPUtil::T_NO = _T("no");
 
 
 
@@ -162,7 +165,7 @@ LPCTSTR LaunchPadSettingsHelper::T_NO = _T("no");
 // Synchronizes the state of a Win32 check-box with its corresponding
 //  setting
 //
-HRESULT LaunchPadSettingsHelper::SyncCheckBox(
+HRESULT VLPUtil::SyncCheckBox(
   BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
@@ -229,7 +232,7 @@ HRESULT LaunchPadSettingsHelper::SyncCheckBox(
 //  This function deals with 'regular' radio buttons (that represent
 //  meaningful settings).
 //
-HRESULT LaunchPadSettingsHelper::SyncRadioButton(
+HRESULT VLPUtil::SyncRadioButton(
   BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
@@ -286,7 +289,7 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
 //  This function deals with 'other'-type radio buttons that represent
 //  indeterminate settings.
 //
-HRESULT LaunchPadSettingsHelper::SyncRadioButton(
+HRESULT VLPUtil::SyncRadioButton(
   BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
@@ -344,7 +347,7 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
 //
 // Loads a Win32 icon from a setting.
 //
-HRESULT LaunchPadSettingsHelper::LoadIconCtl(
+HRESULT VLPUtil::LoadIconCtl(
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
@@ -361,21 +364,21 @@ HRESULT LaunchPadSettingsHelper::LoadIconCtl(
   BOOL isIndeterminate = FALSE;
   CString iconLocation;
 
-  HINSTANCE hInstance = _Module.GetModuleInstance();
+  HINSTANCE hShInstance = ::GetModuleHandle(_T("SHELL32"));
 
   if (FAILED(settings.GetValue(section, key, iconLocation, &isIndeterminate, _T(""))))
-    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_UNKNOWNICON));
+    return control.LoadIcon(hShInstance, MAKEINTRESOURCE(IDI_SH_UNKNOWN));
 
   if (isIndeterminate)
-    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MULTIPLEICON));
+    return control.LoadIcon(hShInstance, MAKEINTRESOURCE(IDI_SH_MULTISEL));
 
   CString iconPath;
   int iconIndex;
 
   ParseIconLocation(iconLocation, iconPath, iconIndex);
 
-  if (FAILED(control.ExtractIcon(hInstance, (LPCTSTR)iconPath, iconIndex)))
-    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_UNKNOWNICON));
+  if (FAILED(control.ExtractIcon(AfxGetInstanceHandle(), (LPCTSTR)iconPath, iconIndex)))
+    return control.LoadIcon(hShInstance, MAKEINTRESOURCE(IDI_SH_UNKNOWN));
 
   return S_OK;
 }
@@ -383,7 +386,7 @@ HRESULT LaunchPadSettingsHelper::LoadIconCtl(
 //
 // Parses a file location string for its file component and icon index
 //
-void LaunchPadSettingsHelper::ParseIconLocation(
+void VLPUtil::ParseIconLocation(
   LPCTSTR iconLocation,         // string that will be parsed
   CString& iconPath,            // file component
   int& iconIndex)               // icon index
@@ -399,16 +402,21 @@ void LaunchPadSettingsHelper::ParseIconLocation(
 //
 // Creates a relative path from two paths
 //
-CString LaunchPadSettingsHelper::GetRelativePath(
+CString VLPUtil::GetRelativePath(
   LPCTSTR filePath,             // string that contains the path that relPath will be relative to; the relative path will point to this path
   BOOL isPathOnly,              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
-  LPCTSTR basePath)             // string that contains the path that relPath will be relative from; this is the path in which the relative path can be used
+  LPCTSTR basePath)             // string that contains the path that the returned path will be relative from; this is the path in which the relative path can be used
 {
-  TCHAR szPath[MAX_PATH];
+  ASSERT(filePath != NULL);
+  ASSERT(basePath != NULL);
+  ASSERT(_tcslen(filePath) < MAX_PATH);
+  ASSERT(_tcslen(basePath) < MAX_PATH);
 
-  if ((!PathIsRelative(filePath)) &&
-      (PathIsDirectory(basePath)) &&
-      (PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL)))
+  TCHAR szPath[MAX_PATH + 1];
+
+  if (!PathIsRelative(basePath) &&
+      !PathIsRelative(filePath) &&
+      PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL))
   {
     return CString(szPath);
   } else {
@@ -417,9 +425,37 @@ CString LaunchPadSettingsHelper::GetRelativePath(
 }
 
 //
+// Creates an absolute path from two paths
+//
+CString VLPUtil::GetAbsolutePath(
+  LPCTSTR filePath,             // string that contains the relative path to be converted
+  BOOL isPathOnly,              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
+  LPCTSTR basePath)             // string that contains the path relative to which the return path is computed from
+{
+  ASSERT(filePath != NULL);
+  ASSERT(basePath != NULL);
+  ASSERT(_tcslen(filePath) < MAX_PATH);
+  ASSERT(_tcslen(basePath) < MAX_PATH);
+
+  TCHAR szPath1[2 * MAX_PATH + 1], szPath2[2 * MAX_PATH + 1];
+
+  _tcscpy(szPath1, basePath);
+
+  if (!PathIsRelative(basePath) &&
+      PathIsRelative(filePath) &&
+      PathAppend(szPath1, filePath) &&
+      PathCanonicalize(szPath2, szPath1))
+  {
+    return CString(szPath2);
+  } else {
+    return filePath;
+  }
+}
+
+//
 // Removes the trailing file name and backslash from a path, if it has them
 //
-CString LaunchPadSettingsHelper::GetDirectory(LPCTSTR filePath) {
+CString VLPUtil::GetDirectory(LPCTSTR filePath) {
   CString retVal(filePath);
 
   LPTSTR retValBuf = retVal.GetBuffer(0);
@@ -429,4 +465,18 @@ CString LaunchPadSettingsHelper::GetDirectory(LPCTSTR filePath) {
   retVal.ReleaseBuffer();
 
   return retVal;
+}
+
+//
+//
+//
+BOOL VLPUtil::isVLPFile(LPCTSTR fName) {
+  return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0);
+}
+
+//
+//
+//
+BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
+  return (_tcsicmp(PathFindExtension(fName), _T(".bat")) == 0) || (SHGetFileInfo(fName, 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d);
 }

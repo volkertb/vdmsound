@@ -122,37 +122,35 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   static LPCTSTR T_JOY2_MAP = _T("joy2.map");
   static LPCTSTR T_JOY3_MAP = _T("joy3.map");
 
-  using namespace LaunchPadSettingsHelper;
-
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
   //
 
   // Compatibility
-  SyncCheckBox(bSave, m_settings, _T("winnt.memory"), _T("useEMS"), m_chkEms, FALSE);
-  SyncCheckBox(bSave, m_settings, _T("winnt.video"), _T("useVESA"), m_chkVesa, FALSE);
-  SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"), m_chkCdrom, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.memory"), _T("useEMS"), m_chkEms, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.video"), _T("useVESA"), m_chkVesa, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"), m_chkCdrom, FALSE);
 
   // MIDI
-  SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
-  SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
-  SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
 
   // Joystick
-  SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
-  SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
-  SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
 
   // Other
-  SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"), _T("exitClose"), m_chkClose, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"), _T("exitClose"), m_chkClose, FALSE);
 
   //
   // Synchronize the read-only controls with the settings they represent
   //
   if (!bSave) {
     // Program icon
-    LoadIconCtl(m_settings, _T("program"), _T("icon"), m_icoApp);
+    VLPUtil::LoadIconCtl(m_settings, _T("program"), _T("icon"), m_icoApp);
 
     // Program command line
     CString progExec, progParams, progWDir;
@@ -169,7 +167,7 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
       m_edtDoscmd.EnableWindow(FALSE);
       m_edtDoscmd.SetWindowText(tmpStr);
     } else {
-      CString tmpStr = GetRelativePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
+      CString tmpStr = VLPUtil::GetRelativePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
       tmpStr.TrimLeft(); tmpStr.TrimRight();
 
       m_edtDoscmd.EnableWindow(TRUE);
@@ -304,6 +302,8 @@ BOOL CBasicSettingsPage::OnApply()
 
   if (FAILED(m_settings.CommitAll()))
     return FALSE;
+
+  SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
   return CPropertyPage::OnApply();
 }

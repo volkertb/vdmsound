@@ -16,9 +16,9 @@
 /////////////////////////////////////////////////////////////////////////////
 
 HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDataObj, HKEY hProgID) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
   try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
     FORMATETC format = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
     STGMEDIUM storage;
     HDROP     hDrop;
@@ -75,9 +75,15 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
 /////////////////////////////////////////////////////////////////////////////
 
 HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
   try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+    // Only display the property page if all files are of type "VDMSound LaunchPad"
+    for (int i = 0; i < m_fileNames.GetSize(); i++) {
+      if (!VLPUtil::isVLPFile(m_fileNames.GetAt(i)))
+        return S_OK;    // return right away, without displaying the property page
+    }
+
     // Create and add the property page to the Shell's "Properties" property sheet
     return CBasicSettingsPage::AddPage(lpfnAddPageProc, lParam, m_fileNames);
   } catch (...) {
@@ -92,35 +98,77 @@ HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
 /////////////////////////////////////////////////////////////////////////////
 
 HRESULT CLaunchPadShellEx::GetCommandString(UINT idCmd, UINT uFlags, UINT* pwReserved, LPSTR pszName, UINT cchMax) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-  // TODO: implement
-  return E_NOTIMPL;
+    if (idCmd != 0)
+      return E_INVALIDARG;
+
+    switch (uFlags) {
+      case GCS_HELPTEXTA:
+        LoadStringA(AfxGetResourceHandle(), IDS_HLP_RUNWITHVDMS, (LPSTR)pszName, cchMax);
+        return S_OK;
+
+      case GCS_HELPTEXTW:
+        LoadStringW(AfxGetResourceHandle(), IDS_HLP_RUNWITHVDMS, (LPWSTR)pszName, cchMax);
+        return S_OK;
+
+      case GCS_VALIDATEA:
+      case GCS_VALIDATEW:
+        return S_OK;
+
+      default:
+        return E_FAIL;
+    }
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
 }
 
 HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-  // TODO: implement
-  return E_NOTIMPL;
+    // TODO: implement
+    return E_NOTIMPL;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
 }
 
 HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-  USHORT numMenuItems = 0;
+    USHORT numMenuItems = 0;
 
-  if (idCmdFirst > idCmdLast)
-    return E_INVALIDARG;
+    if (idCmdFirst > idCmdLast)
+      return E_INVALIDARG;
 
-  if (hMenu == NULL)
-    return E_INVALIDARG;
+    if (hMenu == NULL)
+      return E_INVALIDARG;
 
-  // TODO: use InsertMenuItem and MENUITEMINFO
-  InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, _T("Run with &VDMS"));
-  numMenuItems++;
+    if (m_fileNames.GetSize() != 1)
+      return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
-  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, numMenuItems);
+    if (!VLPUtil::isVLPFile(m_fileNames.GetAt(0)) && !VLPUtil::isMSDOSFile(m_fileNames.GetAt(0)))
+      return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
+
+    ASSERT((HBITMAP)m_contextMenuBmp == NULL);
+
+    m_contextMenuBmp.LoadBitmap(IDB_MENUICON2);
+
+    CString strRunWithVDMS;
+    strRunWithVDMS.LoadString(IDS_TXT_RUNWITHVDMS);
+
+    InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS);
+    SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
+    numMenuItems++;
+
+    return MAKE_HRESULT(SEVERITY_SUCCESS, 0, numMenuItems);
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
 }
 
 
@@ -130,11 +178,17 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
 /////////////////////////////////////////////////////////////////////////////
 
 HRESULT CLaunchPadShellEx::Load(LPCOLESTR pszFileName, DWORD dwMode) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-  m_fileNames.Add(pszFileName);
+    ASSERT(m_fileNames.GetSize() == 0);
 
-  return S_OK;
+    m_fileNames.Add(pszFileName);
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
 }
 
 
@@ -148,28 +202,79 @@ HRESULT CLaunchPadShellEx::Extract(LPCTSTR pszFile, UINT nIconIndex, HICON* phic
 }
 
 HRESULT CLaunchPadShellEx::GetIconLocation(UINT uFlags, LPTSTR szIconFile, UINT cchMax, LPINT piIndex, UINT* pwFlags) {
-  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-  CString iconLocation, iconPath;
-  int iconIndex;
+    ASSERT(m_fileNames.GetSize() == 1);
 
-  if ((szIconFile == NULL) || (piIndex == NULL) || (pwFlags == NULL))
-    return E_POINTER;
+    CString iconLocation, iconPath;
+    int iconIndex;
 
-  if (cchMax <= 0)
-    return E_INVALIDARG;
+    if ((szIconFile == NULL) || (piIndex == NULL) || (pwFlags == NULL))
+      return E_POINTER;
 
-  CLaunchPadSettings settings(m_fileNames);
+    if (cchMax <= 0)
+      return E_INVALIDARG;
 
-  if (FAILED(settings.GetValue(_T("program"), _T("icon"), iconLocation)))
-    return S_FALSE;
+    CLaunchPadSettings settings(m_fileNames);
 
-  LaunchPadSettingsHelper::ParseIconLocation(iconLocation, iconPath, iconIndex);
+    if (FAILED(settings.GetValue(_T("program"), _T("icon"), iconLocation)))
+      return S_FALSE;
 
-  _tcsncpy(szIconFile, (LPCTSTR)iconPath, cchMax);
+    VLPUtil::ParseIconLocation(iconLocation, iconPath, iconIndex);
 
-  *piIndex = iconIndex;
-  *pwFlags = GIL_PERINSTANCE;
+    _tcsncpy(szIconFile, (LPCTSTR)iconPath, cchMax);
 
-  return S_OK;
+    *piIndex = iconIndex;
+    *pwFlags = GIL_PERINSTANCE;
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IQueryInfo
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::GetInfoTip(DWORD dwFlags, LPWSTR* ppwszTip) {
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    USES_CONVERSION;
+
+    *ppwszTip = NULL;
+
+    CComPtr<IMalloc> pMalloc;
+
+    if (FAILED(SHGetMalloc(&pMalloc)))
+      return E_FAIL;
+
+    ASSERT(m_fileNames.GetSize() == 1);
+
+    CLaunchPadSettings settings(m_fileNames);
+
+    CString progExec, progParams, progWDir;
+    CString strTmp, strToolTip;
+
+    settings.GetValue(_T("program"), _T("executable"), progExec);
+    settings.GetValue(_T("program"), _T("params"), progParams);
+    settings.GetValue(_T("program"), _T("workdir"), progWDir);
+
+    strTmp = VLPUtil::GetAbsolutePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
+    strTmp.TrimLeft(); strTmp.TrimRight();
+
+    strToolTip.FormatMessage(IDS_HLP_SHTOOLTIP, (LPCTSTR)strTmp);
+
+    if ((*ppwszTip = (LPWSTR)pMalloc->Alloc((strToolTip.GetLength() + 1) * sizeof(wchar_t))) == NULL)
+      return E_OUTOFMEMORY;
+
+    wcscpy(*ppwszTip, T2COLE((LPCTSTR)strToolTip));
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
 }

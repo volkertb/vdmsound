@@ -59,11 +59,9 @@ void CBasicBrowseDlg::OnButFilebrowse()
   UpdateData(TRUE);     // save all changes that occured in the GUI
 	COpenDOSProgramDialog dlgFile(m_edtFile_val, this);
 
-  using namespace LaunchPadSettingsHelper;
-
   if (dlgFile.DoModal() == IDOK) {
     m_edtFile_val = dlgFile.GetPathName();
-    m_edtDir_val = GetDirectory(m_edtFile_val);
+    m_edtDir_val = VLPUtil::GetDirectory(m_edtFile_val);
     UpdateData(FALSE);  // update the GUI to reflect any changed settings
   }
 }
@@ -75,6 +73,6 @@ void CBasicBrowseDlg::OnButChangeicon()
   dlgIcon.m_edtFile_val = m_iconLocation;
 
   if (dlgIcon.DoModal() == IDOK) {
-    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, dlgIcon.m_lstIcons_val == -1 ? 0 : dlgIcon.m_lstIcons_val);
+    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
   }
 }
