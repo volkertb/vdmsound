@@ -3,6 +3,8 @@
 #include "EmuSBCompat.h"
 #include "SBCompatCtl.h"
 
+#include <memory>
+
 /////////////////////////////////////////////////////////////////////////////
 
 #define MIN_PLAYBACK_RATE     4000
@@ -477,10 +479,9 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   // Allocate PCM/ADPCM intermediate storage.  A maximum of 64kB can be
   //  trasferred at once (DMA limitation), which can then be further expanded
   //  four times (to 256kB) if the transferred data was ADPCM2-compressed.
-  // Note: in Win2k, allocating buf on the stack causes an exception,
-  //  therefore make it static.
-  static int bufSize;         // how much relevant data is stored in the buffer <buf>
-  static BYTE buf[65536*4];   // temporary storage for processing (e.g. decompressing -- up to 4x if ADPCM2) data
+  int bufSize;        // how much relevant data is stored in the buffer <buf>
+  int bufSizeLimit;   // maximum amount of data that <buf> can accomodate
+  BYTE* buf = NULL;   // temporary storage for processing (e.g. decompressing -- up to 4x if ADPCM2) data
 
   // Compute by how much this transfer should be boosted or diminished, based on
   //  playback performance (feedback indicating playback buffer overrun/underrun)
@@ -527,6 +528,19 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
     }
   }
 
+  // Now that we know how much we need to transfer, allocate the transfer buffer
+  bufSizeLimit = toTransfer * (m_codec == CODEC_ADPCM_2 ? 4 : m_codec == CODEC_ADPCM_3 ? 3 : m_codec == CODEC_ADPCM_4 ? 2 : 1);
+# if 0
+  buf = (BYTE*)_alloca(bufSizeLimit * sizeof(buf[0]));
+# else
+  // KLUDGE: in Win2k's NTVDM it looks as if the thread's reserved
+  //  stack size is awfully tiny (supposed to be 1MB), and declaring
+  //  buf[] on the stack causes a stack overflow!
+  //  We therefore use the heap for now. :(
+  buf = new BYTE[bufSizeLimit];
+  std::auto_ptr<BYTE> buf_auto(buf);
+# endif
+
   /* TODO: put a limit on the frequency of "need to boost DMA" warnings; logging
      them incurs up to 20ms (!) or more overhead, which is the last thing we need when
      struggling for 1-2ms in an attempt to boost DMA performance */
@@ -569,10 +583,10 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
           bufSize = m_SBDSP.decode_PCM_SIGNED(buf, toTransfer, m_bitsPerSample);
           break;
         case CODEC_ADPCM_2:
-          bufSize = m_SBDSP.decode_ADPCM_2(buf, toTransfer, sizeof(buf));
+          bufSize = m_SBDSP.decode_ADPCM_2(buf, toTransfer, bufSizeLimit);
           break;
         case CODEC_ADPCM_4:
-          bufSize = m_SBDSP.decode_ADPCM_4(buf, toTransfer, sizeof(buf));
+          bufSize = m_SBDSP.decode_ADPCM_4(buf, toTransfer, bufSizeLimit);
           break;
         case CODEC_ADPCM_3:
         default:
