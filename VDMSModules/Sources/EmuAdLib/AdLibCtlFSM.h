@@ -16,7 +16,8 @@ typedef __int64 OPLTime_t;
 //
 class IAdLibHWEmulationLayer {
   public:
-    virtual void setOPLReg(int address, int value) = 0;
+    virtual void resetOPL(void) = 0;
+    virtual void setOPLReg(int regSet, int regIdx, int value) = 0;
     virtual OPLTime_t getTimeMicros(void) = 0;
     virtual void logError(const char* message) = 0;
     virtual void logWarning(const char* message) = 0;
@@ -39,23 +40,28 @@ class CAdLibCtlFSM {
     };
 
   public:
-    CAdLibCtlFSM(IAdLibHWEmulationLayer* hwemu);
+    enum OPL_t { TYPE_OPL2, TYPE_OPL3 };
+
+  public:
+    CAdLibCtlFSM(IAdLibHWEmulationLayer* hwemu, OPL_t type);
     ~CAdLibCtlFSM(void);
 
   public:
-    void reset(void);
-    char getStatus(void);
-    void setAddress(char data);
-    void putData(char data);
+    void OPLReset(void);
+    char OPLRead(int port);
+    void OPLWrite(int port, char data);
 
   protected:
+    void setRegister(int address, char data);
     void clearStatus(bool T1 = true, bool T2 = true);
     void clearTimers(OPLTime_t tNow, bool T1 = true, bool T2 = true);
     char updateTimers(OPLTime_t tNow);
 
   protected:
-    char m_status;
-    int m_regIdx;                       // the currently-selected register
+    OPL_t m_type;                       // OPL type (OPL2, OPL3, etc.)
+    char  m_status;                     // OPL status byte (flags)
+    int   m_regIdx;                     // the currently-selected register index
+    bool  m_OPL2_compat;                // OPL2 compatibility mode
     OPLTimer_t m_timer1, m_timer2;      // the timer values
 
   protected:
