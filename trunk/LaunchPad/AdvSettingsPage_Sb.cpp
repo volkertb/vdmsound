@@ -129,7 +129,7 @@ BOOL CAdvSettingsPage_Sb::OnInitDialog()
   m_help.Attach(this);
 	
   // Setup controls
-  m_spnSboutdevbuf.SetRange(0, 500);
+  m_spnSboutdevbuf.SetRange(0, 1500);
   InitDeviceList();
 
   // Load the information from file into the GUI
