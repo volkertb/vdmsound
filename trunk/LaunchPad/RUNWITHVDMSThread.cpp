@@ -540,7 +540,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   CString iconPath;
   int iconIndex;
 
-  VLPUtil::ParseIconLocation(SettingGetString(_T("program"), _T("icon")), iconPath, iconIndex);
+  VLPUtil::ParseIconLocation(SettingGetString(_T("program"), _T("icon"), _T("%COMPSEC%")), iconPath, iconIndex);
 
   PIFFile.SetIcon(iconPath, iconIndex);
   PIFFile.SetCloseOnExit(SettingGetBool(_T("winnt.dosbox"), _T("exitClose"), FALSE));

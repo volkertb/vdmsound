@@ -52,7 +52,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Dosenv::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Dosenv::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -66,22 +66,28 @@ VOID CAdvSettingsPage_Dosenv::SyncGUIData(BOOL bSave) {
 
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dos"), _T("useAutoexec"),  m_chkAutoexecbat, TRUE);
   SyncGUIData_AUTOEXEC(bSave, m_chkAutoexecbat.GetCheck() != BST_UNCHECKED);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Dosenv::SyncGUIData_CONFIG(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Dosenv::SyncGUIData_CONFIG(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("winnt.dos"),  _T("config"),      m_edtConfigsys,   _T("FILES=40"));
 
   if (!bEnabled) {
     m_edtConfigsys.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Dosenv::SyncGUIData_AUTOEXEC(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Dosenv::SyncGUIData_AUTOEXEC(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("winnt.dos"),  _T("autoexec"),    m_edtAutoexecbat, _T(""));
 
   if (!bEnabled) {
     m_edtAutoexecbat.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
 

@@ -27,10 +27,10 @@ public:
 
 // Helper functions
 protected:
-  VOID SyncGUIData(BOOL bSave = TRUE);
-  VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
-  VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
-  VOID SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData(BOOL bSave = TRUE);
+  BOOL SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled = TRUE);
 
   VOID InitDeviceList(void);
 

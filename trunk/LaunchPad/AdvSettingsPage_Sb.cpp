@@ -57,7 +57,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage helper functions
 
-VOID CAdvSettingsPage_Sb::SyncGUIData(BOOL bSave) {
+BOOL CAdvSettingsPage_Sb::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -65,9 +65,11 @@ VOID CAdvSettingsPage_Sb::SyncGUIData(BOOL bSave) {
 
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("enabled"),    m_chkUsesb,       TRUE);
   SyncGUIData_Enabled(bSave, m_chkUsesb.GetCheck() != BST_UNCHECKED);
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("port"),       m_cmbSbport,      _T("0x220"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("IRQ"),        m_cmbSbirq,       _T("7"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("DMA8"),       m_cmbSbdma8,      _T("1"));
@@ -87,9 +89,11 @@ VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   } else {
     m_cmbSbtype.EnableWindow(TRUE);
   }
+
+  return TRUE;
 }
 
-VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
+BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.dsp"), m_devInfo, m_cmbSboutdev, DeviceUtil::DEV_DSOUND, -1);
   VLPUtil::SyncEditBox   (bSave, m_settings, _T("vdms.sb.dsp"), _T("buffer"), m_cmbSboutdevbuf, _T("75"));
 
@@ -101,6 +105,8 @@ VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) 
   } else {
     m_spnSboutdevbuf.EnableWindow(m_cmbSboutdevbuf.IsWindowEnabled());
   }
+
+  return TRUE;
 }
 
 VOID CAdvSettingsPage_Sb::InitDeviceList(void) {

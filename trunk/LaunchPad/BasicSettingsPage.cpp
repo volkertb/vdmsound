@@ -159,7 +159,7 @@ UINT CALLBACK CBasicSettingsPage::PropPageCallbackProc(HWND hWnd, UINT uMsg, LPP
 /////////////////////////////////////////////////////////////////////////////
 // CBasicSettingsPage helper functions
 
-VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
+BOOL CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -186,7 +186,7 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   //
   if (!bSave) {
     // Program icon
-    VLPUtil::LoadIconCtl(m_settings, _T("program"), _T("icon"), m_icoApp);
+    VLPUtil::LoadIconCtl(m_settings, _T("program"), _T("icon"), m_icoApp, _T("%COMSPEC%"));
 
     // Program command line
     CString progExec, progParams, progWDir;
@@ -207,9 +207,11 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
       m_edtDoscmd.SetWindowText(strTmp);
     }
   }
+
+  return TRUE;
 }
 
-VOID CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
+BOOL CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
   const CString str_identity_map = VLPUtil::GetVDMSFilePath(_T("identity.map"));
   const CString str_mt2gm_map = VLPUtil::GetVDMSFilePath(_T("mt2gm.map"));
 
@@ -222,9 +224,11 @@ VOID CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
     m_optMt32.EnableWindow(FALSE);
     m_optMidiother.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
-VOID CBasicSettingsPage::SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled) {
+BOOL CBasicSettingsPage::SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled) {
   const CString str_joy2_map = VLPUtil::GetVDMSFilePath(_T("joy2.map"));
   const CString str_joy3_map = VLPUtil::GetVDMSFilePath(_T("joy3.map"));
 
@@ -237,6 +241,8 @@ VOID CBasicSettingsPage::SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled) {
     m_optJoy4but.EnableWindow(FALSE);
     m_optJoyother.EnableWindow(FALSE);
   }
+
+  return TRUE;
 }
 
 
@@ -368,12 +374,13 @@ void CBasicSettingsPage::OnButChange()
 
   edtDosProgram = VLPUtil::GetAbsolutePath(edtDosProgram, edtDosDir, FALSE);
 
-  m_settings.GetValue(_T("program"), _T("icon"), iconLocation);
+  BOOL isIconLocationIndeterm;
+  m_settings.GetValue(_T("program"), _T("icon"), iconLocation, &isIconLocationIndeterm, _T("%COMSPEC%"));
 
   dlgBrowse.m_edtDosprogram_val = edtDosProgram;
   dlgBrowse.m_edtDosargs_val    = edtDosArgs;
   dlgBrowse.m_edtDosdir_val     = edtDosDir;
-  dlgBrowse.m_iconLocation      = iconLocation;
+  dlgBrowse.m_iconLocation      = isIconLocationIndeterm ? _T("") : iconLocation;
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:

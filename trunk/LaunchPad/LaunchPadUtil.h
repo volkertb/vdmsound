@@ -83,7 +83,7 @@ namespace VLPUtil {
   HRESULT SyncEditBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CWnd& control, LPCTSTR defValue = _T(""));
   HRESULT SyncGroup(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
 
-  HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control);
+  HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control, LPCTSTR defValue = _T(""));
 
   // GDI helper functions
   HRESULT LoadDIBFromIcon(CDIBitmap& bmp, HINSTANCE hInstance, LPCTSTR lpIconName, HBRUSH hBgBrush, UINT cx = 0, UINT cy = 0, BOOL stretch = TRUE, UINT cx1 = 0, UINT cy1 = 0);
