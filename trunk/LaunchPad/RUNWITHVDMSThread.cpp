@@ -239,39 +239,40 @@ int CRUNWITHVDMSThread::Run(void) {
 BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   CString vdmsini;
 
-  CString vdms_debug_detail         = SettingGetString(_T("vdms.debug"), _T("detail"), _T("256"));
-  CString vdms_debug_file           = SettingGetString(_T("vdms.debug"), _T("file"), _T(".\\VDMS.LOG"));
+  CString vdms_debug_detail         = SettingGetString(_T("vdms.debug"),    _T("detail"),       _T("256"));
+  CString vdms_debug_file           = SettingGetString(_T("vdms.debug"),    _T("file"),         _T(".\\VDMS.LOG"));
 
-  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"), _T("enabled"), TRUE);
-  CString vdms_midi_port            = SettingGetString(_T("vdms.midi"), _T("port"), _T("0x330"));
-  CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"), _T("IRQ"), _T("2"));
-  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"), _T("mapFile"), _T("identity.map"));
-  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"), _T("device"), _T("-1"));
-  CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"), _T("showSysExLed"), _T("Scroll"));
+  BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"),     _T("enabled"),      TRUE);
+  CString vdms_midi_port            = SettingGetString(_T("vdms.midi"),     _T("port"),         _T("0x330"));
+  CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"),     _T("IRQ"),          _T("2"));
+  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"),     _T("mapFile"),      _T("identity.map"));
+  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"),     _T("device"),       _T("-1"));
+  CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"),     _T("showSysExLed"), _T("Scroll"));
 
-  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"), _T("enabled"), TRUE);
-  CString vdms_sb_dsp_port          = SettingGetString(_T("vdms.sb.dsp"), _T("port"), _T("0x220"));
-  CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"), _T("IRQ"), _T("7"));
-  CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"), _T("DMA8"), _T("1"));
-  CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"), _T("DMA16"), _T("5"));
-  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"), _T("version"), _T("4.15"));
-  CString vdms_sb_dsp_minDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("minDMAPeriod"), _T("5"));
-  CString vdms_sb_dsp_maxDMAPeriod  = SettingGetString(_T("vdms.sb.dsp"), _T("maxDMAPeriod"), _T("15"));
-  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"), _T("device"), _T("-1"));
-  CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"), _T("buffer"), _T("75"));
+  CString vdms_dmac_minDMAPeriod    = SettingGetString(_T("vdms.dmac"),     _T("minDMAPeriod"), _T("5"));
+  CString vdms_dmac_maxDMAPeriod    = SettingGetString(_T("vdms.dmac"),     _T("maxDMAPeriod"), _T("15"));
 
-  BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"), _T("enabled"), TRUE);
-  CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"), _T("port"), _T("0x388"));
-  CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"), _T("sampleRate"), _T("11025"));
-  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"), _T("device"), _T("-1"));
-  CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"), _T("buffer"), _T("75"));
+  BOOL    vdms_sb_dsp_enabled       = SettingGetBool  (_T("vdms.sb.dsp"),   _T("enabled"),      TRUE);
+  CString vdms_sb_dsp_port          = SettingGetString(_T("vdms.sb.dsp"),   _T("port"),         _T("0x220"));
+  CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"),   _T("IRQ"),          _T("7"));
+  CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA8"),         _T("1"));
+  CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA16"),        _T("5"));
+  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.15"));
+  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"),   _T("device"),       _T("-1"));
+  CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"),   _T("buffer"),       _T("75"));
 
-  BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"), TRUE);
-  CString vdms_gameport_port        = SettingGetString(_T("vdms.gameport"), _T("port"), _T("0x201"));
-  CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"), _T("5"));
-  CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"), _T("250"));
-  CString vdms_gameport_pollPeriod  = SettingGetString(_T("vdms.gameport"), _T("pollPeriod"), _T("125"));
-  CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"), _T("joy2.map"));
+  BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"),    _T("enabled"),      TRUE);
+  CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"),    _T("port"),         _T("0x388"));
+  CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"),    _T("sampleRate"),   _T("11025"));
+  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"),    _T("device"),       _T("-1"));
+  CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"),    _T("buffer"),       _T("75"));
+
+  BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"),      TRUE);
+  CString vdms_gameport_port        = SettingGetString(_T("vdms.gameport"), _T("port"),         _T("0x201"));
+  CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"),     _T("5"));
+  CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"),     _T("250"));
+  CString vdms_gameport_pollPeriod  = SettingGetString(_T("vdms.gameport"), _T("pollPeriod"),   _T("125"));
+  CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"),      _T("joy2.map"));
 
   //
   // Basic settings
@@ -296,6 +297,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
     vdmsini += _T("MidiOut=MIDIMapper\n");
 
+    // TODO: no mapper if using identity.map?
+
     vdmsini += _T("[MIDIMapper]\n");
     vdmsini += _T("CLSID=MIDIToolkit.MIDIMapper\n");
     vdmsini += _T("[MIDIMapper.config]\n");
@@ -303,12 +306,16 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("[MIDIMapper.depends]\n");
     vdmsini += _T("MidiOut=MIDIPlayer\n");
 
+    // TODO: no MIDIPlayer if useDevice=no
+
     vdmsini += _T("[MIDIPlayer]\n");
     vdmsini += _T("CLSID=MIDIDevice.MIDIOut\n");
     vdmsini += _T("[MIDIPlayer.config]\n");
     vdmsini += _T("device=") + vdms_midi_device + _T("\n");
     vdmsini += _T("[MIDIPlayer.depends]\n");
     vdmsini += _T("MidiOut=SysExIndicator\n");
+
+    // TODO: no SysExIndicator if showSysExLed=no
 
     vdmsini += _T("[SysExIndicator]\n");
     vdmsini += _T("CLSID=MIDIIndicator.ActivityLights\n");
@@ -323,8 +330,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("[DMATransferManager]\n");
     vdmsini += _T("CLSID=DMAController.TransferMgr\n");
     vdmsini += _T("[DMATransferManager.config]\n");
-    vdmsini += _T("minDMAPeriod=") + vdms_sb_dsp_minDMAPeriod + _T("\n");
-    vdmsini += _T("maxDMAPeriod=") + vdms_sb_dsp_maxDMAPeriod + _T("\n");
+    vdmsini += _T("minDMAPeriod=") + vdms_dmac_minDMAPeriod + _T("\n");
+    vdmsini += _T("maxDMAPeriod=") + vdms_dmac_maxDMAPeriod + _T("\n");
     vdmsini += _T("[DMATransferManager.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
 
@@ -345,6 +352,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("AdLib=AdLibController\n");
     }
 
+    // TODO: no SBWavePlayer if useDevice=no
+
     vdmsini += _T("[SBWavePlayer]\n");
     vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
     vdmsini += _T("[SBWavePlayer.config]\n");
@@ -364,6 +373,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("[AdLibController.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
     vdmsini += _T("WaveOut=AdLibWavePlayer\n");
+
+    // TODO: no AdLibWavePlayer if useDevice=no
 
     vdmsini += _T("[AdLibWavePlayer]\n");
     vdmsini += _T("CLSID=DSoundDevice.WaveOut\n");
@@ -402,9 +413,9 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   //
   CString config;
 
-  BOOL vdms_winnt_dos_useHIMEM  = SettingGetBool(_T("winnt.dos"), _T("useHIMEM.SYS"), TRUE);
-  BOOL vdms_winnt_dos_useUMB    = SettingGetBool(_T("winnt.dos"), _T("useUMB"), TRUE);
-  BOOL vdms_winnt_memory_useEMS = SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE);
+  BOOL vdms_winnt_dos_useHIMEM  = SettingGetBool(_T("winnt.dos"),    _T("useHIMEM.SYS"), TRUE);
+  BOOL vdms_winnt_dos_useUMB    = SettingGetBool(_T("winnt.dos"),    _T("useUMB"),       TRUE);
+  BOOL vdms_winnt_memory_useEMS = SettingGetBool(_T("winnt.memory"), _T("useEMS"),       TRUE);
 
   strTmp.Format(_T("DOS=%s,%s\r\n"), vdms_winnt_dos_useHIMEM ? _T("HIGH") : _T("LOW"),
                                      vdms_winnt_dos_useUMB   ? _T("UMB")  : _T("NOUMB"));
@@ -418,16 +429,21 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     config += _T("DEVICE=%SYSTEMROOT%\\SYSTEM32\\HIMEM.SYS\r\n");
   }
 
-  // TODO: add "custom" CONFIG.SYS options from VDMS.INI to config
+  BOOL vdms_winnt_dos_useCONFIG = SettingGetBool(_T("winnt.dos"),    _T("useConfig"),    TRUE);
+
+  if (vdms_winnt_dos_useCONFIG) {
+    CString vdms_winnt_dos_Config = SettingGetString(_T("winnt.dos"), _T("config"), _T("FILES=40"));
+    config += vdms_winnt_dos_Config + _T("\r\n");
+  }
 
   //
   // AUTOEXEC
   //
   CString autoexec;
 
-  BOOL vdms_winnt_storage_useCDROM   = SettingGetBool(_T("winnt.storage"), _T("useCDROM"), FALSE);
+  BOOL vdms_winnt_storage_useCDROM   = SettingGetBool(_T("winnt.storage"), _T("useCDROM"),   FALSE);
   BOOL vdms_winnt_storage_useNetware = SettingGetBool(_T("winnt.storage"), _T("useNetware"), FALSE);
-  BOOL vdms_winnt_pmode_useDPMI      = SettingGetBool(_T("winnt.pmode"), _T("useDPMI"), TRUE);
+  BOOL vdms_winnt_pmode_useDPMI      = SettingGetBool(_T("winnt.pmode"),   _T("useDPMI"),    TRUE);
 
   autoexec += _T("@ECHO OFF\r\n");
 
@@ -448,6 +464,12 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\VWIPXSPX\r\n");
   }
 
+  BOOL vdms_winnt_dos_useAUTOEXEC    = SettingGetBool(_T("winnt.dos"),    _T("useAutoexec"), TRUE);
+
+  if (vdms_winnt_dos_useAUTOEXEC) {
+    CString vdms_winnt_dos_Autoexec = SettingGetString(_T("winnt.dos"), _T("autoexec"), _T(""));
+    autoexec += vdms_winnt_dos_Autoexec + _T("\r\n");
+  }
   // TODO: add "custom" AUTOEXEC.BAT options from VDMS.INI to autoexec
 
   autoexec += VLPUtil::GetAbsolutePath(_T("dosdrv.exe"), _tgetenv(_T("VDMSPath"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
@@ -468,17 +490,17 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   VLPUtil::ParseIconLocation(SettingGetString(_T("program"), _T("icon")), iconPath, iconIndex);
 
   PIFFile.SetIcon(iconPath, iconIndex);
-  PIFFile.SetCloseOnExit(SettingGetBool(_T("winnt.dosbox"), _T("exitClose")));
-  PIFFile.SetWarnOnClose(SettingGetBool(_T("winnt.dosbox"), _T("exitWarn")));
+  PIFFile.SetCloseOnExit(SettingGetBool(_T("winnt.dosbox"), _T("exitClose"), FALSE));
+  PIFFile.SetWarnOnClose(SettingGetBool(_T("winnt.dosbox"), _T("exitWarn"), TRUE));
 
-  PIFFile.SetFastPaste(SettingGetBool(_T("winnt.dosbox"), _T("fastPaste")));
+  PIFFile.SetFastPaste(SettingGetBool(_T("winnt.dosbox"), _T("fastPaste"), TRUE));
 
   // Memory
-  PIFFile.SetMemory(SettingGetBool(_T("winnt.memory"), _T("useEMS")) ? SettingGetInt(_T("winnt.memory"), _T("memEMS"), 16384) : 0,
-                    SettingGetBool(_T("winnt.memory"), _T("useXMS")) ? SettingGetInt(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
+  PIFFile.SetMemory(SettingGetBool(_T("winnt.memory"), _T("useEMS"), TRUE) ? SettingGetInt(_T("winnt.memory"), _T("memEMS"), 16384) : 0,
+                    SettingGetBool(_T("winnt.memory"), _T("useXMS"), TRUE) ? SettingGetInt(_T("winnt.memory"), _T("memXMS"), 16384) : 0);
 
   // Screen
-  PIFFile.SetFullScreen(SettingGetBool(_T("winnt.video"), _T("useVESA")));
+  PIFFile.SetFullScreen(SettingGetBool(_T("winnt.video"), _T("useVESA"), FALSE));
 
   return PIFFile.Create(config, autoexec);
 }
