@@ -79,9 +79,9 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   m_deviceName = WaveOutGetName();    // Obtain information about the device (its name)
 
   // Create the garbage-collector thread (manages packets that have finished playing)
-  gcThread.Create(this, true);
-  gcThread.SetPriority(THREAD_PRIORITY_LOWEST);
-  gcThread.Resume();
+  m_gcThread.Create(this, true);
+  m_gcThread.SetPriority(THREAD_PRIORITY_LOWEST);
+  m_gcThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("WaveOut initialized (device ID = %d, '%s')"), m_deviceID, (LPCTSTR)m_deviceName));
 
@@ -94,8 +94,8 @@ STDMETHODIMP CWaveOut::Destroy() {
     WaveOutClose();
 
   // Signal the GC thread to quit
-  if (gcThread.GetThreadHandle() != NULL)
-    gcThread.Cancel();
+  if (m_gcThread.GetThreadHandle() != NULL)
+    m_gcThread.Cancel();
 
   // Release the Wave-out module
   m_waveOut = NULL;
@@ -117,6 +117,8 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
   /* TODO: validate that 10% tolerance in frequency chane is worth anything; if yes, make it parametrizable
      in VDMS.ini file as a number n = 0...100, then use tolerance range = 1.00 +/- (n / 100.0) */
 
+  HRESULT hrThis = S_OK, hrThat;
+
   if ((m_hWaveOut == NULL) ||
       (m_waveFormat.nChannels != channels) ||
       (m_waveFormat.nSamplesPerSec * 0.90 > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
@@ -135,85 +137,114 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
           break;
         default:
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutClose(0x%08x) on device %d ('%s'): 0x%08x - %s"), (int)m_hWaveOut, (int)m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-          return S_FALSE;
+          hrThis = S_FALSE;
       }
     }
 
-    m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-    m_waveFormat.nChannels = channels;
-    m_waveFormat.nSamplesPerSec = samplesPerSec;
-    m_waveFormat.nAvgBytesPerSec = channels * samplesPerSec * bitsPerSample / 8;
-    m_waveFormat.nBlockAlign = channels * bitsPerSample / 8;
-    m_waveFormat.wBitsPerSample = bitsPerSample;
-    m_waveFormat.cbSize = 0;
+    if (hrThis == S_OK) {
+      m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+      m_waveFormat.nChannels = channels;
+      m_waveFormat.nSamplesPerSec = samplesPerSec;
+      m_waveFormat.nAvgBytesPerSec = channels * samplesPerSec * bitsPerSample / 8;
+      m_waveFormat.nBlockAlign = channels * bitsPerSample / 8;
+      m_waveFormat.wBitsPerSample = bitsPerSample;
+      m_waveFormat.cbSize = 0;
 
-    if (!WaveOutOpen())
-      return S_FALSE;
+      if (!WaveOutOpen())
+        hrThis = S_FALSE;
+    }
   }
 
   if (m_waveOut != NULL)
-    return m_waveOut->SetFormat(channels, samplesPerSec, bitsPerSample);
+    hrThat = m_waveOut->SetFormat(channels, samplesPerSec, bitsPerSample);
 
-  return S_OK;
+  return (hrThat == S_OK ? hrThis : hrThat);
 }
 
-STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
+STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
   if (data == NULL)
     return E_POINTER;
 
-  if ((m_hWaveOut == NULL) && (!WaveOutOpen()))
-    return S_FALSE;         // The device is not open, and an attempt to open it failed
+  if (load == NULL)
+    return E_POINTER;
 
-  WAVEHDR* waveHdr = NULL;
-  LPSTR waveData = NULL;
+  *load = 1.0;
 
-  try {
+  HRESULT hrThis = S_OK, hrThat;
 
-    /* TODO: get rid of this silly new/delete scheme; replace with static,
-       pre-allocated circular buffer (size specifiable in VDMS.ini?) and
-       pre-allocated WAVEHDR's that point at consecutive locations in the
-       buffer -- new/delete is too inefficient */
+  if ((m_hWaveOut == NULL) && (!WaveOutOpen())) {
+    hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
+  } else {
+    WAVEHDR* waveHdr = NULL;
+    LPSTR waveData = NULL;
 
-    waveHdr  = new WAVEHDR;
-    waveData = new CHAR[length];
+    try {
 
-    memcpy(waveData, data, length); // the actual data
+      /* TODO: get rid of this silly new/delete scheme; replace with static,
+         pre-allocated circular buffer (size specifiable in VDMS.ini?) and
+         pre-allocated WAVEHDR's that point at consecutive locations in the
+         buffer -- new/delete is too inefficient */
 
-    waveHdr->lpData = waveData;
-    waveHdr->dwBufferLength = length;
-    waveHdr->dwBytesRecorded = 0;
-    waveHdr->dwUser = (DWORD)waveHdr;
-    waveHdr->dwFlags = 0;
-    waveHdr->dwLoops = 0;
+      waveHdr  = new WAVEHDR;
+      waveData = new CHAR[length];
 
-    MMRESULT errCode;
+      memcpy(waveData, data, length); // the actual data
 
-    if ((errCode = waveOutPrepareHeader(m_hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
-      CString args = Format(_T("0x%08x, %p, %d"), m_hWaveOut, waveHdr, sizeof(*waveHdr));
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutPrepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-      AfxThrowUserException();
+      waveHdr->lpData = waveData;
+      waveHdr->dwBufferLength = length;
+      waveHdr->dwBytesRecorded = 0;
+      waveHdr->dwUser = (DWORD)waveHdr;
+      waveHdr->dwFlags = 0;
+      waveHdr->dwLoops = 0;
+
+      MMRESULT errCode;
+
+      if ((errCode = waveOutPrepareHeader(m_hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
+        CString args = Format(_T("0x%08x, %p, %d"), m_hWaveOut, waveHdr, sizeof(*waveHdr));
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutPrepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
+        AfxThrowUserException();
+      }
+
+      if ((errCode = waveOutWrite(m_hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
+        CString args = Format(_T("0x%08x, %p, %d"), m_hWaveOut, waveHdr, sizeof(*waveHdr));
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutWrite(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
+        AfxThrowUserException();
+      }
+
+      LONG oldCount = InterlockedExchangeAdd(&m_enqueuedBytes, length);
+
+LONG _LO_ = m_waveFormat.nAvgBytesPerSec * 1.0 * 0.90;
+LONG _HI_ = m_waveFormat.nAvgBytesPerSec * 1.0 * 1.10;
+
+if (oldCount<_LO_) {
+*load = 1.0*oldCount/_LO_;//(oldCount*((double)(100000-_LO_)/_LO_)/(100000-oldCount));
+//printf("<< buf = % 6lu (%0.5f), xfer = %d\n", oldCount, (float)x, (int)length);
+} else if (oldCount>_HI_) {
+*load = 1.0*oldCount/_HI_;//(oldCount*((double)(100000-_HI_)/_HI_)/(100000-oldCount));
+//printf("<< buf = % 6lu (%0.5f), xfer = %d\n", oldCount, (float)x, (int)length);
+} else {
+//printf("** % 6lu\n", oldCount);
+*load=1.0;
+}
+
+    } catch (CMemoryException * pme) {
+      TCHAR errMsg[1024] = _T("<no description available>");
+      pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An unexpected out-of-memory condition was encountered while handling a Wave system-exclusive message:\nwaveHdr  = %p (%d bytes)\nwaveData= %p (%d bytes)\n%s"), waveHdr, sizeof(*waveHdr), waveData, length + 2, errMsg));
+      delete waveHdr;
+      delete[] waveData;
+      hrThis = S_FALSE;
+    } catch (CUserException * /*pue*/) {
+      delete waveHdr;
+      delete[] waveData;
+      hrThis = S_FALSE;
     }
-
-    if ((errCode = waveOutWrite(m_hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
-      CString args = Format(_T("0x%08x, %p, %d"), m_hWaveOut, waveHdr, sizeof(*waveHdr));
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutWrite(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-      AfxThrowUserException();
-    }
-  } catch (CMemoryException * pme) {
-    TCHAR errMsg[1024] = _T("<no description available>");
-    pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An unexpected out-of-memory condition was encountered while handling a Wave system-exclusive message:\nwaveHdr  = %p (%d bytes)\nwaveData= %p (%d bytes)\n%s"), waveHdr, sizeof(*waveHdr), waveData, length + 2, errMsg));
-    delete waveHdr;
-    delete[] waveData;
-  } catch (CUserException * /*pue*/) {
-    delete waveHdr;
-    delete[] waveData;
   }
 
   if (m_waveOut != NULL)
-    return m_waveOut->PlayData(data, length);
+    hrThat = m_waveOut->PlayData(data, length, load);
 
-  return S_OK;
+  return (hrThat == S_OK ? hrThis : hrThat);
 }
 
 
@@ -225,7 +256,7 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
 unsigned int CWaveOut::Run(CThread& thread) {
   MSG message;
 
-  _ASSERTE(thread.GetThreadID() == gcThread.GetThreadID());
+  _ASSERTE(thread.GetThreadID() == m_gcThread.GetThreadID());
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
@@ -292,18 +323,21 @@ void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, D
   try {
     switch (wMsg) {
       case WOM_OPEN:
-        pThis->gcThread.PostMessage(MM_WOM_OPEN, (WPARAM)hwo, NULL);
+        pThis->m_gcThread.PostMessage(MM_WOM_OPEN, (WPARAM)hwo, NULL);
         break;
       case WOM_CLOSE:
-        pThis->gcThread.PostMessage(MM_WOM_CLOSE, (WPARAM)hwo, NULL);
+        pThis->m_gcThread.PostMessage(MM_WOM_CLOSE, (WPARAM)hwo, NULL);
         break;
       case WOM_DONE:
         _ASSERTE(hwo == pThis->m_hWaveOut);
         _ASSERTE(waveHdr != NULL);
+
+        InterlockedExchangeAdd(&(pThis->m_enqueuedBytes), -(LONG)(waveHdr->dwBufferLength));
+
         if ((errCode = waveOutUnprepareHeader(hwo, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
-          pThis->gcThread.PostMessage(UM_WOM_ERROR, (WPARAM)hwo, (LPARAM)errCode);
+          pThis->m_gcThread.PostMessage(UM_WOM_ERROR, (WPARAM)hwo, (LPARAM)errCode);
         } else {
-          pThis->gcThread.PostMessage(MM_WOM_DONE, (WPARAM)hwo, (LPARAM)dwParam1);
+          pThis->m_gcThread.PostMessage(MM_WOM_DONE, (WPARAM)hwo, (LPARAM)dwParam1);
         } break;
     }
   } catch (...) { }
