@@ -16,6 +16,10 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define UM_WOM_ERROR      (WM_USER + 0x100)
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
@@ -217,9 +221,9 @@ unsigned int CWaveOut::Run(CThread& thread) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
   while (thread.GetMessage(&message)) {
-    MMRESULT errCode;
     HWAVEOUT hWaveOut = (HWAVEOUT)(message.wParam);
     WAVEHDR* waveHdr = (WAVEHDR*)(message.lParam);
+    MMRESULT errCode = (MMRESULT)(message.lParam);
 
     switch (message.message) {
       case WM_QUIT:
@@ -235,19 +239,17 @@ unsigned int CWaveOut::Run(CThread& thread) {
         break;
 
       case MM_WOM_DONE:
-        _ASSERTE(hWaveOut == m_hWaveOut);
         _ASSERTE(waveHdr != NULL);
         _ASSERTE(waveHdr->lpData != NULL);
         _ASSERTE(waveHdr->dwUser != NULL);
-        _ASSERTE((waveHdr->dwFlags & MHDR_DONE) == MHDR_DONE);
-
-        if ((errCode = waveOutUnprepareHeader(hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
-          CString args = Format(_T("0x%08x, %p, %d"), hWaveOut, waveHdr, sizeof(*waveHdr));
-          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutUnprepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(WaveOutGetError(errCode))));
-        }
+        _ASSERTE((waveHdr->dwFlags & WHDR_DONE) == WHDR_DONE);
 
         delete[] (CHAR*)(waveHdr->lpData);
         delete (WAVEHDR*)(waveHdr->dwUser);
+        break;
+
+      case UM_WOM_ERROR:
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("WaveOut (hWaveOut = 0x%08x) error on device %d ('%s'): 0x%08x - %s"), hWaveOut, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(WaveOutGetError(errCode))));
         break;
 
       default:
@@ -266,6 +268,37 @@ unsigned int CWaveOut::Run(CThread& thread) {
 /////////////////////////////////////////////////////////////////////////////
 // Utility functions
 /////////////////////////////////////////////////////////////////////////////
+
+//
+// Callback function invoked by WAVE driver when the device is opened/closed,
+//   or when a wave "packet" finishes playing.
+//
+void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2) {
+  MMRESULT errCode;
+  CWaveOut* pThis = (CWaveOut*)dwInstance;
+  WAVEHDR* waveHdr = (WAVEHDR*)(dwParam1);
+
+  _ASSERTE(pThis != NULL);
+
+  try {
+    switch (wMsg) {
+      case WOM_OPEN:
+        pThis->gcThread.PostMessage(MM_WOM_OPEN, (WPARAM)hwo, NULL);
+        break;
+      case WOM_CLOSE:
+        pThis->gcThread.PostMessage(MM_WOM_CLOSE, (WPARAM)hwo, NULL);
+        break;
+      case WOM_DONE:
+        _ASSERTE(hwo == pThis->m_hWaveOut);
+        _ASSERTE(waveHdr != NULL);
+        if ((errCode = waveOutUnprepareHeader(hwo, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
+          pThis->gcThread.PostMessage(UM_WOM_ERROR, (WPARAM)hwo, (LPARAM)errCode);
+        } else {
+          pThis->gcThread.PostMessage(MM_WOM_DONE, (WPARAM)hwo, (LPARAM)dwParam1);
+        } break;
+    }
+  } catch (...) { }
+}
 
 //
 // Opens the Wave device specified in the module's settings
@@ -288,7 +321,7 @@ void CWaveOut::WaveOutOpen(void) {
   MMRESULT errCode;
 
   // Attempt to open the Wave-out device
-  while ((errCode = waveOutOpen(&m_hWaveOut, m_deviceID, &m_waveFormat, gcThread.GetThreadID(), (DWORD)(this), CALLBACK_THREAD)) != MMSYSERR_NOERROR) {
+  while ((errCode = waveOutOpen(&m_hWaveOut, m_deviceID, &m_waveFormat, (DWORD)WaveOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
     if (!isErrPrompt)       // did the user select not to be prompted again ?
       break;                // stop trying
 
