@@ -10,6 +10,8 @@
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
+#include "DeviceUtil.h"
+
 class CPIFFile;
 class CINIFile;
 
@@ -61,11 +63,14 @@ protected:
   BOOL SetupEnv(LPTSTR lpEnvBlock, int ncch);
 
   CString SettingGetString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue = _T(""));
-  bool SettingGetBool(LPCTSTR section, LPCTSTR key, bool defValue = false);
-  int SettingGetInt(LPCTSTR section, LPCTSTR key, int defValue = 0);
+  BOOL SettingGetBool(LPCTSTR section, LPCTSTR key, BOOL defValue = FALSE);
+  LONG SettingGetLong(LPCTSTR section, LPCTSTR key, LONG defValue = 0);
+
+  CString GetDeviceID(DeviceUtil::DeviceType devType);
 
 // Member variables
 protected:
+  CString m_fileName;
   CLaunchPadSettings m_settings;
 };
 
