@@ -34,8 +34,8 @@ class CAdLibCtlFSM {
     struct OPLTimer_t {
       bool isEnabled;
       bool isMasked;
-      OPLTime_t timeout;
-      OPLTime_t timebase;
+      OPLTime_t period;
+      OPLTime_t expiry;
     };
 
   public:
@@ -49,8 +49,13 @@ class CAdLibCtlFSM {
     void putData(char data);
 
   protected:
+    void clearStatus(bool T1 = true, bool T2 = true);
+    void clearTimers(OPLTime_t tNow, bool T1 = true, bool T2 = true);
+    char updateTimers(OPLTime_t tNow);
+
+  protected:
+    char m_status;
     int m_regIdx;                       // the currently-selected register
-    int m_status;                       // the status register
     OPLTimer_t m_timer1, m_timer2;      // the timer values
 
   protected:
