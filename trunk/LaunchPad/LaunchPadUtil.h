@@ -25,6 +25,22 @@ class CIcon : public CStatic {
     UINT m_uType;
 };
 
+
+
+//////////////////////////////////////////////////////////////////////
+// COpenDOSProgramDialog
+//////////////////////////////////////////////////////////////////////
+
+class COpenDOSProgramDialog : public CFileDialog {
+  public:
+    COpenDOSProgramDialog(LPCTSTR lpszFileName = NULL, CWnd* pParentWnd = NULL);
+
+  protected:
+    virtual BOOL OnFileNameOK(void);
+};
+
+
+
 //////////////////////////////////////////////////////////////////////
 // LaunchPadSettingsHelper
 //////////////////////////////////////////////////////////////////////
@@ -35,12 +51,16 @@ namespace LaunchPadSettingsHelper {
   extern LPCTSTR T_NO;
 
   // GUI helper functions
-  HRESULT SyncCheckBox(BOOL isSetOp, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
-  HRESULT SyncRadioButton(BOOL isSetOp, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
-  HRESULT SyncRadioButton(BOOL isSetOp, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
-  HRESULT SyncIcon(BOOL isSetOp, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CIcon& control);
+  HRESULT SyncCheckBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
+  HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
+  HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
 
-  void ParseIconString(const CString& iconString, CString& iconPath, int& iconIndex);
+  HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CIcon& control);
+
+  // Shell helper functions
+  void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);
+  CString GetRelativePath(LPCTSTR filePath, BOOL isPathOnly, LPCTSTR basePath);
+  CString GetDirectory(LPCTSTR filePath);
 };
 
 #endif // __LAUNCHPADUTIL_H

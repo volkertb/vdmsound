@@ -27,9 +27,13 @@ private:
 public:
   static HRESULT AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam, const CStringArray& fileNames);
 
+// Callback functions
+protected:
+  static UINT CALLBACK PropPageCallbackProc(HWND hwnd, UINT uMsg, LPPROPSHEETPAGE ppsp);
+
 // Helper functions
 protected:
-  VOID SyncGUIData(BOOL isSetOp);
+  VOID SyncGUIData(BOOL bSave = TRUE);
 
 // Dialog Data
 	//{{AFX_DATA(CBasicSettingsPage)
@@ -54,7 +58,7 @@ protected:
 	//{{AFX_VIRTUAL(CBasicSettingsPage)
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	virtual void PostNcDestroy();
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -64,6 +68,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDestroy();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg void OnButChange();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

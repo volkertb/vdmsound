@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "resource.h"
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
@@ -62,7 +63,7 @@ HRESULT CIcon::ExtractIcon(HINSTANCE hInstance, LPCTSTR lpszExeFileName, UINT nI
     DeleteIcon();
 
   if ((hIcon = ::ExtractIcon(hInstance, lpszExeFileName, nIconIndex)) < (HICON)2)
-    return HRESULT_FROM_WIN32(GetLastError());
+    return E_FAIL;
 
   m_hIcon = hIcon;
   m_bAttached = TRUE;
@@ -84,6 +85,49 @@ BOOL CIcon::DeleteIcon(void) {
   m_bAttached = FALSE;
 
   return retVal;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// COpenDOSProgramDialog
+//
+//////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+COpenDOSProgramDialog::COpenDOSProgramDialog(
+  LPCTSTR lpszFileName,
+  CWnd* pParentWnd)
+: CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, NULL, pParentWnd)
+{
+  m_ofn.lpstrFilter  = _T("Programs (*.exe,*.com)\0*.exe;*.com\0Batch files (*.bat)\0*.bat\0All Files (*.*)\0*.*\0\0");
+  m_ofn.nFilterIndex = 1;
+
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+// Overridables
+//////////////////////////////////////////////////////////////////////
+
+BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
+  // Check that the file is a MS-DOS .exe, .com, or .bat file
+  if ((GetFileExt().CompareNoCase(_T("BAT")) == 0) ||                                     // .bat file
+      (SHGetFileInfo((LPCTSTR)GetPathName(), 0, NULL, 0, SHGFI_EXETYPE) == 0x00005a4d))   // valid .exe/.com file
+  {
+    return FALSE;
+  } else {
+    CString message;
+    message.Format(_T("The file '%s' does not appear to be a valid MS-DOS executable or batch file.\n\rDo you want to continue?"), (LPCTSTR)GetFileName());
+    return (MessageBox(message, _T("Warning"), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES);
+  }
 }
 
 
@@ -114,7 +158,7 @@ LPCTSTR LaunchPadSettingsHelper::T_NO = _T("no");
 //  setting
 //
 HRESULT LaunchPadSettingsHelper::SyncCheckBox(
-  BOOL isSetOp,                                       // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
@@ -123,17 +167,17 @@ HRESULT LaunchPadSettingsHelper::SyncCheckBox(
   LPCTSTR yesValue,                                   // ini value corresponding to a checked state
   LPCTSTR noValue)                                    // ini value corresponding to an unchecked state
 {
-  _ASSERTE(section != NULL);
-  _ASSERTE(key != NULL);
-  _ASSERTE(yesValue != NULL);
-  _ASSERTE(noValue != NULL);
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(yesValue != NULL);
+  ASSERT(noValue != NULL);
 
-  control.AssertValid();
+  ASSERT_VALID(&control);
 
   if (control.m_hWnd == NULL)
     return E_INVALIDARG;
 
-  if (isSetOp) {
+  if (bSave) {
     if ((!control.IsWindowEnabled()) || (control.GetState() == BST_INDETERMINATE))
       return settings.UnsetValue(section, key);
 
@@ -181,7 +225,7 @@ HRESULT LaunchPadSettingsHelper::SyncCheckBox(
 //  meaningful settings).
 //
 HRESULT LaunchPadSettingsHelper::SyncRadioButton(
-  BOOL isSetOp,                                       // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
@@ -189,16 +233,16 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
   BOOL defState,                                      // default button state assumed if none is defined
   LPCTSTR selValue)                                   // ini value corresponding to a selected state
 {
-  _ASSERTE(section != NULL);
-  _ASSERTE(key != NULL);
-  _ASSERTE(selValue != NULL);
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(selValue != NULL);
 
-  control.AssertValid();
+  ASSERT_VALID(&control);
 
   if (control.m_hWnd == NULL)
     return E_INVALIDARG;
 
-  if (isSetOp) {
+  if (bSave) {
     if ((control.IsWindowEnabled()) && (control.GetState() == BST_CHECKED)) {
       return settings.SetValue(section, key, selValue);
     } else {
@@ -238,7 +282,7 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
 //  indeterminate settings.
 //
 HRESULT LaunchPadSettingsHelper::SyncRadioButton(
-  BOOL isSetOp,                                       // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
@@ -246,16 +290,16 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
   LPCTSTR selValue1,                                  // list of known values for which this button should not be in a selected state
   ...)                                                //  (list must end with a NULL value)
 {
-  _ASSERTE(section != NULL);
-  _ASSERTE(key != NULL);
-  _ASSERTE(selValue1 != NULL);
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(selValue1 != NULL);
 
-  control.AssertValid();
+  ASSERT_VALID(&control);
 
   if (control.m_hWnd == NULL)
     return E_INVALIDARG;
 
-  if (isSetOp) {
+  if (bSave) {
     if ((control.IsWindowEnabled()) && (control.GetState() == BST_CHECKED)) {
       return settings.UnsetValue(section, key);
     } else {
@@ -293,66 +337,88 @@ HRESULT LaunchPadSettingsHelper::SyncRadioButton(
 }
 
 //
-// Synchronizes the state of a Win32 icon with its corresponding
-//  setting.
+// Loads a Win32 icon from a setting.
 //
-HRESULT LaunchPadSettingsHelper::SyncIcon(
-  BOOL isSetOp,                                       // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+HRESULT LaunchPadSettingsHelper::LoadIconCtl(
   CLaunchPadSettings& settings,                       // settings store
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
   CIcon& control)                                     // static control with which the data must be synchronized
 {
-  _ASSERTE(section != NULL);
-  _ASSERTE(key != NULL);
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
 
-  control.AssertValid();
+  ASSERT_VALID(&control);
 
   if (control.m_hWnd == NULL)
     return E_INVALIDARG;
 
-  if (isSetOp) {
-    return S_OK;
+  BOOL isIndeterminate = FALSE;
+  CString iconLocation;
+
+  HINSTANCE hInstance = _Module.GetModuleInstance();
+
+  if (FAILED(settings.GetValue(section, key, iconLocation, &isIndeterminate, _T(""))))
+    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_UNKNOWNICON));
+
+  if (isIndeterminate)
+    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MULTIPLEICON));
+
+  CString iconPath;
+  int iconIndex;
+
+  ParseIconLocation(iconLocation, iconPath, iconIndex);
+
+  if (FAILED(control.ExtractIcon(hInstance, (LPCTSTR)iconPath, iconIndex)))
+    return control.LoadIcon(hInstance, MAKEINTRESOURCE(IDI_UNKNOWNICON));
+
+  return S_OK;
+}
+
+//
+// Parses a file location string for its file component and icon index
+//
+void LaunchPadSettingsHelper::ParseIconLocation(
+  LPCTSTR iconLocation,         // string that will be parsed
+  CString& iconPath,            // file component
+  int& iconIndex)               // icon index
+{
+  iconPath = iconLocation;
+  LPTSTR iconPathBuf = iconPath.LockBuffer();
+
+  iconIndex = PathParseIconLocation(iconPathBuf);
+
+  iconPath.UnlockBuffer();
+}
+
+//
+// Creates a relative path from two paths
+//
+CString LaunchPadSettingsHelper::GetRelativePath(
+  LPCTSTR filePath,             // string that contains the path that relPath will be relative to; the relative path will point to this path
+  BOOL isPathOnly,              // if TRUE, filePath is assumed to be a directory; otherwise, filePath is assumed to be a file
+  LPCTSTR basePath)             // string that contains the path that relPath will be relative from; this is the path in which the relative path can be used
+{
+  TCHAR szPath[MAX_PATH];
+
+  if ((!PathIsRelative(filePath)) &&
+      (PathIsDirectory(basePath)) &&
+      (PathRelativePathTo(szPath, basePath, FILE_ATTRIBUTE_DIRECTORY, filePath, isPathOnly ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL)))
+  {
+    return CString(szPath);
   } else {
-    HRESULT hr = S_OK;
-    BOOL isIndeterminate = FALSE;
-    CString value;
-
-    hr = settings.GetValue(section, key, value, &isIndeterminate, _T(""));
-
-    if (FAILED(hr)) {
-      return control.LoadIcon(NULL, MAKEINTRESOURCE(IDI_WINLOGO));
-    } else if (isIndeterminate) {
-      return control.LoadIcon(NULL, MAKEINTRESOURCE(IDI_QUESTION));
-    } else {
-      HINSTANCE hInstance = _Module.GetModuleInstance();
-
-      if (SUCCEEDED(control.ExtractIcon(hInstance, (LPCTSTR)value, 0)))
-        return S_OK;
-
-      int splitPos = value.ReverseFind(_T(','));
-
-      if (splitPos < 0)
-        return E_FAIL;
-
-      return control.ExtractIcon(hInstance, (LPCTSTR)value.Left(splitPos), _tcstol((LPCTSTR)value.Mid(splitPos + 1), NULL, 10));
-    }
-
-    return E_NOTIMPL;
+    return filePath;
   }
 }
 
-void LaunchPadSettingsHelper::ParseIconString(
-  const CString& iconString,
-  CString& iconPath,
-  int& iconIndex)
-{
-  int splitPos = iconString.ReverseFind(_T(','));
+//
+// Removes the trailing file name and backslash from a path, if it has them
+//
+CString LaunchPadSettingsHelper::GetDirectory(LPCTSTR filePath) {
+  CString retVal(filePath);
+  LPTSTR retValBuf = retVal.LockBuffer();
+  PathRemoveFileSpec(retValBuf);
+  retVal.UnlockBuffer();
 
-  if (splitPos < 0) {
-    iconPath = iconString;
-    iconIndex = 0;
-  } else {
-    
-  }
+  return retVal;
 }

@@ -175,7 +175,7 @@ HRESULT CLaunchPadSettings::CommitValue(
   if (!cacheValue.m_isChanged)
     return S_FALSE;
 
-  _ASSERTE(!cacheValue.m_isIndeterminate);
+  ASSERT(!cacheValue.m_isIndeterminate);
 
   HRESULT hr = S_OK;
 
