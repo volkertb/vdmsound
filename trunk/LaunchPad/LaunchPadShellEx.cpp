@@ -78,8 +78,7 @@ HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   try {
-    // Create and add the property page to the Shell's
-    //  "Properties" property sheet
+    // Create and add the property page to the Shell's "Properties" property sheet
     return CBasicSettingsPage::AddPage(lpfnAddPageProc, lParam, m_fileNames);
   } catch (...) {
     return E_UNEXPECTED;
@@ -93,7 +92,10 @@ HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
 /////////////////////////////////////////////////////////////////////////////
 
 HRESULT CLaunchPadShellEx::Load(LPCOLESTR pszFileName, DWORD dwMode) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
   m_fileNames.Add(pszFileName);
+
   return S_OK;
 }
 
@@ -108,6 +110,8 @@ HRESULT CLaunchPadShellEx::Extract(LPCTSTR pszFile, UINT nIconIndex, HICON* phic
 }
 
 HRESULT CLaunchPadShellEx::GetIconLocation(UINT uFlags, LPTSTR szIconFile, UINT cchMax, LPINT piIndex, UINT* pwFlags) {
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
   CString iconLocation, iconPath;
   int iconIndex;
 

@@ -196,7 +196,11 @@ HRESULT CLaunchPadSettings::CommitAll(void) {
   SettingKey cacheKey;                                // temporary storage for the setting key
   SettingValue cacheValue;                            // temporary storage for the setting value
 
-  for (POSITION itr = m_settingsCache.GetStartPosition(); itr != NULL; m_settingsCache.GetNextAssoc(itr, cacheKey, cacheValue)) {
+  POSITION pos = m_settingsCache.GetStartPosition();
+  
+  while (pos != NULL) {
+    m_settingsCache.GetNextAssoc(pos, cacheKey, cacheValue);
+
     if (FAILED(hr = CommitValue(cacheKey.m_section, cacheKey.m_key))) {
       retVal = hr;
     }

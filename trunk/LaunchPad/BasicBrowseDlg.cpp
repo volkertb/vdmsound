@@ -35,11 +35,11 @@ void CBasicBrowseDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicBrowseDlg)
 	DDX_Text(pDX, IDC_EDT_ARGS, m_edtArgs_val);
-	DDV_MaxChars(pDX, m_edtArgs_val, 64);
+	DDV_MaxChars(pDX, m_edtArgs_val, 63);
 	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
-	DDV_MaxChars(pDX, m_edtFile_val, 64);
+	DDV_MaxChars(pDX, m_edtFile_val, 63);
 	DDX_Text(pDX, IDC_EDT_DIR, m_edtDir_val);
-	DDV_MaxChars(pDX, m_edtDir_val, 64);
+	DDV_MaxChars(pDX, m_edtDir_val, 63);
 	//}}AFX_DATA_MAP
 }
 
@@ -75,6 +75,6 @@ void CBasicBrowseDlg::OnButChangeicon()
   dlgIcon.m_edtFile_val = m_iconLocation;
 
   if (dlgIcon.DoModal() == IDOK) {
-    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, dlgIcon.m_lstIcons_val);
+    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
   }
 }
