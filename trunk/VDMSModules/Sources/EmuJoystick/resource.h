@@ -3,7 +3,7 @@
 // Used by EmuJoystick.rc
 //
 #define IDS_PROJNAME                    100
-#define IDR_EMUJOYSTICKS                102
+#define IDR_JOYSTICKCTL                 102
 
 // Next default values for new objects
 // 

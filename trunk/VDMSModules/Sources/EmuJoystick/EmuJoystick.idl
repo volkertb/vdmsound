@@ -18,9 +18,9 @@ library EMUJOYSTICKLib
 
 	[
 		uuid(F675312E-ECE0-4FD3-B96F-2E84597E6000),
-		helpstring("EmuJoysticks Class")
+		helpstring("JoystickCtl Class")
 	]
-	coclass EmuJoysticks
+	coclass JoystickCtl
 	{
 		[default] interface IVDMBasicModule;
 		interface IIOHandler;

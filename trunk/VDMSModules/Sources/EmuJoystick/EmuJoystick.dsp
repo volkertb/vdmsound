@@ -305,7 +305,7 @@ SOURCE=.\EmuJoystick.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\EmuJoysticks.cpp
+SOURCE=.\JoystickCtl.cpp
 # End Source File
 # Begin Source File
 
@@ -318,7 +318,7 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\EmuJoysticks.h
+SOURCE=.\JoystickCtl.h
 # End Source File
 # Begin Source File
 
@@ -334,7 +334,7 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=.\EmuJoysticks.rgs
+SOURCE=.\JoystickCtl.rgs
 # End Source File
 # End Group
 # End Target

@@ -11,13 +11,13 @@
 #include "EmuJoystick.h"
 
 #include "EmuJoystick_i.c"
-#include "EmuJoysticks.h"
+#include "JoystickCtl.h"
 
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
-OBJECT_ENTRY(CLSID_EmuJoysticks, CEmuJoysticks)
+OBJECT_ENTRY(CLSID_JoystickCtl, CJoystickCtl)
 END_OBJECT_MAP()
 
 class CEmuJoystickApp : public CWinApp

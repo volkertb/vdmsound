@@ -1,7 +1,7 @@
-// EmuJoysticks.cpp : Implementierung von CEmuJoysticks
+// JoystickCtl.cpp : Implementierung von CJoystickCtl
 #include "stdafx.h"
 #include "EmuJoystick.h"
-#include "EmuJoysticks.h"
+#include "JoystickCtl.h"
 
 /* TODO: put these in a .mc file or something */
 #define MSG_ERR_INTERFACE _T("The dependency module '%1' does not support the '%2' interface.%0")
@@ -22,13 +22,13 @@
 
 
 /////////////////////////////////////////////////////////////////////////////
-// CEmuJoysticks
+// CJoystickCtl
 
 /////////////////////////////////////////////////////////////////////////////
 // ISupportsErrorInfo
 /////////////////////////////////////////////////////////////////////////////
 
-STDMETHODIMP CEmuJoysticks::InterfaceSupportsErrorInfo(REFIID riid)
+STDMETHODIMP CJoystickCtl::InterfaceSupportsErrorInfo(REFIID riid)
 {
 	static const IID* arr[] = 
 	{
@@ -47,7 +47,7 @@ STDMETHODIMP CEmuJoysticks::InterfaceSupportsErrorInfo(REFIID riid)
 // IVDMBasicModule
 /////////////////////////////////////////////////////////////////////////////
 
-STDMETHODIMP CEmuJoysticks::Init(IUnknown * configuration) {
+STDMETHODIMP CJoystickCtl::Init(IUnknown * configuration) {
 	if (configuration == NULL)
 		return E_POINTER;
 
@@ -115,7 +115,7 @@ STDMETHODIMP CEmuJoysticks::Init(IUnknown * configuration) {
 	return S_OK;
 }
 
-STDMETHODIMP CEmuJoysticks::Destroy() {
+STDMETHODIMP CJoystickCtl::Destroy() {
 	// Release the VDM Services module
 	m_IOSrv   = NULL;
 	m_BaseSrv = NULL;
@@ -131,7 +131,7 @@ STDMETHODIMP CEmuJoysticks::Destroy() {
 // IIOHandler
 /////////////////////////////////////////////////////////////////////////////
 
-STDMETHODIMP CEmuJoysticks::HandleINB(USHORT inPort, BYTE * data) {
+STDMETHODIMP CJoystickCtl::HandleINB(USHORT inPort, BYTE * data) {
 	if (data == NULL)
 		return E_POINTER;
 
@@ -199,7 +199,7 @@ STDMETHODIMP CEmuJoysticks::HandleINB(USHORT inPort, BYTE * data) {
 	return S_OK;
 }
 
-STDMETHODIMP CEmuJoysticks::HandleOUTB(USHORT outPort, BYTE data) {
+STDMETHODIMP CJoystickCtl::HandleOUTB(USHORT outPort, BYTE data) {
 	JOYINFO info;
 	if (outPort != 0x201)
 		return E_FAIL;
@@ -245,29 +245,29 @@ STDMETHODIMP CEmuJoysticks::HandleOUTB(USHORT outPort, BYTE data) {
 
 // ** BEGIN not implemented ** //////////////////////////////////////////////
 
-STDMETHODIMP CEmuJoysticks::HandleINW(USHORT inPort, USHORT * data) {
+STDMETHODIMP CJoystickCtl::HandleINW(USHORT inPort, USHORT * data) {
 	if (data == NULL) return E_POINTER;
 	*data = -1;
 	return E_NOTIMPL;
 }
-STDMETHODIMP CEmuJoysticks::HandleINSB(USHORT inPort, BYTE * data, USHORT count, DIR_T direction) {
+STDMETHODIMP CJoystickCtl::HandleINSB(USHORT inPort, BYTE * data, USHORT count, DIR_T direction) {
 	if (data == NULL) return E_POINTER;
 	memset(data, -1, count * sizeof(data[0]));
 	return E_NOTIMPL;
 }
-STDMETHODIMP CEmuJoysticks::HandleINSW(USHORT inPort, USHORT * data, USHORT count, DIR_T direction) {
+STDMETHODIMP CJoystickCtl::HandleINSW(USHORT inPort, USHORT * data, USHORT count, DIR_T direction) {
 	if (data == NULL) return E_POINTER;
 	memset(data, -1, count * sizeof(data[0]));
 	return E_NOTIMPL;
 }
-STDMETHODIMP CEmuJoysticks::HandleOUTW(USHORT outPort, USHORT data) {
+STDMETHODIMP CJoystickCtl::HandleOUTW(USHORT outPort, USHORT data) {
 	return E_NOTIMPL;
 }
-STDMETHODIMP CEmuJoysticks::HandleOUTSB(USHORT outPort, BYTE * data, USHORT count, DIR_T direction) {
+STDMETHODIMP CJoystickCtl::HandleOUTSB(USHORT outPort, BYTE * data, USHORT count, DIR_T direction) {
 	if (data == NULL) return E_POINTER;
 	return E_NOTIMPL;
 }
-STDMETHODIMP CEmuJoysticks::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count, DIR_T direction) {
+STDMETHODIMP CJoystickCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count, DIR_T direction) {
 	if (data == NULL) return E_POINTER;
 	return E_NOTIMPL;
 }
