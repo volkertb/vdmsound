@@ -496,7 +496,7 @@ InputName=DOSDrv
 
 ".\16bitDrv\Release\$(InputName).exe" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	mkdir .\16bitDrv\Release 
-	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -O1 -f- -N- -v- -vi -y- -r -d $(InputPath) 
+	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -f- -N- -v- -vi -y- -r -d $(InputPath) 
 	
 # End Custom Build
 
@@ -509,7 +509,7 @@ InputName=DOSDrv
 
 ".\16bitDrv\Release\$(InputName).exe" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	mkdir .\16bitDrv\Release 
-	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -O1 -f- -N- -v- -vi -y- -r -d $(InputPath) 
+	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -f- -N- -v- -vi -y- -r -d $(InputPath) 
 	
 # End Custom Build
 
@@ -522,7 +522,7 @@ InputName=DOSDrv
 
 ".\16bitDrv\Release\$(InputName).exe" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	mkdir .\16bitDrv\Release 
-	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -O1 -f- -N- -v- -vi -y- -r -d $(InputPath) 
+	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -f- -N- -v- -vi -y- -r -d $(InputPath) 
 	
 # End Custom Build
 
@@ -535,7 +535,7 @@ InputName=DOSDrv
 
 ".\16bitDrv\Release\$(InputName).exe" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	mkdir .\16bitDrv\Release 
-	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -O1 -f- -N- -v- -vi -y- -r -d $(InputPath) 
+	bcc -I$(BCPATH)\include -L$(BCPATH)\lib -n.\16bitDrv\Release -R -mt -2 -G- -f- -N- -v- -vi -y- -r -d $(InputPath) 
 	
 # End Custom Build
 
