@@ -72,10 +72,9 @@ VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("IRQ"),        m_cmbSbirq,       _T("7"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("DMA8"),       m_cmbSbdma8,      _T("1"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("DMA16"),      m_cmbSbdma16,     _T("5"));
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("version"),    m_cmbSbtype,      _T("4.05 (SoundBlaster 16)"));
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("useDevice"),  m_chkSboutdev,    TRUE);
   SyncGUIData_Enabled_Device(bSave, bEnabled && (m_chkSboutdev.GetCheck() != BST_UNCHECKED));
-
-  // TODO: read/write sb-type
 
   if (!bEnabled) {
     m_cmbSbport.EnableWindow(FALSE);
@@ -91,7 +90,37 @@ VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
 }
 
 VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  // TODO: read/write device
+  // Read/write device
+  if (bSave) {
+    int curSel = m_cmbSboutdev.GetCurSel();
+
+    if (curSel != CB_ERR) {
+      m_settings.SetValue(_T("vdms.sb.dsp"), _T("deviceType"), VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceType));
+      m_settings.SetValue(_T("vdms.sb.dsp"), _T("deviceID"),   VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceID));
+    }
+  } else {
+    BOOL isDevTypeIndeterm, isDevIDIndeterm;
+    CString devType, devID;
+
+    if (FAILED(m_settings.GetValue(_T("vdms.sb.dsp"), _T("deviceType"), devType, &isDevTypeIndeterm, _T("2")))  ||
+        FAILED(m_settings.GetValue(_T("vdms.sb.dsp"), _T("deviceID"),   devID,   &isDevIDIndeterm,   _T("-1"))) ||
+        isDevTypeIndeterm ||
+        isDevIDIndeterm)
+    {
+      m_cmbSboutdev.SetCurSel(-1);
+    } else {
+      for (int i = 0; i < m_devInfo.GetSize(); i++) {
+        if ((m_devInfo[i].deviceType == (DeviceUtil::DeviceType)_tcstol(devType, NULL, 10)) && (m_devInfo[i].deviceID == (UINT)_tcstol(devID, NULL, 10))) {
+          m_cmbSboutdev.SetCurSel(i);
+          break;
+        }
+      }
+
+      if (i >= m_devInfo.GetSize()) {
+        m_cmbSboutdev.SetCurSel(-1);
+      }
+    }
+  }
 
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("buffer"),     m_cmbSboutdevbuf, _T("75"));
 
@@ -104,6 +133,20 @@ VOID CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) 
     m_cmbSboutdev.EnableWindow(TRUE);
     m_spnSboutdevbuf.EnableWindow(TRUE);
   }
+}
+
+VOID CAdvSettingsPage_Sb::InitDeviceList(void) {
+  m_devInfo.RemoveAll();
+  m_cmbSboutdev.ResetContent();
+
+  DeviceUtil::EnumWaveOut(m_devInfo);
+  DeviceUtil::EnumDSoundOut(m_devInfo);
+
+  for (int i = 0; i < m_devInfo.GetSize(); i++) {
+    m_cmbSboutdev.AddString(m_devInfo[i].deviceName + _T(" (") + DeviceUtil::GetDevTypeText(m_devInfo[i].deviceType) + _T(")"));
+  }
+
+  ASSERT(m_cmbSboutdev.GetCount() == m_devInfo.GetSize());
 }
 
 
@@ -119,6 +162,7 @@ BOOL CAdvSettingsPage_Sb::OnInitDialog()
 	
   // Setup controls
   m_spnSboutdevbuf.SetRange(0, 500);
+  InitDeviceList();
 
   // Load the information from file into the GUI
   SyncGUIData(FALSE);

@@ -365,6 +365,10 @@ SOURCE=.\ContextHelp.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\DeviceUtil.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\IconListBox.cpp
 # End Source File
 # Begin Source File
@@ -463,6 +467,10 @@ SOURCE=.\ChangeIconDlg.h
 # Begin Source File
 
 SOURCE=.\ContextHelp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\DeviceUtil.h
 # End Source File
 # Begin Source File
 

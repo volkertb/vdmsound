@@ -13,6 +13,8 @@
 #include "LaunchPadUtil.h"
 #include "ContextHelp.h"
 
+#include "DeviceUtil.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsPage_Adlib dialog
 
@@ -29,10 +31,13 @@ protected:
   VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
   VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
 
+  VOID InitDeviceList(void);
+
 // Member variables
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
+  DeviceUtil::DeviceInfoList m_devInfo;
 
 // Public MFC stuff
 public:
