@@ -1,3 +1,0 @@
-@echo Uninstalling...
-@regsvr32 /c /u VDDLoader.dll
-@regsvr32 /c /u VDMConfig.dll
