@@ -288,7 +288,15 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\DiskUtil.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\DiskWriter.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\MIDIOut.cpp
 # End Source File
 # Begin Source File
 
@@ -305,6 +313,14 @@ SOURCE=.\WaveOut.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\DiskUtil.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MIDIOut.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\StdAfx.h
 # End Source File
 # Begin Source File
@@ -318,6 +334,10 @@ SOURCE=.\WaveOut.h
 # Begin Source File
 
 SOURCE=.\DiskWriter.rc
+# End Source File
+# Begin Source File
+
+SOURCE=.\MIDIOut.rgs
 # End Source File
 # Begin Source File
 

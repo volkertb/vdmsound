@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,1
+ FILEVERSION 1,0,4,3
  PRODUCTVERSION 2,0,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -73,7 +73,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "DiskWriter Module\0"
-            VALUE "FileVersion", "1, 0, 4, 1\0"
+            VALUE "FileVersion", "1, 0, 4, 3\0"
             VALUE "InternalName", "DiskWriter\0"
             VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "DiskWriter.DLL\0"
@@ -97,6 +97,7 @@ END
 //
 
 IDR_WAVEOUT             REGISTRY DISCARDABLE    "WaveOut.rgs"
+IDR_MIDIOUT             REGISTRY DISCARDABLE    "MIDIOut.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //

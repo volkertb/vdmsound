@@ -12,12 +12,14 @@
 
 #include "DiskWriter_i.c"
 #include "WaveOut.h"
+#include "MIDIOut.h"
 
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_WaveOut, CWaveOut)
+OBJECT_ENTRY(CLSID_MIDIOut, CMIDIOut)
 END_OBJECT_MAP()
 
 class CDiskWriterApp : public CWinApp
