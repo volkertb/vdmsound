@@ -5,6 +5,8 @@
 
 #include "BasicSettingsPage.h"
 
+#include "RUNWITHVDMSThread.h"
+
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
@@ -125,8 +127,21 @@ HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-    // TODO: implement
-    return E_NOTIMPL;
+    if (HIWORD(lpici->lpVerb) != 0)
+      return E_INVALIDARG;
+
+    ASSERT(m_fileNames.GetSize() == 1);
+
+    if (m_fileNames.GetSize() != 1)
+      return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
+
+    switch (LOWORD(lpici->lpVerb)) {
+      case 0:
+        // Create and start a thread that spawns the 16-bit process and waits for its termination
+        return CRUNWITHVDMSThread::CreateThread(m_fileNames.GetAt(0));
+      default:
+        return E_INVALIDARG;
+    }
   } catch (...) {
     return E_UNEXPECTED;
   }
@@ -163,9 +178,10 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
 
     VLPUtil::LoadDIBFromIcon(m_contextMenuBmp, AfxGetResourceHandle(), MAKEINTRESOURCE(IDI_ICON2), CBrush(0xffffff), chkW, chkH, FALSE, icoW, icoH);
 
-    InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS);
-    SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
-    numMenuItems++;
+    if (InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS)) {
+      SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
+      numMenuItems++;
+    }
 
     return MAKE_HRESULT(SEVERITY_SUCCESS, 0, numMenuItems);
   } catch (...) {

@@ -22,6 +22,11 @@ static char THIS_FILE[]=__FILE__;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+CLaunchPadSettings::CLaunchPadSettings(const CString& fileName) {
+  // Keep a copy of the list of file names the settings are stored in
+  m_fileNames.Add(fileName);
+}
+
 CLaunchPadSettings::CLaunchPadSettings(const CStringArray& fileNames) {
   // Keep a copy of the list of file names the settings are stored in
   m_fileNames.Copy(fileNames);
@@ -66,16 +71,11 @@ HRESULT CLaunchPadSettings::GetValue(
 
     // Go through all configuration files
     for (int i = 0; i < m_fileNames.GetSize(); i++) {
-      DWORD lastError;
       LPTSTR szTmpBuf = tmpBuf.GetBuffer(1024);       // obtain direct access to tmpBuf's internal storage (reserve 1024 characters)
 
       GetPrivateProfileString(section, key, defValue, szTmpBuf, 1024, m_fileNames.GetAt(i));
-      lastError = GetLastError();
 
       tmpBuf.ReleaseBuffer();                         // give tmpBuf back control of its internal storage
-
-      if (lastError != ERROR_SUCCESS)                 // if file access failed then abort now
-        return HRESULT_FROM_WIN32(lastError);
 
       tmpBuf.Replace(_T(';'), _T('\0'));              // remove ';'-prefixed comments
       tmpBuf.TrimLeft();                              // trim spaces
