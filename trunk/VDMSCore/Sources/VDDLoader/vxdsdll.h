@@ -334,4 +334,7 @@ vSetFlag(
 #define FreeVDMPointer(Address, Size, Buffer, Mode) \
           TRUE
 
+#define VDDSimulateInterrupt(ms, line, count) \
+          VDDSimulateInterrupt(0, (ms) * 8 + (line), count)
+
 #endif //__VXDSDLL_H
