@@ -882,6 +882,23 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Menu
+//
+
+IDR_MENU_DRAGNDROP MENU DISCARDABLE 
+BEGIN
+    POPUP "dragndrop"
+    BEGIN
+        MENUITEM "&Run using",                  ID_RUNWITH
+        MENUITEM "Set as &target of",           ID_REPLACE
+        MENUITEM SEPARATOR
+        MENUITEM "Cancel",                      IDCANCEL
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 

@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "LaunchPadUtil.h"
+#include "DragNDropFSM.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CLaunchPadShellEx
@@ -17,12 +18,13 @@ class ATL_NO_VTABLE CLaunchPadShellEx :
   public IShellExtInit,         // Common (Property sheet, Context menu)
   public IShellPropSheetExt,    // Property sheet
   public IContextMenu,          // Context menu
-  public IPersistFile,          // Common (Icon, Tooltip)
+  public IPersistFile,          // Common (Icon, Tooltip, Drag'n'Drop)
+  public IDropTarget,
   public IExtractIcon,          // Icon
   public IQueryInfo             // Tooltip
 {
 public:
-	CLaunchPadShellEx()
+	CLaunchPadShellEx(VOID)
 	{
 	}
 
@@ -35,18 +37,19 @@ BEGIN_COM_MAP(CLaunchPadShellEx)
 	COM_INTERFACE_ENTRY(IShellPropSheetExt)
 	COM_INTERFACE_ENTRY(IContextMenu)
 	COM_INTERFACE_ENTRY(IPersistFile)
+	COM_INTERFACE_ENTRY(IDropTarget)
 	COM_INTERFACE_ENTRY(IExtractIcon)
 	COM_INTERFACE_ENTRY(IQueryInfo)
 END_COM_MAP()
 
 // IShellExtInit
 public:
-  STDMETHOD(Initialize)(LPCITEMIDLIST, LPDATAOBJECT, HKEY);
+  STDMETHOD(Initialize)(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDataObj, HKEY hProgID);
 
 // IShellPropSheetExt
 public:
-  STDMETHOD(AddPages)(LPFNADDPROPSHEETPAGE, LPARAM);
-  STDMETHOD(ReplacePage)(UINT, LPFNADDPROPSHEETPAGE, LPARAM)
+  STDMETHOD(AddPages)(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam);
+  STDMETHOD(ReplacePage)(UINT /*uPageID*/, LPFNADDPROPSHEETPAGE /*lpfnReplacePage*/, LPARAM /*lParam*/)
     { return E_NOTIMPL; }
 
 // IContextMenu
@@ -69,6 +72,13 @@ public:
     { return E_NOTIMPL; }
   STDMETHOD(Load)(LPCOLESTR pszFileName, DWORD dwMode);
 
+// IDropTarget
+public:
+	STDMETHOD(DragEnter)(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect);
+	STDMETHOD(DragOver)(DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect);
+	STDMETHOD(DragLeave)(VOID);
+	STDMETHOD(Drop)(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect);
+
 // IExtractIcon
 public:
   STDMETHOD(Extract)(LPCTSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize);
@@ -79,11 +89,16 @@ public:
   STDMETHOD(GetInfoFlags)(DWORD* /*pdwFlags*/)
     { return E_NOTIMPL; }
   STDMETHOD(GetInfoTip)(DWORD dwFlags, LPWSTR* ppwszTip);
-    
+
+// Utility methods
+protected:
+  static HRESULT QueryDragInfo(LPDATAOBJECT pDataObject, CStringArray& result);
+
 // Member variables
 protected:
   CDIBitmap m_contextMenuBmp;
-  CStringArray m_fileNames;
+  CStringArray m_fileNames, m_dropNames;
+  CDragNDropFSM m_dragndropFSM;
 };
 
 #endif //__LAUNCHPADSHELLEX_H_

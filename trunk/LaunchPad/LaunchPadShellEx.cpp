@@ -10,6 +10,12 @@
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // CLaunchPadShellEx
 
@@ -21,42 +27,12 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-    FORMATETC format = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-    STGMEDIUM storage;
-    HDROP     hDrop;
+    m_fileNames.RemoveAll();
 
-    UINT      uNumFiles;
-    TCHAR     szFileName[MAX_PATH];
+    HRESULT hr;
 
-    // Read the list of items from the data object.  They are stored
-    //  in HDROP form, so just get the HDROP handle and then use the
-    //  drag'n'drop API on it
-    if (FAILED(pDataObj->GetData(&format, &storage)))
-      return E_INVALIDARG;
-
-    // Get a HDROP handle
-    hDrop = (HDROP)GlobalLock(storage.hGlobal);
-
-    if (!hDrop) {
-      ReleaseStgMedium(&storage);
-      return E_INVALIDARG;
-    }
-
-    // Determine how many files are involved in this operation
-    uNumFiles = DragQueryFile(hDrop, (UINT)(-1), NULL, 0);
-
-    for (UINT uFileIdx = 0; uFileIdx < uNumFiles; uFileIdx++) {
-      // Get the next filename
-      if (DragQueryFile(hDrop, uFileIdx, szFileName, MAX_PATH) == 0)
-        continue;
-
-      // Add the filename to our list of files to act on
-      m_fileNames.Add(szFileName);
-    }
-
-    // Release resources
-    GlobalUnlock(storage.hGlobal);
-    ReleaseStgMedium(&storage);
+    if (FAILED(hr = QueryDragInfo(pDataObj, m_fileNames)))
+      return hr;
 
     // If we found any files we can work with, return S_OK.  Otherwise,
     // return E_FAIL so we don't get called again
@@ -135,11 +111,9 @@ HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
     if (m_fileNames.GetSize() != 1)
       return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
-    CRUNWITHVDMSDispatcher dispatcher(m_fileNames.GetAt(0));
-
     switch (LOWORD(lpici->lpVerb)) {
       case 0:
-        return dispatcher.RunWithVdms();
+        return CRUNWITHVDMSDispatcher::RunWithVdms(m_fileNames.GetAt(0));
       default:
         return E_INVALIDARG;
     }
@@ -200,6 +174,80 @@ HRESULT CLaunchPadShellEx::Load(LPCOLESTR pszFileName, DWORD dwMode) {
     ASSERT(m_fileNames.GetSize() == 0);
 
     m_fileNames.Add(pszFileName);
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IDropTarget
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::DragEnter(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+    // Set default value in case of unexpected return and reset drag'n'drop FSM
+    *pdwEffect = DROPEFFECT_NONE;
+
+    m_dropNames.RemoveAll();
+
+    HRESULT hr;
+
+    if (FAILED(hr = QueryDragInfo(pDataObject, m_dropNames)))
+      return hr;
+
+    if (m_dropNames.GetSize() != 1)
+      return E_FAIL;
+
+    if (!VLPUtil::isMSDOSFile(m_dropNames.GetAt(0)))
+      return E_FAIL;
+
+    m_dragndropFSM.DragEnter(grfKeyState, pdwEffect);
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
+}
+
+HRESULT CLaunchPadShellEx::DragOver(DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+    m_dragndropFSM.DragOver(grfKeyState, pdwEffect);
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
+}
+
+HRESULT CLaunchPadShellEx::DragLeave(VOID) {
+  try {
+    m_dragndropFSM.DragLeave();
+
+    return S_OK;
+  } catch (...) {
+    return E_UNEXPECTED;
+  }
+}
+
+HRESULT CLaunchPadShellEx::Drop(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
+  try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+    ASSERT(m_fileNames.GetSize() == 1);
+    ASSERT(m_dropNames.GetSize() == 1);
+
+    if ((m_fileNames.GetSize() != 1) || (m_dropNames.GetSize() != 1))
+      return E_FAIL;
+
+    m_dragndropFSM.Drop(grfKeyState, pdwEffect, pt, m_fileNames.GetAt(0), m_dropNames.GetAt(0));
 
     return S_OK;
   } catch (...) {
@@ -295,6 +343,52 @@ HRESULT CLaunchPadShellEx::GetInfoTip(DWORD dwFlags, LPWSTR* ppwszTip) {
   }
 }
 
-// TODO: implement drag-n-drop of executable files over .vlp files with option to:
-//  (1) Execute with target .vlp's settings, or
-//  (2) change target .vlp's program to point to dropped program
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Utility methods
+/////////////////////////////////////////////////////////////////////////////
+
+HRESULT CLaunchPadShellEx::QueryDragInfo(LPDATAOBJECT pDataObject, CStringArray& result) {
+  if (pDataObject == NULL)
+    return E_INVALIDARG;
+
+  FORMATETC format = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+  STGMEDIUM storage;
+  HDROP     hDrop;
+
+  UINT      uNumFiles;
+  TCHAR     szFileName[MAX_PATH];
+
+  // Read the list of items from the data object.  They are stored
+  //  in HDROP form, so just get the HDROP handle and then use the
+  //  drag'n'drop API on it
+  if (FAILED(pDataObject->GetData(&format, &storage)))
+    return E_INVALIDARG;
+
+  // Get a HDROP handle
+  hDrop = (HDROP)GlobalLock(storage.hGlobal);
+
+  if (!hDrop) {
+    ReleaseStgMedium(&storage);
+    return E_INVALIDARG;
+  }
+
+  // Determine how many files are involved in this operation
+  uNumFiles = DragQueryFile(hDrop, (UINT)(-1), NULL, 0);
+
+  for (UINT uFileIdx = 0; uFileIdx < uNumFiles; uFileIdx++) {
+    // Get the next filename
+    if (DragQueryFile(hDrop, uFileIdx, szFileName, MAX_PATH) == 0)
+      continue;
+
+    // Add the filename to our list of files to act on
+    result.Add(szFileName);
+  }
+
+  // Release resources
+  GlobalUnlock(storage.hGlobal);
+  ReleaseStgMedium(&storage);
+
+  return S_OK;
+}

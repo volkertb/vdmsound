@@ -121,22 +121,22 @@ HRESULT CLaunchPadSettings::SetValue(
   SettingKey cacheKey(section, key);                  // the key used to access this setting in the settings cache
   SettingValue cacheValue(FALSE, FALSE);              // the cached setting value
 
-  if (!m_settingsCache.Lookup(cacheKey, cacheValue)) {
-    ASSERT(FALSE);
-    return E_INVALIDARG;
-  }
-
-  if ((cacheValue.m_isIndeterminate) || (cacheValue.m_value.Collate(value) != 0)) {
-    cacheValue.m_isChanged = TRUE;
-    cacheValue.m_isIndeterminate = FALSE;
-    cacheValue.m_value = value;
-
-    m_settingsCache.SetAt(cacheKey, cacheValue);
-
-    return doWriteThrough ? CommitValue(section, key) : S_OK;
-  } else {
+  // If the setting already exists and has not been changed, bail out
+  if (!doWriteThrough &&
+      m_settingsCache.Lookup(cacheKey, cacheValue) &&
+      !cacheValue.m_isIndeterminate &&
+      (cacheValue.m_value.Collate(value) == 0))
+  {
     return S_FALSE;
   }
+
+  cacheValue.m_isChanged = TRUE;
+  cacheValue.m_isIndeterminate = FALSE;
+  cacheValue.m_value = value;
+
+  m_settingsCache.SetAt(cacheKey, cacheValue);
+
+  return doWriteThrough ? CommitValue(section, key) : S_OK;
 }
 
 //
@@ -149,21 +149,18 @@ HRESULT CLaunchPadSettings::UnsetValue(
   SettingKey cacheKey(section, key);                  // the key used to access this setting in the settings cache
   SettingValue cacheValue(FALSE, FALSE);              // the cached setting value
 
-  if (!m_settingsCache.Lookup(cacheKey, cacheValue)) {
-    ASSERT(FALSE);
-    return E_INVALIDARG;
-  }
-
-  if (!cacheValue.m_isIndeterminate) {
-    cacheValue.m_isChanged = FALSE;
-    cacheValue.m_isIndeterminate = TRUE;
-
-    m_settingsCache.SetAt(cacheKey, cacheValue);
-
-    return S_OK;
-  } else {
+  if (!m_settingsCache.Lookup(cacheKey, cacheValue) ||
+      cacheValue.m_isIndeterminate)
+  {
     return S_FALSE;
   }
+
+  cacheValue.m_isChanged = FALSE;
+  cacheValue.m_isIndeterminate = TRUE;
+
+  m_settingsCache.SetAt(cacheKey, cacheValue);
+
+  return S_OK;
 }
 
 //

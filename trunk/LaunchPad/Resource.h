@@ -3,6 +3,7 @@
 // Used by LaunchPad.rc
 //
 #define IDR_LAUNCHPADSHELLEX            101
+#define IDR_MENU_DRAGNDROP              102
 
 #define IDI_APPICON                     201
 #define IDI_ICON1                       202
@@ -170,6 +171,9 @@
 #define IDS_MSG_SHTOOLTIP               10203
 #define IDS_MSG_COMMITERR               10204
 #define IDS_MSG_SECURITYERR             10205
+
+#define ID_RUNWITH                      32771
+#define ID_REPLACE                      32772
 
 // Next default values for new objects
 // 
