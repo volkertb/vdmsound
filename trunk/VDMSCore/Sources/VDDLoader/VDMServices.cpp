@@ -285,6 +285,12 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       FreeVDMPointer(MAKELONG(offset, segment), length, pSrc, FALSE);
       return S_OK;
 
+    case ADDR_PHYSICAL:
+      pSrc = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
+      memcpy(buffer, pSrc + offset, length);
+      FreeVDMPointer(MAKELONG(0, 0), 1, pSrc, FALSE);
+      return S_OK;
+
     default:
       memset(buffer, 0, length);
       return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
@@ -308,6 +314,12 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       pDest = GetVDMPointer(MAKELONG(offset, segment), length, FALSE);
       memcpy(pDest, buffer, length);
       FreeVDMPointer(MAKELONG(offset, segment), length, pDest, FALSE);
+      return S_OK;
+
+    case ADDR_PHYSICAL:
+      pDest = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
+      memcpy(pDest + offset, buffer, length);
+      FreeVDMPointer(MAKELONG(0, 0), 1, pDest, FALSE);
       return S_OK;
 
     default:

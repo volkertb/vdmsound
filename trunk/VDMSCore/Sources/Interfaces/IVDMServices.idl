@@ -13,43 +13,43 @@ interface IVDMBaseServices : IUnknown
 {
 	typedef [ helpstring("Registers that can be read from and written to") ] enum
 	{
-		REG_EAX     = 0x00,
-		REG_AX      = 0x01,
-		REG_AL      = 0x02,
-		REG_AH      = 0x03,
+		REG_EAX = 0x00,
+		REG_AX  = 0x01,
+		REG_AL  = 0x02,
+		REG_AH  = 0x03,
 
-		REG_EBX     = 0x04,
-		REG_BX      = 0x05,
-		REG_BL      = 0x06,
-		REG_BH      = 0x07,
+		REG_EBX = 0x04,
+		REG_BX  = 0x05,
+		REG_BL  = 0x06,
+		REG_BH  = 0x07,
 
-		REG_ECX     = 0x08,
-		REG_CX      = 0x09,
-		REG_CL      = 0x0a,
-		REG_CH      = 0x0b,
+		REG_ECX = 0x08,
+		REG_CX  = 0x09,
+		REG_CL  = 0x0a,
+		REG_CH  = 0x0b,
 
-		REG_EDX     = 0x0c,
-		REG_DX      = 0x0d,
-		REG_DL      = 0x0e,
-		REG_DH      = 0x0f,
+		REG_EDX = 0x0c,
+		REG_DX  = 0x0d,
+		REG_DL  = 0x0e,
+		REG_DH  = 0x0f,
 
-		REG_SS      = 0x10,
-		REG_ESP     = 0x11,
-		REG_SP      = 0x12,
-		REG_EBP     = 0x13,
-		REG_BP      = 0x14,
+		REG_SS  = 0x10,
+		REG_ESP = 0x11,
+		REG_SP  = 0x12,
+		REG_EBP = 0x13,
+		REG_BP  = 0x14,
 
-		REG_DS      = 0x15,
-		REG_ESI     = 0x16,
-		REG_SI      = 0x17,
+		REG_DS  = 0x15,
+		REG_ESI = 0x16,
+		REG_SI  = 0x17,
 
-		REG_ES      = 0x18,
-		REG_EDI     = 0x19,
-		REG_DI      = 0x1a,
+		REG_ES  = 0x18,
+		REG_EDI = 0x19,
+		REG_DI  = 0x1a,
 
-		REG_CS      = 0x1b,
-		REG_EIP     = 0x1c,
-		REG_IP      = 0x1d
+		REG_CS  = 0x1b,
+		REG_EIP = 0x1c,
+		REG_IP  = 0x1d
 	} REGISTER_T;
 
 	typedef [ helpstring("Flags that can be examined and modified") ] enum
@@ -69,16 +69,17 @@ interface IVDMBaseServices : IUnknown
 
 	typedef [ helpstring("Interrupt master/slave") ] enum
 	{
-		INT_MASTER  = 0x00,
-		INT_SLAVE   = 0x01
+		INT_MASTER = 0x00,
+		INT_SLAVE  = 0x01
 	} INTERRUPT_T;
 
 
 
-	typedef [ helpstring("Addressing mode, Protected Mode or V86") ] enum
+	typedef [ helpstring("Addressing mode, Protected Mode, V86 or 32-bit physical address") ] enum
 	{
-		ADDR_PM     = 0x00,
-		ADDR_V86    = 0x01
+		ADDR_PM       = 0x00,
+		ADDR_V86      = 0x01,
+		ADDR_PHYSICAL = 0x03
 	} ADDRMODE_T;
 
 
@@ -115,17 +116,17 @@ interface IVDMBaseServices : IUnknown
 
 	[ helpstring("Retrieves data from memory") ]
 	HRESULT GetMemory(
-		[in] WORD segment,                      // The segment or selector
+		[in] WORD segment,                      // The segment or selector (0 for physical addresses)
 		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
-		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM, ADDR_V86 or ADDR_PHYSICAL
 		[out, size_is(length)] BYTE buffer[],   // Points to the buffer where a copy of the data should be stored
 		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
 
 	[ helpstring("Sets data in memory") ]
 	HRESULT SetMemory(
-		[in] WORD segment,                      // The segment or selector
+		[in] WORD segment,                      // The segment or selector (0 for physical addresses)
 		[in] ULONG offset,                      // The 32-bit or 16-bit offset of the x86 address
-		[in] ADDRMODE_T mode,                   // Either ADDR_PM or ADDR_V86
+		[in] ADDRMODE_T mode,                   // Either ADDR_PM, ADDR_V86 or ADDR_PHYSICAL
 		[in, size_is(length)] BYTE buffer[],    // Points to the buffer where data should be taken from
 		[in] ULONG length );                    // Specifies the number of bytes of memory to transfer
 
