@@ -26,6 +26,8 @@ extern CComModule _Module;
 
 // TODO: reference additional headers your program requires here
 
+#include <vector>
+#include <queue>
 #include <iomanip>
 #include <sstream>
 
