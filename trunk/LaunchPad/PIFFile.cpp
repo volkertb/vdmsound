@@ -624,6 +624,8 @@ void CPIFFile::ToANSI(LPCTSTR src, LPSTR dst, LONG ncch) {
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);
 
+  ncch = StrNLen(src, ncch);
+
 # ifdef _UNICODE
   WideCharToMultiByte(CP_ACP, 0, src, -1, dst, ncch, NULL, NULL);
 # else
@@ -641,6 +643,8 @@ void CPIFFile::ToOEM(LPCTSTR src, LPSTR dst, LONG ncch) {
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);
 
+  ncch = StrNLen(src, ncch);
+
   CharToOemBuff(src, dst, ncch);
 
   dst[ncch - 1] = '\0';
@@ -654,6 +658,8 @@ void CPIFFile::ToUNICODE(LPCTSTR src, LPWSTR dst, LONG ncch) {
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);
 
+  ncch = StrNLen(src, ncch);
+
 # ifdef _UNICODE
   wcsncpy(dst, src, ncch);
 # else
@@ -661,4 +667,17 @@ void CPIFFile::ToUNICODE(LPCTSTR src, LPWSTR dst, LONG ncch) {
 # endif
 
   dst[ncch - 1] = L'\0';
+}
+
+//
+//
+//
+LONG CPIFFile::StrNLen(LPCTSTR str, LONG ncch) {
+  for (LONG i = 0; i < ncch; i++) {
+    if (str[i] == _T('\0')) {
+      return i + 1;
+    }
+  }
+
+  return ncch;
 }

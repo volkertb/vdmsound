@@ -88,6 +88,7 @@ protected:
   static void ToANSI(LPCTSTR src, LPSTR dst, LONG ncch);
   static void ToOEM(LPCTSTR src, LPSTR dst, LONG ncch);
   static void ToUNICODE(LPCTSTR src, LPWSTR dst, LONG ncch);
+  static LONG StrNLen(LPCTSTR str, LONG ncch);
 
 protected:
   inline getPIFOffset(const void* ptr)
