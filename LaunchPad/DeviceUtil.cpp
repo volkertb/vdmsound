@@ -3,8 +3,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "launchpad.h"
+#include "resource.h"
+
 #include "DeviceUtil.h"
+
+#include "LaunchPadSettings.h"
+#include "LaunchpadUtil.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -129,4 +133,136 @@ HRESULT DeviceUtil::EnumWaveOut(DeviceInfoList& result) {
 HRESULT DeviceUtil::EnumDSoundOut(DeviceInfoList& result) {
   DSEnumCallback_struct context(result);
   return DirectSoundEnumerate(DSEnumCallback, (LPVOID)(&context));
+}
+
+//
+//
+//
+
+//
+// Synchronizes the state of a Win32 check-box with its corresponding
+//  setting
+//
+HRESULT VLPUtil::SyncDevListBox(
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  CLaunchPadSettings& settings,                       // settings store
+  LPCTSTR section,                                    // ini section
+  const DeviceUtil::DeviceInfoList& devInfo,          // list of devices that helps translate devType/ID <-> textual representation
+  CComboBox& control,                                 // combo-box control with which the data must be synchronized
+  DeviceUtil::DeviceType defDevType,                  // default device type
+  LONG defDevID)                                      // default device ID
+{
+  ASSERT(section != NULL);
+
+  ASSERT_VALID(&control);
+
+  HRESULT hr = S_OK;
+
+  if (control.m_hWnd == NULL)
+    return E_INVALIDARG;
+
+  if (bSave) {
+    int curSel = control.GetCurSel();
+    DWORD selData;
+
+    if (curSel == CB_ERR) {
+      selData = CB_ERR;                               // no user data available (error)
+    } else {
+      selData = control.GetItemData(curSel);          // obtain the user data associated with the currently selected item
+    }
+
+    if ((selData == CB_ERR) || (selData < 1)) {       // an error was encountered, or selData denotes a "(multiple values)" (or an invalid) entry.
+      settings.UnsetValue(section, _T("devOutType"));
+      settings.UnsetValue(section, _T("devOutID"));
+      hr = ((selData == CB_ERR) ? S_FALSE : hr);
+    } else {
+      HRESULT hr2;
+
+      ASSERT((int)(selData - 1) < devInfo.GetSize());
+
+      if (FAILED(hr2 = settings.SetValue  (section, _T("devOutType"), FormatString(_T("%d"), devInfo[selData - 1].deviceType))))
+        hr = hr2;
+      if (FAILED(hr2 = settings.SetValue  (section, _T("devOutID"),   FormatString(_T("%d"), devInfo[selData - 1].deviceID))))
+        hr = hr2;
+    }
+  } else {
+    BOOL bEnabled = TRUE;
+    BOOL isDevTypeIndeterm, isDevIDIndeterm;
+    CString devType, devID;
+
+    HRESULT hr2;
+
+    // If the list hasn't been populated yet then do so
+    if (control.GetCount() == 0) {
+      for (int i = 0; i < devInfo.GetSize(); i++) {
+        int index = control.AddString(devInfo[i].deviceName + _T(" (") + DeviceUtil::GetDevTypeText(devInfo[i].deviceType) + _T(")"));
+
+        if ((index == CB_ERR) || (index == CB_ERRSPACE) || (control.SetItemData(index, i + 1) == CB_ERR))
+          hr = S_FALSE;
+      }
+    }
+
+    // Index of the item that will be selected as a result of data synchronization
+    int curSel = -1;
+
+    if (FAILED(hr2 = settings.GetValue(section, _T("devOutType"), devType, &isDevTypeIndeterm, FormatString(_T("%d"), defDevType)))  ||
+        FAILED(hr2 = settings.GetValue(section, _T("devOutID"),   devID,   &isDevIDIndeterm,   FormatString(_T("%d"), defDevID))))
+    {
+      bEnabled = FALSE;   // error encountered while retrieving data, so disable the control
+      hr = hr2;
+    } else if (isDevTypeIndeterm || isDevIDIndeterm) {
+      // We need a "(multiple values)" item in the list because the setting is indeterminate,
+      //  so insert it if it doesn't exist already
+      for (int i = 0; i < control.GetCount(); i++) {  // look for existing "(multiple values)"
+        if (control.GetItemData(i) == 0) {
+          curSel = i;
+          break;
+        }
+      }
+
+      if (curSel == -1) {
+        curSel = control.InsertString(0, VLPUtil::LoadString(IDS_TXT_MULTIPLEVALUES));  // add new "(multiple values)"
+      }
+
+      // Select the "(multiple values)" item (if found/successfully created)
+      if ((curSel == CB_ERR) || (curSel == CB_ERRSPACE)) {
+        hr = S_FALSE;
+        control.SetCurSel(-1);
+      } else {
+        control.SetItemData(curSel, 0);
+        control.SetCurSel(curSel);
+      }
+    } else {
+      LPTSTR devTypeEndPtr = NULL, devIDEndPtr = NULL;
+
+      long devTypeLong = _tcstol(devType, &devTypeEndPtr, 0);
+      long devIDLong   = _tcstol(devID  , &devIDEndPtr,   0);
+
+      if ((devTypeEndPtr != NULL) && (devTypeEndPtr[0] == _T('\0')) &&
+          (devIDEndPtr   != NULL) && (devIDEndPtr[0]   == _T('\0')))
+      {
+        for (int i = 0; i < control.GetCount(); i++) {
+          int selData = control.GetItemData(i);
+
+          if ((selData != CB_ERR) && (selData > 0)) { // no error has occured and not looking at a "(multiple values)" list item
+            ASSERT((int)(selData - 1) < devInfo.GetSize());
+
+            if ((devInfo[selData - 1].deviceType == (DeviceUtil::DeviceType)devTypeLong) &&
+                (devInfo[selData - 1].deviceID   == (UINT)devIDLong))
+            {
+              curSel = i;
+              break;
+            }
+          } else {
+            hr = ((selData == CB_ERR) ? S_FALSE : hr);
+          }
+        }
+      }
+    }
+
+    control.SetCurSel(curSel);
+    control.EnableWindow(bEnabled);
+  }
+
+  return hr;
 }

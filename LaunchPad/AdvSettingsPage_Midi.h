@@ -30,6 +30,7 @@ protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
   VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
   VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled = TRUE);
 
   VOID InitDeviceList(void);
 
@@ -45,6 +46,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Midi)
 	enum { IDD = IDD_ADVPROPPAGE_MIDI };
+	CButton	m_chkSysexindicator;
 	CEdit	m_edtMidimapbrowse;
 	CComboBox	m_cmbSysexindicator;
 	CComboBox	m_cmbMpuport;
@@ -74,6 +76,7 @@ protected:
 	afx_msg void OnChkUsempu();
 	afx_msg void OnChkMpuoutdev();
 	afx_msg void OnButMidimapbrowse();
+	afx_msg void OnChkSysexindicator();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

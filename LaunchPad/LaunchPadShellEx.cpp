@@ -166,9 +166,6 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
     if (!VLPUtil::isVLPFile(m_fileNames.GetAt(0)) && !VLPUtil::isMSDOSFile(m_fileNames.GetAt(0)))
       return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 
-    CString strRunWithVDMS;
-    strRunWithVDMS.LoadString(IDS_TXT_RUNWITHVDMS);
-
     int chkW = GetSystemMetrics(SM_CXMENUCHECK);
     int chkH = GetSystemMetrics(SM_CYMENUCHECK);
 
@@ -179,7 +176,7 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
 
     VLPUtil::LoadDIBFromIcon(m_contextMenuBmp, AfxGetResourceHandle(), MAKEINTRESOURCE(IDI_ICON2), CBrush(0xffffff), chkW, chkH, FALSE, icoW, icoH);
 
-    if (InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS)) {
+    if (InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, VLPUtil::LoadString(IDS_TXT_RUNWITHVDMS))) {
       SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
       numMenuItems++;
     }

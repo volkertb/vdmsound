@@ -80,48 +80,16 @@ VOID CAdvSettingsPage_Adlib::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
 }
 
 VOID CAdvSettingsPage_Adlib::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  // Read/write device
-  if (bSave) {
-    int curSel = m_cmbFmoutdev.GetCurSel();
-
-    if (curSel != CB_ERR) {
-      m_settings.SetValue(_T("vdms.sb.fm"), _T("deviceType"), VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceType));
-      m_settings.SetValue(_T("vdms.sb.fm"), _T("deviceID"),   VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceID));
-    }
-  } else {
-    BOOL isDevTypeIndeterm, isDevIDIndeterm;
-    CString devType, devID;
-
-    if (FAILED(m_settings.GetValue(_T("vdms.sb.fm"), _T("deviceType"), devType, &isDevTypeIndeterm, _T("2")))  ||
-        FAILED(m_settings.GetValue(_T("vdms.sb.fm"), _T("deviceID"),   devID,   &isDevIDIndeterm,   _T("-1"))) ||
-        isDevTypeIndeterm ||
-        isDevIDIndeterm)
-    {
-      m_cmbFmoutdev.SetCurSel(-1);
-    } else {
-      for (int i = 0; i < m_devInfo.GetSize(); i++) {
-        if ((m_devInfo[i].deviceType == (DeviceUtil::DeviceType)_tcstol(devType, NULL, 10)) && (m_devInfo[i].deviceID == (UINT)_tcstol(devID, NULL, 10))) {
-          m_cmbFmoutdev.SetCurSel(i);
-          break;
-        }
-      }
-
-      if (i >= m_devInfo.GetSize()) {
-        m_cmbFmoutdev.SetCurSel(-1);
-      }
-    }
-  }
-
-  VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("buffer"),     m_cmbFmoutdevbuf, _T("75"));
+  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.fm"), m_devInfo, m_cmbFmoutdev, DeviceUtil::DEV_DSOUND, -1);
+  VLPUtil::SyncEditBox   (bSave, m_settings, _T("vdms.sb.fm"), _T("buffer"), m_cmbFmoutdevbuf, _T("75"));
 
   if (!bEnabled) {
     m_cmbFmoutdevbuf.EnableWindow(FALSE);
-
     m_cmbFmoutdev.EnableWindow(FALSE);
+
     m_spnFmoutdevbuf.EnableWindow(FALSE);
   } else {
-    m_cmbFmoutdev.EnableWindow(TRUE);
-    m_spnFmoutdevbuf.EnableWindow(TRUE);
+    m_spnFmoutdevbuf.EnableWindow(m_cmbFmoutdevbuf.IsWindowEnabled());
   }
 }
 
@@ -131,12 +99,6 @@ VOID CAdvSettingsPage_Adlib::InitDeviceList(void) {
 
   DeviceUtil::EnumWaveOut(m_devInfo);
   DeviceUtil::EnumDSoundOut(m_devInfo);
-
-  for (int i = 0; i < m_devInfo.GetSize(); i++) {
-    m_cmbFmoutdev.AddString(m_devInfo[i].deviceName + _T(" (") + DeviceUtil::GetDevTypeText(m_devInfo[i].deviceType) + _T(")"));
-  }
-
-  ASSERT(m_cmbFmoutdev.GetCount() == m_devInfo.GetSize());
 }
 
 
