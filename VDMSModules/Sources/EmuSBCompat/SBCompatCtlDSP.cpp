@@ -100,7 +100,7 @@ void CSBCompatCtlDSP::putCommand(char data) {
 
   if (commandLength == m_bufIn.size()) {
 
-#   if 1  /* TODO: might want to disable following logInformation code (performance penalty) in release versions */
+#   ifdef _DEBUG
     char msgBuf[1024];
     sprintf(msgBuf, "Processing DSP command 0x%02x (%d bytes)", cmd & 0xff, commandLength);
     for (int i = 1; i < commandLength; i++) sprintf(msgBuf + strlen(msgBuf), " %02x", m_bufIn[i] & 0xff);
@@ -183,8 +183,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       setNumBits(8);
       setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);  /* TODO: how about stereo? */
       m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
-          getSampleRate(), getSampleRate() * getNumBits() * getNumChannels() / 8,
-          getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, false);
+          getSampleRate(), getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, false);
       return true;
 
     case 0x16:  /* 016h : DMA DAC, 2-bit ADPCM */
@@ -201,8 +200,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
       setNumBits(8);
       m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
-          getSampleRate(), getSampleRate() * getNumBits() * getNumChannels() / 8,
-          getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
+          getSampleRate(), getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
       return true;
 
     case 0x1f:  /* 01Fh : Auto-Initialize DMA DAC, 2-bit ADPCM Reference */
@@ -387,8 +385,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
         }
 
         setNumSamples(MKWORD(m_bufIn[3], m_bufIn[2]) + 1); /* TODO: How about stereo? */
-        m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(), getSampleRate(),
-            getSampleRate() * getNumBits() * getNumChannels() / 8, getNumBits(), getNumSamples(),
+        m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK,
+            getNumChannels(), getSampleRate(),getNumBits(), getNumSamples(),
             isSigned ? ISBDSPHWEmulationLayer::CODEC_PCM_SIGNED : ISBDSPHWEmulationLayer::CODEC_PCM, autoInit);
       } return true;
 

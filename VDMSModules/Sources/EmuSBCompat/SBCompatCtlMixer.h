@@ -9,6 +9,7 @@ class ISBMixerHWEmulationLayer {
   public:
     virtual void logError(const char* message) = 0;
     virtual void logWarning(const char* message) = 0;
+    virtual void logInformation(const char* message) = 0;
 };
 
 //
