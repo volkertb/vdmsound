@@ -1,0 +1,12 @@
+; TipOfDay.def : Declares the module parameters for the DLL.
+
+LIBRARY      "TipOfDay"
+DESCRIPTION  'TipOfDay Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
+    TODInitializeA	PRIVATE
+    TODInitializeW	PRIVATE
+    TODIsEnabled	PRIVATE
+    TODShowTips		PRIVATE
+    TODShowTipsRunDLL	PRIVATE
