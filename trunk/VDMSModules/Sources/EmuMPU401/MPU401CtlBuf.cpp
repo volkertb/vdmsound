@@ -10,10 +10,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-CMIDIInputBuffer::CMIDIInputBuffer(IMPU401HWEmulationLayer* _hwemu)
-  : isEmptyBuf(true), IRQPending(false), hwemu(_hwemu)
+CMIDIInputBuffer::CMIDIInputBuffer(IMPU401HWEmulationLayer* hwemu)
+  : m_isEmptyBuf(true), m_IRQPending(false), m_hwemu(hwemu)
 {
-  ASSERT(hwemu != NULL);
+  ASSERT(m_hwemu != NULL);
 }
 
 CMIDIInputBuffer::~CMIDIInputBuffer(void)
@@ -22,49 +22,52 @@ CMIDIInputBuffer::~CMIDIInputBuffer(void)
 
 void CMIDIInputBuffer::putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length) {
   _QUEUEPUT_PROLOGUE();
-  buf.push(status);
-  if (length >= 1) buf.push(data1);
-  if (length >= 2) buf.push(data2);
+  m_buf.push(status);
+  if (length >= 1) m_buf.push(data1);
+  if (length >= 2) m_buf.push(data2);
   _QUEUEPUT_EPILOGUE();
 }
 
 void CMIDIInputBuffer::putSysEx(const unsigned char * data, long length) {
   _QUEUEPUT_PROLOGUE();
-  buf.push(MIDI_EVENT_SYSTEM_SYSEX);
-  for (int i = 0; i < length; i++) buf.push(data[i]);
-  buf.push(MIDI_EVENT_SYSTEM_EOX);
+  m_buf.push(MIDI_EVENT_SYSTEM_SYSEX);
+  for (int i = 0; i < length; i++) m_buf.push(data[i]);
+  m_buf.push(MIDI_EVENT_SYSTEM_EOX);
   _QUEUEPUT_EPILOGUE();
 }
 
 void CMIDIInputBuffer::putRealTime(unsigned char data) {
   _QUEUEPUT_PROLOGUE();
-  buf.push(data);
+  m_buf.push(data);
   _QUEUEPUT_EPILOGUE();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 void CMIDIInputBuffer::reset(void) {
-  mutex.lock();
-  while (!buf.empty()) buf.pop();   // flush the buffer
-  isEmptyBuf = true;                // mark as empty
-  IRQPending = false;               // clear interrupt
-  mutex.unlock();
+  m_mutex.lock();
+
+  while (!m_buf.empty())
+    m_buf.pop();                    // flush the buffer
+
+  m_isEmptyBuf = true;              // mark as empty
+  m_IRQPending = false;             // clear interrupt
+  m_mutex.unlock();
 }
 
 void CMIDIInputBuffer::putByte(unsigned char data) {
   _QUEUEPUT_PROLOGUE();
-  buf.push(data);
+  m_buf.push(data);
   _QUEUEPUT_EPILOGUE();
 }
 
 bool CMIDIInputBuffer::getByte(unsigned char* data) {
-  if (buf.empty())
+  if (m_buf.empty())
     return false;                   // no data to retrieve
 
   _QUEUEGET_PROLOGUE();
-  *data = buf.front();
-  buf.pop();
+  *data = m_buf.front();
+  m_buf.pop();
   _QUEUEGET_EPILOGUE();
   return true;
 }
@@ -77,10 +80,10 @@ bool CMIDIInputBuffer::getByte(unsigned char* data) {
 //
 /////////////////////////////////////////////////////////////////////////////
 
-CMIDIOutputBuffer::CMIDIOutputBuffer(IMPU401HWEmulationLayer* _hwemu)
-  : currentEvent(0x00), hwemu(_hwemu)
+CMIDIOutputBuffer::CMIDIOutputBuffer(IMPU401HWEmulationLayer* hwemu)
+  : m_currentEvent(0x00), m_hwemu(hwemu)
 {
-  ASSERT(hwemu != NULL);
+  ASSERT(m_hwemu != NULL);
 }
 
 CMIDIOutputBuffer::~CMIDIOutputBuffer(void)
@@ -88,56 +91,56 @@ CMIDIOutputBuffer::~CMIDIOutputBuffer(void)
 }
 
 void CMIDIOutputBuffer::reset(void) {
-  buf.clear();                      // flush the buffer
-  currentEvent = 0x00;              // clear the running-status
+  m_buf.clear();                    // flush the buffer
+  m_currentEvent = 0x00;            // clear the running-status
 }
 
 void CMIDIOutputBuffer::putByte(
     unsigned char data)
 {
   if (IS_REALTIME_EVENT(data)) {
-    hwemu->putRealTime(data);       // let through the realtime event
+    m_hwemu->putRealTime(data);     // let through the realtime event
     return;
   }
 
   if (IS_MIDI_EVENT(data)) {
-    if (currentEvent == MIDI_EVENT_SYSTEM_SYSEX) {
-      if (buf.size() < 4) {
+    if (m_currentEvent == MIDI_EVENT_SYSTEM_SYSEX) {
+      if (m_buf.size() < 4) {
         std::ostringstream oss;
-        oss << std::setbase(10) << "SysEx too short (" << buf.size() << " bytes); ended by event 0x" << std::setbase(16) << (data & 0xff) << ".";
-        hwemu->logMessage(IMPU401HWEmulationLayer::MSG_ERROR, oss.str().c_str());
-        buf.clear();
+        oss << std::setbase(10) << "SysEx too short (" << m_buf.size() << " bytes); ended by event 0x" << std::setbase(16) << (data & 0xff) << ".";
+        m_hwemu->logError(oss.str().c_str());
+        m_buf.clear();
       } else {
-        hwemu->putSysEx(buf.begin(), buf.size());   // let through the system exclusive event
-        buf.clear();
+        m_hwemu->putSysEx(m_buf.begin(), m_buf.size()); // let through the system exclusive event
+        m_buf.clear();
 
         if (data == MIDI_EVENT_SYSTEM_EOX) {
-          currentEvent = 0x00;      // clear running status; don't want next event to find currentEvent==SYSEX with an empty queue ("SysEx too short" error)
+          m_currentEvent = 0x00;    // clear running status; don't want next event to find currentEvent==SYSEX with an empty queue ("SysEx too short" error)
           return;
         }
       }
     }
 
-    if (!buf.empty()) {
+    if (!m_buf.empty()) {
       std::ostringstream oss;
-      oss << std::setbase(16) << "Non-realtime event (0x" << (data & 0xff) << ") occured during another event (0x" << (currentEvent & 0xff) << ", " << std::setbase(10) << buf.size() << " bytes to date)";
-      hwemu->logMessage(IMPU401HWEmulationLayer::MSG_ERROR, oss.str().c_str());
-      buf.clear();
+      oss << std::setbase(16) << "Non-realtime event (0x" << (data & 0xff) << ") occured during another event (0x" << (m_currentEvent & 0xff) << ", " << std::setbase(10) << m_buf.size() << " bytes to date)";
+      m_hwemu->logError(oss.str().c_str());
+      m_buf.clear();
     }
-    currentEvent = data;            // set running status
+    m_currentEvent = data;          // set running status
   } else {
     if (isFull()) {
-      hwemu->logMessage(IMPU401HWEmulationLayer::MSG_ERROR, "MIDI-out buffer is full");
+      m_hwemu->logError("MIDI-out buffer is full");
     } else {
-      buf.push_back(data);
+      m_buf.push_back(data);
     }
   }
 
-  if ((currentEvent != MIDI_EVENT_SYSTEM_SYSEX) &&
-      (buf.size() + 1 == MIDI_evt_len[currentEvent & 0xff]))
+  if ((m_currentEvent != MIDI_EVENT_SYSTEM_SYSEX) &&
+      (m_buf.size() + 1 == MIDI_evt_len[m_currentEvent & 0xff]))
   {
-    hwemu->putEvent(currentEvent, buf.size() > 0 ? buf[0] : 0x00, buf.size() > 1 ? buf[1] : 0x00, buf.size());   // let through the event
-    buf.clear();
+    m_hwemu->putEvent(m_currentEvent, m_buf.size() > 0 ? m_buf[0] : 0x00, m_buf.size() > 1 ? m_buf[1] : 0x00, m_buf.size());  // let through the event
+    m_buf.clear();
     return;
   }
 }

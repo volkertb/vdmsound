@@ -30,11 +30,9 @@ class IMPU401HWEmulationLayer
   : public IMPU401MIDIConsumer
 {
   public:
-    enum msgType { MSG_INFO, MSG_WARNING, MSG_ERROR };
-
-  public:
     virtual void generateInterrupt(void) = 0;
-    virtual void logMessage(msgType type, const char* message) = 0;
+    virtual void logError(const char* message) = 0;
+    virtual void logWarning(const char* message) = 0;
 };
 
 //
@@ -44,7 +42,7 @@ class CMIDIInputBuffer
   : public IMPU401MIDIConsumer
 {
   public:
-    CMIDIInputBuffer(IMPU401HWEmulationLayer* _hwemu);
+    CMIDIInputBuffer(IMPU401HWEmulationLayer* hwemu);
     ~CMIDIInputBuffer(void);
 
   public:
@@ -58,48 +56,48 @@ class CMIDIInputBuffer
     bool getByte(unsigned char* data);
 
     inline bool isEmpty(void)
-      { return isEmptyBuf; };
+      { return m_isEmptyBuf; };
     inline bool isFull(void)
-      { return (buf.size() > MAX_MIDI_BUF); };
+      { return (m_buf.size() > MAX_MIDI_BUF); };
 
   protected:
     inline void _QUEUEPUT_PROLOGUE(void) {
-      mutex.lock();
+      m_mutex.lock();
       if (isFull()) {
         std::ostringstream oss;
-        oss << std::setbase(10) << "MIDI-in buffer is full (" << buf.size() << "  bytes), flushing.";
-        hwemu->logMessage(IMPU401HWEmulationLayer::MSG_ERROR, oss.str().c_str());
-        while (!buf.empty()) buf.pop();
+        oss << std::setbase(10) << "MIDI-in buffer is full (" << m_buf.size() << "  bytes), flushing.";
+        m_hwemu->logError(oss.str().c_str());
+        while (!m_buf.empty()) m_buf.pop();
       }
     }
 
     inline void _QUEUEPUT_EPILOGUE(void) {
-      isEmptyBuf = false;
-      if (!IRQPending) {
-        hwemu->generateInterrupt();
-        IRQPending = true;
+      m_isEmptyBuf = false;
+      if (!m_IRQPending) {
+        m_hwemu->generateInterrupt();
+        m_IRQPending = true;
       }
-      mutex.unlock();
+      m_mutex.unlock();
     }
 
     inline void _QUEUEGET_PROLOGUE(void) {
-      mutex.lock();
-      isEmptyBuf = (buf.size() <= 1);
+      m_mutex.lock();
+      m_isEmptyBuf = (m_buf.size() <= 1);
     }
 
     inline void _QUEUEGET_EPILOGUE(void) {
-      IRQPending = false;
-      mutex.unlock();
+      m_IRQPending = false;
+      m_mutex.unlock();
     }
 
   protected:
-    CCriticalSection mutex;
-    std::queue<unsigned char> buf;
-    bool isEmptyBuf;
-    bool IRQPending;
+    CCriticalSection m_mutex;
+    std::queue<unsigned char> m_buf;
+    bool m_isEmptyBuf;
+    bool m_IRQPending;
 
   protected:
-    IMPU401HWEmulationLayer* hwemu;
+    IMPU401HWEmulationLayer* m_hwemu;
 };
 
 
@@ -108,7 +106,7 @@ class CMIDIInputBuffer
 //
 class CMIDIOutputBuffer {
   public:
-    CMIDIOutputBuffer(IMPU401HWEmulationLayer* _hwemu);
+    CMIDIOutputBuffer(IMPU401HWEmulationLayer* hwemu);
     ~CMIDIOutputBuffer(void);
 
   public:
@@ -116,16 +114,16 @@ class CMIDIOutputBuffer {
     void putByte(unsigned char data);
 
     inline bool isEmpty(void)
-      { return buf.empty(); };
+      { return m_buf.empty(); };
     inline bool isFull(void)
-      { return (buf.size() > MAX_MIDI_BUF); };
+      { return (m_buf.size() > MAX_MIDI_BUF); };
 
   protected:
-    std::vector<unsigned char> buf;
-    unsigned char currentEvent;
+    std::vector<unsigned char> m_buf;
+    unsigned char m_currentEvent;
 
   protected:
-    IMPU401HWEmulationLayer* hwemu;
+    IMPU401HWEmulationLayer* m_hwemu;
 };
 
 #endif //__MPU401CTLBUF_H_
