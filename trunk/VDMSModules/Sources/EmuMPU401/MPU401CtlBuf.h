@@ -5,7 +5,7 @@
 
 /* TODO: give the max. buffer length as a .INI setting */
 // Individual size of the IN/OUT MIDI buffers
-#define MAX_MIDI_BUF 65536
+#define MIDI_BUF_LEN 256
 
 //
 // This interface can receive MIDI messages, either for storage (in the case
@@ -34,6 +34,7 @@ class IMPU401HWEmulationLayer
     virtual void logError(const char* message) = 0;
     virtual void logWarning(const char* message) = 0;
     virtual void logInformation(const char* message) = 0;
+    virtual void setTimerPeriod(long period) = 0;
 };
 
 //
@@ -57,44 +58,15 @@ class CMIDIInputBuffer
     bool getByte(unsigned char* data);
 
     inline bool isEmpty(void)
-      { return m_isEmptyBuf; }
+      { return m_buf_len < 1; }
     inline bool isFull(void)
-      { return (m_buf.size() > MAX_MIDI_BUF); }
-
-  protected:
-    inline void _QUEUEPUT_PROLOGUE(void) {
-      m_mutex.Lock();
-      if (isFull()) {
-        std::ostringstream oss;
-        oss << std::setbase(10) << "MIDI-in buffer is full (" << m_buf.size() << "  bytes), flushing.";
-        m_hwemu->logError(oss.str().c_str());
-        while (!m_buf.empty()) m_buf.pop();
-      }
-    }
-
-    inline void _QUEUEPUT_EPILOGUE(void) {
-      m_isEmptyBuf = false;
-      if (!m_IRQPending) {
-        m_hwemu->generateInterrupt();
-        m_IRQPending = true;
-      }
-      m_mutex.Unlock();
-    }
-
-    inline void _QUEUEGET_PROLOGUE(void) {
-      m_mutex.Lock();
-      m_isEmptyBuf = (m_buf.size() <= 1);
-    }
-
-    inline void _QUEUEGET_EPILOGUE(void) {
-      m_IRQPending = false;
-      m_mutex.Unlock();
-    }
+      { return (m_buf_len >= MIDI_BUF_LEN); }
 
   protected:
     CCriticalSection m_mutex;
-    std::queue<unsigned char> m_buf;
-    bool m_isEmptyBuf;
+    unsigned char m_buf[MIDI_BUF_LEN];
+    unsigned long m_buf_len;
+    unsigned long m_buf_pos;
     bool m_IRQPending;
 
   protected:
@@ -117,7 +89,7 @@ class CMIDIOutputBuffer {
     inline bool isEmpty(void)
       { return m_buf.empty(); }
     inline bool isFull(void)
-      { return (m_buf.size() > MAX_MIDI_BUF); }
+      { return (m_buf.size() > 65536); }
 
   protected:
     std::vector<unsigned char> m_buf;

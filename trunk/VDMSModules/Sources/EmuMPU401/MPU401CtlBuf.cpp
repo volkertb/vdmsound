@@ -11,7 +11,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 CMIDIInputBuffer::CMIDIInputBuffer(IMPU401HWEmulationLayer* hwemu)
-  : m_isEmptyBuf(true), m_IRQPending(false), m_hwemu(hwemu)
+  : m_buf_len(0), m_buf_pos(0), m_IRQPending(false), m_hwemu(hwemu)
 {
   _ASSERTE(m_hwemu != NULL);
 }
@@ -21,25 +21,22 @@ CMIDIInputBuffer::~CMIDIInputBuffer(void)
 }
 
 void CMIDIInputBuffer::putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length) {
-  _QUEUEPUT_PROLOGUE();
-  m_buf.push(status);
-  if (length >= 1) m_buf.push(data1);
-  if (length >= 2) m_buf.push(data2);
-  _QUEUEPUT_EPILOGUE();
+  // TODO: check if "recording" first
+  putByte(status);
+  if (length >= 1) putByte(data1);
+  if (length >= 2) putByte(data2);
 }
 
 void CMIDIInputBuffer::putSysEx(const unsigned char * data, long length) {
-  _QUEUEPUT_PROLOGUE();
-  m_buf.push(MIDI_EVENT_SYSTEM_SYSEX);
-  for (int i = 0; i < length; i++) m_buf.push(data[i]);
-  m_buf.push(MIDI_EVENT_SYSTEM_EOX);
-  _QUEUEPUT_EPILOGUE();
+  // TODO: check if "recording" first
+  putByte(MIDI_EVENT_SYSTEM_SYSEX);
+  for (int i = 0; i < length; i++) putByte(data[i]);
+  putByte(MIDI_EVENT_SYSTEM_EOX);
 }
 
 void CMIDIInputBuffer::putRealTime(unsigned char data) {
-  _QUEUEPUT_PROLOGUE();
-  m_buf.push(data);
-  _QUEUEPUT_EPILOGUE();
+  // TODO: check if "recording" first
+  putByte(data);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -47,29 +44,56 @@ void CMIDIInputBuffer::putRealTime(unsigned char data) {
 void CMIDIInputBuffer::reset(void) {
   m_mutex.Lock();
 
-  while (!m_buf.empty())
-    m_buf.pop();                    // flush the buffer
+  m_buf_len = 0;                    // flush the buffer
 
-  m_isEmptyBuf = true;              // mark as empty
-  m_IRQPending = false;             // clear interrupt
+  // do *not* clear any pending interrupts
+
   m_mutex.Unlock();
 }
 
 void CMIDIInputBuffer::putByte(unsigned char data) {
-  _QUEUEPUT_PROLOGUE();
-  m_buf.push(data);
-  _QUEUEPUT_EPILOGUE();
+  m_mutex.Lock();
+
+  if (m_buf_len < MIDI_BUF_LEN) {
+    m_buf[(m_buf_pos + m_buf_len) % MIDI_BUF_LEN] = data;
+    m_buf_len = (m_buf_len + 1) % (MIDI_BUF_LEN + 1);
+
+    if (!m_IRQPending) {
+      m_hwemu->generateInterrupt();
+      m_IRQPending = true;
+    }
+  } else {
+    std::ostringstream oss;
+    oss << std::setbase(10) << "MIDI-in buffer is full (" << m_buf_len << "  bytes), discarding data.";
+    m_hwemu->logError(oss.str().c_str());
+  }
+
+  m_mutex.Unlock();
 }
 
 bool CMIDIInputBuffer::getByte(unsigned char* data) {
-  if (m_buf.empty())
-    return false;                   // no data to retrieve
+  bool retVal = true;
 
-  _QUEUEGET_PROLOGUE();
-  *data = m_buf.front();
-  m_buf.pop();
-  _QUEUEGET_EPILOGUE();
-  return true;
+  m_mutex.Lock();
+
+  m_IRQPending = false;           // reading this byte acknowledges the last IRQ (if any)
+  *data = m_buf[m_buf_pos];       // read the data byte at the head of the queue
+
+  if (m_buf_len > 1) {            // more than one data byte was waiting in the queue
+    m_buf_len--;
+    m_buf_pos = (m_buf_pos + 1) % MIDI_BUF_LEN;
+
+    m_hwemu->generateInterrupt(); // signal that additional data bytes are waiting in the queue
+    m_IRQPending = true;
+  } else if (m_buf_len > 0) {     // exactly one data byte was waiting in the queue
+    m_buf_len = 0;                // no need to advance queue head now; keep it where it is so that "undeflow" reads always return the last value.
+  } else {                        // the queue was empty
+    retVal = false;
+  }
+
+  m_mutex.Unlock();
+
+  return retVal;
 }
 
 
