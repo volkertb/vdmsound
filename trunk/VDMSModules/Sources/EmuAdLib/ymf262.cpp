@@ -5,7 +5,7 @@
 
 namespace MAME {
   /* Defines */
-# define INLINE inline
+# define INLINE static inline
 # define logerror
 
   /* Disable recurring warnings */
@@ -15,5 +15,10 @@ namespace MAME {
   /* Bring in the MAME OPL emulation */
 # define HAS_YMF262 1
 # include "ymf262.c"
+
+  /* Cleanup */
+# undef HAS_YMF262
+# undef logerror
+# undef INLINE
 
 }
