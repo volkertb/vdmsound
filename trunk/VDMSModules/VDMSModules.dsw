@@ -28,6 +28,28 @@ Package=<4>
 
 ###############################################################################
 
+Project: "EmuSBCompat"=.\Sources\EmuSBCompat\EmuSBCompat.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSModules/Sources/EmuSBCompat", QJAAAAAA
+    .\sources\emusbcompat
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "INIParser"=..\VDMSCore\Sources\INIParser\INIParser.dsp - Package Owner=<4>
 
 Package=<5>
