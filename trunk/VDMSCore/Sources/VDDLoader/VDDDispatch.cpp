@@ -119,7 +119,7 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
     char* INIFiles;
 
     if ((lpParam == NULL) || (((char*)lpParam)[0] == '\0')) {
-      INIFiles = ".\\VDMS.INI";   // use a default value
+      INIFiles = "VDMS.INI";   // use a default value
     } else {
       INIFiles = (char*)lpParam;  // information provided by DOS loader
     }
