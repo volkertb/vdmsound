@@ -620,14 +620,26 @@ BOOL CRUNWITHVDMSThread::SetupEnv(LPTSTR lpEnvBlock, int ncch) {
   DOSEnv.SetEnvBlock();
 
 #else
+  LPCTSTR szCOMSPEC    = _tgetenv(_T("COMSPEC"));
+  LPCTSTR szTEMP       = _tgetenv(_T("TEMP"));
+  LPCTSTR szTMP        = _tgetenv(_T("TMP"));
+  LPCTSTR szSYSTEMROOT = _tgetenv(_T("SYSTEMROOT"));
+  LPCTSTR szVDMSPath   = _tgetenv(_T("VDMSPATH"));
+
+  ASSERT(szCOMSPEC    != NULL);
+  ASSERT(szTEMP       != NULL);
+  ASSERT(szTMP        != NULL);
+  ASSERT(szSYSTEMROOT != NULL);
+  ASSERT(szVDMSPath   != NULL);
+
   // Bring in some important variables from the master environment
-  DOSEnv.SetAt(_T("COMSPEC"),    _tgetenv(_T("COMSPEC")));
-  DOSEnv.SetAt(_T("TEMP"),       _tgetenv(_T("TEMP")));
-  DOSEnv.SetAt(_T("TMP"),        _tgetenv(_T("TMP")));
-  DOSEnv.SetAt(_T("SYSTEMROOT"), _tgetenv(_T("SYSTEMROOT")));
+  DOSEnv.SetAt(_T("COMSPEC"),    szCOMSPEC);
+  DOSEnv.SetAt(_T("TEMP"),       szTEMP);
+  DOSEnv.SetAt(_T("TMP"),        szTMP);
+  DOSEnv.SetAt(_T("SYSTEMROOT"), szSYSTEMROOT);
 
   // Set some other variables
-  DOSEnv.SetAt(_T("PATH"), VLPUtil::FormatString(_T("%s;%s"), VLPUtil::GetDirectory(_tgetenv(_T("COMSPEC"))), _tgetenv(_T("VDMSPATH"))));
+  DOSEnv.SetAt(_T("PATH"), VLPUtil::FormatString(_T("%s;%s"), szCOMSPEC ? VLPUtil::GetDirectory(szCOMSPEC) : _T(""), szVDMSPath));
   DOSEnv.SetAt(_T("PATHEXT"), _T(".COM;.EXE;.BAT"));
   DOSEnv.SetAt(_T("PROMPT"), _T("$P$G"));
 
