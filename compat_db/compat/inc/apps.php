@@ -39,6 +39,9 @@
   // Methods - General
   ////////////////////////////////////////////////////////////////////////////
 
+  //
+  //
+  //
   function AppsGetGlobalStats() {
     $retval = Array();
 
@@ -59,6 +62,17 @@
     return $retval;
   }
 
+  //
+  //
+  //
+  function AppsGetLastNumRows() {
+    global $apps_lastnumrows;
+    return $apps_lastnumrows;
+  }
+
+  //
+  //
+  //
   function AppsGetReports($reportid = NULL,
                           $userid = NULL,
                           $appid = NULL,
@@ -70,8 +84,11 @@
                           $sortkey = NULL,
                           $sortascend = true,
                           $start = 0,
-                          $limit = -1 )
+                          $limit = -1,
+                          $countrows = false)
   {
+    global $apps_lastnumrows;
+
     ErrSetLastError();
 
     $columns = Array();
@@ -250,7 +267,13 @@
     if (!is_null($titleid))
       array_push($filters, 'Applications.Titles_id=' . $titleid);
 
-    $querystr  = 'SELECT ' . implode(',', $columns);
+    if ($countrows && ($limit > 0)) {
+      $querystr = 'SELECT CALC_FOUND_ROWS ';
+    } else {
+      $querystr = 'SELECT ';
+    }
+
+    $querystr .= implode(',', $columns);
     $querystr .= ' FROM '  . implode(' INNER JOIN ', $tables);
 
     if (count($filters) > 0) {
@@ -266,7 +289,7 @@
     if (!is_null($sortkey)) {
       $querystr .= ' ORDER BY ' . $sortkey;
 
-      if ($ascending) {
+      if ($sortascend) {
         $querystr .= ' ASC';
       } else {
         $querystr .= ' DESC';
@@ -278,7 +301,22 @@
     }
 
     // Get time, title, distribution, version, OS and emulator
-    return MysqlQueryAssoc($querystr);
+    $retval = MysqlQueryAssoc($querystr);
+
+    if ($countrows) {
+      if ($limit > 0) {
+        $result = MysqlQuery('SELECT FOUND_ROWS()');
+        if ($result) {
+          $apps_lastnumrows = mysql_result($result, 0, 0);
+        } else {
+          $apps_lastnumrows = count($retval);
+        }
+      } else {
+        $apps_lastnumrows = count($retval);
+      }
+    }
+
+    return $retval;
   }
 
   //
@@ -309,8 +347,11 @@
                          $sortkey = NULL,
                          $sortascend = true,
                          $start = 0,
-                         $limit = -1)
-  {
+                         $limit = -1,
+                         $countrows = false )
+{
+    global $apps_lastnumrows;
+
     ErrSetLastError();
 
     $filters = Array();
@@ -326,10 +367,16 @@
     if (is_string($appnames))
       $appnames = Array($appnames);
 
-    $querystr = 'SELECT Titles.name AS title_text,Titles.id AS name_id,Applications.id AS app_id,Applications.version AS appver_text,Applications.time_created AS created,DATE_FORMAT(Applications.time_updated,"%Y-%m-%d %H:%i:%s") AS updated,DistributionTypes.id AS distrib_id,DistributionTypes.description AS distrib_text,DistributionTypes.icon_URL AS distrib_icon,COUNT(Reports.id) AS reports_num FROM Titles INNER JOIN Applications ON (Titles.id=Applications.Titles_id) INNER JOIN DistributionTypes ON (DistributionTypes.id=Applications.DistributionTypes_id) INNER JOIN Reports ON (Applications.id=Reports.Applications_id) WHERE ';
+    if ($countrows && ($limit > 0)) {
+      $querystr = 'SELECT CALC_FOUND_ROWS ';
+    } else {
+      $querystr = 'SELECT ';
+    }
+
+    $querystr .= 'Titles.name AS title_text,Titles.id AS name_id,Applications.id AS app_id,Applications.version AS appver_text,Applications.time_created AS created,DATE_FORMAT(Applications.time_updated,"%Y-%m-%d %H:%i:%s") AS updated,DistributionTypes.id AS distrib_id,DistributionTypes.description AS distrib_text,DistributionTypes.icon_URL AS distrib_icon,COUNT(Reports.id) AS reports_num FROM Titles INNER JOIN Applications ON (Titles.id=Applications.Titles_id) INNER JOIN DistributionTypes ON (DistributionTypes.id=Applications.DistributionTypes_id) INNER JOIN Reports ON (Applications.id=Reports.Applications_id) WHERE ';
 
     foreach ($appnames as $appname) {
-      array_push($filters, 'Titles.name ' . $operator . ' "' . mysql_escape_string($appname) . '"');
+      array_push($filters, 'Titles.name ' . $operator . ' "' . MysqlMakeSafe($appname) . '"');
     }
 
     if ($matchall) {
@@ -343,7 +390,7 @@
     if (!is_null($sortkey)) {
       $querystr .= ' ORDER BY ' . $sortkey;
 
-      if ($ascending) {
+      if ($sortascend) {
         $querystr .= ' ASC';
       } else {
         $querystr .= ' DESC';
@@ -355,7 +402,22 @@
     }
 
     // Perform the query and return
-    return MysqlQueryAssoc($querystr);
+    $retval = MysqlQueryAssoc($querystr);
+
+    if ($countrows) {
+      if ($limit > 0) {
+        $result = MysqlQuery('SELECT FOUND_ROWS()');
+        if ($result) {
+          $apps_lastnumrows = mysql_result($result, 0, 0);
+        } else {
+          $apps_lastnumrows = count($retval);
+        }
+      } else {
+        $apps_lastnumrows = count($retval);
+      }
+    }
+
+    return $retval;
   }
 
   //
@@ -378,7 +440,7 @@
   function AppsGetSimilar($title) {
     $title = $title . ' ' . AppsSoundex($title);
 
-    return MysqlQueryAssoc('SELECT Applications.id,Titles.name,Titles.nameSoundex FROM Titles INNER JOIN Applications ON (Titles.id=Applications.Titles_id) WHERE MATCH(Titles.name,Titles.nameSoundex) AGAINST("' . mysql_escape_string($title) . '")');
+    return MysqlQueryAssoc('SELECT Applications.id,Titles.name,Titles.nameSoundex FROM Titles INNER JOIN Applications ON (Titles.id=Applications.Titles_id) WHERE MATCH(Titles.name,Titles.nameSoundex) AGAINST("' . MysqlMakeSafe($title) . '")');
   }
 
   function AppsAddReport(&$reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, $forceadd = true) {
@@ -409,12 +471,12 @@
       return false;
     }
 
-    $titles = MysqlQueryAssoc('SELECT id,name FROM Titles WHERE name="' . mysql_escape_string($title) . '"');
+    $titles = MysqlQueryAssoc('SELECT id,name FROM Titles WHERE name="' . MysqlMakeSafe($title) . '"');
 
     if ($titles && (count($titles) == 1)) {
       $Titles_id = $titles[0]['id'];
     } else if ($forceadd) {
-      if (!MysqlQuery('INSERT INTO Titles (name,nameSoundex) VALUES ("' . mysql_escape_string($title) . '","' . mysql_escape_string(AppsSoundex($title)) . '")'))
+      if (!MysqlQuery('INSERT INTO Titles (name,nameSoundex) VALUES ("' . MysqlMakeSafe($title) . '","' . MysqlMakeSafe(AppsSoundex($title)) . '")'))
         return false;
 
       $Titles_id = mysql_insert_id();
@@ -422,12 +484,12 @@
       return false;
     }
 
-    $apps = MysqlQueryAssoc('SELECT id,Titles_id,version,DistributionTypes_id FROM Applications WHERE Titles_id=' . $Titles_id . ' AND version="' . mysql_escape_string($version) . '" AND DistributionTypes_id=' . $distrib);
+    $apps = MysqlQueryAssoc('SELECT id,Titles_id,version,DistributionTypes_id FROM Applications WHERE Titles_id=' . $Titles_id . ' AND version="' . MysqlMakeSafe($version) . '" AND DistributionTypes_id=' . $distrib);
 
     if ($apps && (count($apps) == 1)) {
       $Applications_id = $apps[0]['id'];
     } else if ($forceadd) {
-      if (!MysqlQuery('INSERT INTO Applications (Titles_id,version,time_created,DistributionTypes_id) VALUES (' . $Titles_id . ',"' . mysql_escape_string($version) . '",NOW(),' . $distrib . ')'))
+      if (!MysqlQuery('INSERT INTO Applications (Titles_id,version,time_created,DistributionTypes_id) VALUES (' . $Titles_id . ',"' . MysqlMakeSafe($version) . '",NOW(),' . $distrib . ')'))
         return false;
 
       $Applications_id = mysql_insert_id();
@@ -436,9 +498,9 @@
     }
 
     if ($reportid > 0) {
-      if (!MysqlQuery('UPDATE Reports SET' .
+      if (!MysqlQuery('UPDATE Reports SET ' .
           'Applications_id=' .         $Applications_id . ',' .
-          'comment="' .                mysql_escape_string($comment) . '",' .
+          'comment="' .                MysqlMakeSafe($comment) . '",' .
           'CompatTypes_id_video=' .    $cvideo . ',' .
           'CompatTypes_id_keyboard=' . $ckeyboard . ',' .
           'CompatTypes_id_mouse=' .    $cmouse . ',' .
@@ -460,7 +522,7 @@
       return true;
     } else {
       if (!MysqlQuery('INSERT INTO Reports (Users_id,Applications_id,time_created,comment,CompatTypes_id_video,CompatTypes_id_keyboard,CompatTypes_id_mouse,CompatTypes_id_joystick,CompatTypes_id_speaker,CompatTypes_id_sb,CompatTypes_id_adlib,CompatTypes_id_midi,CompatTypes_id_gus,CompatTypes_id_disk,CompatTypes_id_io,CompatTypes_id_timer,OSVerTypes_id,EMUVerTypes_id) ' .
-          'VALUES (' . AuthGetUserId() . ',' . $Applications_id . ',NOW(),"' . mysql_escape_string($comment) . '",' . $cvideo . ',' . $ckeyboard . ',' . $cmouse . ',' . $cjoystick . ',' . $cspeaker . ',' . $csb . ',' . $cadlib . ',' . $cmidi . ',' . $cgus . ',' . $cdisk . ',' . $cio . ',' . $ctimer . ',' . $os . ',' . $emu . ')'))
+          'VALUES (' . AuthGetUserId() . ',' . $Applications_id . ',NOW(),"' . MysqlMakeSafe($comment) . '",' . $cvideo . ',' . $ckeyboard . ',' . $cmouse . ',' . $cjoystick . ',' . $cspeaker . ',' . $csb . ',' . $cadlib . ',' . $cmidi . ',' . $cgus . ',' . $cdisk . ',' . $cio . ',' . $ctimer . ',' . $os . ',' . $emu . ')'))
       {
         return false;
       }

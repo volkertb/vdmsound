@@ -50,12 +50,12 @@
   }
 
   if (isset($appquery, $queryOp)) {
-    $myApps = AppsGetByName($appquery, $queryOp, true, 'title_text', true, $i, $n);
+    $myApps = AppsGetByName($appquery, $queryOp, true, 'title_text', true, $i, $n, false);
 
     echo('<h1 class="normal">' . $hdrText . '</h1>');
 
     if ($myApps && (count($myApps) > 0)) {
-      HtmlSendAppsList($myApps);
+      HtmlSendAppsList($myApps, HtmlMakeResultsInfo($i, $n, AppsGetLastNumRows(), 'Applications', $REQUEST_URI));
     } else {
       echo('<h2 class="normal">' . $errmsg . '</h2>');
     }

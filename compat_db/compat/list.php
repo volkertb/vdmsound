@@ -40,10 +40,10 @@
                                 APPS_GET_TITLE  | APPS_GET_APP     | APPS_GET_APPVER  | APPS_GET_DISTRIB   | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
                                 APPS_GET_OSVER  | APPS_GET_EMUVER  | APPS_GET_EMUCAPS | APPS_GET_AS_TEXT | APPS_GET_AS_ICON,
                                 APPS_GET_COMPAT | APPS_GET_AS_TEXT | APPS_GET_AS_ID   | APPS_GET_AS_ICON,
-                                $sortkey, $sortasc, $i, $n);
+                                $sortkey, $sortasc, $i, $n, false);
 
     if ($myReports && (count($myReports) > 0)) {
-      HtmlSendReportList($myReports, $loggedin, false);
+      HtmlSendReportList($myReports, $loggedin, false, HtmlMakeResultsInfo($i, $n, AppsGetLastNumRows(), 'Applications', $REQUEST_URI));
     } else {
       echo('<h2 class="normal">No compatibility report(s) matching the given ID exist(s)</h2>');
     }

@@ -32,7 +32,7 @@
       $params = Array();
 
       foreach($pairs as $pair) {
-        $keyvalue = explode('=', $pair);
+        $keyvalue = explode('=', $pair, 2);
         $params[$keyvalue[0]] = $keyvalue[1];
       }
     }
@@ -67,6 +67,22 @@
   }
 
   //
+  // Breaks an URL into base URL and parameters
+  //
+  function HtmlUnmakeURL($url, &$baseURL, &$params) {
+    $params = Array();
+
+    $tmp = explode('?', $url, 2);
+    $baseURL = $tmp[0];
+    $pairs = explode('&', $tmp[1]);
+
+    foreach ($pairs as $pair) {
+      $keyvalue = explode('=', $pair, 2);
+      $params[$keyvalue[0]] = $keyvalue[1];
+    }
+  }
+
+  //
   // Makes an '<a href="...">...</a>' link using the HtmlMakeURL function
   //
   function HtmlMakeLink($title, $baseURL, $params = NULL, $target = NULL) {
@@ -94,6 +110,40 @@
       $result .= ' align="' . $align . '"';
 
     return $result . ' border="' . $border . '" hspace="' . $hspace . '" vspace="' . $vspace . '">';
+  }
+
+  //
+  // Makes an '<img src="...">
+  //
+  function HtmlMakeResultsInfo($start, $limit, $total, $itemName, $url) {
+    if (!($limit > 0))
+      $limit = max(1, $total - $start);
+
+    $retval = Array();
+
+    if ($limit < $total) {
+      array_push($retval, $itemName . ' ' . $start . '-' . ($start + $limit - 1) . ' of ' . $total);
+    }
+
+    HtmlUnmakeUrl($url, $baseURL, $params);
+
+    if ($start > 0) {
+      $i = max(0, $start - $limit);
+      $n = $start - $i;
+      array_push($retval, HtmlMakeLink('previous ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $n))));
+    }
+
+    if ($start + $limit < $total) {
+      $i = min($total - 2, $start + $limit);
+      $n = min($limit, $total - $i);
+      array_push($retval, HtmlMakeLink('next ' . $n, $baseURL, array_merge($params, Array('i' => $i, 'n' => $n))));
+    }
+
+    if (count($retval > 0)) {
+      return implode('&nbsp;| ', $retval);
+    } else {
+      return NULL;
+    }
   }
 
   //
