@@ -245,8 +245,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   BOOL    vdms_midi_enabled         = SettingGetBool  (_T("vdms.midi"),     _T("enabled"),      TRUE);
   CString vdms_midi_port            = SettingGetString(_T("vdms.midi"),     _T("port"),         _T("0x330"));
   CString vdms_midi_IRQ             = SettingGetString(_T("vdms.midi"),     _T("IRQ"),          _T("2"));
-  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"),     _T("mapFile"),      _T("identity.map"));
-  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"),     _T("device"),       _T("-1"));
+  CString vdms_midi_mapFile         = SettingGetString(_T("vdms.midi"),     _T("mapFile"),      VLPUtil::GetVDMSFilePath(_T("identity.map")));
+  CString vdms_midi_device          = SettingGetString(_T("vdms.midi"),     _T("deviceID"),     _T("-1"));
   CString vdms_midi_showSysExLed    = SettingGetString(_T("vdms.midi"),     _T("showSysExLed"), _T("Scroll"));
 
   CString vdms_dmac_minDMAPeriod    = SettingGetString(_T("vdms.dmac"),     _T("minDMAPeriod"), _T("5"));
@@ -257,14 +257,14 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   CString vdms_sb_dsp_IRQ           = SettingGetString(_T("vdms.sb.dsp"),   _T("IRQ"),          _T("7"));
   CString vdms_sb_dsp_DMA8          = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA8"),         _T("1"));
   CString vdms_sb_dsp_DMA16         = SettingGetString(_T("vdms.sb.dsp"),   _T("DMA16"),        _T("5"));
-  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.15"));
-  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"),   _T("device"),       _T("-1"));
+  CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.05 (SoundBlaster 16)"));
+  CString vdms_sb_dsp_device        = SettingGetString(_T("vdms.sb.dsp"),   _T("deviceID"),     _T("-1"));
   CString vdms_sb_dsp_buffer        = SettingGetString(_T("vdms.sb.dsp"),   _T("buffer"),       _T("75"));
 
   BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"),    _T("enabled"),      TRUE);
   CString vdms_sb_fm_port           = SettingGetString(_T("vdms.sb.fm"),    _T("port"),         _T("0x388"));
   CString vdms_sb_fm_sampleRate     = SettingGetString(_T("vdms.sb.fm"),    _T("sampleRate"),   _T("11025"));
-  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"),    _T("device"),       _T("-1"));
+  CString vdms_sb_fm_device         = SettingGetString(_T("vdms.sb.fm"),    _T("deviceID"),     _T("-1"));
   CString vdms_sb_fm_buffer         = SettingGetString(_T("vdms.sb.fm"),    _T("buffer"),       _T("75"));
 
   BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"),      TRUE);
@@ -272,7 +272,7 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   CString vdms_gameport_minCoord    = SettingGetString(_T("vdms.gameport"), _T("minCoord"),     _T("5"));
   CString vdms_gameport_maxCoord    = SettingGetString(_T("vdms.gameport"), _T("maxCoord"),     _T("250"));
   CString vdms_gameport_pollPeriod  = SettingGetString(_T("vdms.gameport"), _T("pollPeriod"),   _T("125"));
-  CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"),      _T("joy2.map"));
+  CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"),      VLPUtil::GetVDMSFilePath(_T("joy2.map")));
 
   //
   // Basic settings
@@ -470,9 +470,8 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     CString vdms_winnt_dos_Autoexec = SettingGetString(_T("winnt.dos"), _T("autoexec"), _T(""));
     autoexec += vdms_winnt_dos_Autoexec + _T("\r\n");
   }
-  // TODO: add "custom" AUTOEXEC.BAT options from VDMS.INI to autoexec
 
-  autoexec += VLPUtil::GetAbsolutePath(_T("dosdrv.exe"), _tgetenv(_T("VDMSPath"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
+  autoexec += VLPUtil::GetVDMSFilePath(_T("dosdrv.exe")) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
 
   //
   // PIF
