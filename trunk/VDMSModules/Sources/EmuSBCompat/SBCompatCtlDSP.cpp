@@ -27,8 +27,8 @@ CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu, CSBCompatCtlMixe
     m_isRstAsserted(false),         // the reset sequence was not yet engaged
     m_isSpeakerEna(false),          // the speaker is disabled
     m_useTimeConstant(false),       // playback rate determined by sample rate, not time constant
-    m_is8BitIRQPending(false),      // no 8-bit operation IRQs pending
-    m_is16BitIRQPending(false),     // no 16-bit operation IRQs pending
+    m_8BitIRQsPending(0),           // no 8-bit operation IRQs pending
+    m_16BitIRQsPending(0),          // no 16-bit operation IRQs pending
     m_testRegister((char)0x00)      // no value in the test register
 {
   _ASSERTE(m_hwemu != NULL);
@@ -50,9 +50,8 @@ void CSBCompatCtlDSP::reset(void) {
   m_isRstAsserted = false;
 
   // flush buffers
-  while (!m_bufOut.empty())
-    m_bufOut.pop();
-  m_bufIn.clear();
+  flushInputBuffer();
+  flushOutputBuffer();
 
   // reset other internal registers, except for:
   // - test register: must remain the same across resets
@@ -92,6 +91,7 @@ void CSBCompatCtlDSP::reset(char data) {
         m_state = DSP_S_NORMAL;
     }
 
+    flushOutputBuffer();        // flush the buffer
     m_bufOut.push((char)0xaa);  // acknowledge reset
   }
 }
@@ -115,7 +115,7 @@ void CSBCompatCtlDSP::putCommand(char data) {
         char msgBuf[1024];
         sprintf(msgBuf, "Attempted to use undocumented DSP command 0x%02x", cmd & 0xff);
         m_hwemu->logWarning(msgBuf);
-        m_bufIn.clear();    // flush buffer
+        flushInputBuffer(); // flush buffer
         return;
       }
 
@@ -123,7 +123,7 @@ void CSBCompatCtlDSP::putCommand(char data) {
         char msgBuf[1024];
         sprintf(msgBuf, "DSP internal state inconsistency: command = 0x%02x, in buffer = %d bytes, expected %d bytes", cmd & 0xff, m_bufIn.size(), commandLength);
         m_hwemu->logWarning(msgBuf);
-        m_bufIn.clear();    // flush buffer
+        flushInputBuffer(); // flush buffer
         return;
       }
 
@@ -139,7 +139,7 @@ void CSBCompatCtlDSP::putCommand(char data) {
         if (processCommand(cmd))
           m_lastCommand = cmd;
 
-        m_bufIn.clear();    // flush buffer
+        flushInputBuffer(); // flush buffer
         return;
       } else {
         return;             // command not complete yet
@@ -161,48 +161,52 @@ char CSBCompatCtlDSP::getData(void) {
      this and a thread-safe FIFO, or make this FIFO thread-safe -- MIDI
      data would come in asynchronously! */
 
+  // Always remember the last value that we had in the output FIFO; if the
+  //   FIFO is empty, output this last value (that is what the SB is doing)
+  static char lastReply = (char)0xff;
+
   switch (m_state) {
     case DSP_S_NORMAL:
       if (!m_bufOut.empty()) {
-        char data = m_bufOut.front();
+        char reply = m_bufOut.front();
         m_bufOut.pop();
+
+        lastReply = reply;  // remember this value
 
 #       ifdef _DEBUG
         char msgBuf[1024];
-        sprintf(msgBuf, "Replying to last DSP command: 0x%02x (%d bytes left in buffer)", data & 0xff, m_bufOut.size());
+        sprintf(msgBuf, "Replying to last DSP command: 0x%02x (%d bytes left in buffer)", lastReply & 0xff, m_bufOut.size());
         m_hwemu->logInformation(msgBuf);
 #       endif
 
-        return data;
+        return reply;
       } else {
-        return (char)0xff;
+        return lastReply;
       }
 
     case DSP_S_HIGHSPEED:
       // During high-speed DMA ignore any port read requests
-      return (char)0xff;
+      return lastReply;
 
     default:
       m_hwemu->logError("DSP get data - invalid state, reverting to NORMAL");
       m_state = DSP_S_NORMAL;
-      return (char)0xff;
+      return lastReply;
   }
 }
 
 char CSBCompatCtlDSP::getWrStatus(void) {
   switch (m_state) {
     case DSP_S_NORMAL:
-      // if there is still data in the output
-      // buffer, then don't accept commands
-      return m_bufOut.empty() ? 0x00 : 0x80;
+      return (char)MK_SB_WR_STATUS(true);   // always accept commands
 
     case DSP_S_HIGHSPEED:
-      return (char)0x80;  // don't accept commands
+      return (char)MK_SB_WR_STATUS(false);  // don't accept commands
 
     default:
       m_hwemu->logError("DSP get WRITE status - invalid state, reverting to NORMAL");
       m_state = DSP_S_NORMAL;
-      return (char)0x80;  // don't accept commands yet
+      return (char)MK_SB_WR_STATUS(false);  // don't accept commands yet
   }
 }
 
@@ -210,56 +214,58 @@ char CSBCompatCtlDSP::getRdStatus(void) {
   switch (m_state) {
     case DSP_S_NORMAL:
       // is there data in the output buffer ?
-      return m_bufOut.empty() ? 0x00 : 0x80;
+      return (char)MK_SB_RD_STATUS(!m_bufOut.empty());
 
     case DSP_S_HIGHSPEED:
-      return 0x00;        // no data is available
+      return (char)MK_SB_RD_STATUS(false);  // no data is available
 
     default:
       m_hwemu->logError("DSP get READ status - invalid state, reverting to NORMAL");
       m_state = DSP_S_NORMAL;
-      return 0x00;        // no data is available yet
+      return (char)MK_SB_RD_STATUS(false);  // no data is available yet
   }
 }
 
 void CSBCompatCtlDSP::ack8BitIRQ(void) {
-  if (m_is8BitIRQPending) {
-    m_is8BitIRQPending = false;
+  if (m_8BitIRQsPending > 0) {
+    m_8BitIRQsPending--;
     m_hwemu->logInformation("IRQ acknowledged (8-bit)");
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, false);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_8BitIRQsPending > 0);
 }
 
 void CSBCompatCtlDSP::ack16BitIRQ(void) {
-  if (m_is16BitIRQPending) {
-    m_is16BitIRQPending = false;
+  if (m_16BitIRQsPending > 0) {
+    m_16BitIRQsPending--;
     m_hwemu->logInformation("IRQ acknowledged (16-bit)");
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, false);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_16BitIRQsPending > 0);
 }
 
-void CSBCompatCtlDSP::set8BitIRQ(void) {
-  if (m_is8BitIRQPending) {
-    m_hwemu->logWarning("set8BitIRQ(): an IRQ is already pending");
+void CSBCompatCtlDSP::set8BitIRQ(int count) {
+  if (m_8BitIRQsPending > 0) {
+    m_hwemu->logWarning("set8BitIRQ(): one or more IRQs already pending; resetting");
+    m_8BitIRQsPending = count;
   } else {
-    m_is8BitIRQPending = true;
+    m_8BitIRQsPending += count;
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, true);
-  m_hwemu->generateInterrupt();
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_8BitIRQsPending > 0);
+  m_hwemu->generateInterrupt(count);
 }
 
-void CSBCompatCtlDSP::set16BitIRQ(void) {
-  if (m_is16BitIRQPending) {
-    m_hwemu->logWarning("set16BitIRQ(): an IRQ is already pending");
+void CSBCompatCtlDSP::set16BitIRQ(int count) {
+  if (m_16BitIRQsPending > 0) {
+    m_hwemu->logWarning("set16BitIRQ(): one or more IRQs already pending; resetting");
+    m_16BitIRQsPending = count;
   } else {
-    m_is16BitIRQPending = true;
+    m_16BitIRQsPending += count;
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, true);
-  m_hwemu->generateInterrupt();
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_16BitIRQsPending > 0);
+  m_hwemu->generateInterrupt(count);
 }
 
 
@@ -271,8 +277,8 @@ void CSBCompatCtlDSP::stopAllDMA(bool isSynchronous) {
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, isSynchronous);
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, isSynchronous);
 
-  if (m_is8BitIRQPending) ack8BitIRQ();
-  if (m_is16BitIRQPending) ack16BitIRQ();
+  while (m_8BitIRQsPending > 0) ack8BitIRQ();
+  while (m_16BitIRQsPending > 0) ack16BitIRQ();
 }
 
 bool CSBCompatCtlDSP::processCommand(unsigned char command) {
@@ -289,7 +295,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x04:  /* 004h : DSP Status (Obsolete) */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x04 (DSP status)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -345,7 +352,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x20:  /* 020h : Direct ADC, 8-bit */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x20 (Direct ADC)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     case 0x24:  /* 024h : DMA ADC, 8-bit */
@@ -370,7 +378,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x30:  /* 030h : MIDI Read Poll */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x30 (MIDI read poll)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     case 0x31:  /* 031h : MIDI Read Interrupt */
@@ -381,7 +390,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x32:  /* 032h : MIDI Read Timestamp Poll */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x32 (MIDI read timestamp poll)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       m_bufOut.push(0xff);
       m_bufOut.push(0xff);
       m_bufOut.push(0xff);
@@ -528,7 +538,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0xd8:  /* 0D8h : Speaker Status */
-      m_bufOut.push(m_isSpeakerEna ? 0xff : 0x00);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(m_isSpeakerEna ? 0xff : 0x00);  // output reply
       return true;
 
     case 0xd9:  /* 0D9h : Exit Auto-Initialize DMA Operation, 16-bit */
@@ -537,18 +548,23 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0xe0:  /* 0E0h : DSP Identification */
-      m_bufOut.push(~m_bufIn[1]);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(~m_bufIn[1]); // output reply
       return true;
 
     case 0xe1:  /* 0E1h : DSP Version */
       /* TODO: maybe make this configurable?! */
-      m_bufOut.push(HIBYTE(m_hwemu->getDSPVersion()));  // major
-      m_bufOut.push(LOBYTE(m_hwemu->getDSPVersion()));  // minor
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(HIBYTE(m_hwemu->getDSPVersion()));  // output reply: major version
+      m_bufOut.push(LOBYTE(m_hwemu->getDSPVersion()));  // output reply: minor version
       return true;
 
     case 0xe3:  /* 0E3h : DSP Copyright */
+      flushOutputBuffer();  // flush any previous replies
+
       for (i = 0; i <= strlen(getCopyright()); i++)
         m_bufOut.push(getCopyright()[i]);
+
       return true;
 
     case 0xe4:  /* 0E4h : Write Test Register */
@@ -556,7 +572,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0xe8:  /* 0E8h : Read Test Register */
-      m_bufOut.push(m_testRegister);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(m_testRegister);  // output reply
       return true;
 
     case 0xf0:  /* 0F0h : Sine Generator */
@@ -568,32 +585,36 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xf1:  /* 0F1h : DSP Auxiliary Status (Obsolete) */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0xf1 (DSP aux. status, obsolete)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     case 0xf2:  /* 0F2h : IRQ Request, 8-bit */
-      set8BitIRQ();
+      set8BitIRQ(1);  // generate one 8-bit IRQ
       return true;
 
     case 0xf3:  /* 0F3h : IRQ Request, 16-bit */
-      set16BitIRQ();
+      set16BitIRQ(1); // generate one 16-bit IRQ
       return true;
 
     case 0xfb:  /* 0FBh : DSP Status */
       /* TODO: implement -- IMPORTANT */
       m_hwemu->logError("Attempted to use unimplemented DSP command 0xfb (DSP status)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     case 0xfc:  /* 0FCh : DSP Auxiliary Status */
       // TODO: implement
       m_hwemu->logError("Attempted to use unimplemented DSP command 0xfc (DSP aux. status)");
-      m_bufOut.push(0xff);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(0xff);  // output reply
       return false;
 
     case 0xfd:  /* 0FDh : DSP Command Status */
       /* TODO: inquire: exclude self ?! */
-      m_bufOut.push(m_lastCommand);
+      flushOutputBuffer();  // flush any previous replies
+      m_bufOut.push(m_lastCommand); // output reply
       return true;
 
     default:

@@ -28,7 +28,7 @@ class ISBDSPHWEmulationLayer {
     virtual void pauseTransfer(transfer_t type) = 0;
     virtual void resumeTransfer(transfer_t type) = 0;
 
-    virtual void generateInterrupt(void) = 0;
+    virtual void generateInterrupt(int count = 1) = 0;
 
     virtual void logError(const char* message) = 0;
     virtual void logWarning(const char* message) = 0;
@@ -58,8 +58,8 @@ class CSBCompatCtlDSP {
     char getRdStatus(void);
     void ack8BitIRQ(void);
     void ack16BitIRQ(void);
-    void set8BitIRQ(void);
-    void set16BitIRQ(void);
+    void set8BitIRQ(int count = 1);
+    void set16BitIRQ(int count = 1);
 
   protected:
     void stopAllDMA(bool isSynchronous);
@@ -81,6 +81,12 @@ class CSBCompatCtlDSP {
       { return m_useTimeConstant ? (1000000 / ((256 - m_timeConstant) * getNumChannels())) : m_sampleRate; }
 
   protected:
+    inline void flushInputBuffer(void)
+      { m_bufIn.clear(); }
+    inline void flushOutputBuffer(void)
+      { while (!m_bufOut.empty()) m_bufOut.pop(); }
+
+  protected:
     std::queue<unsigned char> m_bufOut;
     std::vector<unsigned char> m_bufIn;
     DSPState_t m_state;
@@ -91,7 +97,7 @@ class CSBCompatCtlDSP {
     int m_sampleRate, m_timeConstant;
     int m_numSamples;
 
-    bool m_is8BitIRQPending, m_is16BitIRQPending;
+    int m_8BitIRQsPending, m_16BitIRQsPending;
 
     unsigned char m_testRegister;
 

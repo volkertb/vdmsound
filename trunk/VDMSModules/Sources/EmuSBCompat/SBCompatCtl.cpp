@@ -357,6 +357,26 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   if (m_isPaused)
     return S_OK;
 
+  // Performance 'hack' (quick-DMA)
+  if (m_transferredBytes + maxData < 32) {
+    /* Many games verify the SB by performing a 1- or 4-bytes transfer; some games' detection routine times
+       out very quickly (20-50ms), so if we are dealing with such a transfer:
+       1) don't even bother playing back the data (it's garbage anyway, usually comes from 0000:0000)
+       2) return ASAP, pretending everything was transmitted (prevents the game's detection from time-out'ing) */
+
+    long toTransfer = (channel < 4) ? maxData : 2 * maxData;
+    m_transferredBytes += toTransfer;
+
+#   if _DEBUG
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d (quick-DMA)"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+#   endif
+
+    *transferred = maxData;
+    return S_OK;
+  }
+
+  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
   /* TODO: buffer can be as much as 4 times larger for ADPCM2 */
 
   int bufSize;                // how much relevant data is stored in the buffer <buf>
@@ -371,7 +391,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
     ((m_avgBandwidth * (LONGLONG)(timeGetTime() - m_transferStartTime)) / 1000) - m_transferredBytes,
     (m_numChannels - 1) + (m_bitsPerSample >> 4)); // rounding boundaries: 2^0 for mono 8-bit, 2^1 for 16-bit mono or 8-bit stereo, 2^2 for 16-bit stereo
 
-  // One last detail regarding 8-bit vs. 16-bit DMA transfer (*not* audio samples)
+  // One last detail regarding 8-bit vs. 16-bit DMA transfer (*NOT* 8-bit vs. 16-bit audio samples)
   if (channel < 4) {          // 8-bit DMA transfer, maxData is in BYTES
     toTransfer = toTransfer > maxData ? maxData : toTransfer;
   } else {                    // 16-bit DMA transfer, maxData is in WORDS
@@ -423,7 +443,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
 # if _DEBUG
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
-#endif
+# endif
 
   if (channel < 4) {          // 8-bit DMA transfer, keep BYTE count as BYTE count
     *transferred = toTransfer;
@@ -435,7 +455,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 }
 
 STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, LONG isTerminalCount) {
-  long lastTransfer;
+  long lastTransfer, overShoot;
 
   // If this notification does not concern the active DMA channel, ignore it
   if (channel != m_activeDMAChannel)
@@ -447,14 +467,18 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
     lastTransfer = 2 * transferred;
   }
 
-  if (lastTransfer > m_transferredBytes % m_DSPBlockSize) {
+  overShoot = m_transferredBytes % m_DSPBlockSize;  // how many bytes were transferred above the point where an IRQ should be generated
+
+  if (lastTransfer > overShoot) {   // we passed one or more IRQ generation points during the last transfer
+    int numInterrupts = ((lastTransfer - overShoot - 1) / m_DSPBlockSize) + 1;
+
     if (m_bitsPerSample != 16) {
-      m_SBDSP.set8BitIRQ();
+      m_SBDSP.set8BitIRQ(numInterrupts);
     } else {
-      m_SBDSP.set16BitIRQ();
+      m_SBDSP.set16BitIRQ(numInterrupts);
     }
 
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
   }
 
   return S_OK;
@@ -549,9 +573,9 @@ void CSBCompatCtl::resumeTransfer(transfer_t type) {
   }
 }
 
-void CSBCompatCtl::generateInterrupt(void) {
+void CSBCompatCtl::generateInterrupt(int count) {
   try {
-    m_BaseSrv->SimulateInterrupt(IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
+    m_BaseSrv->SimulateInterrupt(IVDMSERVICESLib::INT_MASTER, m_IRQLine, count);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d, %d, %d"), IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SimulateInterrupt(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
