@@ -4,13 +4,13 @@
 class CLaunchPadSettings;
 
 //////////////////////////////////////////////////////////////////////
-// CIcon
+// CStatic_Icon
 //////////////////////////////////////////////////////////////////////
 
-class CIcon : public CStatic {
+class CStatic_Icon : public CStatic {
   public:
-    CIcon(void);
-    virtual ~CIcon(void);
+    CStatic_Icon(void);
+    virtual ~CStatic_Icon(void);
 
   public:
     HRESULT LoadIcon(HINSTANCE hInstance, LPCTSTR lpIconName);
@@ -23,6 +23,23 @@ class CIcon : public CStatic {
   protected:
     BOOL m_bAttached;
     UINT m_uType;
+};
+
+
+
+//////////////////////////////////////////////////////////////////////
+// CDIBitmap
+//////////////////////////////////////////////////////////////////////
+
+class CDIBitmap : public CBitmap {
+  public:
+    CDIBitmap(void);
+
+  public:
+    BOOL CreateDIBitmap(CDC* pdc, const LPBITMAPINFOHEADER lpbmih, LPCVOID lpbInit = NULL, const LPBITMAPINFO lpbmi = NULL, UINT fuUsage = DIB_RGB_COLORS);
+    BOOL CreateDIBitmap(int nWidth, int nHeight, UINT nBitcount = 24, int numColors = 0);
+    UINT SetDIBColorTable(CDC* pdc, UINT uStartIndex, UINT cEntries, CONST RGBQUAD *pColors);
+    UINT SetDIBits(CDC* pdc, UINT uStartScan, UINT cScanLines, CONST VOID *lpvBits, CONST BITMAPINFO *lpbmi, UINT fuColorUse);
 };
 
 
@@ -58,7 +75,10 @@ namespace VLPUtil {
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
 
-  HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CIcon& control);
+  HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control);
+
+  // GDI helper functions
+  HRESULT LoadDIBFromIcon(CDIBitmap& bmp, HINSTANCE hInstance, LPCTSTR lpIconName, HBRUSH hBgBrush, UINT cx = 0, UINT cy = 0);
 
   // Shell helper functions
   void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);
