@@ -1,0 +1,25 @@
+HKCR
+{
+	DSoundDevice.WaveOut.1 = s 'WaveOut Class'
+	{
+		CLSID = s '{D2CF660F-4A54-11D5-9D41-00A024112F81}'
+	}
+	DSoundDevice.WaveOut = s 'WaveOut Class'
+	{
+		CLSID = s '{D2CF660F-4A54-11D5-9D41-00A024112F81}'
+		CurVer = s 'DSoundDevice.WaveOut.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {D2CF660F-4A54-11D5-9D41-00A024112F81} = s 'WaveOut Class'
+		{
+			ProgID = s 'DSoundDevice.WaveOut.1'
+			VersionIndependentProgID = s 'DSoundDevice.WaveOut'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{D2CF6601-4A54-11D5-9D41-00A024112F81}'
+		}
+	}
+}
