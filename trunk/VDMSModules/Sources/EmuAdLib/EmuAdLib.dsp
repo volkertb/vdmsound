@@ -296,6 +296,10 @@ SOURCE=.\EmuAdLib.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\fmopl.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
@@ -306,6 +310,10 @@ SOURCE=.\StdAfx.cpp
 # Begin Source File
 
 SOURCE=.\AdLibCtl.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\driver.h
 # End Source File
 # Begin Source File
 
@@ -335,6 +343,35 @@ SOURCE=.\Resource.h
 
 SOURCE=.\EmuAdLib.idl
 # ADD MTL /tlb ".\EmuAdLib.tlb" /h "EmuAdLib.h" /iid "EmuAdLib_i.c" /Oicf
+# End Source File
+# End Group
+# Begin Group "MAME files"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\fmopl.c
+
+!IF  "$(CFG)" == "EmuAdLib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Release MinSize"
+
+!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Release MinDependency"
+
+!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Release MinSize"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "EmuAdLib - Win32 Unicode Release MinDependency"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\fmopl.h
 # End Source File
 # End Group
 # Begin Source File
