@@ -105,6 +105,9 @@ public:
 
 protected:
   static CString StringFromPortRanges(int numPorts, const VDD_IO_PORTRANGE* ports);
+  static USHORT getDOSEnvSeg(USHORT DOSPSPSeg);
+  static CString getDOSEnvString(USHORT DOSPSPSeg, LPCSTR varName);
+  static CString getDOSProgArg(USHORT DOSPSPSeg, int argIdx);
 
 protected:
   HINSTANCE m_hInstance;
