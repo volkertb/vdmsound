@@ -132,6 +132,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "EmuPPDAC"=.\Sources\EmuPPDAC\EmuPPDAC.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "EmuSBCompat"=.\Sources\EmuSBCompat\EmuSBCompat.dsp - Package Owner=<4>
 
 Package=<5>

@@ -1,0 +1,28 @@
+// EmuPPDAC.idl : IDL source for EmuPPDAC.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (EmuPPDAC.tlb) and marshalling code.
+
+import "oaidl.idl";
+
+[
+	uuid(563987FE-E3D6-4a2b-A8C9-61D868E67EB9),
+	version(1.0),
+	helpstring("EmuPPDAC 1.0 Type Library")
+]
+library EMUPPDACLib
+{
+	import "IVDMModule.idl";
+	import "IVDMHandlers.idl";
+
+	[
+		uuid(0D05B759-6315-465a-AFF5-CDED5F1AE442),
+		helpstring("PPDACCtl Class")
+	]
+	coclass PPDACCtl
+	{
+		[default] interface IVDMBasicModule;
+		interface IIOHandler;
+	};
+};
