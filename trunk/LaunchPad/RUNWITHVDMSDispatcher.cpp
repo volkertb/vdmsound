@@ -83,19 +83,10 @@ HRESULT CRUNWITHVDMSDispatcher::RunWithVdms(LPCTSTR vlpFileName, LPCTSTR exeFile
 }
 
 HRESULT CRUNWITHVDMSDispatcher::RunWithVdms_Wizard(LPCTSTR exeFileName) {
-  CWaitCursor wait;
-
   DWORD lastError = ERROR_SUCCESS;
   CString strTmp;
 
-  CString vlpFileName = VLPUtil::RenameExtension(exeFileName, _T(".vlp"));
-  CLaunchPadSettings settings(vlpFileName);
-/*
-  settings.SetValue(_T("program"), _T("executable"), exeFileName);
-  settings.SetValue(_T("program"), _T("params"), _T(""));
-  settings.SetValue(_T("program"), _T("workdir"), VLPUtil::GetDirectory(exeFileName));
-*/
-  CWizardSheet wizardSheet(exeFileName, settings, IDS_PROJNAME);
+  CWizardSheet wizardSheet(exeFileName, IDS_PROJNAME);
 
   switch (wizardSheet.DoModal()) {
     case ID_WIZFINISH:
@@ -114,8 +105,8 @@ HRESULT CRUNWITHVDMSDispatcher::RunWithVdms_Wizard(LPCTSTR exeFileName) {
   // Create and start a thread that spawns the 16-bit process and waits for its termination
   return CRUNWITHVDMSThread::CreateThread(
     VLPUtil::GetFilename(exeFileName, TRUE),  // the executable file name, with extension, will be displayed in the title-bar
-    settings,                                 // take the customized settings
-    exeFileName);                             // execute the executable using the customized settings
+    wizardSheet.m_wizard.settings,            // take the customized settings
+    NULL);                                    // execute the executable specified in the customized settings
 
   return S_OK;
 }

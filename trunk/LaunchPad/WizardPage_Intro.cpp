@@ -38,6 +38,10 @@ void CWizardPage_Intro::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 }
 
+void CWizardPage_Intro::SyncWizButtons(void) {
+  ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_NEXT);
+}
+
 
 BEGIN_MESSAGE_MAP(CWizardPage_Intro, CPropertyPageEx)
 	//{{AFX_MSG_MAP(CWizardPage_Intro)
@@ -78,7 +82,7 @@ BOOL CWizardPage_Intro::OnInitDialog()
 BOOL CWizardPage_Intro::OnSetActive() 
 {
   // Set up the wizard buttons
-  ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_NEXT);
+  SyncWizButtons();
 
 	return CPropertyPageEx::OnSetActive();
 }
@@ -91,7 +95,9 @@ LRESULT CWizardPage_Intro::OnWizardNext()
   if (bUseDefault) {
     // Load in the settings from %VDMSPath%\default.vlp
     TRACE(_T("CWizardPage_Intro::OnWizardNext() - Loading in default settings\n"));
-    m_wizard.settings.Copy(CLaunchPadSettings(VLPUtil::GetVDMSFilePath(_T("default.vlp"))));
+
+    m_wizard.settings.LoadFromTemplate(VLPUtil::GetVDMSFilePath(_T("default.vlp")));
+    m_wizard.ResetProgramInfo();
 
     // Advance to the "Finish" page
     retVal = IDD_WIZPROPPAGE_FINIS;

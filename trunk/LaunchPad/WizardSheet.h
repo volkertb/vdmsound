@@ -20,11 +20,17 @@
 // WizardContainer
 struct WizardContainer
 {
-  WizardContainer(LPCTSTR _exeFileName, CLaunchPadSettings& _settings)
-   : exeFileName(_exeFileName), settings(_settings) { }
+  WizardContainer(LPCTSTR _exeFileName)
+   : exeFileName(_exeFileName), settings(CLaunchPadSettings(VLPUtil::RenameExtension(exeFileName, _T(".vlp")))) { }
+
+  void ResetProgramInfo(void) {
+    settings.SetValue(_T("program"), _T("executable"), exeFileName);
+    settings.SetValue(_T("program"), _T("params"), _T(""));
+    settings.SetValue(_T("program"), _T("workdir"), VLPUtil::GetDirectory(exeFileName));
+  }
 
   CString exeFileName;
-  CLaunchPadSettings& settings;
+  CLaunchPadSettings settings;
   CList<UINT,UINT> history;
 };
 
@@ -35,21 +41,24 @@ class CWizardSheet : public CPropertySheetEx
 {
 // Construction
 public:
-	CWizardSheet(LPCTSTR exeFileName, CLaunchPadSettings& settings, UINT nIDCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
-	CWizardSheet(LPCTSTR exeFileName, CLaunchPadSettings& settings, LPCTSTR pszCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
+	CWizardSheet(LPCTSTR exeFileName, UINT nIDCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
+	CWizardSheet(LPCTSTR exeFileName, LPCTSTR pszCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
 
 // Utility
 protected:
   void Init(void);
   static int GetScreenBpp(void);
 
+// Public stuff
+public:
+  // Must be declared (constructed) before m_p*
+  WizardContainer m_wizard;
+
 // Member variables
 protected:
   CContextHelp m_help;
 
-  // Must be declared (constructed) before m_p*
-  WizardContainer m_wizard;
-
+  // Must be declared (constructed) after m_wizard*
   CWizardPage_Intro     m_p1;
   CWizardPage_Custom_1  m_p2;
   CWizardPage_Custom_2  m_p3;

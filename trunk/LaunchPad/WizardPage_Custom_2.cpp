@@ -37,6 +37,10 @@ void CWizardPage_Custom_2::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 }
 
+void CWizardPage_Custom_2::SyncWizButtons(void) {
+  ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_BACK | PSWIZB_NEXT);
+}
+
 
 BEGIN_MESSAGE_MAP(CWizardPage_Custom_2, CPropertyPageEx)
 	//{{AFX_MSG_MAP(CWizardPage_Custom_2)
@@ -60,7 +64,7 @@ BOOL CWizardPage_Custom_2::OnInitDialog()
 BOOL CWizardPage_Custom_2::OnSetActive() 
 {
   // Set up the wizard buttons
-  ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_BACK | PSWIZB_NEXT);
+  SyncWizButtons();
 
 	return CPropertyPageEx::OnSetActive();
 }

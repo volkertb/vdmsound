@@ -217,9 +217,9 @@ int CRUNWITHVDMSThread::Run(void) {
     si.cb          = sizeof(si);
     si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
     si.wShowWindow = SW_SHOWNORMAL;
-    si.hStdInput   = NULL;
-    si.hStdOutput  = NULL;
-    si.hStdError   = NULL;
+    si.hStdInput   = NULL;  // NULL seems to be the only value that works when spawning
+    si.hStdOutput  = NULL;  //  command.com or cmd.exe even when/if I inherit handles
+    si.hStdError   = NULL;  //  in CreateProcess -- WHY?!
 
     DWORD dwCreationFlags = CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP | CREATE_SEPARATE_WOW_VDM;
 
@@ -473,6 +473,29 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
 BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   CString strTmp;
 
+  CString program_executable = SettingGetString(_T("program"), _T("executable"));
+  CString program_params     = SettingGetString(_T("program"), _T("params"));
+  CString program_workdir    = SettingGetString(_T("program"), _T("workdir"));
+
+  CString tmp_expWorkDir     = VLPUtil::GetExpandedPath(program_workdir);
+  CString tmp_expExecutable  = VLPUtil::GetExpandedPath(program_executable);
+  CString tmp_fullProgPath   = VLPUtil::GetAbsolutePath(tmp_expExecutable, tmp_expWorkDir);
+
+  // Check that directory exists, that file exists, and that file is valid
+  if (!VLPUtil::FileExists(tmp_expWorkDir)) {
+    strTmp.FormatMessage(IDS_MSG_NODIRERR, (LPCTSTR)tmp_expWorkDir);
+    if (MessageBox(NULL, strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES)
+      return FALSE;
+  } else if (!VLPUtil::FileExists(tmp_fullProgPath)) {
+    strTmp.FormatMessage(IDS_MSG_NOFILEERR, (LPCTSTR)tmp_fullProgPath);
+    if (MessageBox(NULL, strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES)
+      return FALSE;
+  } else if (!VLPUtil::isMSDOSFile(tmp_fullProgPath)) {
+    strTmp.FormatMessage(IDS_MSG_NOEXECOMBATERR, (LPCTSTR)tmp_fullProgPath);
+    if (MessageBox(NULL, strTmp, NULL, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES)
+      return FALSE;
+  }
+
   //
   // CONFIG
   //
@@ -544,10 +567,8 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
   PIFFile.SetWindowTitle(VLPUtil::FormatString(_T("VDMS Launchpad - %s"), m_displayName));
 
   // Program
-  PIFFile.SetProgram(
-    SettingGetString(_T("program"), _T("executable")),
-    SettingGetString(_T("program"), _T("params")));
-  PIFFile.SetWorkDir(SettingGetString(_T("program"), _T("workdir")));
+  PIFFile.SetProgram(program_executable, program_params);
+  PIFFile.SetWorkDir(program_workdir);
 
   CString iconPath;
   int iconIndex;

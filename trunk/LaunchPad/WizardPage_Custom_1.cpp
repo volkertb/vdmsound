@@ -38,12 +38,25 @@ void CWizardPage_Custom_1::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 }
 
+void CWizardPage_Custom_1::SyncWizButtons(void) {
+  BOOL bMakeNew = (m_optMakenew.GetCheck() != BST_UNCHECKED);
+  CString fileName;
+  m_edtTemplate.GetWindowText(fileName);
+
+  if (!bMakeNew && fileName.IsEmpty()) {
+    ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_BACK);
+  } else {
+    ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_BACK | PSWIZB_NEXT);
+  }
+}
+
 
 BEGIN_MESSAGE_MAP(CWizardPage_Custom_1, CPropertyPageEx)
 	//{{AFX_MSG_MAP(CWizardPage_Custom_1)
 	ON_BN_CLICKED(IDC_OPT_MAKENEW, OnOptClicked)
-	ON_BN_CLICKED(IDC_OPT_USETEMPLATE, OnOptClicked)
 	ON_BN_CLICKED(IDC_BUT_TEMPLATE, OnButTemplate)
+	ON_BN_CLICKED(IDC_OPT_USETEMPLATE, OnOptClicked)
+	ON_EN_CHANGE(IDC_EDT_TEMPLATE, OnChangeEdtTemplate)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -78,7 +91,7 @@ BOOL CWizardPage_Custom_1::OnInitDialog()
 BOOL CWizardPage_Custom_1::OnSetActive() 
 {
   // Set up the wizard buttons
-  ::PropSheet_SetWizButtons(GetParent()->GetSafeHwnd(), PSWIZB_BACK | PSWIZB_NEXT);
+  SyncWizButtons();
 
 	return CPropertyPageEx::OnSetActive();
 }
@@ -89,22 +102,28 @@ LRESULT CWizardPage_Custom_1::OnWizardNext()
   BOOL bMakeNew = (m_optMakenew.GetCheck() != BST_UNCHECKED);
 
   if (bMakeNew) {
+    // Load in the settings from %VDMSPath%\default.vlp
     TRACE(_T("CWizardPage_Custom_1::OnWizardNext() - Resetting settings\n"));
+
     m_wizard.settings.Reset();
+    m_wizard.ResetProgramInfo();
   } else {
     CString fileName;
     m_edtTemplate.GetWindowText(fileName);
 
-    if (VLPUtil::FileExists(fileName)) {
-      TRACE(_T("CWizardPage_Custom_1::OnWizardNext() - Loading in settings from '%s'\n"), (LPCTSTR)fileName);
-      m_wizard.settings.Copy(CLaunchPadSettings(fileName));
-    } else {
+    if (!VLPUtil::FileExists(VLPUtil::GetExpandedPath(fileName))) {
       CString strTmp1, strTmp2;
       strTmp1.FormatMessage(IDS_MSG_NOFILEERR, fileName);
       GetWindowText(strTmp2);
-      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
-      return -1;  //do not advance in the wizard
+      if (MessageBox(strTmp1, strTmp2, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) != IDYES) {
+        return -1;  //do not advance in the wizard
+      }
     }
+
+    TRACE(_T("CWizardPage_Custom_1::OnWizardNext() - Loading in settings from '%s'\n"), (LPCTSTR)fileName);
+
+    m_wizard.settings.LoadFromTemplate(fileName);
+    m_wizard.ResetProgramInfo();
   }
 
   ASSERT(m_wizard.history.GetCount() > 0);
@@ -126,6 +145,17 @@ void CWizardPage_Custom_1::OnOptClicked()
 
   m_edtTemplate.EnableWindow(!bMakeNew);
   m_butTemplate.EnableWindow(!bMakeNew);
+
+  // "Next" button should be disabled if the template option
+  //  was chosen and and empty template file name is given
+  SyncWizButtons();
+}
+
+void CWizardPage_Custom_1::OnChangeEdtTemplate() 
+{
+  // "Next" button should be disabled if the template option
+  //  was chosen and and empty template file name is given
+  SyncWizButtons();
 }
 
 void CWizardPage_Custom_1::OnButTemplate() 
