@@ -96,7 +96,7 @@ char CAdLibCtlFSM::read(int port) {
     // Get the current time
     OPLTime_t tNow = m_hwemu->getTimeMicros();
 
-#   ifdef _DEBUGxxxxxxx
+#   ifdef _DEBUG
     char buf[1024];
     sprintf(buf, "Polling OPL (id=%d) status: timer 1 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over); timer 2 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over).", m_chipID, m_timer1.isMasked ? "masked" : "unmasked", m_timer1.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T1_EXPIRED ? "expired" : "not expired", (float)(m_timer1.period / 1000.0), (float)((m_timer1.period - (m_timer1.expiry - tNow)) / 1000.0), m_timer2.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T2_EXPIRED ? "expired" : "not expired", (float)(m_timer2.period / 1000.0), (float)((m_timer2.period - (m_timer2.expiry - tNow)) / 1000.0));
     m_hwemu->logInformation(buf);
