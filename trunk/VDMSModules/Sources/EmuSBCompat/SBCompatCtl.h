@@ -115,6 +115,8 @@ protected:
 
   BYTE m_E2Reply;
 
+  CCriticalSection m_mutex;
+
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;
