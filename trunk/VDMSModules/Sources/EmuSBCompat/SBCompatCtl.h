@@ -10,9 +10,12 @@
 #pragma warning ( disable : 4192 )
 #import <IVDMModule.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 #import <IVDMHandlers.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
+#import <IDMAHandlers.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 
 #import <IVDMServices.tlb>
 #import <IVDMQuery.tlb>
+#import <IDMAC.tlb>
+#import <IWave.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -28,7 +31,8 @@ class ATL_NO_VTABLE CSBCompatCtl :
   public ISBMixerHWEmulationLayer,
   public ISupportErrorInfo,
   public IVDMBasicModule,
-  public IIOHandler
+  public IIOHandler,
+  public IDMAHandler
 {
 public:
   CSBCompatCtl()
@@ -44,11 +48,12 @@ BEGIN_COM_MAP(CSBCompatCtl)
   COM_INTERFACE_ENTRY(ISupportErrorInfo)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
   COM_INTERFACE_ENTRY(IIOHandler)
+  COM_INTERFACE_ENTRY(IDMAHandler)
 END_COM_MAP()
 
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
-  void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int avgBytesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit);
+  void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit);
   void pauseTransfer(transfer_t type);
   void resumeTransfer(transfer_t type);
   void stopTransfer(transfer_t type);
@@ -77,6 +82,11 @@ public:
   STDMETHOD(HandleOUTSB)(USHORT outPort, BYTE * data, USHORT count, DIR_T direction);
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
+// IDMAHandler
+public:
+  STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxBytes, LONG isDescending, ULONG * transferred);
+  STDMETHOD(HandleAfterTransfer)(BYTE channel, ULONG transferred, LONG isTerminalCount);
+
 protected:
   CSBCompatCtlDSP m_SBDSP;
   CSBCompatCtlMixer m_SBMixer;
@@ -86,9 +96,17 @@ protected:
   int m_DMA16Channel;
 
 protected:
+  DWORD m_transferStartTime;
+  ULONG m_transferredBytes;
+  ULONG m_avgBandwidth;
+  ULONG m_DSPBlockSize;
+
+protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;
   IVDMSERVICESLib::IVDMIOServicesPtr m_IOSrv;
+  IDMACLib::IDMAControllerPtr m_DMACtl;
+  IWAVELib::IWaveDataConsumerPtr m_waveOut;
 };
 
 #endif //__SBCOMPATCTL_H_
