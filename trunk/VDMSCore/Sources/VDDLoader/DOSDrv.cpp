@@ -255,6 +255,8 @@ int main(int argc, char** argv) {
 
   fnType function = FN_LOAD;
 
+  int retVal = 0;
+
   highvideo();
   cprintf("VDMSound DOS loader, version %d.%02d (%s)\n\r"
           "Copyright (C) 2000-2001 Vlad ROMASCANU.\n\n\r", _VER_MAJOR, _VER_MINOR, __DATE__);
@@ -264,6 +266,7 @@ int main(int argc, char** argv) {
           "published by the Free Software Foundation, Inc. (http://www.fsf.org/).\n\n\r");
 
   normvideo();
+
   for (int i = 1; i < argc; i++) {
     if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
       char* arg = &(argv[i][1]);
@@ -293,11 +296,13 @@ int main(int argc, char** argv) {
           } else {
             fprintf(stderr, "Invalid use of the switch - %s.\nPlease provide a valid file name following the switch.\n", argv[i]);
             function = FN_DONOTHING;
+            retVal = 1;
             break;
           }
         } else {
           fprintf(stderr, "Not enough memory.\nPlease reduce the length of your command-line parameters.\n");
           function = FN_DONOTHING;
+          retVal = 1;
           break;
         }
 
@@ -306,10 +311,12 @@ int main(int argc, char** argv) {
 
       fprintf(stderr, "Unknown switch - %s.\n", argv[i]);
       function = FN_HELP;
+      retVal = 1;
       break;
     } else {
       fprintf(stderr, "Invalid parameter - %s.\n", argv[i]);
       function = FN_HELP;
+      retVal = 1;
       break;
     }
   }
@@ -333,10 +340,12 @@ int main(int argc, char** argv) {
           break;
         case -1:
           fprintf(stderr, "VDD DLL loading failed.\nCheck the README file and the FAQ for possible causes and remedies.\n");
+          retVal = 2;
           break;
         case -2:
           fprintf(stderr, "Could not properly initialize; unloading.\n");
           unload(hVDD);
+          retVal = 3;
           break;
       }
 
@@ -348,5 +357,5 @@ int main(int argc, char** argv) {
       break;
   }
 
-  return 0;
+  return retVal;
 }
