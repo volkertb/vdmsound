@@ -7,12 +7,19 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+namespace MAME {
+# include "fmopl.h"
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 #pragma warning ( disable : 4192 )
 #import <IVDMModule.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 #import <IVDMHandlers.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 
 #import <IVDMServices.tlb>
 #import <IVDMQuery.tlb>
+#import <IWave.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
 // CAdLibCtl
@@ -58,13 +65,23 @@ public:
   STDMETHOD(HandleOUTSB)(USHORT outPort, BYTE * data, USHORT count, DIR_T direction);
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
   int m_basePort;
+  int m_sampleRate;
 
+// Platform-independent classes
+protected:
+  MAME::FM_OPL* m_OPL;
+
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;
   IVDMSERVICESLib::IVDMIOServicesPtr m_IOSrv;
+  IWAVELib::IWaveDataConsumerPtr m_waveOut;
 };
 
 #endif //__ADLIBCTL_H_

@@ -11,8 +11,10 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define INI_STR_VDMSERVICES   L"VDMSrv"
+#define INI_STR_WAVEOUT       L"WaveOut"
 
 #define INI_STR_BASEPORT      L"port"
+#define INI_STR_RATE          L"sampleRate"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -72,6 +74,7 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
 
     // Try to obtain the AdLib settings, use defaults if none specified
     m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x388, 16, false);
+    m_sampleRate = CFG_Get(Config, INI_STR_RATE, 22050, 10, false);
 
     /** Get VDM services ***************************************************/
 
@@ -86,6 +89,10 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     if (m_IOSrv == NULL)
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
+    /** Get modules ********************************************************/
+
+    // Try to obtain an interface to a Wave-out module, use NULL if none available
+    m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
@@ -111,12 +118,19 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
+  // initialize the OPL software synthesizer
+  m_OPL = MAME::OPLCreate(OPL_TYPE_YM3812, 12500, m_sampleRate);    /* TODO: check m_OPL non-null */
+
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x)"), m_basePort));
 
   return S_OK;
 }
 
 STDMETHODIMP CAdLibCtl::Destroy() {
+  // release the OPL software synthesizer
+  if (m_OPL != NULL)
+    MAME::OPLDestroy(m_OPL);
+
   // Release the VDM Services module
   m_IOSrv   = NULL;
   m_BaseSrv = NULL;
