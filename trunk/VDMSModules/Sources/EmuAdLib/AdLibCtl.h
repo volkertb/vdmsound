@@ -22,6 +22,10 @@ namespace MAME {
 #import <IWave.tlb>
 
 /////////////////////////////////////////////////////////////////////////////
+
+#define MAX_INSTANCES 16
+
+/////////////////////////////////////////////////////////////////////////////
 // CAdLibCtl
 class ATL_NO_VTABLE CAdLibCtl : 
 	public CComObjectRootEx<CComMultiThreadModel>,
@@ -32,6 +36,7 @@ class ATL_NO_VTABLE CAdLibCtl :
 {
 public:
 	CAdLibCtl()
+    : m_instanceID(-1), m_OPL(NULL)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ADLIBCTL)
@@ -65,6 +70,23 @@ public:
   STDMETHOD(HandleOUTSB)(USHORT outPort, BYTE * data, USHORT count, DIR_T direction);
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
+protected:
+  static void OPLTimerHandler(int channel, double interval_sec);
+  static void OPLUpdateHandler(int param, int min_interval_usec);
+
+protected:
+  HRESULT OPLCreate(int sampleRate);
+  void OPLDestroy(void);
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Types
+protected:
+  struct TimerInfo {
+    bool isActive;
+    DWORD expiration;
+  };
+
 /////////////////////////////////////////////////////////////////////////////
 
 // Module's settings
@@ -75,6 +97,16 @@ protected:
 // Platform-independent classes
 protected:
   MAME::FM_OPL* m_OPL;
+
+// Other member variables
+protected:
+  static bool isInstancesInitialized;
+  static CAdLibCtl* instances[MAX_INSTANCES];
+  static CCriticalSection OPLMutex;
+
+  int m_instanceID;
+
+  TimerInfo m_targetTime[2];
 
 // Interfaces to dependency modules
 protected:
