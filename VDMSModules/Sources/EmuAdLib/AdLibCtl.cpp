@@ -257,12 +257,14 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
   MSG message;
   OPLMessage OPLMsg;
 
+  int activity;
+  bool hasStarted = false;
+
   _ASSERTE(thread.GetThreadID() == m_playbackThread.GetThreadID());
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Playback thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
-  m_lastTime = 0;
-  m_curTime  = 0;
+  m_renderLoad = 1.00;                              // we start off perfectly calibrated
 
   while (true) {
     if (thread.GetMessage(&message, false)) {       // non-blocking message-"peek"
@@ -275,12 +277,38 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
           break;
       }
     } else {
-      while (m_OPLMsgQueue.get(OPLMsg)) {
-        m_lastTime = m_curTime;
-        m_curTime  = OPLMsg.timestamp;
+      // Process any pending OPL writes
+      for (activity = 0; m_OPLMsgQueue.get(OPLMsg); activity++) {
+        if (!hasStarted) {                          // is this the first OPL access ?
+          m_lastTime = OPLMsg.timestamp;            // the timeline starts *now*
+          m_curTime  = OPLMsg.timestamp;
+          hasStarted = true;                        // we're in business
 
+          // Set up the renderer (if any)
+          try {
+            m_waveOut->SetFormat(1, m_sampleRate, 16);
+          } catch (_com_error& ce) {
+            CString args = Format(_T("%d, %d, %d"), 1, m_sampleRate, 16);
+            RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+          }
+        } else {
+          m_lastTime = m_curTime;
+          m_curTime  = OPLMsg.timestamp;
+        }
+
+        // Program the OPL (functions will return after the UpdateHandler()
+        //  callback has been called)
         MAME::OPLWrite(m_OPL, 0, OPLMsg.address);
         MAME::OPLWrite(m_OPL, 1, OPLMsg.value);
+      }
+
+      // Did we process any OPL writes (was the OPL kept active) ?
+      if ((hasStarted) && (activity == 0)) {
+        // The OPL was not written to lately, but we must periodically force
+        //  it to output audio data
+        m_lastTime = m_curTime;
+        m_curTime  = timeGetTime();                 // we need the output data up to this point (i.e. "now")
+        OPLPlay(m_curTime - m_lastTime);            // generate and output the data for the last time interval
       }
 
       Sleep(30);
@@ -359,6 +387,35 @@ void CAdLibCtl::OPLDestroy(void) {
     instances[m_instanceID] = NULL;
 }
 
+//
+//
+//
+void CAdLibCtl::OPLPlay(DWORD deltaTime) {
+  if (m_waveOut == NULL)
+    return; // why bother if no renderer is attached ?
+
+  if (m_curTime > m_lastTime) {
+    MAME::INT16 buf[65536];
+
+    // Compute by how much this transfer should be boosted or diminished, based on
+    //  playback performance (feedback indicating playback buffer overrun/underrun)
+    double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
+
+    // Compute how many samples we should transfer
+    long toTransfer = min(65536, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
+
+    MAME::YM3812UpdateOne(m_OPL, buf, toTransfer);
+
+    // Play the data, and update the load factor
+    try {
+      m_renderLoad = m_waveOut->PlayData((BYTE*)buf, toTransfer * sizeof(buf[0]));
+    } catch (_com_error& ce) {
+      CString args = Format(_T("%p, %d"), buf, toTransfer * sizeof(buf[0]));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    }
+  }
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -376,7 +433,26 @@ void CAdLibCtl::setOPLReg(int address, int value) {
 }
 
 OPLTime_t CAdLibCtl::getTimeMicros(void) {
-  return 1000lu * timeGetTime();
+  static bool isInitialized = false;
+  static LARGE_INTEGER perfCountFreq;
+
+  if (!isInitialized) {
+    if (QueryPerformanceFrequency(&perfCountFreq)) {
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Using performance counter (%0.0f ticks/s) for AdLib timing"), (float)perfCountFreq.QuadPart));
+    } else {
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, _T("Could not query performance counter; using millisecond-resolution functions instead"));
+    }
+
+    isInitialized = true;
+  }
+
+  if (perfCountFreq.QuadPart < 1000) {
+    return timeGetTime() * (OPLTime_t)1000;
+  } else {
+    LARGE_INTEGER currentCount;
+    VERIFY(QueryPerformanceCounter(&currentCount));
+    return (currentCount.QuadPart * (OPLTime_t)1000000) / perfCountFreq.QuadPart;
+  }
 }
 
 void CAdLibCtl::logError(const char* message) {
@@ -406,30 +482,6 @@ void CAdLibCtl::OPLUpdateHandler(int param, int min_interval_usec) {
   CAdLibCtl* pThis = instances[param];
   if (pThis == NULL) return;
 
-  if (pThis->m_waveOut == NULL)
-    return; // why bother if no renderer is attached ?
-
-  if (pThis->m_lastTime == 0) {
-    // Set up the renderer (if any)
-    try {
-      pThis->m_waveOut->SetFormat(1, pThis->m_sampleRate, 16);
-    } catch (_com_error& ce) {
-      CString args = Format(_T("%d, %d, %d"), 1, pThis->m_sampleRate, 16);
-      RTE_RecordLogEntry(pThis->m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
-    }
-  } else if (pThis->m_curTime > pThis->m_lastTime) {
-    MAME::INT16 buf[65536];
-    int numBytes = (int)(pThis->m_sampleRate * ((pThis->m_curTime - pThis->m_lastTime) / 1000.0));
-    numBytes = min(65536, numBytes);
-
-    MAME::YM3812UpdateOne(instances[param]->m_OPL, buf, numBytes);
-
-    // Play the data, and update the load factor
-    try {
-      pThis->m_waveOut->PlayData((BYTE*)buf, 2*numBytes);
-    } catch (_com_error& ce) {
-      CString args = Format(_T("%p, %d"), buf, 2*numBytes);
-      RTE_RecordLogEntry(pThis->m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
-    }
-  }
+  // Generate and output the data for the last time interval
+  pThis->OPLPlay(pThis->m_curTime - pThis->m_lastTime);
 }
