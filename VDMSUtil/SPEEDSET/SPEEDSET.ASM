@@ -233,6 +233,7 @@ IRQ_Handler	proc	far
 
 IRQ_Handler_fast:
 		mov	TEXT:[ISR_busy], 1
+		or	cx, cx              ; otherwise loopnz will fail
 
 IRQ_Handler_fast_fire:
 		int	08h
@@ -409,7 +410,7 @@ DispatchCall	endp
 hVDD		dw	0
 wPSP		dw	0
 
-szAbout		db	'Poor man',27h,'s DOS speed controller (ver. 1.0.1)',0Dh,0Ah,'Copyright (C) 2001 Vlad ROMASCANU',0Dh,0Ah,0Ah,0
+szAbout		db	'Poor man',27h,'s DOS speed controller (ver. 1.0.2)',0Dh,0Ah,'Copyright (C) 2001 Vlad ROMASCANU',0Dh,0Ah,0Ah,0
 szDone		db	'SPEEDSET is now resident on IRQ '
 szDone1		db	'?'
 szDone2		db	'.',0Dh,0Ah,0
