@@ -102,7 +102,7 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     if (sscanf((LPCSTR)versionStr, "%d.%d", &vMajor, &vMinor) != 2)
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_FMT_VERSION, /*false, NULL, 0, */false, (LPCTSTR)versionStr), __uuidof(IVDMBasicModule), E_ABORT);
 
-    m_DSPVersion = MAKEWORD((BYTE)vMinor, (BYTE)vMajor);
+    m_SBDSP.setDSPVersion(MAKEWORD((BYTE)vMinor, (BYTE)vMajor));
 
     // Try to obtain the SB settings, use defaults if none specified
     m_basePort     = CFG_Get(Config, INI_STR_BASEPORT, 0x220, 16, false);
@@ -197,7 +197,7 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
   m_SBMixer.setIRQSelect(m_IRQLine);
   m_SBMixer.setDMASelect(m_DMA8Channel, m_DMA16Channel);
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl initialized (DSP version = %d.%02d, base port = 0x%03x, IRQ = %d, 8-bit DMA = %d, 16-bit DMA = %d)"), HIBYTE(m_DSPVersion) & 0xff, LOBYTE(m_DSPVersion) & 0xff, m_basePort, m_IRQLine, m_DMA8Channel, m_DMA16Channel));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl initialized (DSP version = %d.%02d, base port = 0x%03x, IRQ = %d, 8-bit DMA = %d, 16-bit DMA = %d)"), HIBYTE(m_SBDSP.getDSPVersion()) & 0xff, LOBYTE(m_SBDSP.getDSPVersion()) & 0xff, m_basePort, m_IRQLine, m_DMA8Channel, m_DMA16Channel));
 
   return S_OK;
 }
@@ -245,7 +245,7 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
     case 0x02:  /* Right FM status port */
     case 0x08:  /* Compatible FM status port */
       try {
-        m_AdLib->HandleByteRead((inPort - m_basePort) & 0x03, data);
+        if (m_AdLib) m_AdLib->HandleByteRead((inPort - m_basePort) & 0x03, data);
         return S_OK;
       } catch (_com_error& ce) {
         *data = 0xff;
@@ -307,7 +307,7 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
     case 0x02:  /* Right FM register port */
     case 0x08:  /* Compatible FM register port */
       try {
-        m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
+        if (m_AdLib) m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
         return S_OK;
       } catch (_com_error& ce) {
         return ce.Error();
@@ -317,7 +317,7 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
     case 0x03:  /* Right FM data port */
     case 0x09:  /* Compatible FM data port */
       try {
-        m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
+        if (m_AdLib) m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
         return S_OK;
       } catch (_com_error& ce) {
         return ce.Error();
@@ -440,7 +440,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
     return S_OK;
 
   // On SB16: if the last IRQ was not acknowledged, don't process any bytes
-  if ((getDSPVersion() >= 0x0400) &&
+  if ((m_SBDSP.getDSPVersion() >= 0x0400) &&
       (m_bitsPerSample < 16 ? m_SBDSP.get8BitIRQ() : m_SBDSP.get16BitIRQ()))
   {
     return S_OK;
@@ -723,10 +723,6 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
 /////////////////////////////////////////////////////////////////////////////
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
-
-short CSBCompatCtl::getDSPVersion(void) {
-  return m_DSPVersion;
-}
 
 void CSBCompatCtl::startTransfer(transfer_t type, char E2Reply, bool isSynchronous) {
   _ASSERTE(type == TT_E2CMD);
