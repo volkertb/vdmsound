@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,3
+ FILEVERSION 1,0,0,5
  PRODUCTVERSION 2,0,5,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -72,7 +72,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "VDMSound LaunchPad Shell Extension\0"
-            VALUE "FileVersion", "1, 0, 0, 3\0"
+            VALUE "FileVersion", "1, 0, 0, 5\0"
             VALUE "InternalName", "LaunchPad\0"
             VALUE "LegalCopyright", "Copyright (C) 2001\0"
             VALUE "OriginalFilename", "LaunchPad.DLL\0"
@@ -238,7 +238,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,109,153,45,10
     CONTROL         "Alt+Space",IDC_CHK_WINKALTSPACE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
-    LTEXT           "VDMSound Launchpad (ver. 1,0,0,2)\nBETA 1 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
+    LTEXT           "VDMSound Launchpad (ver. 1,0,0,5)\nBETA 1 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
     PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
@@ -1098,6 +1098,7 @@ BEGIN
     IDS_MSG_NODIRERR        "The directory '%1' does not appear to exist.%nDo you want to continue?"
     IDS_MSG_NOEXECOMBATERR  "The file '%1' does not appear to be a valid MS-DOS executable or batch file.%nDo you want to continue?"
     IDS_MSG_SHORTCUTERR     "Cannot create the file '%1':%n%3 (0x%2!08x!)"
+    IDS_MSG_NOVDMSOUND      "The VDMSound core program '%1' could not be found.%nPlease verify that VDMSound is properly installed,%nor that the VDMSPath environment variable points to the VDMSound directory.%nDo you want to continue?"
 END
 
 #endif    // English (U.S.) resources

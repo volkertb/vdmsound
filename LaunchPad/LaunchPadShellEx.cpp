@@ -27,6 +27,13 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
+    INITCOMMONCONTROLSEX iccex = {
+      sizeof(INITCOMMONCONTROLSEX), ICC_UPDOWN_CLASS
+    };
+
+    // Init the common controls.
+    InitCommonControlsEx(&iccex);
+
     m_fileNames.RemoveAll();
 
     HRESULT hr;
