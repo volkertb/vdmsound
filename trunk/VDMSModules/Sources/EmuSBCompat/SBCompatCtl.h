@@ -60,6 +60,7 @@ public:
   void stopTransfer(transfer_t type, bool isSynchronous = false);
   void pauseTransfer(transfer_t type);
   void resumeTransfer(transfer_t type);
+  void resetADPCM(void);
   void generateInterrupt(int count = 1);
   void logError(const char* message);
   void logWarning(const char* message);
@@ -120,6 +121,9 @@ protected:
   int m_activeDMAChannel;
   transfer_t m_transferType;
   double m_renderLoad;
+
+  int m_ADPCMReference;
+  int m_ADPCMScale;
 
   BYTE m_E2Reply;
 

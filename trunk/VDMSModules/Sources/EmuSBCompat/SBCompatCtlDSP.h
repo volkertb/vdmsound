@@ -32,6 +32,8 @@ class ISBDSPHWEmulationLayer {
     virtual void pauseTransfer(transfer_t type) = 0;
     virtual void resumeTransfer(transfer_t type) = 0;
 
+    virtual void resetADPCM(void) = 0;
+
     virtual void generateInterrupt(int count = 1) = 0;
 
     virtual void logError(const char* message) = 0;
@@ -68,6 +70,27 @@ class CSBCompatCtlDSP {
     bool get8BitIRQ(void);
     bool get16BitIRQ(void);
 
+    static int decode_PCM(
+        unsigned char* buf,
+        int bufSize,
+        int bitsPerSample);
+    static int decode_PCM_SIGNED(
+        unsigned char* buf,
+        int bufSize,
+        int bitsPerSample);
+    static int decode_ADPCM_2(
+        unsigned char* buf,
+        int& reference,
+        int& scale,
+        int bufSize,
+        int maxSize);
+    static int decode_ADPCM_4(
+        unsigned char* buf,
+        int& reference,
+        int& scale,
+        int bufSize,
+        int maxSize);
+
   protected:
     void stopAllDMA(bool isSynchronous);
     void ackAllIRQs(void);
@@ -76,15 +99,15 @@ class CSBCompatCtlDSP {
     int getNumChannels(void);
 
   protected:
-    inline void setNumSamples(int numSamples)
-      { m_numSamples = numSamples; }
+    inline void setNumSampleBytes(int numSampleBytes)
+      { m_numSampleBytes = numSampleBytes; }
     inline void setSampleRate(int sampleRate)
       { m_useTimeConstant = false; m_sampleRate = sampleRate; }
     inline void setTimeConstant(int timeConstant)
       { m_useTimeConstant = true; m_timeConstant = timeConstant; }
 
-    inline int getNumSamples(void)
-      { return m_numSamples; }
+    inline int getNumSampleBytes(void)
+      { return m_numSampleBytes; }
     inline int getSampleRate(void)
       { return m_useTimeConstant ? (1000000 / ((256 - m_timeConstant) * getNumChannels())) : m_sampleRate; }
 
@@ -106,7 +129,7 @@ class CSBCompatCtlDSP {
     bool m_isSpeakerEna;
     bool m_useTimeConstant;
     int m_sampleRate, m_timeConstant;
-    int m_numSamples;
+    int m_numSampleBytes;
 
     bool m_is8BitIRQPending, m_is16BitIRQPending;
 

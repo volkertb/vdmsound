@@ -61,11 +61,13 @@ void CSBCompatCtlDSP::reset(void) {
   m_E2Value      = (char)0xaa;
   m_E2Count      = 0;
 
-  setNumSamples(0);
+  setNumSampleBytes(0);
   setSampleRate(11025);
 
   stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
   ackAllIRQs();     // clear any pending IRQs
+
+  m_hwemu->resetADPCM();
 }
 
 //
@@ -347,9 +349,18 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x16:  /* 016h : DMA DAC, 2-bit ADPCM */
     case 0x17:  /* 017h : DMA DAC, 2-bit ADPCM Reference */
-      // TODO: implement
-      m_hwemu->logError("Attempted to use unimplemented DSP commands 0x16/0x17 (DMA DAC 2-bit ADPCM)");
-      return false;
+      if (command == 0x17)  // initialize reference byte
+        m_hwemu->resetADPCM();
+
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_PLAYBACK,
+          getNumChannels(),
+          getSampleRate(),
+          2,                                          // 2 bits/sample
+          4 * (MKWORD(m_bufIn[2], m_bufIn[1]) + 1),   // 4 samples/byte
+          ISBDSPHWEmulationLayer::CODEC_ADPCM_2,
+          false);
+      return true;
 
     case 0x1c:  /* 01Ch : Auto-Initialize DMA DAC, 8-bit */
     case 0x90:  /* 090h : Auto-Initialize DMA DAC, 8-bit (High Speed) */
@@ -361,7 +372,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
           getNumChannels(),
           getSampleRate(),
           8,
-          getNumSamples(),
+          getNumSampleBytes() * 1,  // number of samples in a channel (1 byte/sample)
           ISBDSPHWEmulationLayer::CODEC_PCM,
           true);
       return true;
@@ -410,7 +421,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
           1,                /* TODO: check for stereo recording (SBPro or cmd. 0xa0/0xa8?) */
           getSampleRate(),  /* TODO: have separate rate for playback/recording */
           8,
-          getNumSamples(),
+          getNumSampleBytes() * 1,  // number of samples in a channel (1 byte/sample)
           ISBDSPHWEmulationLayer::CODEC_PCM,
           true);
       return true;
@@ -496,17 +507,25 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0x48:  /* 048h : Set DMA Block Size */
-      /* TODO: take care (in the future) of ADPCM */
-      setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);  /* TODO: how about 16 bit (seems 8-bit only)? how about stereo?! */
+      setNumSampleBytes(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);
       return true;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
     case 0x74:  /* 074h : DMA DAC, 4-bit ADPCM */
     case 0x75:  /* 075h : DMA DAC, 4-bit ADPCM Reference */
-      // TODO: implement
-      m_hwemu->logError("Attempted to use unimplemented DSP commands 0x74/0x75 (DMA DAC, 4-bit ADPCM)");
-      return false;
+      if (command == 0x75)  // initialize reference byte
+        m_hwemu->resetADPCM();
+
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_PLAYBACK,
+          getNumChannels(),
+          getSampleRate(),
+          4,                                          // 4 bits/sample
+          2 * (MKWORD(m_bufIn[2], m_bufIn[1]) + 1),   // 2 samples/byte
+          ISBDSPHWEmulationLayer::CODEC_ADPCM_4,
+          false);
+      return true;
 
     case 0x76:  /* 076h : DMA DAC, 2.6-bit ADPCM */
     case 0x77:  /* 077h : DMA DAC, 2.6-bit ADPCM Reference */
@@ -699,4 +718,125 @@ int CSBCompatCtlDSP::getNumChannels(void) {
   } else {
     return 1;
   }
+}
+
+//
+// Performs unsigned-PCM decoding in-place.
+//
+int CSBCompatCtlDSP::decode_PCM(
+    unsigned char* buf,
+    int bufSize,
+    int bitsPerSample)
+{
+  int i;
+  unsigned short* buf16;
+
+  switch (bitsPerSample) {
+    case 8:   /* 8-bit quantities */
+      return bufSize;
+    case 16:  /* 16-bit quantities */
+      buf16 = (unsigned short*)buf;
+      for (i = 0; i < bufSize / 2; i++) buf16[i] ^= 0x8000;
+      return bufSize;
+    default:
+      return bufSize;
+  }
+}
+
+//
+// Performs signed-PCM decoding in-place.
+//
+int CSBCompatCtlDSP::decode_PCM_SIGNED(
+    unsigned char* buf,
+    int bufSize,
+    int bitsPerSample)
+{
+  int i;
+
+  switch (bitsPerSample) {
+    case 8:   /* 8-bit quantities */
+      for (i = 0; i < bufSize; i++) buf[i] ^= 0x80;
+      return bufSize;
+    case 16:  /* 16-bit quantities */
+      return bufSize;
+    default:
+      return bufSize;
+  }
+}
+
+//
+// Performs 2-bit ADPCM decoding in-place.
+//
+int CSBCompatCtlDSP::decode_ADPCM_2(
+    unsigned char* buf,
+    int& reference,
+    int& scale,
+    int bufSize,
+    int maxSize)
+{
+  int i, skip = 0;
+  unsigned char tmpBuf[65536];
+
+  maxSize = min(bufSize, maxSize / 4);  // 4x factor because of 2bits/sample to 8bits/sample decoding
+
+  if (reference < 0) {
+    reference = buf[0] & 0xff;          // use the first byte in the buffer as the reference byte
+    maxSize--;                          // remember to skip the reference byte
+    memcpy(tmpBuf, &(buf[1]), maxSize); // copy the ADPCM compressed information (except for the reference byte)
+  } else {
+    memcpy(tmpBuf, buf, bufSize);       // copy the ADPCM compressed information
+  }
+
+  // ...
+
+  return maxSize * 4;
+}
+
+inline int decode_ADPCM_4_sample(
+    unsigned char sample,
+    int& reference,
+    int& scale)
+{
+  static int scaleMap[8] = { -1, 0, 0, 0, 1, 1, 1, 1 };
+
+  if (sample & 0x08) {
+    reference = max(0x00, reference - ((sample & 0x07) << scale));
+  } else {
+    reference = min(0xff, reference + ((sample & 0x07) << scale));
+  }
+
+  scale = max(2, min(6, scaleMap[sample & 0x07]));
+
+  return reference;
+}
+
+//
+// Performs 4-bit ADPCM decoding in-place.
+//
+int CSBCompatCtlDSP::decode_ADPCM_4(
+    unsigned char* buf,
+    int& reference,
+    int& scale,
+    int bufSize,
+    int maxSize)
+{
+  int i, skip = 0;
+  unsigned char tmpBuf[65536];
+
+  maxSize = min(bufSize, maxSize / 2);  // 2x factor because of 4bits/sample to 8bits/sample decoding
+
+  if (reference < 0) {
+    reference = buf[0] & 0xff;          // use the first byte in the buffer as the reference byte
+    maxSize--;                          // remember to skip the reference byte
+    memcpy(tmpBuf, &(buf[1]), maxSize); // copy the ADPCM compressed information (except for the reference byte)
+  } else {
+    memcpy(tmpBuf, buf, bufSize);       // copy the ADPCM compressed information
+  }
+
+  for (i = 0; i < maxSize; i++) {
+    buf[i * 2 + 0] = decode_ADPCM_4_sample(tmpBuf[i] >> 4, reference, scale);
+    buf[i * 2 + 1] = decode_ADPCM_4_sample(tmpBuf[i] >> 0, reference, scale);
+  }
+
+  return maxSize * 2;
 }
