@@ -100,7 +100,7 @@ STDAPI CfgInitialize(char* INIFiles) {
       char* INIFileName = INIFiles;
 
       while (INIFileName[0] != '\0') {
-        config.load(INIFileName);
+        config.load(SearchPathA(INIFileName));
         INIFileName = INIFileName + strlen(INIFileName) + 1;
       }
     } catch (CINIParser::fopen_error& foe) {

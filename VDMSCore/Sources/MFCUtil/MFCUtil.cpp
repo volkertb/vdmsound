@@ -343,3 +343,19 @@ LPCTSTR AFXAPI GetHelpPath(void) {
     return lpApp->m_pszHelpFilePath;
   }
 }
+
+//
+//
+//
+LPCSTR AFXAPI SearchPathA(
+  LPCSTR szFileName )
+{
+  static CHAR buf[_MAX_PATH];
+  LPSTR lpFilePart;
+
+  if (SearchPathA(NULL, szFileName, NULL, _MAX_PATH, buf, &lpFilePart) == 0) {
+    return szFileName;
+  } else {
+    return buf;
+  }
+}
