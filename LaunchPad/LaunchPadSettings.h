@@ -5,6 +5,7 @@ class CLaunchPadSettings {
   public:
 	  CLaunchPadSettings(const CString& fileName);
 	  CLaunchPadSettings(const CStringArray& fileNames);
+	  CLaunchPadSettings(const CLaunchPadSettings& settings);
 	  virtual ~CLaunchPadSettings(void);
 
   public:
@@ -15,6 +16,16 @@ class CLaunchPadSettings {
     HRESULT UnsetValue(LPCTSTR section, LPCTSTR key);
     HRESULT CommitValue(LPCTSTR section, LPCTSTR key);
     HRESULT CommitAll(void);
+    BOOL IsChanged(LPCTSTR section, LPCTSTR key);
+    BOOL IsChanged(void);
+
+    CLaunchPadSettings& operator =(const CLaunchPadSettings& src);
+
+  // Utility
+  protected:
+    BOOL GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpDefault, CString& result, LPCTSTR lpFileName);
+    BOOL WritePrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpString, LPCTSTR lpFileName);
+    BOOL NeedsTranslation(TCHAR tch);
 
   // Types
   protected:
