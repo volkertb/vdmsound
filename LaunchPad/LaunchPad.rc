@@ -27,7 +27,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-
 1 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "resource.h\0"
@@ -158,14 +157,14 @@ CAPTION "Change Program Information"
 FONT 8, "MS Sans Serif"
 BEGIN
     RTEXT           "&Program:",IDC_STATIC,7,7,40,14,SS_CENTERIMAGE
-    EDITTEXT        IDC_EDT_FILE,52,7,136,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDT_FILE,52,7,136,14,ES_AUTOHSCROLL
     PUSHBUTTON      "&...",IDC_BUT_FILEBROWSE,188,7,14,14,NOT WS_TABSTOP,
-                    WS_EX_STATICEDGE
+                    WS_EX_CLIENTEDGE
     RTEXT           "&Arguments:",IDC_STATIC,7,24,40,14,SS_CENTERIMAGE
     EDITTEXT        IDC_EDT_ARGS,52,24,150,14,ES_AUTOHSCROLL
     RTEXT           "&Run in:",IDC_STATIC,7,41,40,14,SS_CENTERIMAGE
     EDITTEXT        IDC_EDT_DIR,52,41,150,14,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "&Change icon...",IDC_BUT_CHANGEICON,32,63,60,14
+    PUSHBUTTON      "&Change icon...",IDC_BUT_CHANGEICON,27,63,60,14
     DEFPUSHBUTTON   "OK",IDOK,97,63,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,152,63,50,14
 END
@@ -235,6 +234,14 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Bitmap
+//
+
+IDB_MENUICON1           BITMAP  DISCARDABLE     "menuicon1.bmp"
+IDB_MENUICON2           BITMAP  DISCARDABLE     "menuicon2.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
@@ -247,6 +254,9 @@ BEGIN
     IDS_MSG_NOICONS         "The file %1 contains no icons."
     IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
     IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
+    IDS_TXT_RUNWITHVDMS     "Run with &VDMS"
+    IDS_HLP_RUNWITHVDMS     "Run with DOS sound and joystick support"
+    IDS_HLP_SHTOOLTIP       "Program: %1"
 END
 
 #endif    // English (U.S.) resources

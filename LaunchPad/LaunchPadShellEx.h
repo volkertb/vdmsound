@@ -10,11 +10,12 @@
 class ATL_NO_VTABLE CLaunchPadShellEx : 
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public CComCoClass<CLaunchPadShellEx, &CLSID_LaunchPadShellEx>,
-  public IShellExtInit,         // Property sheet, Context menu)
+  public IShellExtInit,         // Common (Property sheet, Context menu)
   public IShellPropSheetExt,    // Property sheet
   public IContextMenu,          // Context menu
-  public IPersistFile,          // Icon
-  public IExtractIcon           // Icon
+  public IPersistFile,          // Common (Icon, Tooltip)
+  public IExtractIcon,          // Icon
+  public IQueryInfo             // Tooltip
 {
 public:
 	CLaunchPadShellEx()
@@ -31,6 +32,7 @@ BEGIN_COM_MAP(CLaunchPadShellEx)
 	COM_INTERFACE_ENTRY(IContextMenu)
 	COM_INTERFACE_ENTRY(IPersistFile)
 	COM_INTERFACE_ENTRY(IExtractIcon)
+	COM_INTERFACE_ENTRY(IQueryInfo)
 END_COM_MAP()
 
 // IShellExtInit
@@ -68,8 +70,15 @@ public:
   STDMETHOD(Extract)(LPCTSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize);
   STDMETHOD(GetIconLocation)(UINT uFlags, LPTSTR szIconFile, UINT cchMax, LPINT piIndex, UINT* pwFlags);
 
+// IQueryInfo
+public:
+  STDMETHOD(GetInfoFlags)(DWORD* /*pdwFlags*/)
+    { return E_NOTIMPL; }
+  STDMETHOD(GetInfoTip)(DWORD dwFlags, LPWSTR* ppwszTip);
+    
 // Member variables
 protected:
+  CBitmap m_contextMenuBmp;
   CStringArray m_fileNames;
 };
 

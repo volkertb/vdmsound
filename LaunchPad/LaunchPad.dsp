@@ -361,6 +361,18 @@ SOURCE=.\LaunchPadShellEx.rgs
 # End Source File
 # Begin Source File
 
+SOURCE=.\menuicon.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\menuicon1.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\menuicon2.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Multiple.ico
 # End Source File
 # Begin Source File

@@ -45,10 +45,10 @@ class COpenDOSProgramDialog : public CFileDialog {
 
 
 //////////////////////////////////////////////////////////////////////
-// LaunchPadSettingsHelper
+// VLPUtil
 //////////////////////////////////////////////////////////////////////
 
-namespace LaunchPadSettingsHelper {
+namespace VLPUtil {
   // Constants
   extern LPCTSTR T_YES;
   extern LPCTSTR T_NO;
@@ -63,7 +63,12 @@ namespace LaunchPadSettingsHelper {
   // Shell helper functions
   void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);
   CString GetRelativePath(LPCTSTR filePath, BOOL isPathOnly, LPCTSTR basePath);
+  CString GetAbsolutePath(LPCTSTR filePath, BOOL isPathOnly, LPCTSTR basePath);
   CString GetDirectory(LPCTSTR filePath);
+
+  // Other shell helper functions
+  BOOL isVLPFile(LPCTSTR fName);
+  BOOL isMSDOSFile(LPCTSTR fName);
 };
 
 #endif // __LAUNCHPADUTIL_H
