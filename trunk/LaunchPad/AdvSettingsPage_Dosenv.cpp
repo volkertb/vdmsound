@@ -69,7 +69,7 @@ VOID CAdvSettingsPage_Dosenv::SyncGUIData(BOOL bSave) {
 }
 
 VOID CAdvSettingsPage_Dosenv::SyncGUIData_CONFIG(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.dos"),  _T("config"),       m_edtConfigsys,   _T("FILES=40"));
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("winnt.dos"),  _T("config"),      m_edtConfigsys,   _T("FILES=40"));
 
   if (!bEnabled) {
     m_edtConfigsys.EnableWindow(FALSE);
@@ -77,7 +77,7 @@ VOID CAdvSettingsPage_Dosenv::SyncGUIData_CONFIG(BOOL bSave, BOOL bEnabled) {
 }
 
 VOID CAdvSettingsPage_Dosenv::SyncGUIData_AUTOEXEC(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncEditBox(bSave, m_settings, _T("winnt.dos"),  _T("autoexec"),     m_edtAutoexecbat, _T(""));
+  VLPUtil::SyncEditBox (bSave, m_settings, _T("winnt.dos"),  _T("autoexec"),    m_edtAutoexecbat, _T(""));
 
   if (!bEnabled) {
     m_edtAutoexecbat.EnableWindow(FALSE);

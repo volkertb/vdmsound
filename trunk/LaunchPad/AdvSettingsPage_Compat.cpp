@@ -19,6 +19,7 @@ CAdvSettingsPage_Compat::CAdvSettingsPage_Compat(CLaunchPadSettings& settings)
  : CPropertyPage(CAdvSettingsPage_Compat::IDD), m_settings(settings)
 {
 	//{{AFX_DATA_INIT(CAdvSettingsPage_Compat)
+		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
 }
 

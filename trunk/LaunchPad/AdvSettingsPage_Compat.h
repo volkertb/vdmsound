@@ -33,8 +33,6 @@ protected:
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
-	CString	m_cmbEms_old;
-	CString	m_cmbXms_old;
 
 // Public MFC stuff
 public:
