@@ -2,26 +2,40 @@
 
 #include "SBConst.h"
 #include "SBCompatCtlDSP.h"
+#include "SBCompatCtlMixer.h"
 
 
 /////////////////////////////////////////////////////////////////////////////
 
+#undef MKWORD
+#undef LOBYTE
+#undef HIBYTE
 
 #define MKWORD(bHi, bLo) ((((bHi) & 0xff) << 8) | ((bLo) & 0xff))
+#define LOBYTE(word) ((word) & 0xff)
+#define HIBYTE(word) (((word) >> 8) & 0xff)
 
+/////////////////////////////////////////////////////////////////////////////
+
+/* TODO: make this ocnfigurable from VDMS.ini file? */
+#define DSP_VERSION   0x0405
 
 /////////////////////////////////////////////////////////////////////////////
 
 
-CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu)
-  : m_hwemu(hwemu),
+CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu, CSBCompatCtlMixer* sbmix)
+  : m_hwemu(hwemu), m_sbmix(sbmix),
+    m_state(DSP_S_NORMAL),          // not in high-speed mode
+    m_lastCommand((char)0x00),      // no last command
     m_isRstAsserted(false),         // the reset sequence was not yet engaged
     m_isSpeakerEna(false),          // the speaker is disabled
     m_useTimeConstant(false),       // playback rate determined by sample rate, not time constant
-    m_lastCommand((char)0x00),      // no last command
+    m_is8BitIRQPending(false),      // no 8-bit operation IRQs pending
+    m_is16BitIRQPending(false),     // no 16-bit operation IRQs pending
     m_testRegister((char)0x00)      // no value in the test register
 {
-  ASSERT(m_hwemu != NULL);
+  _ASSERTE(m_hwemu != NULL);
+  _ASSERTE(m_sbmix != NULL);
 }
 
 CSBCompatCtlDSP::~CSBCompatCtlDSP(void)
@@ -45,15 +59,20 @@ void CSBCompatCtlDSP::reset(void) {
 
   // reset other internal registers, except for:
   // - test register: must remain the same across resets
+  m_state        = DSP_S_NORMAL;
   m_isSpeakerEna = false;
   m_lastCommand  = (char)0x00;
 
   setNumSamples(0);
   setNumChannels(1);
-  setNumBits(8);
   setSampleRate(11025);
 
-  /* TODO: stop DMA xfer? (ops. 0x90, 0x98, ... others ?) */
+  // stop all pending DMA operations
+  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, true);
+  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, true);
+
+  if (m_is8BitIRQPending) ack8BitIRQ();
+  if (m_is16BitIRQPending) ack16BitIRQ();
 }
 
 //
@@ -65,53 +84,83 @@ void CSBCompatCtlDSP::reset(char data) {
   } else if (m_isRstAsserted) {
     /* TODO: account for different meanings of RESET when in high-speed DMA,
        MIDI UART mode, etc. */
-    reset();
+    switch (m_state) {
+      case DSP_S_NORMAL:
+        m_hwemu->logInformation("DSP reset - reinitializing DSP");
+        reset();
+        break;
+
+      case DSP_S_HIGHSPEED:
+        m_hwemu->logInformation("DSP reset - exiting high-speed mode");
+        m_state = DSP_S_NORMAL;
+        break;
+
+      default:
+        m_hwemu->logError("DSP reset - invalid state, reverting to NORMAL");
+        m_state = DSP_S_NORMAL;
+    }
+
     m_bufOut.push((char)0xaa);  // acknowledge reset
   }
 }
 
 void CSBCompatCtlDSP::putCommand(char data) {
-  /* TODO: in the future: handle UART MIDI through here;
-     during high-speed DMA, any byte that comes in here is ignored
-     or treated like a sample byte, but *not* like a DSP command */
+  /* TODO: in the future: handle UART MIDI through here */
 
-  // put data into incoming queue
-  m_bufIn.push_back(data);
+  unsigned char cmd;
+  int commandLength;
 
-  // what command we are dealing with, and how long
-  unsigned char cmd = m_bufIn[0];
-  int commandLength = DSP_cmd_len[cmd & 0xff];
+  switch (m_state) {
+    case DSP_S_NORMAL:
+      // put data into incoming queue
+      m_bufIn.push_back(data);
 
-  if (commandLength <= 0) {
-    char msgBuf[1024];
-    sprintf(msgBuf, "Attempted to use undocumented DSP command 0x%02x", cmd & 0xff);
-    m_hwemu->logWarning(msgBuf);
-    m_bufIn.clear();    // flush buffer
-    return;
-  }
+      // what command we are dealing with, and how long
+      cmd = m_bufIn[0];
+      commandLength = DSP_cmd_len[cmd & 0xff];
 
-  if (commandLength < m_bufIn.size()) {
-    char msgBuf[1024];
-    sprintf(msgBuf, "DSP internal state inconsistency: command = 0x%02x, in buffer = %d bytes, expected %d bytes", cmd & 0xff, m_bufIn.size(), commandLength);
-    m_hwemu->logWarning(msgBuf);
-    m_bufIn.clear();    // flush buffer
-    return;
-  }
+      if (commandLength <= 0) {
+        char msgBuf[1024];
+        sprintf(msgBuf, "Attempted to use undocumented DSP command 0x%02x", cmd & 0xff);
+        m_hwemu->logWarning(msgBuf);
+        m_bufIn.clear();    // flush buffer
+        return;
+      }
 
-  if (commandLength == m_bufIn.size()) {
+      if (commandLength < m_bufIn.size()) {
+        char msgBuf[1024];
+        sprintf(msgBuf, "DSP internal state inconsistency: command = 0x%02x, in buffer = %d bytes, expected %d bytes", cmd & 0xff, m_bufIn.size(), commandLength);
+        m_hwemu->logWarning(msgBuf);
+        m_bufIn.clear();    // flush buffer
+        return;
+      }
 
-#   ifdef _DEBUG
-    char msgBuf[1024];
-    sprintf(msgBuf, "Processing DSP command 0x%02x (%d bytes)", cmd & 0xff, commandLength);
-    for (int i = 1; i < commandLength; i++) sprintf(msgBuf + strlen(msgBuf), " %02x", m_bufIn[i] & 0xff);
-    m_hwemu->logInformation(msgBuf);
-#   endif
+      if (commandLength == m_bufIn.size()) {
 
-    if (processCommand(cmd))
-      m_lastCommand = cmd;
+#       ifdef _DEBUG
+        char msgBuf[1024];
+        sprintf(msgBuf, "Processing DSP command 0x%02x (%d bytes)", cmd & 0xff, commandLength);
+        for (int i = 1; i < commandLength; i++) sprintf(msgBuf + strlen(msgBuf), " %02x", m_bufIn[i] & 0xff);
+        m_hwemu->logInformation(msgBuf);
+#       endif
 
-    m_bufIn.clear();    // flush buffer
-    return;
+        if (processCommand(cmd))
+          m_lastCommand = cmd;
+
+        m_bufIn.clear();    // flush buffer
+        return;
+      } else {
+        return;             // command not complete yet
+      }
+
+    case DSP_S_HIGHSPEED:
+      // During high-speed DMA, any byte that comes in here is ignored
+      // or treated like a sample byte, but *not* like a DSP command
+      return;
+
+    default:
+      m_hwemu->logError("DSP command - invalid state, reverting to NORMAL");
+      m_state = DSP_S_NORMAL;
   }
 }
 
@@ -120,45 +169,114 @@ char CSBCompatCtlDSP::getData(void) {
      this and a thread-safe FIFO, or make this FIFO thread-safe -- MIDI
      data would come in asynchronously! */
 
-  if (!m_bufOut.empty()) {
-    char data = m_bufOut.front();
-    m_bufOut.pop();
-    return data;
-  } return (char)0xff;
+  switch (m_state) {
+    case DSP_S_NORMAL:
+      if (!m_bufOut.empty()) {
+        char data = m_bufOut.front();
+        m_bufOut.pop();
+        return data;
+      } else {
+        return (char)0xff;
+      }
+
+    case DSP_S_HIGHSPEED:
+      // During high-speed DMA ignore any port read requests
+      return (char)0xff;
+
+    default:
+      m_hwemu->logError("DSP get data - invalid state, reverting to NORMAL");
+      m_state = DSP_S_NORMAL;
+      return (char)0xff;
+  }
 }
 
 char CSBCompatCtlDSP::getWrStatus(void) {
-  // if there is still data in the output
-  // buffer, then don't accept commands
-  return m_bufOut.empty() ? 0x00 : 0x80;
+  switch (m_state) {
+    case DSP_S_NORMAL:
+      // if there is still data in the output
+      // buffer, then don't accept commands
+      return m_bufOut.empty() ? 0x00 : 0x80;
+
+    case DSP_S_HIGHSPEED:
+      return (char)0x80;  // don't accept commands
+
+    default:
+      m_hwemu->logError("DSP get WRITE status - invalid state, reverting to NORMAL");
+      m_state = DSP_S_NORMAL;
+      return (char)0x80;  // don't accept commands yet
+  }
 }
 
 char CSBCompatCtlDSP::getRdStatus(void) {
-  // is there data in the output buffer ?
-  return m_bufOut.empty() ? 0x00 : 0x80;
+  switch (m_state) {
+    case DSP_S_NORMAL:
+      // is there data in the output buffer ?
+      return m_bufOut.empty() ? 0x00 : 0x80;
+
+    case DSP_S_HIGHSPEED:
+      return 0x00;        // no data is available
+
+    default:
+      m_hwemu->logError("DSP get READ status - invalid state, reverting to NORMAL");
+      m_state = DSP_S_NORMAL;
+      return 0x00;        // no data is available yet
+  }
 }
 
-void CSBCompatCtlDSP::ack8bitIRQ(void) {
-  // TODO: implement
+void CSBCompatCtlDSP::ack8BitIRQ(void) {
+  if (m_is8BitIRQPending) {
+    m_is8BitIRQPending = false;
+    m_hwemu->logInformation("IRQ acknowledged (8-bit)");
+  }
+
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, false);
 }
 
-void CSBCompatCtlDSP::ack16bitIRQ(void) {
-  // TODO: implement
+void CSBCompatCtlDSP::ack16BitIRQ(void) {
+  if (m_is16BitIRQPending) {
+    m_is16BitIRQPending = false;
+    m_hwemu->logInformation("IRQ acknowledged (16-bit)");
+  }
+
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, false);
 }
+
+void CSBCompatCtlDSP::set8BitIRQ(void) {
+  if (m_is8BitIRQPending) {
+    m_hwemu->logWarning("set8BitIRQ(): an IRQ is already pending");
+  } else {
+    m_is8BitIRQPending = true;
+  }
+
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, true);
+  m_hwemu->generateInterrupt();
+}
+
+void CSBCompatCtlDSP::set16BitIRQ(void) {
+  if (m_is16BitIRQPending) {
+    m_hwemu->logWarning("set16BitIRQ(): an IRQ is already pending");
+  } else {
+    m_is16BitIRQPending = true;
+  }
+
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, true);
+  m_hwemu->generateInterrupt();
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
 
 
 bool CSBCompatCtlDSP::processCommand(unsigned char command) {
-  ASSERT(m_bufIn.size() > 0);
-  ASSERT(m_bufIn[0] == command);
+  _ASSERTE(m_bufIn.size() > 0);
+  _ASSERTE(m_bufIn[0] == command);
 
   int i;
   char msgBuf[1024] = "";
 
-  /* TODO: interface with mixer for establishing mono/stereo output, filters, etc.; let mixer
-     have a ptr. to DSP, and have DSP expose public fn's for setting up setero, filters, etc. */
+  /* TODO: interface with mixer for establishing mono/stereo output, filters, etc.; let DSP have a
+     ptr. to the mixer, and have the mixer expose public fn's for querying setero, filters, etc. */
 
   switch (command) {
     case 0x04:  /* 004h : DSP Status (Obsolete) */
@@ -176,14 +294,19 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x14:  /* 014h : DMA DAC, 8-bit */
     case 0x91:  /* 091h : DMA DAC, 8-bit (High Speed) */
-      // TODO: account for high-speed by blocking DSP command interpretation until reset?
-      if (command == 0x91)
+      /* TODO: set state to DSP_S_HIGHSPEED for cmd. 0x91 (implement when DMA single-cycle terminal count
+         notification is functional, to automatically switch out of high-speed at the end of transfer) */
+      if ((command == 0x91) && (DSP_VERSION < 0x0400))  // high-speed not supported on v4.xx+
         m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x91 (DMA DAC 8-bit high-speed)");
 
-      setNumBits(8);
-      setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);  /* TODO: how about stereo? */
-      m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
-          getSampleRate(), getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, false);
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_PLAYBACK,
+          getNumChannels(),
+          getSampleRate(),
+          8,
+          MKWORD(m_bufIn[2], m_bufIn[1]) + 1,  /* TODO: how about stereo? */
+          ISBDSPHWEmulationLayer::CODEC_PCM,
+          false);
       return true;
 
     case 0x16:  /* 016h : DMA DAC, 2-bit ADPCM */
@@ -194,13 +317,11 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x1c:  /* 01Ch : Auto-Initialize DMA DAC, 8-bit */
     case 0x90:  /* 090h : Auto-Initialize DMA DAC, 8-bit (High Speed) */
-      // TODO: account for high-speed by blocking DSP command interpretation until reset?
-      if (command == 0x90)
-        m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x90 (A/I DMA DAC 8-bit high-speed)");
+      if ((command == 0x90) && (DSP_VERSION < 0x0400))  // high-speed not supported on v4.xx+
+        m_state = DSP_S_HIGHSPEED;  // set state to high-speed; can only get out by resetting the DSP
 
-      setNumBits(8);
       m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
-          getSampleRate(), getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
+          getSampleRate(), 8, getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
       return true;
 
     case 0x1f:  /* 01Fh : Auto-Initialize DMA DAC, 2-bit ADPCM Reference */
@@ -295,7 +416,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0x42:  /* 042h : Set Input Sample Rate */
-      // TODO: implement
+      // TODO: implement (same holds as for DSP cmd. 0x41)
       m_hwemu->logError("Attempted to use unimplemented DSP command 0x42 (Input sample rate)");
       return false;
 
@@ -303,13 +424,16 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x45:  /* 045h : Continue Auto-Initialize DMA, 8-bit */
     case 0x47:  /* 047h : Continue Auto-Initialize DMA, 16-bit */
+    case 0xd4:  /* 0D4h : Continue DMA Operation, 8-bit */
+    case 0xd6:  /* 0D6h : Continue DMA Operation, 16-bit */
+      // TODO: do we need to discriminate between 8-bit and 16-bit (i.e. expect
+      //   matching 8-bit or 16-bit halt/resume calls), or A/I and S.C. ?
       m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0x48:  /* 048h : Set DMA Block Size */
       /* TODO: take care (in the future) of ADPCM */
-      setNumBits(8);    /* TODO: verify that, indeed, this cannot be 16 bit; how about stereo?! */
-      setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]));
+      setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);  /* TODO: how about 16 bit (seems 8-bit only)? how about stereo?! */
       return true;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -363,36 +487,22 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0xc2:
     case 0xc4:
     case 0xc6:
-      switch (command & 0xf0) {
-        case 0xb0: setNumBits(16); break;
-        case 0xc0: setNumBits(8); break;
-      }
-
-      if (true) {
-        int mode = m_bufIn[1];
-
-        bool isRecord = ((command & 0x08) == 0x08);     // A/D (record) vs. D/A (playback)
-        bool autoInit = ((command & 0x04) == 0x04);     // autoinit vs. single-cycle
-        bool isFIFO   = ((command & 0x02) == 0x02);     // not really used
-
-        bool isStereo = ((command & 0x20) == 0x20);     // stereo vs. mono
-        bool isSigned = ((command & 0x10) == 0x10);     // signed vs. unsigned quantites
-
-        if (isStereo) {
-          setNumChannels(2);
-        } else {
-          setNumChannels(1);
-        }
-
-        setNumSamples(MKWORD(m_bufIn[3], m_bufIn[2]) + 1); /* TODO: How about stereo? */
-        m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK,
-            getNumChannels(), getSampleRate(),getNumBits(), getNumSamples(),
-            isSigned ? ISBDSPHWEmulationLayer::CODEC_PCM_SIGNED : ISBDSPHWEmulationLayer::CODEC_PCM, autoInit);
-      } return true;
+      m_hwemu->startTransfer(
+          (command & 0x08) == 0 ?                       // D/A (playback) vs. A/D (record)
+            ISBDSPHWEmulationLayer::TT_PLAYBACK : ISBDSPHWEmulationLayer::TT_RECORD,
+          (m_bufIn[1] & 0x20) == 0 ? 1 : 2,             // mono vs. stereo
+          getSampleRate(),                              // asmples per channel per second
+          (command & 0x10) == 0 ? 8 : 16,               // 8- vs. 16-bit
+          MKWORD(m_bufIn[3], m_bufIn[2]) + 1,           // samples between interrupts /* TODO: How about stereo? */
+          (m_bufIn[1] & 0x10) == 0 ?                    // unsigned vs. signed quantites
+            ISBDSPHWEmulationLayer::CODEC_PCM : ISBDSPHWEmulationLayer::CODEC_PCM_SIGNED,
+          (command & 0x04) != 0);                       // autoinit vs. single-cycle
+      return true;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
     case 0xd0:  /* 0D0h : Halt DMA Operation, 8-bit */
+    case 0xd5:  /* 0D5h : Halt DMA Operation, 16-bit */
       m_hwemu->pauseTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
@@ -402,18 +512,6 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xd3:  /* 0D3h : Disable Speaker */
       m_isSpeakerEna = false;
-      return true;
-
-    case 0xd4:  /* 0D4h : Continue DMA Operation, 8-bit */
-      m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
-      return true;
-
-    case 0xd5:  /* 0D5h : Halt DMA Operation, 16-bit */
-      m_hwemu->pauseTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
-      return true;
-
-    case 0xd6:  /* 0D6h : Continue DMA Operation, 16-bit */
-      m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xd8:  /* 0D8h : Speaker Status */
@@ -431,8 +529,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xe1:  /* 0E1h : DSP Version */
       /* TODO: maybe make this configurable?! */
-      m_bufOut.push(0x04);  // major
-      m_bufOut.push(0x05);  // minor
+      m_bufOut.push(HIBYTE(DSP_VERSION));  // major
+      m_bufOut.push(LOBYTE(DSP_VERSION));  // minor
       return true;
 
     case 0xe3:  /* 0E3h : DSP Copyright */
@@ -461,8 +559,11 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return false;
 
     case 0xf2:  /* 0F2h : IRQ Request, 8-bit */
+      set8BitIRQ();
+      return true;
+
     case 0xf3:  /* 0F3h : IRQ Request, 16-bit */
-      m_hwemu->generateInterrupt();
+      set16BitIRQ();
       return true;
 
     case 0xfb:  /* 0FBh : DSP Status */

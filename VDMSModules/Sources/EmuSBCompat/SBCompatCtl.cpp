@@ -21,16 +21,17 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define MK_SEGMENT(physicalAddr)  ((physicalAddr) >> 4)
-#define MK_OFFSET(physicalAddr)   ((physicalAddr) & 0x000f)
-
-/////////////////////////////////////////////////////////////////////////////
-
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
 #include <VDMUtil.h>
 #pragma comment ( lib , "VDMUtil.lib" )
+
+/////////////////////////////////////////////////////////////////////////////
+
+long round(long, int);
+void bufferReverse(BYTE*, int, bool);
+int CODEC_SignedPCM_decode(BYTE*, int, int);
 
 /////////////////////////////////////////////////////////////////////////////
 // CSBCompatCtl
@@ -141,6 +142,8 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     m_DMACtl->AddDMAHandler(m_DMA8Channel, pDMAHandler);
     m_DMACtl->AddDMAHandler(m_DMA16Channel, pDMAHandler);
 
+    m_activeDMAChannel = m_DMA8Channel;
+
     pDMAHandler->Release();     // Take back the AddRef in QueryInterface above
   } catch (_com_error& ce) {
     if (pDMAHandler != NULL)
@@ -208,12 +211,12 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
       return S_OK;
 
     case 0x0e:  /* DSP data available status / IRQ ack. 8-bit */
-      m_SBDSP.ack8bitIRQ();
+      m_SBDSP.ack8BitIRQ();
       *data = m_SBDSP.getRdStatus();
       return S_OK;
 
     case 0x0f:  /* DSP IRQ ack. 16-bit */
-      m_SBDSP.ack16bitIRQ();
+      m_SBDSP.ack16BitIRQ();
       *data = 0xff;
       return S_OK;
 
@@ -225,7 +228,7 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
     case 0x0d:  // not documented, although unofficially mentioned ("Timer Interrupt Clear") in Baresel & Jackson
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to read from unsupported port (IN 0x%3x)"), inPort));
       *data = 0xff;
-      return S_OK;
+      return S_FALSE;
 
     case 0x01:
     case 0x03:
@@ -234,7 +237,7 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
     case 0x09:
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to read from write-only port (IN 0x%3x)"), inPort));
       *data = 0xff;
-      return S_OK;
+      return S_FALSE;
 
     default:
       *data = 0xff;
@@ -270,13 +273,13 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
     case 0x0b:  // not documented
     case 0x0d:  // not documented, although unofficially mentioned ("Timer Interrupt Clear") in Baresel & Jackson
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to write to unsupported port (OUT 0x%3x, 0x%02x)"), outPort, data));
-      return S_OK;
+      return S_FALSE;
 
     case 0x0a:
     case 0x0e:
     case 0x0f:
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to write to read-only port (OUT 0x%3x, 0x%02x)"), outPort, data));
-      return S_OK;
+      return S_FALSE;
 
     default:
       return E_FAIL;
@@ -320,46 +323,119 @@ STDMETHODIMP CSBCompatCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT cou
 /////////////////////////////////////////////////////////////////////////////
 // IDMAHandler
 /////////////////////////////////////////////////////////////////////////////
-STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxBytes, LONG isDescending, ULONG * transferred) {
+
+STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred) {
   if (transferred == NULL)
     return E_POINTER;
 
-  BYTE buf[65536];  /* TODO: can be as much as 4 times larger for ADPCM2 */
+  *transferred = 0;
 
-  /* TODO: inquire: xfer 0 bytes if IRQ was not acknowledged? */
-  ULONG toTransfer = ((m_avgBandwidth * (timeGetTime() - m_transferStartTime)) / 1000) - m_transferredBytes;
-  toTransfer = toTransfer > maxBytes ? maxBytes : toTransfer;
+  // If this transfer does not occur on the active DMA channel, ignore it
+  if (channel != m_activeDMAChannel)
+    return S_FALSE;
+
+  // If transfer is paused, don't process any bytes
+  if (m_isPaused)
+    return S_OK;
+
+  /* TODO: buffer can be as much as 4 times larger for ADPCM2 */
+
+  int bufSize;                // how much relevant data is stored in the buffer <buf>
+  BYTE buf[65536];            // temporary storage for processing (e.g. dcompressing) data 
+
+  /* TODO: inquire: xfer 0 bytes if IRQ was not acknowledged ? */
+
+  // Compute how many bytes should be transferred; round in such a way so that
+  //   the transfer will not break a 16-bit sample down the middle, or split
+  //   a left/right sample pair (for stereo data)
+  long toTransfer = round(
+    ((m_avgBandwidth * (LONGLONG)(timeGetTime() - m_transferStartTime)) / 1000) - m_transferredBytes,
+    (m_numChannels - 1) + (m_bitsPerSample >> 4)); // rounding boundaries: 2^0 for mono 8-bit, 2^1 for 16-bit mono or 8-bit stereo, 2^2 for 16-bit stereo
+
+  // One last detail regarding 8-bit vs. 16-bit DMA transfer (*not* audio samples)
+  if (channel < 4) {          // 8-bit DMA transfer, maxData is in BYTES
+    toTransfer = toTransfer > maxData ? maxData : toTransfer;
+  } else {                    // 16-bit DMA transfer, maxData is in WORDS
+    toTransfer = round(toTransfer, 1);  // make sure we transfer in multiples of WORDS, or else we can lose up to one byte/transfer
+    toTransfer = toTransfer > (2 * maxData) ? (2 * maxData) : toTransfer;
+  }
+
+  // If no bytes need to be transferred, finish now
+  if (toTransfer == 0)
+    return S_OK;
+
+  // Transfer data from application memory to the temporary buffer <buf>
   m_transferredBytes += toTransfer;
 
-  _ASSERTE(physicalAddr < 0x100000);  // fits in segment:offset ?
-
   try {
-    m_BaseSrv->GetMemory(MK_SEGMENT(physicalAddr), MK_OFFSET(physicalAddr), IVDMSERVICESLib::ADDR_V86, buf, toTransfer);
+    if (isDescending) {       // is data transferred in reverse order ?
+      m_BaseSrv->GetMemory(0, physicalAddr - toTransfer + 1, IVDMSERVICESLib::ADDR_PHYSICAL, buf, toTransfer);
+      bufferReverse(buf, toTransfer, channel < 4);  // re-arrange (swap) data so that it is ordered normally
+    } else {
+      m_BaseSrv->GetMemory(0, physicalAddr, IVDMSERVICESLib::ADDR_PHYSICAL, buf, toTransfer);
+    }
   } catch (_com_error& ce) {
-    CString args = Format(_T("0x%04x, 0x%04x, %d, %p, %d"), MK_SEGMENT(physicalAddr), MK_OFFSET(physicalAddr), IVDMSERVICESLib::ADDR_V86, buf, toTransfer);
+    CString args = Format(_T("0x%04x, 0x%04x, %d, %p, %d"), 0, isDescending ? physicalAddr - toTransfer + 1 : physicalAddr, IVDMSERVICESLib::ADDR_PHYSICAL, buf, toTransfer);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("GetMemory(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    return S_FALSE;
   }
 
-//memcpy(buf,(const void*)(physicalAddr|0x100000),toTransfer);
+  // Decode/decompress the data (if necessary)
+  switch (m_codec) {
+    case CODEC_PCM:
+      bufSize = toTransfer;   // no decoding necessary; there is a 1:1 correspondence
+      break;
+    case CODEC_PCM_SIGNED:
+      bufSize = CODEC_SignedPCM_decode(buf, toTransfer, m_bitsPerSample);
+      break;
+    default:
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Unsupported CODEC: %d"), (int)m_codec));
+      bufSize = toTransfer;
+  }
 
+  // Play the data
   if (m_waveOut != NULL) try {
-    m_waveOut->PlayData(buf, toTransfer);
+    m_waveOut->PlayData(buf, bufSize);
   } catch (_com_error& ce) {
-    CString args = Format(_T("%p, %d"), buf, toTransfer);
+    CString args = Format(_T("%p, %d"), buf, bufSize);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    return S_FALSE;
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p (%04x:%04x), type = %d, mode = %d, dir = %d, A/I = %d"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)MK_SEGMENT(physicalAddr), (int)MK_OFFSET(physicalAddr), (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+# if _DEBUG
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+#endif
 
-  *transferred = toTransfer;
+  if (channel < 4) {          // 8-bit DMA transfer, keep BYTE count as BYTE count
+    *transferred = toTransfer;
+  } else {                    // 16-bit DMA transfer, convert BYTE count into WORD count
+    *transferred = toTransfer / 2;
+  }
 
   return S_OK;
 }
 
 STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, LONG isTerminalCount) {
-  if (m_transferredBytes % m_DSPBlockSize < transferred) {
-    generateInterrupt();
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting: after %dms, %d bytes"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes));
+  long lastTransfer;
+
+  // If this notification does not concern the active DMA channel, ignore it
+  if (channel != m_activeDMAChannel)
+    return S_FALSE;
+
+  if (channel < 4) {          // 8-bit DMA transfer, keep BYTE count as BYTE count
+    lastTransfer = transferred;
+  } else {                    // 16-bit DMA transfer, convert WORD count into BYTE count
+    lastTransfer = 2 * transferred;
+  }
+
+  if (lastTransfer > m_transferredBytes % m_DSPBlockSize) {
+    if (m_bitsPerSample != 16) {
+      m_SBDSP.set8BitIRQ();
+    } else {
+      m_SBDSP.set16BitIRQ();
+    }
+
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
   }
 
   return S_OK;
@@ -368,20 +444,41 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
 
 
 /////////////////////////////////////////////////////////////////////////////
-// IMPU401HWEmulationLayer
+// ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
 
-void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit) {
-  // TODO: implement
-  m_transferStartTime = timeGetTime();
-  m_transferredBytes = 0;
+void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous) {
+  // TODO: implement (recording vs. playback, codecs, etc.)
+
+  _ASSERTE((numChannels == 1) || (numChannels == 2));
+  _ASSERTE((bitsPerSample == 2) || (bitsPerSample == 3) || (bitsPerSample == 4) || (bitsPerSample == 8) || (bitsPerSample == 16));
+
+  // Abort any active transfers
+  stopTransfer(type, false);
+
+  // Adjust sample rates to fit in acceptable interval
+  if (samplesPerSecond < 4000) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is inferior to the %dHz lower bound; adjusting"), samplesPerSecond, 4000));
+    samplesPerSecond = 4000;
+  } else if (samplesPerSecond > 44100) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is superior to the %dHz upper bound; adjusting"), samplesPerSecond, 44100));
+    samplesPerSecond = 44100;
+  }
+
+  // Set up the transfer state
+  m_transferStartTime = timeGetTime();  // when the transfer started
+  m_transferredBytes = 0;               // how many bytes were transferred to date
   m_avgBandwidth = numChannels * samplesPerSecond * bitsPerSample / 8;
-  m_DSPBlockSize = numChannels * samplesPerBlock * bitsPerSample / 8;
+  m_DSPBlockSize = samplesPerBlock * bitsPerSample / 8;
+  m_bitsPerSample = bitsPerSample;      // how many bits in a sample
+  m_numChannels = numChannels;          // audio channels (1 = mono, 2 = stereo)
+  m_codec = codec;                      // CODEC to be used for converting DMA data
+  m_isPaused = false;                   // can start transferring ASAP
+  m_activeDMAChannel = (bitsPerSample != 16 ? m_DMA8Channel : m_DMA16Channel);   /* TODO: must also be able to handle 16-bit data through 8-bit DMA channels when 16-bit channels are masked out in mixer registers */
 
-  _ASSERTE(m_avgBandwidth > 0);
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Starting DMA transfer (%s) on ch. %d (%s, %d samples/block): %d-bit %s %dHz, %s"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown transfer type>"), m_activeDMAChannel, isAutoInit ? _T("auto-init") : _T("single-cycle"), samplesPerBlock, bitsPerSample, numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown aurality>"), samplesPerSecond, codec == CODEC_PCM ? _T("unsigned PCM") : codec == CODEC_PCM_SIGNED ? _T("signed PCM") : codec == CODEC_ADPCM_2 ? _T("ADPCM 2") : codec == CODEC_ADPCM_3 ? _T("ADPCM 3") : codec == CODEC_ADPCM_4 ? _T("ADPCM 4") : _T("<unknown codec>")));
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transferring (%s) %s, %dHz, %dbps, %d samples, %s"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown>"), numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown>"), samplesPerSecond, bitsPerSample, samplesPerBlock, isAutoInit ? _T("auto-init") : _T("single-cycle")));
-
+  // Set up the renderer (if any)
   if (m_waveOut != NULL) try {
     m_waveOut->SetFormat(numChannels, samplesPerSecond, bitsPerSample); /* TODO: decide how to treat/decompress ADPCM: as 8 or as 16-bit? */
   } catch (_com_error& ce) {
@@ -389,30 +486,48 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
   }
 
+  // Start the DMA transfer
   try {
-    m_DMACtl->InitiateTransfer(m_DMA8Channel);  /* TODO: select channel based on mixer's DMA channel mask */
+    m_DMACtl->InitiateTransfer(m_activeDMAChannel, isSynchronous);
   } catch (_com_error& ce) {
-    CString args = Format(_T("%d"), m_DMA8Channel);
+    CString args = Format(_T("%d"), m_activeDMAChannel);
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("InitiateTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
   }
 }
 
+void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
+  try {
+    m_DMACtl->AbortTransfer(m_activeDMAChannel, isSynchronous);
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%d"), m_activeDMAChannel);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
+}
+
 void CSBCompatCtl::pauseTransfer(transfer_t type) {
-  // TODO: implement
+  // TODO: implement ?
+  if (!m_isPaused) {
+    m_transferPauseTime = timeGetTime();
+    m_isPaused = true;
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transfer paused (ch. %d)"), m_activeDMAChannel));
+  } else {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to pause an already paused transfer")));
+  }
 }
 
 void CSBCompatCtl::resumeTransfer(transfer_t type) {
-  // TODO: implement
-}
-
-void CSBCompatCtl::stopTransfer(transfer_t type) {
-  // TODO: implement
+  // TODO: implement ?
+  if (m_isPaused) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transfer resumed (ch. %d)"), m_activeDMAChannel));
+    m_transferStartTime += (timeGetTime() - m_transferPauseTime); // adjust delta-time with inactivity amount
+    m_isPaused = false;
+  } else {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to resume an already active transfer")));
+  }
 }
 
 void CSBCompatCtl::generateInterrupt(void) {
-  // TODO: implement
   try {
-    /* TODO: set interrupt "mask" in mixer */
     m_BaseSrv->SimulateInterrupt(IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d, %d, %d"), IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
@@ -430,4 +545,68 @@ void CSBCompatCtl::logWarning(const char* message) {
 
 void CSBCompatCtl::logInformation(const char* message) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, (LPCTSTR)CString(message));
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Utility functions
+/////////////////////////////////////////////////////////////////////////////
+
+//
+// Rounds up to the nearest multiple of 2^pow2
+//
+inline long round(
+    long what,
+    int pow2)
+{
+  what >>= pow2;
+  what <<= pow2;
+  return what;
+}
+
+//
+// Inverses a buffer by swapping its elements so that the first becomes last,
+// the second becomes econd to last, etc.  Elements can be words or bytes.
+//
+inline void bufferReverse(
+    BYTE* buf,
+    int bufSize,
+    bool is8bitGranularity)
+{
+  int i, j;
+  WORD* buf16;
+
+  if (is8bitGranularity) {  // invert BYTES
+    for (i = 0, j = bufSize - 1; i <= bufSize / 2; i++, j--)
+      std::swap(buf[i], buf[j]);
+  } else {                  // invert WORDS
+    buf16 = (WORD*)buf;
+    for (i = 0, j = (bufSize / 2) - 1; i <= bufSize / 4; i++, j--)
+      std::swap(buf16[i], buf16[j]);
+  }
+}
+
+//
+// Performs signed-PCM decoding in-place.
+//
+inline int CODEC_SignedPCM_decode(
+    BYTE* buf,
+    int bufSize,
+    int bitsPerSample)
+{
+  int i;
+  WORD* buf16;
+
+  switch (bitsPerSample) {
+    case 8: /* 8-bit quantities */
+      for (i = 0; i < bufSize; i++) buf[i] += 0x80;
+      return bufSize;
+    case 16:
+      buf16 = (WORD*)buf;
+      for (i = 0; i < bufSize / 2; i++) buf16[i] += 0x8000;
+      return bufSize;
+    default:
+      return bufSize;
+  }
 }

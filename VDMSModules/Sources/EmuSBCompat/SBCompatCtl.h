@@ -36,7 +36,7 @@ class ATL_NO_VTABLE CSBCompatCtl :
 {
 public:
   CSBCompatCtl()
-    : m_SBDSP(this), m_SBMixer(this)
+    : m_SBMixer(this), m_SBDSP(this, &m_SBMixer)
     { };
 
 DECLARE_REGISTRY_RESOURCEID(IDR_SBCOMPATCTL)
@@ -53,14 +53,18 @@ END_COM_MAP()
 
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
-  void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit);
+  void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous = false);
+  void stopTransfer(transfer_t type, bool isSynchronous = false);
   void pauseTransfer(transfer_t type);
   void resumeTransfer(transfer_t type);
-  void stopTransfer(transfer_t type);
-  void generateInterrupt(void);
+  void generateInterruptSB8(void);
+  void generateInterruptSB16(void);
   void logError(const char* message);
   void logWarning(const char* message);
   void logInformation(const char* message);
+
+protected:
+  void generateInterrupt(void);
 
 // ISupportsErrorInfo
 public:
@@ -84,12 +88,12 @@ public:
 
 // IDMAHandler
 public:
-  STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxBytes, LONG isDescending, ULONG * transferred);
+  STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred);
   STDMETHOD(HandleAfterTransfer)(BYTE channel, ULONG transferred, LONG isTerminalCount);
 
 protected:
-  CSBCompatCtlDSP m_SBDSP;
   CSBCompatCtlMixer m_SBMixer;
+  CSBCompatCtlDSP m_SBDSP;
   int m_basePort;
   int m_IRQLine;
   int m_DMA8Channel;
@@ -97,9 +101,15 @@ protected:
 
 protected:
   DWORD m_transferStartTime;
-  ULONG m_transferredBytes;
-  ULONG m_avgBandwidth;
-  ULONG m_DSPBlockSize;
+  DWORD m_transferPauseTime;
+  long m_transferredBytes;
+  long m_avgBandwidth;
+  long m_DSPBlockSize;
+  int m_bitsPerSample;
+  int m_numChannels;
+  codec_t m_codec;
+  bool m_isPaused;
+  int m_activeDMAChannel;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;

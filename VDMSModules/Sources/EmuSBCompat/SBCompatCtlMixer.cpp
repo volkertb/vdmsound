@@ -28,7 +28,7 @@ CSBCompatCtlMixer::CSBCompatCtlMixer(ISBMixerHWEmulationLayer* hwemu)
     m_IRQStatus((char)0x10),  // bits 7..3 reserved: 10h for v4.04, 20h for v4.05, 80h for v4.12
     m_lastValue((char)0x00)   // TODO: default value?  Gets updatet on 'getValue' only?  On 'putValue' as well?
 {
-  ASSERT(m_hwemu != NULL);
+  _ASSERTE(m_hwemu != NULL);
 }
 
 CSBCompatCtlMixer::~CSBCompatCtlMixer(void)
@@ -354,8 +354,8 @@ void CSBCompatCtlMixer::setDMASelect(
     int DMA8,                       // DMA channel to use for 8-bit transfers (-1 if none)
     int DMA16)                      // DMA channel to use for 16-bit transfers (-1 if none)
 {
-  ASSERT((DMA8 == -1) || ((DMA8 >= 0) && (DMA8 <= 3) && (DMA8 != 2)));
-  ASSERT((DMA8 == -1) || ((DMA16 >= 5) && (DMA16 <= 7)));
+/*_ASSERTE((DMA8 == -1) || ((DMA8 >= 0) && (DMA8 <= 3) && (DMA8 != 2)));
+  _ASSERTE((DMA8 == -1) || ((DMA16 >= 5) && (DMA16 <= 7)));*/
 
   int dma8mask  = (DMA8 < 0)  ? 0 : (1 << DMA8);
   int dma16mask = (DMA16 < 0) ? 0 : (1 << DMA16);
@@ -371,7 +371,7 @@ void CSBCompatCtlMixer::setIRQStatus(
     IRQSource_t source,             // on whose behalf the interrupt was generated
     bool isPending)                 // was the interrupt just generated (pending), or acknowledged (must clear)?
 {
-  ASSERT((source >= 0) && (source <= 2));
+/*_ASSERTE((source >= 0) && (source <= 2));*/
 
   int mask = 1 << source;
 
