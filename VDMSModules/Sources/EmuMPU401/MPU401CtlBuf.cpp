@@ -13,7 +13,7 @@
 CMIDIInputBuffer::CMIDIInputBuffer(IMPU401HWEmulationLayer* hwemu)
   : m_isEmptyBuf(true), m_IRQPending(false), m_hwemu(hwemu)
 {
-  ASSERT(m_hwemu != NULL);
+  _ASSERTE(m_hwemu != NULL);
 }
 
 CMIDIInputBuffer::~CMIDIInputBuffer(void)
@@ -83,7 +83,7 @@ bool CMIDIInputBuffer::getByte(unsigned char* data) {
 CMIDIOutputBuffer::CMIDIOutputBuffer(IMPU401HWEmulationLayer* hwemu)
   : m_currentEvent(0x00), m_hwemu(hwemu)
 {
-  ASSERT(m_hwemu != NULL);
+  _ASSERTE(m_hwemu != NULL);
 }
 
 CMIDIOutputBuffer::~CMIDIOutputBuffer(void)
@@ -105,9 +105,9 @@ void CMIDIOutputBuffer::putByte(
 
   if (IS_MIDI_EVENT(data)) {
     if (m_currentEvent == MIDI_EVENT_SYSTEM_SYSEX) {
-      if (m_buf.size() < 4) {
+      if (m_buf.size() + 1 < MIDI_evt_len[MIDI_EVENT_SYSTEM_SYSEX]) {
         std::ostringstream oss;
-        oss << std::setbase(10) << "SysEx too short (" << m_buf.size() << " bytes); ended by event 0x" << std::setbase(16) << (data & 0xff) << ".";
+        oss << std::setbase(10) << "SysEx too short (" << m_buf.size() << " bytes, ended by event 0x" << std::setbase(16) << (data & 0xff) << "), flushing";
         m_hwemu->logError(oss.str().c_str());
         m_buf.clear();
       } else {
@@ -121,12 +121,27 @@ void CMIDIOutputBuffer::putByte(
       }
     }
 
+    if (MIDI_evt_len[data & 0xff] < 1) {
+      std::ostringstream oss;
+      oss << std::setbase(16) << "Undefined event (0x" << (data & 0xff) << ") occured during another event (0x" << (m_currentEvent & 0xff) << ", " << std::setbase(10) << m_buf.size() << " bytes to date), ignoring";
+      m_hwemu->logError(oss.str().c_str());
+      return;
+    }
+
+    if (data == MIDI_EVENT_SYSTEM_EOX) {
+      std::ostringstream oss;
+      oss << std::setbase(16) << "EOX event (0x" << (data & 0xff) << ") occured outside of SysEx event (0x" << (m_currentEvent & 0xff) << ", " << std::setbase(10) << m_buf.size() << " bytes to date), ignoring";
+      m_hwemu->logError(oss.str().c_str());
+      return;
+    }
+
     if (!m_buf.empty()) {
       std::ostringstream oss;
-      oss << std::setbase(16) << "Non-realtime event (0x" << (data & 0xff) << ") occured during another event (0x" << (m_currentEvent & 0xff) << ", " << std::setbase(10) << m_buf.size() << " bytes to date)";
+      oss << std::setbase(16) << "Non-realtime event (0x" << (data & 0xff) << ") occured during another event (0x" << (m_currentEvent & 0xff) << ", " << std::setbase(10) << m_buf.size() << " bytes to date), flushing";
       m_hwemu->logError(oss.str().c_str());
       m_buf.clear();
     }
+
     m_currentEvent = data;          // set running status
   } else {
     if (isFull()) {
