@@ -72,6 +72,11 @@ void CSBCompatCtlMixer::setValue(
 {
   char msgBuf[1024] = "";
 
+# ifdef _DEBUG
+  sprintf(msgBuf, "Setting MIXER register 0x%02x (value = 0x%02x)", m_regIdx, value & 0xff);
+  m_hwemu->logInformation(msgBuf);
+# endif
+
   switch (m_regIdx) {
     case 0x00:  /* reset */
       reset(value);
@@ -198,6 +203,11 @@ char CSBCompatCtlMixer::getValue(void) {
   int left, right;
 
   char msgBuf[1024] = "";
+
+# ifdef _DEBUG
+  sprintf(msgBuf, "Reading MIXER register 0x%02x", m_regIdx);
+  m_hwemu->logInformation(msgBuf);
+# endif
 
   switch (m_regIdx) {
     case 0x01:  /* status */

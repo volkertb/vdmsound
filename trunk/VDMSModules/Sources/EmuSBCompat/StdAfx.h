@@ -31,6 +31,9 @@ extern CComModule _Module;
 #include <iomanip>
 #include <sstream>
 
+#include <mmsystem.h>
+#pragma comment ( lib , "winmm.lib" )
+
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 

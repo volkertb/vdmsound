@@ -15,7 +15,6 @@ class ISBDSPHWEmulationLayer {
         transfer_t type,        // playback (output) or recording (input)
         int numChannels,        // 1 = mono, 2 = stereo
         int samplesPerSecond,   // frequency (samples/s)
-        int avgBytesPerSecond,  // average bandwitch of (potentially compressed, e.g. ADPCM) stream
         int bitsPerSample,      // 8 or 16 (PCM), 2, 3 or 4 (ADPCM)
         int samplesPerBlock,    // length of SB "block" (in samples); interrupt is generated after every block
         codec_t codec,          // PCM, ADPCM, etc.
