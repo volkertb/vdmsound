@@ -5,6 +5,9 @@
 **
 */
 
+#ifndef __DRIVER_H_
+#define __DRIVER_H_
+
 /* Work around ANSI compliance problem (see fmopl.cpp) */
 
 /* Assignment of void* to a non-void pointer will generate an error,
@@ -12,18 +15,18 @@
    operators defined in order to make the pointer conversion possible */
 
 /* Make sure malloc(...) is declared NOW */
-
 #include <stdlib.h>
 #include <malloc.h>
 
-/* Force use of surrogate malloc(...) while still leaving
-   the original malloc(...) visible as __old_malloc(...) */
+/* Keep a reference to the standard malloc(...) */
+void* (*__old_malloc)(size_t size) = malloc;
 
-#define __old_malloc malloc
+/* Force use of surrogate malloc(...) */
 #define malloc __new_malloc
 
 /* Define surrogate malloc(...)/__new_malloc(...) */
-
 __MALLOCPTR malloc(size_t size) {
   return __old_malloc(size);
 }
+
+#endif /* __DRIVER_H_ */

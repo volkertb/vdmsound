@@ -25,6 +25,7 @@ namespace MAME {
   };
 
   /* Bring in Tatsuyuki Satoh's OPL emulation */
+# define HAS_YM3812 1
 # include "fmopl.c"
 
 }
