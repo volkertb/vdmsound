@@ -5,14 +5,76 @@ Begin VB.Form frmMain
    ClientHeight    =   5775
    ClientLeft      =   165
    ClientTop       =   735
-   ClientWidth     =   7845
+   ClientWidth     =   7815
    Icon            =   "frmMain.frx":0000
    LinkTopic       =   "Form1"
    ScaleHeight     =   5775
-   ScaleWidth      =   7845
+   ScaleWidth      =   7815
    StartUpPosition =   3  'Windows Default
-   Begin MSComctlLib.ImageList imgListViewIcons32 
-      Left            =   6120
+   Begin MSComctlLib.ImageList imlToolbar1 
+      Left            =   5400
+      Top             =   0
+      _ExtentX        =   1005
+      _ExtentY        =   1005
+      BackColor       =   -2147483643
+      ImageWidth      =   16
+      ImageHeight     =   16
+      MaskColor       =   16711935
+      _Version        =   393216
+      BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
+         NumListImages   =   12
+         BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":08CA
+            Key             =   "New File"
+         EndProperty
+         BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":09BA
+            Key             =   "New Folder"
+         EndProperty
+         BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":0AB6
+            Key             =   "Cut"
+         EndProperty
+         BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":0B9A
+            Key             =   "Copy"
+         EndProperty
+         BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":0C92
+            Key             =   "Paste"
+         EndProperty
+         BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":0E2A
+            Key             =   "Delete"
+         EndProperty
+         BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":0F26
+            Key             =   "Properties"
+         EndProperty
+         BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":1036
+            Key             =   "View Large Icons"
+         EndProperty
+         BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":1132
+            Key             =   "View Small Icons"
+         EndProperty
+         BeginProperty ListImage10 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":122E
+            Key             =   "View List"
+         EndProperty
+         BeginProperty ListImage11 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":132A
+            Key             =   "View Details"
+         EndProperty
+         BeginProperty ListImage12 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":142A
+            Key             =   "Refresh"
+         EndProperty
+      EndProperty
+   End
+   Begin MSComctlLib.ImageList imlListIcons32 
+      Left            =   7200
       Top             =   0
       _ExtentX        =   1005
       _ExtentY        =   1005
@@ -23,8 +85,8 @@ Begin VB.Form frmMain
       UseMaskColor    =   0   'False
       _Version        =   393216
    End
-   Begin MSComctlLib.ImageList imgListViewIcons16 
-      Left            =   5520
+   Begin MSComctlLib.ImageList imlListIcons16 
+      Left            =   6600
       Top             =   0
       _ExtentX        =   1005
       _ExtentY        =   1005
@@ -36,83 +98,86 @@ Begin VB.Form frmMain
       _Version        =   393216
    End
    Begin MSComctlLib.ImageList imlTreeIcons 
-      Left            =   4920
+      Left            =   6000
       Top             =   0
       _ExtentX        =   1005
       _ExtentY        =   1005
       BackColor       =   -2147483643
       ImageWidth      =   16
       ImageHeight     =   16
-      MaskColor       =   12632256
-      UseMaskColor    =   0   'False
+      MaskColor       =   128
       _Version        =   393216
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   2
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":08CA
-            Key             =   "Folder Closed"
+            Picture         =   "frmMain.frx":1526
+            Key             =   "Folder Open"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0A24
-            Key             =   "Folder Open"
+            Picture         =   "frmMain.frx":1638
+            Key             =   "Folder Closed"
          EndProperty
       EndProperty
    End
-   Begin MSComctlLib.ImageList imlToolbarIcons 
-      Left            =   4320
+   Begin MSComctlLib.ImageList imlToolbar0 
+      Left            =   4800
       Top             =   0
       _ExtentX        =   1005
       _ExtentY        =   1005
       BackColor       =   -2147483643
       ImageWidth      =   16
       ImageHeight     =   16
-      MaskColor       =   12632256
+      MaskColor       =   16711935
       _Version        =   393216
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
-         NumListImages   =   11
+         NumListImages   =   12
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0B7E
-            Key             =   "Back"
+            Picture         =   "frmMain.frx":174A
+            Key             =   "New File"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0C90
-            Key             =   "Forward"
+            Picture         =   "frmMain.frx":183A
+            Key             =   "New Folder"
          EndProperty
          BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0DA2
+            Picture         =   "frmMain.frx":1932
             Key             =   "Cut"
          EndProperty
          BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0EB4
+            Picture         =   "frmMain.frx":1A16
             Key             =   "Copy"
          EndProperty
          BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":0FC6
+            Picture         =   "frmMain.frx":1B0E
             Key             =   "Paste"
          EndProperty
          BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":10D8
+            Picture         =   "frmMain.frx":1C0E
             Key             =   "Delete"
          EndProperty
          BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":11EA
+            Picture         =   "frmMain.frx":1CFA
             Key             =   "Properties"
          EndProperty
          BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":12FC
+            Picture         =   "frmMain.frx":1DF2
             Key             =   "View Large Icons"
          EndProperty
          BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":140E
+            Picture         =   "frmMain.frx":1EEA
             Key             =   "View Small Icons"
          EndProperty
          BeginProperty ListImage10 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1520
+            Picture         =   "frmMain.frx":1FE2
             Key             =   "View List"
          EndProperty
          BeginProperty ListImage11 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1632
+            Picture         =   "frmMain.frx":20D6
             Key             =   "View Details"
+         EndProperty
+         BeginProperty ListImage12 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":21D2
+            Key             =   "Refresh"
          EndProperty
       EndProperty
    End
@@ -157,14 +222,13 @@ Begin VB.Form frmMain
       Width           =   5610
       _ExtentX        =   9895
       _ExtentY        =   8467
-      Arrange         =   2
       Sorted          =   -1  'True
       LabelWrap       =   -1  'True
       HideSelection   =   -1  'True
       FullRowSelect   =   -1  'True
       _Version        =   393217
-      Icons           =   "imgListViewIcons"
-      SmallIcons      =   "imgListViewIcons"
+      Icons           =   "imlListIcons32"
+      SmallIcons      =   "imlListIcons16"
       ForeColor       =   -2147483640
       BackColor       =   -2147483643
       BorderStyle     =   1
@@ -184,14 +248,14 @@ Begin VB.Form frmMain
       Height          =   300
       Left            =   0
       ScaleHeight     =   300
-      ScaleWidth      =   7845
+      ScaleWidth      =   7815
       TabIndex        =   2
       TabStop         =   0   'False
-      Top             =   420
-      Width           =   7845
+      Top             =   360
+      Width           =   7815
       Begin VB.Label lblTitle 
          BorderStyle     =   1  'Fixed Single
-         Caption         =   "Applications"
+         Caption         =   "DOS Applications"
          Height          =   270
          Index           =   1
          Left            =   2445
@@ -214,87 +278,131 @@ Begin VB.Form frmMain
    End
    Begin MSComctlLib.Toolbar tbToolBar 
       Align           =   1  'Align Top
-      Height          =   420
+      Height          =   360
       Left            =   0
       TabIndex        =   1
       Top             =   0
-      Width           =   7845
-      _ExtentX        =   13838
-      _ExtentY        =   741
+      Width           =   7815
+      _ExtentX        =   13785
+      _ExtentY        =   635
       ButtonWidth     =   609
       ButtonHeight    =   582
       Appearance      =   1
-      ImageList       =   "imlToolbarIcons"
+      Style           =   1
+      ImageList       =   "imlToolbar0"
+      HotImageList    =   "imlToolbar1"
       _Version        =   393216
       BeginProperty Buttons {66833FE8-8583-11D1-B16A-00C0F0283628} 
-         NumButtons      =   15
+         NumButtons      =   16
          BeginProperty Button1 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
+            Object.Visible         =   0   'False
+            Description     =   "Separator"
             Style           =   3
+            Object.Width           =   1e-4
          EndProperty
          BeginProperty Button2 {66833FEA-8583-11D1-B16A-00C0F0283628} 
-            Key             =   "Back"
-            Object.ToolTipText     =   "Back"
-            ImageKey        =   "Back"
+            Key             =   "New"
+            Description     =   "New"
+            Object.ToolTipText     =   "New"
+            ImageKey        =   "New File"
+            Style           =   5
+            BeginProperty ButtonMenus {66833FEC-8583-11D1-B16A-00C0F0283628} 
+               NumButtonMenus  =   2
+               BeginProperty ButtonMenu1 {66833FEE-8583-11D1-B16A-00C0F0283628} 
+                  Key             =   "NewCategory"
+                  Text            =   "New &Category"
+               EndProperty
+               BeginProperty ButtonMenu2 {66833FEE-8583-11D1-B16A-00C0F0283628} 
+                  Key             =   "NewApplication"
+                  Text            =   "New DOS &Application"
+               EndProperty
+            EndProperty
          EndProperty
          BeginProperty Button3 {66833FEA-8583-11D1-B16A-00C0F0283628} 
-            Key             =   "Forward"
-            Object.ToolTipText     =   "Forward"
-            ImageKey        =   "Forward"
-         EndProperty
-         BeginProperty Button4 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
+            Description     =   "Separator"
             Style           =   3
          EndProperty
-         BeginProperty Button5 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button4 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
             Key             =   "Cut"
+            Description     =   "Cut"
             Object.ToolTipText     =   "Cut"
             ImageKey        =   "Cut"
          EndProperty
-         BeginProperty Button6 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button5 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
             Key             =   "Copy"
+            Description     =   "Copy"
             Object.ToolTipText     =   "Copy"
             ImageKey        =   "Copy"
          EndProperty
-         BeginProperty Button7 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button6 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
             Key             =   "Paste"
+            Description     =   "Paste"
             Object.ToolTipText     =   "Paste"
             ImageKey        =   "Paste"
          EndProperty
-         BeginProperty Button8 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button7 {66833FEA-8583-11D1-B16A-00C0F0283628} 
             Key             =   "Delete"
+            Description     =   "Delete"
             Object.ToolTipText     =   "Delete"
             ImageKey        =   "Delete"
          EndProperty
-         BeginProperty Button9 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button8 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
+            Description     =   "Separator"
             Style           =   3
          EndProperty
-         BeginProperty Button10 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button9 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
             Key             =   "Properties"
+            Description     =   "Properties"
             Object.ToolTipText     =   "Properties"
             ImageKey        =   "Properties"
          EndProperty
-         BeginProperty Button11 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button10 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
+            Description     =   "Separator"
             Style           =   3
          EndProperty
+         BeginProperty Button11 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Key             =   "Refresh"
+            Description     =   "Refresh"
+            Object.ToolTipText     =   "Refresh"
+            ImageKey        =   "Refresh"
+         EndProperty
          BeginProperty Button12 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+            Enabled         =   0   'False
+            Description     =   "Separator"
+            Style           =   3
+         EndProperty
+         BeginProperty Button13 {66833FEA-8583-11D1-B16A-00C0F0283628} 
             Key             =   "View Large Icons"
+            Description     =   "View Large Icons"
             Object.ToolTipText     =   "View Large Icons"
             ImageKey        =   "View Large Icons"
             Style           =   2
          EndProperty
-         BeginProperty Button13 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button14 {66833FEA-8583-11D1-B16A-00C0F0283628} 
             Key             =   "View Small Icons"
+            Description     =   "View Small Icons"
             Object.ToolTipText     =   "View Small Icons"
             ImageKey        =   "View Small Icons"
             Style           =   2
          EndProperty
-         BeginProperty Button14 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button15 {66833FEA-8583-11D1-B16A-00C0F0283628} 
             Key             =   "View List"
+            Description     =   "View List"
             Object.ToolTipText     =   "View List"
             ImageKey        =   "View List"
             Style           =   2
          EndProperty
-         BeginProperty Button15 {66833FEA-8583-11D1-B16A-00C0F0283628} 
+         BeginProperty Button16 {66833FEA-8583-11D1-B16A-00C0F0283628} 
             Key             =   "View Details"
+            Description     =   "View Details"
             Object.ToolTipText     =   "View Details"
             ImageKey        =   "View Details"
             Style           =   2
@@ -307,41 +415,41 @@ Begin VB.Form frmMain
       Left            =   0
       TabIndex        =   0
       Top             =   5505
-      Width           =   7845
-      _ExtentX        =   13838
+      Width           =   7815
+      _ExtentX        =   13785
       _ExtentY        =   476
       _Version        =   393216
       BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
          NumPanels       =   3
          BeginProperty Panel1 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             AutoSize        =   1
-            Object.Width           =   8281
+            Object.Width           =   8229
             Text            =   "Status"
             TextSave        =   "Status"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "6/10/01"
+            TextSave        =   "7/10/01"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "00:51 AM"
+            TextSave        =   "00:32 AM"
          EndProperty
       EndProperty
    End
-   Begin VB.Image icoMSDOS32 
+   Begin VB.Image picMSDOS32 
       Height          =   480
       Left            =   8280
-      Picture         =   "frmMain.frx":1744
+      Picture         =   "frmMain.frx":22D2
       Top             =   2040
       Width           =   480
    End
-   Begin VB.Image icoMSDOS16 
+   Begin VB.Image picMSDOS16 
       Height          =   240
       Left            =   8280
-      Picture         =   "frmMain.frx":1A4E
+      Picture         =   "frmMain.frx":25DC
       Top             =   1680
       Width           =   240
    End
@@ -357,10 +465,11 @@ Begin VB.Form frmMain
       Begin VB.Menu mnuFileNew 
          Caption         =   "&New"
          Begin VB.Menu mnuFileNewCategory 
-            Caption         =   "&Category..."
+            Caption         =   "&Category"
          End
          Begin VB.Menu mnuFileNewApplication 
-            Caption         =   "&Application..."
+            Caption         =   "DOS &Application"
+            Shortcut        =   ^N
          End
       End
       Begin VB.Menu mnuFileBar0 
@@ -368,12 +477,14 @@ Begin VB.Form frmMain
       End
       Begin VB.Menu mnuFileCreateshortcut 
          Caption         =   "Create &Shortcut"
+         Enabled         =   0   'False
       End
       Begin VB.Menu mnuFileRename 
          Caption         =   "Rena&me"
       End
       Begin VB.Menu mnuFileDelete 
          Caption         =   "&Delete"
+         Shortcut        =   {DEL}
       End
       Begin VB.Menu mnuFileBar1 
          Caption         =   "-"
@@ -422,6 +533,7 @@ Begin VB.Form frmMain
       End
       Begin VB.Menu mnuViewRefresh 
          Caption         =   "&Refresh"
+         Shortcut        =   {F5}
       End
    End
    Begin VB.Menu mnuHelp 
@@ -443,16 +555,19 @@ Begin VB.Form frmMain
       Caption         =   "tvTreeViewPopup"
       Visible         =   0   'False
       Begin VB.Menu mnuTreeViewNew 
-         Caption         =   "New"
+         Caption         =   "&New"
          Begin VB.Menu mnuTreeViewNewCategory 
-            Caption         =   "&Category..."
+            Caption         =   "&Category"
          End
          Begin VB.Menu mnuTreeViewNewApplication 
-            Caption         =   "&Application..."
+            Caption         =   "DOS &Application"
          End
       End
       Begin VB.Menu mnuTreeViewRename 
          Caption         =   "Rena&me"
+      End
+      Begin VB.Menu mnuTreeViewDelete 
+         Caption         =   "&Delete"
       End
    End
 End
@@ -514,7 +629,7 @@ Private Sub Form_Resize()
   SizeControls imgSplitter.Left
 End Sub
 
-Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
   With imgSplitter
     picSplitter.Move .Left, .Top, .Width \ 2, .Height - 20
   End With
@@ -522,11 +637,11 @@ Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Sing
   mbMoving = True
 End Sub
 
-Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
   Dim sglPos As Single
   
   If mbMoving Then
-    sglPos = X + imgSplitter.Left
+    sglPos = x + imgSplitter.Left
     If sglPos < sglSplitLimit Then
       picSplitter.Left = sglSplitLimit
     ElseIf sglPos > Me.Width - sglSplitLimit Then
@@ -537,27 +652,96 @@ Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Sing
   End If
 End Sub
 
-Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
   SizeControls picSplitter.Left
   picSplitter.Visible = False
   mbMoving = False
 End Sub
 
-Private Sub tvTreeView_DragDrop(Source As Control, X As Single, y As Single)
-  If Source = imgSplitter Then
-    SizeControls X
+Private Sub mnuFileDelete_Click()
+  Select Case modMain.fMainForm.ActiveControl.Tag
+     Case "CtlCategories"
+      mnuTreeViewDelete_Click
+    Case "CtlApplications"
+  End Select
+End Sub
+
+Private Sub mnuFileNewApplication_Click()
+'''
+'
+End Sub
+
+Private Sub mnuFileNewCategory_Click()
+  Dim strText As String
+  strText = "New Category"
+
+  Dim catIndex As Integer
+  catIndex = 2
+
+  Do Until modTreeUtil.GetNodeByText(tvTreeView, tvTreeView.SelectedItem, strText) Is Nothing
+    strText = "New Category (" & catIndex & ")"
+    catIndex = catIndex + 1
+  Loop
+
+  Dim tvNode As Node
+  Set tvNode = modConfig.AddCategory(tvTreeView, tvTreeView.SelectedItem, strText)
+
+  If Not tvNode Is Nothing Then
+    modMain.SelectCategory tvNode
+    tvTreeView.StartLabelEdit
   End If
 End Sub
 
-Sub SizeControls(X As Single)
+Private Sub mnuTreeViewDelete_Click()
+  Dim tvNode As Node
+  Set tvNode = tvTreeView.SelectedItem
+
+  If Not tvNode Is Nothing Then
+    If MsgBox("This will erase the category '" & tvNode.Text & "' and all other categories and applications contained within." & Chr$(13) & "Are you sure you want to continue?", vbYesNo + vbDefaultButton2 + vbExclamation, "Delete '" & tvNode.Text & "'") = vbYes Then
+      Dim tvParentNode As Node
+      If tvNode.Parent Is Nothing Then
+        Set tvParentNode = tvNode.Next
+      Else
+        Set tvParentNode = tvNode.Parent
+      End If
+
+      modConfig.DeleteCategory tvTreeView, tvNode
+
+      modMain.SelectCategory tvParentNode
+    End If
+  End If
+End Sub
+
+Private Sub mnuTreeViewNewApplication_Click()
+  mnuFileNewApplication_Click
+End Sub
+
+Private Sub mnuTreeViewNewCategory_Click()
+  mnuFileNewCategory_Click
+End Sub
+
+Private Sub mnuViewArrangeIcons_Click()
+  ' Force the view to rearrange
+  lvListView.Arrange = lvwAutoTop
+  ' Switch back, allowing the icons to be moved again
+  lvListView.Arrange = lvwNone
+End Sub
+
+Private Sub tvTreeView_DragDrop(Source As Control, x As Single, y As Single)
+  If Source = imgSplitter Then
+    SizeControls x
+  End If
+End Sub
+
+Sub SizeControls(x As Single)
   On Error Resume Next
   
   'set the width
-  If X < 1500 Then X = 1500
-  If X > (Me.Width - 1500) Then X = Me.Width - 1500
-  tvTreeView.Width = X
-  imgSplitter.Left = X
-  lvListView.Left = X + 40
+  If x < 1500 Then x = 1500
+  If x > (Me.Width - 1500) Then x = Me.Width - 1500
+  tvTreeView.Width = x
+  imgSplitter.Left = x
+  lvListView.Left = x + 40
   lvListView.Width = Me.Width - (tvTreeView.Width + 140)
   lblTitle(0).Width = tvTreeView.Width
   lblTitle(1).Left = lvListView.Left + 20
@@ -588,22 +772,20 @@ End Sub
 Private Sub tbToolBar_ButtonClick(ByVal Button As MSComctlLib.Button)
   On Error Resume Next
   Select Case Button.Key
-    Case "Back"
-      'ToDo: Add 'Back' button code.
-      MsgBox "Add 'Back' button code."
-    Case "Forward"
-      'ToDo: Add 'Forward' button code.
-      MsgBox "Add 'Forward' button code."
-    Case "Cut"
-'      mnuEditCut_Click
-    Case "Copy"
-'      mnuEditCopy_Click
-    Case "Paste"
-'      mnuEditPaste_Click
+    Case "New"
+'     mnuFileNewApplication_Click
     Case "Delete"
-'      mnuFileDelete_Click
+      mnuFileDelete_Click
     Case "Properties"
-'      mnuFileProperties_Click
+'     mnuFileProperties_Click
+    Case "Refresh"
+      mnuViewRefresh_Click
+    Case "Cut"
+'     mnuEditCut_Click
+    Case "Copy"
+'     mnuEditCopy_Click
+    Case "Paste"
+'     mnuEditPaste_Click
     Case "View Large Icons"
       lvListView.View = lvwIcon
     Case "View Small Icons"
@@ -666,8 +848,8 @@ Private Sub mnuViewOptions_Click()
 End Sub
 
 Private Sub mnuViewRefresh_Click()
-  'ToDo: Add 'mnuViewRefresh_Click' code.
-  MsgBox "Add 'mnuViewRefresh_Click' code."
+  modConfig.LoadCategories tvTreeView
+  modMain.SelectCategory tvTreeView.SelectedItem
 End Sub
 
 Private Sub mnuVAIByDate_Click()
@@ -707,24 +889,6 @@ Private Sub mnuFileClose_Click()
   Unload Me
 End Sub
 
-Private Sub mnuFileOpen_Click()
-  Dim sFile As String
-
-  With dlgCommonDialog
-    .DialogTitle = "Open"
-    .CancelError = False
-    'ToDo: set the flags and attributes of the common dialog control
-    .Filter = "All Files (*.*)|*.*"
-    .ShowOpen
-    If Len(.FileName) = 0 Then
-      Exit Sub
-    End If
-    sFile = .FileName
-  End With
-  'ToDo: add code to process the opened file
-
-End Sub
-
 '
 ' Custom code
 '
@@ -741,7 +905,13 @@ Private Sub mnuTreeViewRename_Click()
   tvTreeView.StartLabelEdit
 End Sub
 
-Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub tvTreeView_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+  Dim tvNode As Node
+  Set tvNode = tvTreeView.HitTest(x, y)
+  modMain.SelectCategory tvNode
+End Sub
+
+Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
   If Button = 2 Then  ' Check if right mouse button was clicked.
     PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton
   End If
@@ -749,17 +919,22 @@ End Sub
 
 Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
   sbStatusBar.Panels.Item(1).Text = Node.Key
-  modConfig.LoadApplications Me, Node.Key
+  modMain.SelectCategory Node
 End Sub
 
 Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
-  Select Case modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString)
-    Case 0
-      Cancel = 0
-    Case 1
-      MsgBox "The category '" & NewString & "' already exists.  Please choose another name."
-      Cancel = 1
-    Case Else
-      Cancel = 1
-  End Select
+  If Len(NewString) > 0 Then
+    Select Case modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString)
+      Case 0
+        Cancel = 0
+      Case 1
+        MsgBox "The category '" & NewString & "' already exists." & Chr$(13) & "Please choose another name."
+        Cancel = 1
+      Case Else
+        Cancel = 1
+    End Select
+  Else
+    MsgBox "Please type in a valid name."
+    Cancel = 1
+  End If
 End Sub

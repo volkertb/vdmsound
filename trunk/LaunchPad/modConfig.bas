@@ -1,28 +1,26 @@
 Attribute VB_Name = "modConfig"
+'
+'
+'
 Public iniFileName As String
 
 '
 ' Loads categories from the main .ini file
 '
-Public Function LoadCategories(fMainForm As frmMain) As Long
+Public Function LoadCategories( _
+  tvTree As TreeView, _
+  Optional strRoot As String = "root", _
+  Optional tvParentNode As Node = Nothing _
+) As Long
+
   On Error GoTo Error
-  
-  ' Get the number of categories that exist
-  Dim numItems As Long
-  numItems = Val(modIniFile.ReadIniString(iniFileName, "categories", "count"))
 
   ' Empty the categories tree
-  fMainForm.tvTreeView.Nodes.Clear
+  tvTree.Nodes.Clear
 
-  ' Create each category
-  For i = 0 To numItems - 1
-    Dim itemName As String
-    Dim itemValue As String
-    itemName = "item" & Format$(i)
-    itemValue = modIniFile.ReadIniString(iniFileName, "categories", itemName)
+  ' Load top-level categories, skipping the first (root) level category
+  LoadCategory tvTree, "cat.root", Nothing, 1
 
-    If LoadCategoryBranch(fMainForm.tvTreeView, itemValue) Is Nothing Then GoTo Error_silent
-  Next
   LoadCategories = 0
   Exit Function
 
@@ -33,69 +31,275 @@ Error_silent:
 End Function
 
 '
-' Given an absolute path, this function will create an entire
-'  branch of categories.
 '
-Public Function LoadCategoryBranch(tvTree As TreeView, ByVal strNodeKey As String) As Node
+'
+Private Sub LoadCategory( _
+  tvTree As TreeView, _
+  strKey As String, _
+  tvParentNode As Node, _
+  ByVal lngSkip As Long _
+)
+  ' Get the category's name
+  Dim strText As String
+  strText = StrDecode(modIniFile.ReadIniString(iniFileName, strKey, "name"))
+
+  ' Create this category in the tree (unless we have to skip some levels)
+  Dim tvThisNode As Node
+  If lngSkip > 0 Then
+    lngSkip = lngSkip - 1
+    Set tvThisNode = tvParentNode
+  Else
+    Set tvThisNode = modTreeUtil.AddNode(tvTree, tvParentNode, strText, strKey)
+  End If
+
+  ' Get the number of sub-elements that exist
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strKey, "count"))
+
+  ' Create each sub-category
+  For i = 0 To numItems - 1
+    Dim itemValue As String
+    itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
+
+    If LCase$(Left$(itemValue, 4)) = "cat." Then
+      LoadCategory tvTree, itemValue, tvThisNode, lngSkip
+    End If
+  Next
+End Sub
+
+'
+'
+'
+Public Function GetLastSelectedCategory( _
+  tvTree As TreeView _
+) As Node
+  Set GetLastSelectedCategory = modTreeUtil.GetNodeByKey(tvTree, modIniFile.ReadIniString(modConfig.iniFileName, "general", "lastCat"))
+End Function
+
+'
+' Allocates a uniquely identifying key (for either categories or
+'  applications, based on prefix) inside the main INI file
+'
+Private Function AllocateKey( _
+  strPrefix As String _
+)
+
+  Dim strKey As String
+
+  For i = 0 To &H7FFFFFFF
+    strKey = Hex(i)
+    strKey = Mid$("00000000", Len(strKey) + 1) & strKey
+
+    If Len(ReadIniSection(iniFileName, strPrefix & strKey)) < 1 Then
+      AllocateKey = strPrefix & strKey
+      Exit Function
+    End If
+  Next
+
+  AlloateKey = ""
+  Exit Function
+End Function
+
+'
+' Adds a category to the category tree and main INI file
+'
+Public Function AddCategory( _
+  tvTree As TreeView, _
+  tvParentNode As Node, _
+  strText As String _
+) As Node
+
   On Error GoTo Error
 
-  ' Pick up the last separating '.' which splits the branch into
-  '  a parent-branch key and a child leaf-node key
-  Dim splitPos As Long
-  splitPos = InStrRev(strNodeKey, ".")
+  Dim strKey As String
+  strKey = modConfig.AllocateKey("cat.")
 
-  ' Recursevly create the parent-branch, then add the child leaf-node
-  If splitPos > 0 Then
-    Dim tvParentNode As Node
-    Set tvParentNode = LoadCategoryBranch(tvTree, Left$(strNodeKey, splitPos - 1))
-    If tvParentNode Is Nothing Then GoTo Error_silent
-
-    Set LoadCategoryBranch = AddNode(tvTree, tvParentNode, Mid$(strNodeKey, splitPos + 1)) ' return, middle/leaf node
+  modIniFile.WriteIniString iniFileName, strKey, "count", "0"
+  modIniFile.WriteIniString iniFileName, strKey, "name", StrEncode(strText)
+  
+  Dim strParentKey As String
+  If tvParentNode Is Nothing Then
+    strParentKey = "cat.root"
   Else
-    Set LoadCategoryBranch = AddNode(tvTree, Nothing, strNodeKey)  ' return, root node
+    strParentKey = tvParentNode.Key
+  End If
+
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
+  modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems + 1)
+  modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(numItems), strKey
+
+  Set AddCategory = modTreeUtil.AddNode(tvTree, tvParentNode, strText, strKey)
+  Exit Function
+
+Error:
+  modError.ReportError "Unable to create category '" & strText & "'."
+  Set AddCategory = Nothing
+End Function
+
+'
+' Attempts to rename a category.  If the function is successful, the
+'  function returns zero, otherwise (e.g. if the category name already
+'  exists), it returns a non-zero value.
+' If the renaming is successful, it is mirrored in the .ini configuration file.
+'
+Public Function RenameCategory( _
+  tvTree As TreeView, _
+  tvNode As Node, _
+  ByVal strNewText As String _
+) As Integer
+
+  Dim strOldText As String
+  strOldText = tvNode.Text
+
+  On Error GoTo Error
+
+  ' Attempt to rename the current node (assuming the new key is unique)
+  If modTreeUtil.RenameNode(tvTree, tvNode, strNewText) <> 0 Then
+    RenameCategory = 1  ' return, duplicate name
+  Else
+    ' Rename category inside .ini file
+    modIniFile.WriteIniString iniFileName, tvNode.Key, "name", StrEncode(strNewText)
+
+    RenameCategory = 0  ' return, the node was successfully renamed
   End If
   Exit Function
 
 Error:
-  modError.ReportError "Unable to populate categories tree."
-Error_silent:
-  Set LoadCategoryBranch = Nothing
+  modError.ReportError "Unable to rename category to '" & strNewText & "'."
+  On Error Resume Next
+  modTreeUtil.RenameNode tvTree, tvNode, strOldText ' roll back changes
+  RenameCategory = -1
+End Function
+
+'
+'
+'
+Public Function DeleteCategory( _
+  tvTree As TreeView, _
+  tvNode As Node _
+) As Long
+
+  On Error GoTo Error
+
+  Dim strKey As String
+  strKey = tvNode.Key
+
+  Dim strParentKey As String
+
+  If tvNode.Parent Is Nothing Then
+    strParentKey = "cat.root"
+  Else
+    strParentKey = tvNode.Parent.Key
+  End If
+
+  If DeleteCategory_Helper(strKey, strParentKey) <> 0 Then
+    LoadCategories tvTree ' an error resulted in only a partial delete, so we resynchronize
+  Else
+    modTreeUtil.RemoveNode tvTree, tvNode ' the delete was successful, remove the branch from the GUI
+  End If
+  Exit Function
+
+Error:
+  modError.ReportError "An error was encountered while deleting the category '" & strKey & "'."
+  DeleteCategory = -1
+End Function
+
+'
+'
+'
+Private Function DeleteCategory_Helper( _
+  strKey As String, _
+  strParentKey As String _
+)
+
+  On Error GoTo Error
+
+  Dim numItems As Long
+  Dim itemValue As String
+
+  ' If a parent is specified then we have to locate and erase any reference
+  '  it might have to this element, otherwise those references will point to
+  '  non-existent sections in the INI file
+  If strParentKey <> "" Then
+    Dim isRefDeleted As Long
+    isRefDeleted = 0
+
+    Dim strLCaseKey As String
+    strLCaseKey = LCase$(strKey)
+
+    ' Remove references to this element from the parent category
+    numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
+
+    ' Make an inventory of the elements listed in the parent
+    For i = 0 To numItems - 1
+      itemValue = modIniFile.ReadIniString(iniFileName, strParentKey, "item" & Format$(i))
+
+      If isRefDeleted <> 0 Then
+        modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(i - 1), itemValue
+      ElseIf LCase$(itemValue) = strLCaseKey Then
+        isRefDeleted = 1
+      End If
+    Next
+
+    ' Finally remove the trailing element and shorten the children list by one
+    If isRefDeleted <> 0 Then
+      modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems - 1)
+      modIniFile.DeleteIniString iniFileName, strParentKey, "item" & Format$(numItems - 1)
+    End If
+  End If
+
+  ' If dealing with a category we have to recursively delete any
+  '  sub-categories or applications
+  If LCase$(Left$(strKey, 4)) = "cat." Then
+    ' Get the number of sub-elements that exist in this category
+    numItems = Val(modIniFile.ReadIniString(iniFileName, strKey, "count"))
+
+    ' Delete each sub-category and/or application listed
+    For i = 0 To numItems - 1
+      itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
+      If DeleteCategory_Helper(itemValue, "") <> 0 Then GoTo Error
+    Next
+  End If
+
+  ' Finally erase the element's section from the INI file
+  modIniFile.DeleteIniSection iniFileName, strKey
+  DeleteCategory_Helper = 0 ' return, success
+  Exit Function
+
+Error:
+  DeleteCategory_Helper = -1  ' return, partial or complete failure
 End Function
 
 '
 ' Loads list of applications for a given category from the main .ini file
 '
-Public Function LoadApplications(fMainForm As frmMain, strNodeKey As String) As Long
+Public Function LoadApplications( _
+  lvList As ListView, _
+  strKey As String _
+) As Long
+
   On Error GoTo Error
-
-  Dim strIniSection As String
-  strIniSection = "categories." & strNodeKey
-
-  ' Get the number of applications that exist
-  Dim numItems As Long
-  numItems = Val(modIniFile.ReadIniString(iniFileName, strIniSection, "count"))
 
   ' Empty the applications list
   fMainForm.lvListView.ListItems.Clear
-  
+
   ' Reset the application icons (detach image list from list view first)
-  fMainForm.lvListView.Icons = Nothing
-  fMainForm.lvListView.SmallIcons = Nothing
-  fMainForm.imgListViewIcons32.ListImages.Clear
-  fMainForm.imgListViewIcons16.ListImages.Clear
-  fMainForm.imgListViewIcons32.ListImages.Add , "<default>", fMainForm.icoMSDOS32.Picture
-  fMainForm.imgListViewIcons16.ListImages.Add , "<default>", fMainForm.icoMSDOS16.Picture
-  fMainForm.lvListView.Icons = fMainForm.imgListViewIcons32
-  fMainForm.lvListView.SmallIcons = fMainForm.imgListViewIcons16
+  ResetApplicationsIcons lvList, 32, modMain.fMainForm.picMSDOS32
+  ResetApplicationsIcons lvList, 16, modMain.fMainForm.picMSDOS16
+
+  ' Get the number of sub-elements that exist
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strKey, "count"))
 
   ' Create each application
   For i = 0 To numItems - 1
-    Dim itemName As String
     Dim itemValue As String
-    itemName = "item" & Format$(i)
-    itemValue = modIniFile.ReadIniString(iniFileName, strIniSection, itemName)
+    itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
 
-    LoadApplicationPreview fMainForm.lvListView, strNodeKey, itemValue
+    If LCase$(Left$(itemValue, 4)) = "app." Then
+      LoadApplication lvList, itemValue
+    End If
   Next
   LoadApplications = 0
   Exit Function
@@ -106,190 +310,101 @@ Error:
 End Function
 
 '
-' Loads list of applications for a given category from the main .ini file
 '
-Public Sub LoadApplicationPreview(lvList As ListView, ByVal strNodeKey As String, ByVal strAppKey As String)
-  Dim strFullKey As String
-  strFullKey = strNodeKey & "." & strAppKey
+'
+Private Sub ResetApplicationsIcons( _
+  lvList As ListView, _
+  intSize As Integer, _
+  icoDefault As Picture _
+)
+  Dim imlListIcons As ImageList
 
-  Dim icoKey As String
-  icoKey = "<default>"
+  Select Case intSize
+    Case 32
+      Set imlListIcons = lvList.Icons
+      Set lvList.Icons = Nothing
+    Case 16
+      Set imlListIcons = lvList.SmallIcons
+      Set lvList.SmallIcons = Nothing
+    Case Else
+      Err.Raise ccInvalidProcedureCall, "ResetApplicationsIcons", "Invalid icon size (" & intSize & ")"
+  End Select
 
-  On Error GoTo DefaultIcon
+  imlListIcons.ListImages.Clear
+  imlListIcons.ImageHeight = intSize
+  imlListIcons.ImageWidth = intSize
+  imlListIcons.ListImages.Add , "default", icoDefault
 
-  Dim strIconPath As String
-  strIconPath = modIniFile.ReadIniString(iniFileName, "categories." & strFullKey, "icon")
-
-  fMainForm.imgListViewIcons32.ListImages.Add , strAppKey, LoadPicture(strIconPath, , , 32, 32)
-  fMainForm.imgListViewIcons16.ListImages.Add , strAppKey, LoadPicture(strIconPath, , , 16, 16)
-  icoKey = strAppKey
-
-DefaultIcon:
-  lvList.ListItems.Add , strFullKey, StrDecode(strAppKey), icoKey, icoKey
+  Select Case intSize
+    Case 32
+      Set lvList.Icons = imlListIcons
+    Case 16
+      Set lvList.SmallIcons = imlListIcons
+    Case Else
+      Err.Raise ccInvalidProcedureCall, "ResetApplicationsIcons", "Invalid icon size (" & intSize & ")"
+  End Select
 End Sub
 
 '
-' Attempts to rename a category.  The category's key (as well as
-'  the keys of its children) are updated.  If the function is
-'  successful, the function returns zero, otherwise (e.g. if the
-'  key/category name already exists), it returns a non-zero value.
-' If the renaming is successful, it is mirrored in the configuration file.
 '
-Public Function RenameCategory(tvTree As TreeView, tvNode As Node, ByVal strNewNodeText As String) As Integer
-  On Error GoTo Error
+'
+Private Sub LoadApplication( _
+  lvList As ListView, _
+  ByVal strKey As String _
+)
 
-  Dim strOldKey As String
-  strOldKey = tvNode.Key
-  
+  Dim icoKey As String
+  icoKey = "default"
+
+  On Error GoTo Error_UseDefaultIcon
+
+  Dim strText As String
+  strText = StrDecode(modIniFile.ReadIniString(iniFileName, strKey, "name"))
+
+  Dim strIconPath As String
+  strIconPath = modIniFile.ReadIniString(iniFileName, strKey, "icon")
+
+  fMainForm.imlListIcons32.ListImages.Add , strKey, LoadPicture(strIconPath, , , 32, 32)
+  fMainForm.imlListIcons16.ListImages.Add , strKey, LoadPicture(strIconPath, , , 16, 16)
+  icoKey = strKey
+
+Error_UseDefaultIcon:
+  lvList.ListItems.Add , strKey, strText, icoKey, icoKey
+End Sub
+
+'
+' Attempts to rename an application.  If the function is successful, the
+'  function returns zero, otherwise (e.g. if the application name already
+'  exists), it returns a non-zero value.
+' If the renaming is successful, it is mirrored in the .ini configuration file.
+'
+Public Function RenameApplication( _
+  lvList As ListView, _
+  lvItem As ListItem, _
+  ByVal strNewText As String _
+) As Integer
+
   Dim strOldText As String
-  strOldText = tvNode.Text
+  strOldText = lvItem.Text
+
+  On Error GoTo Error
 
   ' Attempt to rename the current node (assuming the new key is unique)
-  If RenameNode(tvTree, tvNode, strNewNodeText) <> 0 Then
-    RenameCategory = 1  ' return, duplicate key
+  If modListUtil.RenameItem(lvList, lvItem, strNewText) <> 0 Then
+    RenameApplication = 1  ' return, duplicate name
   Else
     ' Rename category inside .ini file
-    If RenameCategoryInIniFile(strOldKey, tvNode.Key) <> 0 Then
-      RenameNode tvTree, tvNode, strOldText ' roll back changes
-      GoTo Error_silent
-    End If
+    modIniFile.WriteIniString iniFileName, lvItem.Key, "name", StrEncode(strNewText)
 
-    ' If the renamed node has children then we  must recursively rebuild
-    '  all children's keys to take into account this node's new key
-    If tvNode.Children > 0 Then
-      Dim curNode As Node
-      Set curNode = tvNode.Child
-
-      Do Until curNode Is Nothing
-        If RenameCategory(tvTree, curNode, curNode.Text) <> 0 Then GoTo Error_silent
-        Set curNode = curNode.Next
-      Loop
-    End If
-
-    ' TODO: rename the applications under this key
-    '  in (1) the ListView, and (2) .ini file
-
-    RenameCategory = 0  ' return, the node was successfully renamed
+    RenameApplication = 0  ' return, the item was successfully renamed
   End If
   Exit Function
 
 Error:
-  modError.ReportError "Unable to rename category to '" & strNewNodeText & "'."
-Error_silent:
-  RenameCategory = -1
-End Function
-
-'
-' Renames references to a certain category in the .ini file
-'
-Private Function RenameCategoryInIniFile(strOldKey As String, strNewKey As String) As Long
-  On Error GoTo Error
-
-  ' Rename category in top-level categories list
-  Dim numItems As Long
-  numItems = Val(modIniFile.ReadIniString(iniFileName, "categories", "count"))
-
-  For i = 0 To numItems - 1
-    Dim itemName As String
-    Dim itemValue As String
-    itemName = "item" & Format$(i)
-    If LCase(modIniFile.ReadIniString(iniFileName, "categories", itemName)) = LCase(strOldKey) Then
-      modIniFile.WriteIniString iniFileName, "categories", itemName, strNewKey
-      Exit For
-    End If
-  Next
-
-  ' Rename section
-  modIniFile.RenameIniSection iniFileName, "categories." & strOldKey, "categories." & strNewKey
-
-  RenameCategoryInIniFile = 0
-  Exit Function
-
-Error:
-  modError.ReportError "Unable to rename category in '" & iniFileName & "'."
-  RenameCategoryInIniFile = -1
-End Function
-
-'
-' Adds a node to the given tree.  If the node already
-'  exists thena  reference to an existing node is returned,
-'  otherwise a reference to the new node is returned.
-'
-Private Function AddNode(tvTree As TreeView, _
-  tvParentNode As Node, _
-  ByVal strPartialNodeKey As String) As Node
-
-  Dim strNodeKey As String
-  Dim tmpParent As Variant
-
-  If tvParentNode Is Nothing Then
-    ' Adding a node at the root
-    tmpParent = Null
-    strNodeKey = strPartialNodeKey
-  Else
-    ' Adding a node under another node
-    tmpParent = tvParentNode
-    strNodeKey = tvParentNode.Key & "." & strPartialNodeKey
-  End If
-
-  ' Check if a node with this key already exists
-  Dim tmpChild As Variant
-  Set tmpChild = GetNode(tvTree, strNodeKey)
-
-  If tmpChild Is Nothing Then
-    Set AddNode = tvTree.Nodes.Add(tmpParent, tvwChild, strNodeKey, StrDecode(strPartialNodeKey), "Folder Closed", "Folder Open") ' return, new node created
-  Else
-    Set AddNode = tmpChild ' return, the existing node with the same key
-  End If
-End Function
-
-'
-' Renames a node (both human-readable text and encoded key).
-'  If another (sibling) node with the same name exists then the
-'  function returns a non-zero value, otherwise the node is
-'  renamed and zero is returned.
-'
-Private Function RenameNode(tvTree As TreeView, _
-  tvNode As Node, _
-  ByVal strNewText As String) As Integer
-
-  Dim strNewNodeKey As String
-
-  If tvNode.Parent Is Nothing Then
-    strNewNodeKey = StrEncode(strNewText)
-  Else
-    strNewNodeKey = tvNode.Parent.Key & "." & StrEncode(strNewText)
-  End If
-
-  Dim dupeNode As Node
-  Set dupeNode = GetNode(tvTree, strNewNodeKey)
-
-  ' Only rename node if another with the same name does *not* exist,
-  '  or if attempting to change the case of the same node's spelling
-  If (dupeNode Is Nothing) Or (dupeNode Is tvNode) Then
-    tvNode.Text = strNewText
-    tvNode.Key = strNewNodeKey
-    RenameNode = 0  ' return
-  Else
-    RenameNode = 1  ' return
-  End If
-End Function
-
-'
-' Looks up a node by its key (case insensitive)
-'
-Private Function GetNode(tvTree As TreeView, _
-  ByVal strNodeKey As String) As Node
-
-  strNodeKey = LCase(strNodeKey)
-
-  ' Go through all nodes
-  For i = 1 To tvTree.Nodes.Count
-    If LCase(tvTree.Nodes.Item(i).Key) = strNodeKey Then
-      Set GetNode = tvTree.Nodes.Item(i)  ' return
-      Exit Function
-    End If
-  Next
+  modError.ReportError "Unable to rename application to '" & strNewText & "'."
+  On Error Resume Next
+  modListUtil.RenameItem lvList, lvItem, strOldText ' roll back changes
+  RenameApplication = -1
 End Function
 
 '
@@ -297,7 +412,10 @@ End Function
 '  form '%xxxx', where 'xxxx' is the hexa-decimal representation
 '  of the encoded character(s)
 '
-Public Function StrEncode(ByVal strSrc As String) As String
+Public Function StrEncode( _
+  ByVal strSrc As String _
+) As String
+
   Dim retVal As String
   Dim curChr As String
 
@@ -314,7 +432,7 @@ Public Function StrEncode(ByVal strSrc As String) As String
     Else                          ' non-ANSI, non-alphanumeric: needs to be encoded!
       Dim strTmp As String        ' build the character's hex representation into this string
       strTmp = Hex(Asc(curChr))
-      strTmp = Mid$("0000", 1, 4 - Len(strTmp)) + strTmp    ' 0-pad hex the representation to 4 figures
+      strTmp = Mid$("0000", Len(strTmp) + 1) + strTmp       ' 0-pad hex the representation to 4 figures
       retVal = retVal + "%" + strTmp                        ' prepend the 4 hex figures with '%' and put in return value
     End If
   Next
@@ -325,7 +443,10 @@ End Function
 '
 ' Decodes strings encoded using StrEncode
 '
-Public Function StrDecode(ByVal strSrc As String) As String
+Public Function StrDecode( _
+  ByVal strSrc As String _
+) As String
+
   Dim retVal As String
   Dim curChr As String
 
@@ -345,19 +466,4 @@ Public Function StrDecode(ByVal strSrc As String) As String
   Next
 
   StrDecode = retVal    ' return
-End Function
-
-'
-'
-'
-Public Function Node2ASCII(leafNode As Node) As String
-  Node2ASCII = Node2ASCII_Helper(leafNode, "")  ' return
-End Function
-
-Private Function Node2ASCII_Helper(leafNode As Node, suffix As String) As String
-  If leafNode.Parent Is Nothing Then
-    Node2ASCII_Helper = StrEncode(leafNode.Text) & suffix ' return
-  Else
-    Node2ASCII_Helper = Node2ASCII_Helper(leafNode.Parent, "." & StrEncode(leafNode.Text) & suffix) ' return
-  End If
 End Function

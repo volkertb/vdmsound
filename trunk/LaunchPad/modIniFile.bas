@@ -3,49 +3,55 @@ Attribute VB_Name = "modIniFile"
 ' Win API Declares
 '
 Private Declare Function WritePrivateProfileString _
-  Lib "kernel32" Alias "WritePrivateProfileStringA" _
- (ByVal lpAppName As String, _
-  ByVal lpKeyName As String, _
-  ByVal lpString As String, _
-  ByVal lpFileName As String) As Long
+  Lib "kernel32" Alias "WritePrivateProfileStringA" ( _
+    ByVal lpAppName As String, _
+    ByVal lpKeyName As String, _
+    ByVal lpString As String, _
+    ByVal lpFileName As String _
+  ) As Long
 
 Private Declare Function GetPrivateProfileString _
-  Lib "kernel32" Alias "GetPrivateProfileStringA" _
- (ByVal lpAppName As String, _
-  ByVal lpKeyName As String, _
-  ByVal lpDefault As String, _
-  ByVal lpReturnedString As String, _
-  ByVal nSize As Long, _
-  ByVal lpFileName As String) As Long
+  Lib "kernel32" Alias "GetPrivateProfileStringA" ( _
+    ByVal lpAppName As String, _
+    ByVal lpKeyName As String, _
+    ByVal lpDefault As String, _
+    ByVal lpReturnedString As String, _
+    ByVal nSize As Long, _
+    ByVal lpFileName As String _
+  ) As Long
 
 Private Declare Function WritePrivateProfileSection _
-  Lib "kernel32" Alias "WritePrivateProfileSectionA" _
- (ByVal lpAppName As String, _
-  ByVal lpString As String, _
-  ByVal lpFileName As String) As Long
+  Lib "kernel32" Alias "WritePrivateProfileSectionA" ( _
+    ByVal lpAppName As String, _
+    ByVal lpString As String, _
+    ByVal lpFileName As String _
+  ) As Long
 
 Private Declare Function GetPrivateProfileSection _
-  Lib "kernel32" Alias "GetPrivateProfileSectionA" _
- (ByVal lpAppName As String, _
-  ByVal lpReturnedString As String, _
-  ByVal nSize As Long, _
-  ByVal lpFileName As String) As Long
+  Lib "kernel32" Alias "GetPrivateProfileSectionA" ( _
+    ByVal lpAppName As String, _
+    ByVal lpReturnedString As String, _
+    ByVal nSize As Long, _
+    ByVal lpFileName As String _
+  ) As Long
 
 '
 ' Creates a full path name given a directory name and a file name.
 '  Takes care of any trailing '\'s in the directory name and of
 '  missing .ini extensions.
 '
-Public Function MakeIniPathStr(ByVal strDir As String, _
-  ByVal strFile As String) As String
+Public Function MakeIniPathStr( _
+  ByVal strDir As String, _
+  ByVal strFile As String _
+) As String
 
   ' First make sure the directory finishes with a '\'
-  If Right(strDir, 1) <> "\" Then
+  If Right$(strDir, 1) <> "\" Then
     strDir = strDir & "\"
   End If
 
   ' Then make sure the directory finishes with a '.ini'
-  If Right(strFile, 4) <> ".ini" Then
+  If Right$(strFile, 4) <> ".ini" Then
     strFile = strFile & ".ini"
   End If
 
@@ -58,7 +64,10 @@ End Function
 '  it) exists, and if it does not exist then the subroutine
 '  creates it
 '
-Public Function EnsurePathExists(ByVal strPath As String) As Long
+Public Function EnsurePathExists( _
+  ByVal strPath As String _
+) As Long
+
   Dim strTmpPath As String  ' holds the path we know exists; as we check for file
                             '  existence, strPath gets transferred into strTmpPath
   Dim splitPos As Long
@@ -97,7 +106,7 @@ Public Function EnsurePathExists(ByVal strPath As String) As Long
       End If
     End If
   Wend
-  
+
   EnsurePathExists = 1
   Exit Function
 
@@ -111,10 +120,12 @@ End Function
 '  exist, then it is automatically created.  The file must exist,
 '  otherwise an error may occur
 '
-Public Sub WriteIniString(strIni As String, _
+Public Sub WriteIniString( _
+  strIni As String, _
   strSection As String, _
   strKey As String, _
-  strValue As String)
+  strValue As String _
+)
 
   ' Write the key/value pair to strIni
   If WritePrivateProfileString(strSection, strKey, strValue, strIni) = 0 Then
@@ -127,19 +138,19 @@ End Sub
 '  ini file from under the given section.  If the key does not
 '  exist, return an empty string
 '
-Public Function ReadIniString(strIni As String, _
+Public Function ReadIniString( _
+  strIni As String, _
   strSection As String, _
-  strKey As String) As String
+  strKey As String _
+) As String
 
   Dim strTmp As String
-  strTmp = String$(1024, 0)
+  strTmp = String$(4096, 0)
 
   Dim lngRet As Long
 
   ' Read the key/value pair from strIni
-  lngRet = GetPrivateProfileString(strSection, _
-    strKey, "", strTmp, _
-    Len(strTmp), strIni)
+  lngRet = GetPrivateProfileString(strSection, strKey, "", strTmp, Len(strTmp), strIni)
 
   ' Trim trailing '\0's
   strTmp = Left$(strTmp, lngRet)
@@ -159,9 +170,11 @@ End Function
 ' Deletes any reference to the given key from under
 '  the given section in the given ini file
 '
-Public Sub DeleteIniString(strIni As String, _
+Public Sub DeleteIniString( _
+  strIni As String, _
   strSection As String, _
-  strKey As String)
+  strKey As String _
+)
 
   ' To delete the key just pass NULL as the value
   If WritePrivateProfileString(strSection, strKey, vbNullString, strIni) = 0 Then
@@ -172,12 +185,14 @@ End Sub
 '
 ' Renames the given key
 '
-Public Sub RenameIniString(strIni As String, _
+Public Sub RenameIniString( _
+  strIni As String, _
   strSection As String, _
   strOldKey As String, _
-  strNewKey As String)
+  strNewKey As String _
+)
 
-  If LCase(strOldKey) = LCase(strNewKey) Then
+  If LCase$(strOldKey) = LCase$(strNewKey) Then
     Exit Sub  ' return, old and new names are identical
   End If
 
@@ -185,8 +200,7 @@ Public Sub RenameIniString(strIni As String, _
   strValue = String$(4096, 0)
 
   ' Get the value
-  GetPrivateProfileString strSection, strOldKey, "", _
-    strValue, Len(strValue), strIni
+  GetPrivateProfileString strSection, strOldKey, "", strValue, Len(strValue), strIni
 
   ' Create the new key
   If WritePrivateProfileString(strSection, strNewKey, strValue, strIni) Then
@@ -202,8 +216,10 @@ End Sub
 '
 ' Deletes a section in the given ini file
 '
-Public Sub DeleteIniSection(strIni As String, _
-  strSection As String)
+Public Sub DeleteIniSection( _
+  strIni As String, _
+  strSection As String _
+)
 
   ' To delete the section just pass NULL as the value
   If WritePrivateProfileSection(strSection, vbNullString, strIni) = 0 Then
@@ -212,13 +228,38 @@ Public Sub DeleteIniSection(strIni As String, _
 End Sub
 
 '
+' Reads the contents of a section from the given ini file.
+'  If the section does not exist, return an empty string.
+'
+Public Function ReadIniSection( _
+  strIni As String, _
+  strSection As String _
+) As String
+
+  Dim strKeys As String
+  strKeys = String$(32768, 0)
+
+  Dim lngRet As Long
+
+  ' Get the keys from the old section
+  lngRet = GetPrivateProfileSection(strSection, strKeys, Len(strKeys), strIni)
+
+  ' Trim trailing '\0's
+  strKeys = Left$(strKeys, lngRet)
+
+  ReadIniSection = strKeys  ' return
+End Function
+
+'
 ' Renames a section in the given ini file
 '
-Public Sub RenameIniSection(strIni As String, _
+Public Sub RenameIniSection( _
+  strIni As String, _
   strOldSection As String, _
-  strNewSection As String)
+  strNewSection As String _
+)
 
-  If LCase(strOldSection) = LCase(strNewSection) Then
+  If LCase$(strOldSection) = LCase$(strNewSection) Then
     Exit Sub  ' return, old and new names are identical
   End If
 
