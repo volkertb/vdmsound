@@ -318,7 +318,7 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
   }
 
   DWORD lastError = GetLastError();
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encountered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
 
   return -2;  // abnormal thread termination (error in message fetch)
 }

@@ -301,9 +301,6 @@ STDMETHODIMP CPPDACCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count,
 unsigned int CPPDACCtl::Run(CThread& thread) {
   MSG message;
 
-  int activity;
-  bool hasStarted = false;
-
   _ASSERTE(thread.GetThreadID() == m_playbackThread.GetThreadID());
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Playback thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
@@ -347,7 +344,7 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
   }
 
   DWORD lastError = GetLastError();
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encountered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
 
   return -2;  // abnormal thread termination (error in message fetch)
 }
