@@ -130,9 +130,17 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
+  // Put the OPL in a known state
+  m_AdLibFSM.reset();
+
   // Initialize the OPL software synthesizer
   if (FAILED(hr = OPLCreate(m_sampleRate)))
     return hr;
+
+  // Create the playback thread (converts FM information to PCM)
+  m_playbackThread.Create(this, true);      /* TODO: check that creation was successful */
+  m_playbackThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+  m_playbackThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x)"), m_basePort));
 
@@ -140,8 +148,15 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
 }
 
 STDMETHODIMP CAdLibCtl::Destroy() {
-  // release the OPL software synthesizer
+  // Signal the playback thread to quit
+  if (m_playbackThread.GetThreadHandle() != NULL)
+    m_playbackThread.Cancel();
+
+  // Release the OPL software synthesizer
   OPLDestroy();
+
+  // Put the OPL in a known state
+  m_AdLibFSM.reset();
 
   // Release the Wave-out module
   m_waveOut = NULL;
@@ -171,15 +186,7 @@ STDMETHODIMP CAdLibCtl::HandleINB(USHORT inPort, BYTE * data) {
 
   switch (inPort - m_basePort) {
     case 0:   // the address/status port
-      curTime = timeGetTime();
-
-      if (m_targetTime[0].isActive && (m_targetTime[0].expiration <= curTime))
-        MAME::OPLTimerOver(m_OPL, 0);   // The first timer expired
-
-      if (m_targetTime[1].isActive && (m_targetTime[1].expiration <= curTime))
-        MAME::OPLTimerOver(m_OPL, 1);   // The second timer expired
-
-      *data = MAME::OPLRead(m_OPL, 0);
+      *data = m_AdLibFSM.getStatus();
       return S_OK;
 
     case 1:   // the data port
@@ -196,13 +203,11 @@ STDMETHODIMP CAdLibCtl::HandleINB(USHORT inPort, BYTE * data) {
 STDMETHODIMP CAdLibCtl::HandleOUTB(USHORT outPort, BYTE data) {
   switch (outPort - m_basePort) {
     case 0:   // the address/status port
-      // TODO: set register index
-      MAME::OPLWrite(m_OPL, 0, data);
+      m_AdLibFSM.setAddress(data);
       return S_OK;
 
     case 1:   // the data port
-      // TODO: set register data
-      MAME::OPLWrite(m_OPL, 1, data);
+      m_AdLibFSM.putData(data);
       return S_OK;
 
     default:
@@ -245,11 +250,59 @@ STDMETHODIMP CAdLibCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count,
 
 
 /////////////////////////////////////////////////////////////////////////////
+// IRunnable
+/////////////////////////////////////////////////////////////////////////////
+
+unsigned int CAdLibCtl::Run(CThread& thread) {
+  MSG message;
+  OPLMessage OPLMsg;
+
+  _ASSERTE(thread.GetThreadID() == m_playbackThread.GetThreadID());
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Playback thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
+
+  m_lastTime = 0;
+  m_curTime  = 0;
+
+  while (true) {
+    if (thread.GetMessage(&message, false)) {       // non-blocking message-"peek"
+      switch (message.message) {
+        case WM_QUIT:
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Playback thread cancelled")));
+          return 0;
+
+        default:
+          break;
+      }
+    } else {
+      while (m_OPLMsgQueue.get(OPLMsg)) {
+        m_lastTime = m_curTime;
+        m_curTime  = OPLMsg.timestamp;
+
+        MAME::OPLWrite(m_OPL, 0, OPLMsg.address);
+        MAME::OPLWrite(m_OPL, 1, OPLMsg.value);
+      }
+
+      Sleep(30);
+    }
+  }
+
+  DWORD lastError = GetLastError();
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
+
+  return -2;  // abnormal thread termination (error in message fetch)
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Utility functions
 /////////////////////////////////////////////////////////////////////////////
 
 //
-//
+// This function will create an OPL emulation core.  It will also take care
+//  of associating this CAdLibCtl instance with a unique numeric ID that can
+//  then be easily looked up inside the OPL core callback functions.
 //
 HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
   int i;
@@ -284,12 +337,8 @@ HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
   if ((m_OPL = MAME::OPLCreate(OPL_TYPE_YM3812, OPL_INTERNAL_FREQ, sampleRate)) == NULL)
     return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
 
-  // Install the callback handlers
-  MAME::OPLSetTimerHandler(m_OPL, OPLTimerHandler, m_instanceID * 2);
+  // Install the callback handler(s)
   MAME::OPLSetUpdateHandler(m_OPL, OPLUpdateHandler, m_instanceID);
-
-  m_targetTime[0].isActive = false;
-  m_targetTime[1].isActive = false;
 
   return S_OK;
 }
@@ -313,46 +362,54 @@ void CAdLibCtl::OPLDestroy(void) {
 
 
 /////////////////////////////////////////////////////////////////////////////
-// OPL callback functions
+// IMPU401HWEmulationLayer
+/////////////////////////////////////////////////////////////////////////////
+
+void CAdLibCtl::setOPLReg(int address, int value) {
+  OPLMessage msg;
+
+  msg.timestamp = timeGetTime();
+  msg.address   = address;
+  msg.value     = value;
+
+  m_OPLMsgQueue.put(msg);
+}
+
+OPLTime_t CAdLibCtl::getTimeMicros(void) {
+  return 1000lu * timeGetTime();
+}
+
+void CAdLibCtl::logError(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, (LPCTSTR)CString(message));
+}
+
+void CAdLibCtl::logWarning(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, (LPCTSTR)CString(message));
+}
+
+void CAdLibCtl::logInformation(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, (LPCTSTR)CString(message));
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// OPL callback function(s)
 /////////////////////////////////////////////////////////////////////////////
 
 //
-//
-//
-void CAdLibCtl::OPLTimerHandler(int channel, double interval_sec) {
-  CAdLibCtl* pThis = instances[channel / 2];
-  if (pThis == NULL) return;
-
-  TimerInfo& timerInfo = pThis->m_targetTime[channel % 2];
-
-  if (interval_sec == 0.0) {
-    timerInfo.isActive = false;
-  } else {
-    timerInfo.expiration = timeGetTime() + (DWORD)(interval_sec * 1.0e3);
-    timerInfo.isActive = true;
-  }
-}
-
-//
-//
+// This handler is called just before the OPL state changes, giving us the
+//  chance to render the immediately preceding portion of the audio stream
+//  just before the operators are reprogrammed.
 //
 void CAdLibCtl::OPLUpdateHandler(int param, int min_interval_usec) {
-  static DWORD lastTime = 0;  /* NO STATIC in final version (because of multimple COM instances with same DLL !!! */
-  static double scale = 1.0;
-
-  /* TODO: try doing all this crap from a thread, asynchronously */
-
   CAdLibCtl* pThis = instances[param];
   if (pThis == NULL) return;
 
   if (pThis->m_waveOut == NULL)
     return; // why bother if no renderer is attached ?
 
-  DWORD curTime = timeGetTime();
-
-  if (lastTime == 0) {
-    lastTime = curTime;
-
+  if (pThis->m_lastTime == 0) {
     // Set up the renderer (if any)
     try {
       pThis->m_waveOut->SetFormat(1, pThis->m_sampleRate, 16);
@@ -360,12 +417,10 @@ void CAdLibCtl::OPLUpdateHandler(int param, int min_interval_usec) {
       CString args = Format(_T("%d, %d, %d"), 1, pThis->m_sampleRate, 16);
       RTE_RecordLogEntry(pThis->m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
     }
-  } else if (curTime > lastTime) {
+  } else if (pThis->m_curTime > pThis->m_lastTime) {
     MAME::INT16 buf[65536];
-    int numBytes = (int)(pThis->m_sampleRate * ((curTime - lastTime) / 1000.0));
+    int numBytes = (int)(pThis->m_sampleRate * ((pThis->m_curTime - pThis->m_lastTime) / 1000.0));
     numBytes = min(65536, numBytes);
-
-    lastTime = curTime;
 
     MAME::YM3812UpdateOne(instances[param]->m_OPL, buf, numBytes);
 

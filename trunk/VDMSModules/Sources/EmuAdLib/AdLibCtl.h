@@ -23,20 +23,67 @@ namespace MAME {
 
 /////////////////////////////////////////////////////////////////////////////
 
+#include "AdLibCtlFSM.h"
+#include <Thread.h>
+
+/////////////////////////////////////////////////////////////////////////////
+
 #define MAX_INSTANCES 16
+#define OPL_QUEUE_LEN 1024
+
+/////////////////////////////////////////////////////////////////////////////
+// TS_Queue
+
+// This implements a circular queue.  This queue is thread-safe as long as
+//  there is only one producer and only one consumer (faster than the
+//  generic case, in which one can have any number of producers/consumers).
+template<class _T,int _n> class TS_Queue {
+  public:
+    TS_Queue(void)
+      : m_head(0), m_tail(0), m_length(0)
+    { }
+
+    bool put(const _T& element) {
+      if (m_length < _n) {
+        m_data[m_head] = element;
+        m_head = (m_head + 1) % _n;
+        InterlockedIncrement(&m_length);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    bool get(_T& element) {
+      if (m_length > 0) {
+        element = m_data[m_tail];
+        m_tail = (m_tail + 1) % _n;
+        InterlockedDecrement(&m_length);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+  protected:
+    _T m_data[_n];
+    LONG m_head, m_tail, m_length;
+};
 
 /////////////////////////////////////////////////////////////////////////////
 // CAdLibCtl
 class ATL_NO_VTABLE CAdLibCtl : 
 	public CComObjectRootEx<CComMultiThreadModel>,
 	public CComCoClass<CAdLibCtl, &CLSID_AdLibCtl>,
+  public IAdLibHWEmulationLayer,
+  public IRunnable,
   public ISupportErrorInfo,
   public IVDMBasicModule,
   public IIOHandler
 {
 public:
 	CAdLibCtl()
-    : m_instanceID(-1), m_OPL(NULL)
+    : m_instanceID(-1), m_OPL(NULL), m_AdLibFSM(this)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ADLIBCTL)
@@ -49,6 +96,18 @@ BEGIN_COM_MAP(CAdLibCtl)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
   COM_INTERFACE_ENTRY(IIOHandler)
 END_COM_MAP()
+
+// IAdLibHWEmulationLayer
+public:
+  void setOPLReg(int address, int value);
+  OPLTime_t getTimeMicros(void);
+  void logError(const char* message);
+  void logWarning(const char* message);
+  void logInformation(const char* message);
+
+// IRunnable
+public:
+  unsigned int Run(CThread& thread);
 
 // ISupportsErrorInfo
 public:
@@ -82,9 +141,10 @@ protected:
 
 // Types
 protected:
-  struct TimerInfo {
-    bool isActive;
-    DWORD expiration;
+  struct OPLMessage {
+    DWORD timestamp;
+    int address;
+    int value;
   };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -104,9 +164,16 @@ protected:
   static CAdLibCtl* instances[MAX_INSTANCES];
   static CCriticalSection OPLMutex;
 
+  CThread m_playbackThread;
+  TS_Queue<OPLMessage,OPL_QUEUE_LEN> m_OPLMsgQueue; // circular queue of OPL 'events'
+
+  DWORD m_lastTime, m_curTime;
+
   int m_instanceID;
 
-  TimerInfo m_targetTime[2];
+// Platform-independent classes
+protected:
+  CAdLibCtlFSM m_AdLibFSM;
 
 // Interfaces to dependency modules
 protected:
