@@ -31,6 +31,9 @@ void CMPU401CtlFSM::reset(void) {
 void CMPU401CtlFSM::putCommand(
     char command)
 {
+  int base = 0;
+  std::ostringstream oss;
+
   switch (command & 0xff) {
     // REQUEST to switch to UART mode
     case CMD_UART_MODE:
@@ -52,7 +55,7 @@ void CMPU401CtlFSM::putCommand(
     case CMD_REQUEST_VERSION:
       m_hwemu->logInformation("MPU-401 request MIDI version");
       m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
-      m_inBuf.putByte(0x10);        // version (bits 7-4 = major, bits 3-0 = minor)
+      m_inBuf.putByte(0x15);        // version (bits 7-4 = major, bits 3-0 = minor)
       return;
 
     case CMD_REQUEST_REVISION:
@@ -61,11 +64,29 @@ void CMPU401CtlFSM::putCommand(
       m_inBuf.putByte(0x01);        // revision number
       return;
 
+    case CMD_INT_CLOCK:
+      m_hwemu->logInformation("MPU-401 internal clock select");
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
+      return;
+
+    case CMD_TIMEBASE_48:
+    case CMD_TIMEBASE_72:
+    case CMD_TIMEBASE_96:
+    case CMD_TIMEBASE_120:
+    case CMD_TIMEBASE_144:
+    case CMD_TIMEBASE_168:
+    case CMD_TIMEBASE_192:
+      base = ((command & 0xff) - CMD_TIMEBASE_48) * 24 + 48;
+      oss << "MPU-401 timebase select (" << base << " \?\?\?)";
+      m_hwemu->logInformation(oss.str().c_str());
+      m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
+      m_hwemu->setTimerPeriod(1000 / base);
+      return;
+
 #endif
 
     // Illegal or unsupported command
     default:
-      std::ostringstream oss;
       oss << std::setbase(16) << "Illegal or unsupported MPU-401 command (0x" << (command & 0xff) << ", " << (m_mode == M_UART ? "UART" : m_mode == M_INTELLIGENT ? "intelligent" : "<unknown>") << " mode), faking acknowledge";
       m_hwemu->logError(oss.str().c_str());
       m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
@@ -100,4 +121,13 @@ char CMPU401CtlFSM::getData(void) {
   }
 
   return data;
+}
+
+//
+// Called when the MPU timer expires
+//
+void CMPU401CtlFSM::timerExpired(void) {
+#if 0 /* doesn't fix Legend games, and wouldn't want to break other games (yet) */
+  m_inBuf.putByte(CMD_TIMING_OVERFLOW);
+#endif
 }

@@ -33,6 +33,7 @@ class CMPU401CtlFSM
     char getStatus(void);
     void putData(char data);
     char getData(void);
+    void timerExpired(void);
 
   protected:
     mode_t m_mode;
