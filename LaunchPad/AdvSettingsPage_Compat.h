@@ -26,11 +26,15 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_EMS(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_XMS(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
+	CString	m_cmbEms_old;
+	CString	m_cmbXms_old;
 
 // Public MFC stuff
 public:
@@ -38,16 +42,25 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Compat)
 	enum { IDD = IDD_ADVPROPPAGE_COMPAT };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CComboBox	m_cmbXms;
+	CComboBox	m_cmbEms;
+	CButton	m_chkXms;
+	CButton	m_chkVesa;
+	CButton	m_chkNetware;
+	CButton	m_chkEms;
+	CButton	m_chkDpmi;
+	CButton	m_chkCdrom;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Compat)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +68,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Compat)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkEms();
+	afx_msg void OnChkXms();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

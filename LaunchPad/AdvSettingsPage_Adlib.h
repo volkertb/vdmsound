@@ -26,6 +26,8 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
@@ -38,16 +40,25 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Adlib)
 	enum { IDD = IDD_ADVPROPPAGE_ADLIB };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CSpinButtonCtrl	m_spnFmoutdevbuf;
+	CComboBox	m_cmbFmsynthrate;
+	CComboBox	m_cmbFmport;
+	CComboBox	m_cmbFmoutdevbuf;
+	CComboBox	m_cmbFmoutdev;
+	CButton	m_chkUsefm;
+	CButton	m_chkFmoutdev;
+	CButton	m_butFmoutfilebrowse;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Adlib)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +66,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Adlib)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkUsefm();
+	afx_msg void OnChkFmoutdev();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

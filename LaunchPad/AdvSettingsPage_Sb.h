@@ -26,6 +26,8 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
@@ -38,16 +40,27 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Sb)
 	enum { IDD = IDD_ADVPROPPAGE_SB };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CSpinButtonCtrl	m_spnSboutdevbuf;
+	CComboBox	m_cmbSbtype;
+	CComboBox	m_cmbSbport;
+	CComboBox	m_cmbSboutdevbuf;
+	CComboBox	m_cmbSboutdev;
+	CComboBox	m_cmbSbirq;
+	CComboBox	m_cmbSbdma8;
+	CComboBox	m_cmbSbdma16;
+	CButton	m_chkUsesb;
+	CButton	m_chkSboutdev;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Sb)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +68,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Sb)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkUsesb();
+	afx_msg void OnChkSboutdev();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

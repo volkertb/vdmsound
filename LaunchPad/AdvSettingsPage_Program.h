@@ -31,6 +31,9 @@ protected:
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
+	CString	m_edtDosargs_old;
+	CString	m_edtDosdir_old;
+	CString	m_edtDosprogram_old;
 
 // Public MFC stuff
 public:
@@ -38,16 +41,30 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Program)
 	enum { IDD = IDD_ADVPROPPAGE_PROGRAM };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CEdit	m_edtDosprogram;
+	CEdit	m_edtDosdir;
+	CEdit	m_edtDosargs;
+	CButton	m_chkWinkprtsc;
+	CButton	m_chkWinkctrlesc;
+	CButton	m_chkWinkalttab;
+	CButton	m_chkWinkaltspace;
+	CButton	m_chkWinkaltprtsc;
+	CButton	m_chkWinkaltesc;
+	CButton	m_chkWinkaltenter;
+	CButton	m_chkWarn;
+	CButton	m_chkFastpaste;
+	CButton	m_chkClose;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Program)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +72,9 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Program)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnButDosprogrambrowse();
+	afx_msg void OnButDosdirbrowse();
+	afx_msg void OnButChangeicon();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
