@@ -161,26 +161,10 @@ void CAdvSettingsPage_Joy::OnButJoymapbrowse()
 {
   CWaitCursor wait;
 
-  DWORD lastError = ERROR_SUCCESS;
-  CString strTmp1, strTmp2;
-
   CString fileName;
   m_edtJoymapbrowse.GetWindowText(fileName);
 
-  CFileDialog dlgFile(TRUE, NULL, fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER3), this);
-
-  switch (dlgFile.DoModal()) {
-    case IDOK:
-      m_edtJoymapbrowse.SetWindowText(dlgFile.GetPathName());
-      break;
-
-    case IDCANCEL:
-      break;
-
-    default:
-      lastError = GetLastError();
-      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
-      GetWindowText(strTmp2);
-      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  if (VLPUtil::BrowseForFile(fileName, TRUE, NULL, fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER3), this)) {
+    m_edtJoymapbrowse.SetWindowText(fileName);
   }
 }

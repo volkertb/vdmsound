@@ -1033,6 +1033,85 @@ HRESULT VLPUtil::EnableAutoComplete(HWND hwndEdit) {
 //
 //
 //
+BOOL VLPUtil::BrowseForFile(CString& fileName, BOOL bOpenFileDialog, LPCTSTR lpszDefExt, LPCTSTR lpszFileName, DWORD dwFlags, LPCTSTR lpszFilter, CWnd* pParentWnd) {
+  BOOL retVal = FALSE;
+
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
+  CFileDialog dlgFile(bOpenFileDialog, lpszDefExt, lpszFileName, dwFlags, lpszFilter, pParentWnd);
+
+  switch (dlgFile.DoModal()) {
+    case IDOK:
+      fileName = dlgFile.GetPathName();
+      retVal = TRUE;
+      break;
+
+    case IDCANCEL:
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      if (pParentWnd) pParentWnd->GetWindowText(strTmp2);
+      MessageBox(pParentWnd->GetSafeHwnd(), strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  }
+
+  return retVal;
+}
+
+//
+//
+//
+BOOL VLPUtil::BrowseForFolder(CString& folderName, UINT ulFlags, LPCTSTR lpszTitle, LPCITEMIDLIST pidlRoot, CWnd* pParentWnd) {
+  BOOL retVal = FALSE;
+
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
+  TCHAR tmpBuf[MAX_PATH];
+
+  BROWSEINFO browseInfo;
+  browseInfo.hwndOwner = pParentWnd->GetSafeHwnd();
+  browseInfo.pidlRoot  = pidlRoot;
+  browseInfo.pszDisplayName = tmpBuf;
+  browseInfo.lpszTitle = lpszTitle;
+  browseInfo.ulFlags   = ulFlags;
+  browseInfo.lpfn      = NULL;
+  browseInfo.lParam    = 0;
+  browseInfo.iImage    = 0;
+
+  LPITEMIDLIST pidlBrowse = SHBrowseForFolder(&browseInfo);
+
+  if (pidlBrowse != NULL) {
+    if (SHGetPathFromIDList(pidlBrowse, tmpBuf)) {
+      folderName = tmpBuf;
+      retVal = TRUE;
+    } else {
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      if (pParentWnd) pParentWnd->GetWindowText(strTmp2);
+      MessageBox(pParentWnd->GetSafeHwnd(), strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+    }
+
+    HRESULT hr;
+    CComPtr<IMalloc> pMalloc;
+
+    if (FAILED(hr = SHGetMalloc(&pMalloc))) {
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, hr, (LPCTSTR)VLPUtil::FormatMessage(hr, true, NULL));
+      if (pParentWnd) pParentWnd->GetWindowText(strTmp2);
+      MessageBox(pParentWnd->GetSafeHwnd(), strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+    } else {
+      pMalloc->Free(pidlBrowse);
+    }
+  }
+
+  return retVal;
+}
+
+//
+//
+//
 BOOL VLPUtil::isVLPFile(LPCTSTR fName) {
   try {
     return (_tcsicmp(PathFindExtension(fName), _T(".vlp")) == 0) && !PathIsDirectory(fName);

@@ -47,6 +47,7 @@ public:
 	CButton	m_chkNetware;
 	CButton	m_chkEms;
 	CButton	m_chkDpmi;
+	CButton	m_chkClipopf;
 	CButton	m_chkCdrom;
 	//}}AFX_DATA
 

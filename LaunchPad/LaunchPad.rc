@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,9
+ FILEVERSION 1,0,1,0
  PRODUCTVERSION 2,0,5,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -72,7 +72,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "VDMSound LaunchPad Shell Extension\0"
-            VALUE "FileVersion", "1, 0, 0, 9\0"
+            VALUE "FileVersion", "1, 0, 1, 0\0"
             VALUE "InternalName", "LaunchPad\0"
             VALUE "LegalCopyright", "Copyright (C) 2001\0"
             VALUE "OriginalFilename", "LaunchPad.DLL\0"
@@ -238,7 +238,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,109,153,45,10
     CONTROL         "Alt+Space",IDC_CHK_WINKALTSPACE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
-    LTEXT           "VDMSound Launchpad (ver. 1,0,0,9)\nBETA 2 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
+    LTEXT           "VDMSound Launchpad (ver. 1,0,1,0)\nBETA 4 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
     PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
@@ -248,35 +248,37 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Compatibility"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "&Memory",IDC_GRP_MEMORY,6,7,211,75,WS_GROUP
+    GROUPBOX        "&Memory",IDC_GRP_MEMORY,6,7,211,45,WS_GROUP
     CONTROL         "Enable expanded memory (&EMS)",IDC_CHK_EMS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,20,119,10
-    RTEXT           "Total:",IDC_STATIC,14,32,25,12,SS_CENTERIMAGE | NOT 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,19,119,12
+    RTEXT           "Total:",IDC_STATIC,133,19,22,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    LTEXT           "kB",IDC_STATIC,85,32,25,12,SS_CENTERIMAGE | NOT 
+    LTEXT           "kB",IDC_STATIC,201,19,13,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    COMBOBOX        IDC_CMB_EMS,42,32,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        IDC_CMB_EMS,158,19,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Enable extended memory (&XMS)",IDC_CHK_XMS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,50,117,10
-    RTEXT           "Total:",IDC_STATIC,14,62,25,12,SS_CENTERIMAGE | NOT 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,32,117,12
+    RTEXT           "Total:",IDC_STATIC,133,32,22,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    LTEXT           "kB",IDC_STATIC,85,62,15,12,SS_CENTERIMAGE | NOT 
+    LTEXT           "kB",IDC_STATIC,201,32,13,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    COMBOBOX        IDC_CMB_XMS,42,62,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        IDC_CMB_XMS,158,32,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "&Protected Mode",IDC_GRP_PMODE,6,87,211,27,WS_GROUP
+    GROUPBOX        "&Protected Mode",IDC_GRP_PMODE,6,57,211,39,WS_GROUP
     CONTROL         "Enable &DPMI support (DOSX)",IDC_CHK_DPMI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,99,109,10
-    GROUPBOX        "V&ideo",IDC_GRP_VIDEO,6,119,211,27,WS_GROUP
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,69,109,10
+    CONTROL         "Enable &CLI/POPF workaround",IDC_CHK_CLIPOPF,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,81,119,10
+    GROUPBOX        "V&ideo",IDC_GRP_VIDEO,6,101,211,27,WS_GROUP
     CONTROL         "Enable basic &VESA support",IDC_CHK_VESA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,131,103,10
-    GROUPBOX        "&Others",IDC_GRP_OTHERS,6,151,211,39,WS_GROUP
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,113,103,10
+    GROUPBOX        "&Others",IDC_GRP_OTHERS,6,133,211,39,WS_GROUP
     CONTROL         "Enable low-level CD-&ROM support (MSCDEX)",
                     IDC_CHK_CDROM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,
-                    163,159,10
+                    145,159,10
     CONTROL         "Enable low-level net&work support",IDC_CHK_NETWARE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,175,120,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,157,120,10
 END
 
 IDD_ADVPROPPAGE_DOSENV DIALOG DISCARDABLE  0, 0, 224, 198
@@ -383,19 +385,16 @@ BEGIN
     PUSHBUTTON      "Mo&re...",IDC_BUT_MPUOUTDEV,172,88,37,13, WS_DISABLED |
                     BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_MPUOUTFILE,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,14,105,33,14
-    EDITTEXT        IDC_EDT_MPUOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
-                    WS_DISABLED
-    PUSHBUTTON      "&...",IDC_BUT_MPUOUTFILEBROWSE,198,105,12,14,
-                    WS_DISABLED
+                    WS_TABSTOP,14,105,33,14
+    EDITTEXT        IDC_EDT_MPUOUTFILE,52,105,144,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&...",IDC_BUT_MPUOUTFILEBROWSE,198,105,12,14
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ | SS_SUNKEN | 
                     WS_DISABLED,14,128,196,1
-    CTEXT           "&Input",IDC_STATIC,19,122,33,12,SS_CENTERIMAGE | 
-                    WS_DISABLED
+    CTEXT           "&Input",IDC_STATIC,19,122,33,12,SS_CENTERIMAGE
     CONTROL         "De&v.:",IDC_CHK_MPUINDEV,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,14,139,33,12
+                    WS_TABSTOP,14,139,33,12
     COMBOBOX        IDC_CMB_MPUINDEV,52,139,158,80,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+                    CBS_AUTOHSCROLL |WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_ADVPROPPAGE_ADLIB DIALOGEX 0, 0, 224, 198
@@ -435,10 +434,9 @@ BEGIN
     PUSHBUTTON      "Mo&re...",IDC_BUT_FMOUTDEV,172,88,37,13, WS_DISABLED |
                     BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_FMOUTFILE,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,14,105,33,14
-    EDITTEXT        IDC_EDT_FMOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
-                    WS_DISABLED
-    PUSHBUTTON      "&...",IDC_BUT_FMOUTFILEBROWSE,198,105,12,14,WS_DISABLED
+                    WS_TABSTOP,14,105,33,14
+    EDITTEXT        IDC_EDT_FMOUTFILE,52,105,144,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&...",IDC_BUT_FMOUTFILEBROWSE,198,105,12,14
 END
 
 IDD_ADVPROPPAGE_SB DIALOGEX 0, 0, 224, 198
@@ -485,10 +483,9 @@ BEGIN
     PUSHBUTTON      "Mo&re...",IDC_BUT_SBOUTDEV,172,88,37,13, WS_DISABLED |
                     BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_SBOUTFILE,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,14,105,33,14
-    EDITTEXT        IDC_EDT_SBOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
-                    WS_DISABLED
-    PUSHBUTTON      "&...",IDC_BUT_SBOUTFILEBROWSE,198,105,12,14,WS_DISABLED
+                    WS_TABSTOP,14,105,33,14
+    EDITTEXT        IDC_EDT_SBOUTFILE,52,105,144,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&...",IDC_BUT_SBOUTFILEBROWSE,198,105,12,14
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ | SS_SUNKEN | 
                     WS_DISABLED,14,128,196,1
     CTEXT           "&Input",IDC_STATIC,19,122,33,12,SS_CENTERIMAGE | 
@@ -1098,8 +1095,10 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
-    IDS_TXT_BROWSEFOLDER_TIPS 
+    IDS_TXT_BROWSEPROGFOLDER_TIPS
                             "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
+    IDS_TXT_BROWSEFOUTFOLDER_TIPS
+                            "Please select a folder where the output file(s) will be saved:"
     IDS_TXT_WIZPROPPAGE_CUSTOM_1_T
                             "Set up a Custom Configuration - Step 1 of 2"
     IDS_TXT_WIZPROPPAGE_CUSTOM_1_S

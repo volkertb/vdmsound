@@ -31,6 +31,8 @@ void CAdvSettingsPage_Adlib::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Adlib)
+	DDX_Control(pDX, IDC_EDT_FMOUTFILE, m_edtFmoutfile);
+	DDX_Control(pDX, IDC_CHK_FMOUTFILE, m_chkFmoutfile);
 	DDX_Control(pDX, IDC_SPN_FMOUTDEVBUF, m_spnFmoutdevbuf);
 	DDX_Control(pDX, IDC_CMB_FMSYNTHRATE, m_cmbFmsynthrate);
 	DDX_Control(pDX, IDC_CMB_FMPORT, m_cmbFmport);
@@ -47,6 +49,8 @@ BEGIN_MESSAGE_MAP(CAdvSettingsPage_Adlib, CPropertyPage)
 	//{{AFX_MSG_MAP(CAdvSettingsPage_Adlib)
 	ON_BN_CLICKED(IDC_CHK_USEFM, OnChkUsefm)
 	ON_BN_CLICKED(IDC_CHK_FMOUTDEV, OnChkFmoutdev)
+	ON_BN_CLICKED(IDC_CHK_FMOUTFILE, OnChkFmoutfile)
+	ON_BN_CLICKED(IDC_BUT_FMOUTFILEBROWSE, OnButFmoutfilebrowse)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -70,21 +74,24 @@ BOOL CAdvSettingsPage_Adlib::SyncGUIData(BOOL bSave) {
 BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("port"),       m_cmbFmport,      _T("0x388"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.fm"), _T("sampleRate"), m_cmbFmsynthrate, _T("11025"));
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.fm"), _T("useDevOut"),  m_chkFmoutdev,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.fm"), _T("useFileOut"), m_chkFmoutfile,   FALSE);
 
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.fm"), _T("useDevice"),  m_chkFmoutdev,    TRUE);
-  SyncGUIData_Enabled_Device(bSave, bEnabled && (m_chkFmoutdev.GetCheck() != BST_UNCHECKED));
+  SyncGUIData_Enabled_DevOut (bSave, bEnabled && (m_chkFmoutdev.GetCheck()   != BST_UNCHECKED));
+  SyncGUIData_Enabled_FileOut(bSave, bEnabled && (m_chkFmoutfile.GetCheck()  != BST_UNCHECKED));
 
   if (!bEnabled) {
     m_cmbFmport.EnableWindow(FALSE);
     m_cmbFmsynthrate.EnableWindow(FALSE);
     m_chkFmoutdev.EnableWindow(FALSE);
+    m_chkFmoutfile.EnableWindow(FALSE);
   }
 
   return TRUE;
 }
 
-BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.fm"), m_devInfo, m_cmbFmoutdev, DeviceUtil::DEV_DSOUND, -1);
+BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled_DevOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.fm"), m_devOutInfo, m_cmbFmoutdev, _T("Out"), DeviceUtil::DEV_DSOUND, -1);
   VLPUtil::SyncEditBox   (bSave, m_settings, _T("vdms.sb.fm"), _T("buffer"), m_cmbFmoutdevbuf, _T("75"));
 
   if (!bEnabled) {
@@ -99,12 +106,25 @@ BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnable
   return TRUE;
 }
 
+BOOL CAdvSettingsPage_Adlib::SyncGUIData_Enabled_FileOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.sb.fm"), _T("fileOut"), m_edtFmoutfile, VLPUtil::GetVDMSFilePath(_T("")));
+
+  if (!bEnabled) {
+    m_edtFmoutfile.EnableWindow(FALSE);
+    m_butFmoutfilebrowse.EnableWindow(FALSE);
+  } else {
+    m_butFmoutfilebrowse.EnableWindow(TRUE);
+  }
+
+  return TRUE;
+}
+
 VOID CAdvSettingsPage_Adlib::InitDeviceList(void) {
-  m_devInfo.RemoveAll();
+  m_devOutInfo.RemoveAll();
   m_cmbFmoutdev.ResetContent();
 
-  DeviceUtil::EnumWaveOut(m_devInfo);
-  DeviceUtil::EnumDSoundOut(m_devInfo);
+  DeviceUtil::EnumWaveOut(m_devOutInfo);
+  DeviceUtil::EnumDSoundOut(m_devOutInfo);
 }
 
 
@@ -139,7 +159,7 @@ BOOL CAdvSettingsPage_Adlib::OnCommand(WPARAM wParam, LPARAM lParam)
 
   if ((GetDlgItem(nID) != NULL) &&
       (nID != IDC_BUT_FMOUTFILEBROWSE) &&
-      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == BN_CLICKED)))
+      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == EN_CHANGE) || (nCode == BN_CLICKED)))
   {
     SetModified();              // enable the "Apply" button to reflect the fact that changes were made
   }
@@ -172,6 +192,26 @@ void CAdvSettingsPage_Adlib::OnChkUsefm()
 
 void CAdvSettingsPage_Adlib::OnChkFmoutdev() 
 {
-  SyncGUIData_Enabled_Device(TRUE); // save current combo-box selection
-  SyncGUIData_Enabled_Device(FALSE, m_chkFmoutdev.GetCheck() != BST_UNCHECKED);
+  SyncGUIData_Enabled_DevOut(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_DevOut(FALSE, m_chkFmoutdev.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Adlib::OnChkFmoutfile() 
+{
+  SyncGUIData_Enabled_FileOut(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_FileOut(FALSE, m_chkFmoutfile.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Adlib::OnButFmoutfilebrowse() 
+{
+  CWaitCursor wait;
+
+  SyncGUIData(TRUE);        // save all changes that occured in the GUI
+
+  CString dirName;
+
+  if (VLPUtil::BrowseForFolder(dirName, BIF_RETURNONLYFSDIRS, VLPUtil::LoadString(IDS_TXT_BROWSEFOUTFOLDER_TIPS), NULL, this)) {
+    m_settings.SetValue(_T("vdms.sb.fm"), _T("fileOut"), dirName);
+    SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
+  }
 }

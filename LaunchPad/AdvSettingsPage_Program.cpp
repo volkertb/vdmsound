@@ -196,7 +196,7 @@ void CAdvSettingsPage_Program::OnButDosdirbrowse()
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  CString txtTitle = VLPUtil::LoadString(IDS_TXT_BROWSEFOLDER_TIPS);
+  CString txtTitle = VLPUtil::LoadString(IDS_TXT_BROWSEPROGFOLDER_TIPS);
 
   TCHAR tmpBuf[MAX_PATH];
 

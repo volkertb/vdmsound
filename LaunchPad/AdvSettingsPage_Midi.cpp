@@ -31,6 +31,11 @@ void CAdvSettingsPage_Midi::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Midi)
+	DDX_Control(pDX, IDC_BUT_MPUOUTFILEBROWSE, m_butMpuoutfilebrowse);
+	DDX_Control(pDX, IDC_EDT_MPUOUTFILE, m_edtMpuoutfile);
+	DDX_Control(pDX, IDC_CMB_MPUINDEV, m_cmbMpuindev);
+	DDX_Control(pDX, IDC_CHK_MPUOUTFILE, m_chkMpuoutfile);
+	DDX_Control(pDX, IDC_CHK_MPUINDEV, m_chkMpuindev);
 	DDX_Control(pDX, IDC_CHK_SYSEXINDICATOR, m_chkSysexindicator);
 	DDX_Control(pDX, IDC_EDT_MIDIMAPBROWSE, m_edtMidimapbrowse);
 	DDX_Control(pDX, IDC_CMB_SYSEXINDICATOR, m_cmbSysexindicator);
@@ -50,6 +55,9 @@ BEGIN_MESSAGE_MAP(CAdvSettingsPage_Midi, CPropertyPage)
 	ON_BN_CLICKED(IDC_CHK_MPUOUTDEV, OnChkMpuoutdev)
 	ON_BN_CLICKED(IDC_BUT_MIDIMAPBROWSE, OnButMidimapbrowse)
 	ON_BN_CLICKED(IDC_CHK_SYSEXINDICATOR, OnChkSysexindicator)
+	ON_BN_CLICKED(IDC_CHK_MPUINDEV, OnChkMpuindev)
+	ON_BN_CLICKED(IDC_CHK_MPUOUTFILE, OnChkMpuoutfile)
+	ON_BN_CLICKED(IDC_BUT_MPUOUTFILEBROWSE, OnButMpuoutfilebrowse)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -74,10 +82,14 @@ BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("port"),         m_cmbMpuport,        _T("0x330"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("IRQ"),          m_cmbMpuirq,         _T("2"));
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useSysExLed"),  m_chkSysexindicator, TRUE);
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useDevice"),    m_chkMpuoutdev,      TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useDevOut"),    m_chkMpuoutdev,      TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useFileOut"),   m_chkMpuoutfile,     FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("useDevIn"),     m_chkMpuindev,       FALSE);
 
-  SyncGUIData_Enabled_Device(bSave, bEnabled && (m_chkMpuoutdev.GetCheck()      != BST_UNCHECKED));
-  SyncGUIData_Enabled_SysEx (bSave, bEnabled && (m_chkSysexindicator.GetCheck() != BST_UNCHECKED));
+  SyncGUIData_Enabled_SysEx  (bSave, bEnabled && (m_chkSysexindicator.GetCheck() != BST_UNCHECKED));
+  SyncGUIData_Enabled_DevOut (bSave, bEnabled && (m_chkMpuoutdev.GetCheck()      != BST_UNCHECKED));
+  SyncGUIData_Enabled_FileOut(bSave, bEnabled && (m_chkMpuoutfile.GetCheck()     != BST_UNCHECKED));
+  SyncGUIData_Enabled_DevIn  (bSave, bEnabled && (m_chkMpuindev.GetCheck()       != BST_UNCHECKED));
 
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.midi"), _T("mapFile"),      m_edtMidimapbrowse, VLPUtil::GetVDMSFilePath(_T("identity.map")));
 
@@ -86,20 +98,12 @@ BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
     m_cmbMpuirq.EnableWindow(FALSE);
     m_chkSysexindicator.EnableWindow(FALSE);
     m_chkMpuoutdev.EnableWindow(FALSE);
+    m_chkMpuoutfile.EnableWindow(FALSE);
+    m_chkMpuindev.EnableWindow(FALSE);
 
     m_butMidimapbrowse.EnableWindow(FALSE);
   } else {
     m_butMidimapbrowse.EnableWindow(TRUE);
-  }
-
-  return TRUE;
-}
-
-BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.midi"), m_devInfo, m_cmbMpuoutdev, DeviceUtil::DEV_MIDI, -1);
-
-  if (!bEnabled) {
-    m_cmbMpuoutdev.EnableWindow(FALSE);
   }
 
   return TRUE;
@@ -146,11 +150,47 @@ BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled)
   return TRUE;
 }
 
-VOID CAdvSettingsPage_Midi::InitDeviceList(void) {
-  m_devInfo.RemoveAll();
-  m_cmbMpuoutdev.ResetContent();
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_DevOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.midi"), m_devOutInfo, m_cmbMpuoutdev, _T("Out"), DeviceUtil::DEV_MIDI, -1);
 
-  DeviceUtil::EnumMidiOut(m_devInfo);
+  if (!bEnabled) {
+    m_cmbMpuoutdev.EnableWindow(FALSE);
+  }
+
+  return TRUE;
+}
+
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_FileOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.midi"), _T("fileOut"), m_edtMpuoutfile, VLPUtil::GetVDMSFilePath(_T("")));
+
+  if (!bEnabled) {
+    m_edtMpuoutfile.EnableWindow(FALSE);
+    m_butMpuoutfilebrowse.EnableWindow(FALSE);
+  } else {
+    m_butMpuoutfilebrowse.EnableWindow(TRUE);
+  }
+
+  return TRUE;
+}
+
+BOOL CAdvSettingsPage_Midi::SyncGUIData_Enabled_DevIn(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.midi"), m_devInInfo, m_cmbMpuindev, _T("In"), DeviceUtil::DEV_MIDI, 0);
+
+  if (!bEnabled) {
+    m_cmbMpuindev.EnableWindow(FALSE);
+  }
+
+  return TRUE;
+}
+
+VOID CAdvSettingsPage_Midi::InitDeviceList(void) {
+  m_devOutInfo.RemoveAll();
+  m_devInInfo.RemoveAll();
+  m_cmbMpuoutdev.ResetContent();
+  m_cmbMpuindev.ResetContent();
+
+  DeviceUtil::EnumMidiOut(m_devOutInfo);
+  DeviceUtil::EnumMidiIn(m_devInInfo);
 }
 
 
@@ -184,7 +224,7 @@ BOOL CAdvSettingsPage_Midi::OnCommand(WPARAM wParam, LPARAM lParam)
 
   if ((GetDlgItem(nID) != NULL) &&
       (nID != IDC_BUT_MIDIMAPBROWSE) && (nID != IDC_BUT_MPUOUTFILEBROWSE) &&
-      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == BN_CLICKED)))
+      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == EN_CHANGE) || (nCode == BN_CLICKED)))
   {
     SetModified();              // enable the "Apply" button to reflect the fact that changes were made
   }
@@ -215,42 +255,52 @@ void CAdvSettingsPage_Midi::OnChkUsempu()
   SyncGUIData_Enabled(FALSE, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 }
 
-
 void CAdvSettingsPage_Midi::OnChkSysexindicator() 
 {
   SyncGUIData_Enabled_SysEx(TRUE);  // save current combo-box selection
   SyncGUIData_Enabled_SysEx(FALSE, m_chkSysexindicator.GetCheck() != BST_UNCHECKED);
 }
+
 void CAdvSettingsPage_Midi::OnChkMpuoutdev() 
 {
-  SyncGUIData_Enabled_Device(TRUE); // save current combo-box selection
-  SyncGUIData_Enabled_Device(FALSE, m_chkMpuoutdev.GetCheck() != BST_UNCHECKED);
+  SyncGUIData_Enabled_DevOut(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_DevOut(FALSE, m_chkMpuoutdev.GetCheck() != BST_UNCHECKED);
 }
 
 void CAdvSettingsPage_Midi::OnButMidimapbrowse() 
 {
   CWaitCursor wait;
 
-  DWORD lastError = ERROR_SUCCESS;
-  CString strTmp1, strTmp2;
-
   CString fileName;
   m_edtMidimapbrowse.GetWindowText(fileName);
 
-  CFileDialog dlgFile(TRUE, NULL, fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER3), this);
+  if (VLPUtil::BrowseForFile(fileName, TRUE, NULL, fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER3), this)) {
+    m_edtMidimapbrowse.SetWindowText(fileName);
+  }
+}
 
-  switch (dlgFile.DoModal()) {
-    case IDOK:
-      m_edtMidimapbrowse.SetWindowText(dlgFile.GetPathName());
-      break;
+void CAdvSettingsPage_Midi::OnChkMpuindev() 
+{
+  SyncGUIData_Enabled_DevIn(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_DevIn(FALSE, m_chkMpuindev.GetCheck() != BST_UNCHECKED);
+}
 
-    case IDCANCEL:
-      break;
+void CAdvSettingsPage_Midi::OnChkMpuoutfile() 
+{
+  SyncGUIData_Enabled_FileOut(TRUE);   // save current selection
+  SyncGUIData_Enabled_FileOut(FALSE, m_chkMpuoutfile.GetCheck() != BST_UNCHECKED);
+}
 
-    default:
-      lastError = GetLastError();
-      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
-      GetWindowText(strTmp2);
-      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+void CAdvSettingsPage_Midi::OnButMpuoutfilebrowse() 
+{
+  CWaitCursor wait;
+
+  SyncGUIData(TRUE);        // save all changes that occured in the GUI
+
+  CString dirName;
+
+  if (VLPUtil::BrowseForFolder(dirName, BIF_RETURNONLYFSDIRS, VLPUtil::LoadString(IDS_TXT_BROWSEFOUTFOLDER_TIPS), NULL, this)) {
+    m_settings.SetValue(_T("vdms.midi"), _T("fileOut"), dirName);
+    SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
   }
 }
