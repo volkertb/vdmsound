@@ -10,10 +10,8 @@
 namespace MAME {
 # define HAS_YM3812 1
 # include "fmopl.h"
-# undef __FMOPL_H_          // temp. hack
 # define HAS_YMF262 1
 # include "ymf262.h"
-# define __FMOPL_H_         // temp. hack
 }
 
 /////////////////////////////////////////////////////////////////////////////
