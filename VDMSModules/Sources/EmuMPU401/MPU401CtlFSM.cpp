@@ -50,7 +50,7 @@ void CMPU401CtlFSM::putCommand(
       m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
       return;
 
-#if 0 /* doesn't fix Legend games, and wouldn't want to break other games (yet) */
+#if 1 /* doesn't fix Legend games, and wouldn't want to break other games (yet) */
 
     case CMD_REQUEST_VERSION:
       m_hwemu->logInformation("MPU-401 request MIDI version");
@@ -80,7 +80,7 @@ void CMPU401CtlFSM::putCommand(
       oss << "MPU-401 timebase select (" << base << " \?\?\?)";
       m_hwemu->logInformation(oss.str().c_str());
       m_inBuf.putByte(MSG_CMD_ACK); // acknowledge command
-      m_hwemu->setTimerPeriod(1000 / base);
+//      m_hwemu->setTimerPeriod(1000 / base);
       return;
 
 #endif

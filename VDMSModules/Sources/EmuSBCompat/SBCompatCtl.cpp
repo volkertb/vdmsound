@@ -235,7 +235,7 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
     return E_POINTER;
 
 # ifdef _DEBUG
-  try { RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("%04x:%08lx INB %03x"), m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_CS) & 0xffff, m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_EIP) & 0xffffffffl, (int)inPort)); } catch (...) { }
+  try { RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("%04x:%08lx INB %03x [+%02x]"), m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_CS) & 0xffff, m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_EIP) & 0xffffffffl, (int)inPort, (int)(inPort - m_basePort))); } catch (...) { }
 # endif
 
   switch (inPort - m_basePort) {
@@ -297,7 +297,7 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
 STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
 
 # ifdef _DEBUG
-  try { RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("%04x:%08lx OUTB %03x, %02x"), m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_CS) & 0xffff, m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_EIP) & 0xffffffffl, (int)outPort, data & 0xff)); } catch (...) { }
+  try { RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("%04x:%08lx OUTB %03x [+%02x], %02x"), m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_CS) & 0xffff, m_BaseSrv->GetRegister(IVDMSERVICESLib::REG_EIP) & 0xffffffffl, (int)outPort, (int)(outPort - m_basePort), data & 0xff)); } catch (...) { }
 # endif
 
   switch (outPort - m_basePort) {
