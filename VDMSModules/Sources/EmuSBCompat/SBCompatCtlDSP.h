@@ -5,7 +5,7 @@ class CSBCompatCtlMixer;
 
 //
 // This interface abstracts some of the hardware details in the DSP's
-//   world
+//  world
 //
 class ISBDSPHWEmulationLayer {
   public:

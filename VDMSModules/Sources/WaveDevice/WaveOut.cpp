@@ -127,8 +127,8 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
   HRESULT hrThis = S_OK, hrThat = S_OK;
 
   // Check if the device has to be (re)opened either because it was not
-  //   opened before, or following a change in playback format that requires
-  //   the device to be closed then opened again with the new format
+  //  opened before, or following a change in playback format that requires
+  //  the device to be closed then opened again with the new format
   if ((m_hWaveOut == NULL) ||
       (m_waveFormat.nChannels != channels) ||
       (m_waveFormat.nSamplesPerSec * (1.00 - TOLERANCE_FREQ / 100.0) > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
@@ -334,7 +334,7 @@ unsigned int CWaveOut::Run(CThread& thread) {
 
 //
 // Callback function invoked by WAVE driver when the device is opened/closed,
-//   or when a wave "packet" finishes playing.
+//  or when a wave "packet" finishes playing.
 //
 void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2) {
   MMRESULT errCode;
