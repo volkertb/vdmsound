@@ -79,7 +79,7 @@ interface IVDMBaseServices : IUnknown
 	{
 		ADDR_PM       = 0x00,
 		ADDR_V86      = 0x01,
-		ADDR_PHYSICAL = 0x03
+		ADDR_PHYSICAL = 0x02
 	} ADDRMODE_T;
 
 
