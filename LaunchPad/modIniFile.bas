@@ -58,19 +58,28 @@ End Function
 '  it) exists, and if it does not exist then the subroutine
 '  creates it
 '
-Public Sub EnsurePathExists(ByVal strPath As String)
+Public Function EnsurePathExists(ByVal strPath As String) As Long
   Dim strTmpPath As String  ' holds the path we know exists; as we check for file
                             '  existence, strPath gets transferred into strTmpPath
-  strTmpPath = ""
+  Dim splitPos As Long
+
+  On Error GoTo Failure
+
+  If Left$(strPath, 2) = "\\" Then  ' take care of UNC paths
+    splitPos = InStr(3, strPath, "\")
+    strTmpPath = Left$(strPath, splitPos)
+    strPath = Mid$(strPath, splitPos + 1)
+  Else
+    strTmpPath = ""
+  End If
 
   While Len(strPath) > 0
-    Dim splitPos As Long
     splitPos = InStr(1, strPath, "\")
 
     If splitPos > 0 Then    ' we found a '\', so whatever comes before is a directory name
       strTmpPath = strTmpPath + Left$(strPath, splitPos)
       strPath = Mid$(strPath, splitPos + 1)
-      
+
       ' check if the DIRECTORY in strTmpPath exists, create it otherwise
       If Len(Dir(strTmpPath, vbNormal Or vbReadOnly Or vbHidden Or vbSystem Or vbDirectory)) = 0 Then
         MkDir strTmpPath
@@ -78,7 +87,7 @@ Public Sub EnsurePathExists(ByVal strPath As String)
     Else                    ' did not find a '\', so we deal with a file name
       strTmpPath = strTmpPath + strPath
       strPath = ""
-    
+
       ' check if the FILE in strTmpPath exists, create it otherwise
       If Len(Dir(strTmpPath, vbNormal Or vbReadOnly Or vbHidden Or vbSystem)) = 0 Then
         Dim hFile As Integer
@@ -88,7 +97,13 @@ Public Sub EnsurePathExists(ByVal strPath As String)
       End If
     End If
   Wend
-End Sub
+  
+  EnsurePathExists = 1
+  Exit Function
+
+Failure:
+  EnsurePathExists = 0
+End Function
 
 '
 ' Writes the given key/value pair in the given ini file under
@@ -102,8 +117,9 @@ Public Sub WriteIniString(strIni As String, _
   strValue As String)
 
   ' Write the key/value pair to strIni
-  WritePrivateProfileString strSection, _
-    strKey, strValue, strIni
+  If WritePrivateProfileString(strSection, strKey, strValue, strIni) = 0 Then
+    Err.Raise Err.LastDllError, "WriteIniString", StrError(Err.LastDllError)  ' throw
+  End If
 End Sub
 
 '
@@ -118,7 +134,7 @@ Public Function ReadIniString(strIni As String, _
   Dim strTmp As String
   strTmp = String$(1024, 0)
 
-  Dim lngRet As String
+  Dim lngRet As Long
 
   ' Read the key/value pair from strIni
   lngRet = GetPrivateProfileString(strSection, _
@@ -148,8 +164,9 @@ Public Sub DeleteIniString(strIni As String, _
   strKey As String)
 
   ' To delete the key just pass NULL as the value
-  WritePrivateProfileString strSection, _
-    strKey, vbNullString, strIni
+  If WritePrivateProfileString(strSection, strKey, vbNullString, strIni) = 0 Then
+    Err.Raise Err.LastDllError, "DeleteIniString", StrError(Err.LastDllError)  ' throw
+  End If
 End Sub
 
 '
@@ -172,12 +189,14 @@ Public Sub RenameIniString(strIni As String, _
     strValue, Len(strValue), strIni
 
   ' Create the new key
-  WritePrivateProfileString strSection, _
-    strNewKey, strValue, strIni
+  If WritePrivateProfileString(strSection, strNewKey, strValue, strIni) Then
+    Err.Raise Err.LastDllError, "RenameIniString", StrError(Err.LastDllError)  ' throw
+  End If
 
   ' Delete the old key
-  WritePrivateProfileString strSection, _
-    strOldKey, vbNullString, strIni
+  If WritePrivateProfileString(strSection, strOldKey, vbNullString, strIni) Then
+    Err.Raise Err.LastDllError, "RenameIniString", StrError(Err.LastDllError)  ' throw
+  End If
 End Sub
 
 '
@@ -187,7 +206,9 @@ Public Sub DeleteIniSection(strIni As String, _
   strSection As String)
 
   ' To delete the section just pass NULL as the value
-  WritePrivateProfileSection strSection, vbNullString, strIni
+  If WritePrivateProfileSection(strSection, vbNullString, strIni) = 0 Then
+    Err.Raise Err.LastDllError, "DeleteIniSection", StrError(Err.LastDllError)  ' throw
+  End If
 End Sub
 
 '
@@ -208,8 +229,12 @@ Public Sub RenameIniSection(strIni As String, _
   GetPrivateProfileSection strOldSection, strKeys, Len(strKeys), strIni
 
   ' Create the new section
-  WritePrivateProfileSection strNewSection, strKeys, strIni
+  If WritePrivateProfileSection(strNewSection, strKeys, strIni) = 0 Then
+    Err.Raise Err.LastDllError, "RenameIniSection", StrError(Err.LastDllError)  ' throw
+  End If
 
   ' Delete the old section
-  WritePrivateProfileSection strOldSection, vbNullString, strIni
+  If WritePrivateProfileSection(strOldSection, vbNullString, strIni) = 0 Then
+    Err.Raise Err.LastDllError, "RenameIniSection", StrError(Err.LastDllError)  ' throw
+  End If
 End Sub
