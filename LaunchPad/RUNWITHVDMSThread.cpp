@@ -294,7 +294,7 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   LONG    vdms_sb_dsp_DMA8          = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA8"),         1);
   LONG    vdms_sb_dsp_DMA16         = SettingGetLong  (_T("vdms.sb.dsp"),   _T("DMA16"),        5);
   CString vdms_sb_dsp_version       = SettingGetString(_T("vdms.sb.dsp"),   _T("version"),      _T("4.05 (SoundBlaster 16)"));
-  BOOL    vdms_sb_dsp_useDevOut     = SettingGetLong  (_T("vdms.sb.dsp"),   _T("useDevOut"),    TRUE);
+  BOOL    vdms_sb_dsp_useDevOut     = SettingGetBool  (_T("vdms.sb.dsp"),   _T("useDevOut"),    TRUE);
   LONG    vdms_sb_dsp_devOutType    = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
   LONG    vdms_sb_dsp_devOutID      = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutID"),     -1);
   LONG    vdms_sb_dsp_buffer        = SettingGetLong  (_T("vdms.sb.dsp"),   _T("buffer"),       75);
@@ -305,7 +305,7 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   LONG    vdms_sb_fm_port           = SettingGetLong  (_T("vdms.sb.fm"),    _T("port"),         0x388);
   CString vdms_sb_fm_oplMode        = SettingGetString(_T("vdms.sb.fm"),    _T("oplMode"),      _T("Automatic"));
   LONG    vdms_sb_fm_sampleRate     = SettingGetLong  (_T("vdms.sb.fm"),    _T("sampleRate"),   44100);
-  BOOL    vdms_sb_fm_useDevOut      = SettingGetLong  (_T("vdms.sb.fm"),    _T("useDevOut"),    TRUE);
+  BOOL    vdms_sb_fm_useDevOut      = SettingGetBool  (_T("vdms.sb.fm"),    _T("useDevOut"),    TRUE);
   LONG    vdms_sb_fm_devOutType     = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
   LONG    vdms_sb_fm_devOutID       = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutID"),     -1);
   LONG    vdms_sb_fm_buffer         = SettingGetLong  (_T("vdms.sb.fm"),    _T("buffer"),       75);
@@ -592,7 +592,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     config += _T("DEVICE=%SYSTEMROOT%\\SYSTEM32\\HIMEM.SYS\r\n");
   }
 
-  BOOL vdms_winnt_dos_useCONFIG = SettingGetBool(_T("winnt.dos"),    _T("useConfig"),    TRUE);
+  BOOL vdms_winnt_dos_useCONFIG = SettingGetBool(_T("winnt.dos"), _T("useConfig"), FALSE);
 
   if (vdms_winnt_dos_useCONFIG) {
     CString vdms_winnt_dos_Config = SettingGetString(_T("winnt.dos"), _T("config"), _T("FILES=40"));
@@ -627,7 +627,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     autoexec += _T("LH %SYSTEMROOT%\\SYSTEM32\\VWIPXSPX\r\n");
   }
 
-  BOOL vdms_winnt_dos_useAUTOEXEC    = SettingGetBool(_T("winnt.dos"),    _T("useAutoexec"), TRUE);
+  BOOL vdms_winnt_dos_useAUTOEXEC = SettingGetBool(_T("winnt.dos"), _T("useAutoexec"), FALSE);
 
   if (vdms_winnt_dos_useAUTOEXEC) {
     CString vdms_winnt_dos_Autoexec = SettingGetString(_T("winnt.dos"), _T("autoexec"), _T(""));
