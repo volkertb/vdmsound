@@ -25,4 +25,12 @@ library MIDIDEVICELib
 		[default] interface IVDMBasicModule;
 		interface IMIDIEventHandler;
 	};
+	[
+		uuid(37356EFE-2D7B-4F80-BBBE-1875B59E3899),
+		helpstring("MIDIIn Class")
+	]
+	coclass MIDIIn
+	{
+		[default] interface IVDMBasicModule;
+	};
 };

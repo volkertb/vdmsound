@@ -1,14 +1,14 @@
-// MIDIOut.h : Declaration of the CMIDIOut
+// MIDIIn.h : Declaration of the CMIDIIn
 
-#ifndef __MIDIOUT_H_
-#define __MIDIOUT_H_
+#ifndef __MIDIIN_H_
+#define __MIDIIN_H_
 
 #include "resource.h"       // main symbols
 
 /////////////////////////////////////////////////////////////////////////////
 
 /* TODO: put this in the .INI file ? */
-#define MIDIOUT_OPEN_RETRY_INTERVAL   2
+#define MIDIIN_OPEN_RETRY_INTERVAL   2
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -23,29 +23,27 @@
 #include <Thread.h>
 
 /////////////////////////////////////////////////////////////////////////////
-// CMIDIOut
-class ATL_NO_VTABLE CMIDIOut : 
-  public CComObjectRootEx<CComMultiThreadModel>,
-  public CComCoClass<CMIDIOut, &CLSID_MIDIOut>,
+// CMIDIIn
+class ATL_NO_VTABLE CMIDIIn : 
+	public CComObjectRootEx<CComMultiThreadModel>,
+	public CComCoClass<CMIDIIn, &CLSID_MIDIIn>,
   public IRunnable,
-  public ISupportErrorInfo,
-  public IVDMBasicModule,
-  public IMIDIEventHandler
+	public ISupportErrorInfo,
+  public IVDMBasicModule
 {
 public:
-  CMIDIOut()
-    : m_hMidiOut(NULL), m_deviceName(_T("<unknown>"))
-    { }
+	CMIDIIn()
+	{
+	}
 
-DECLARE_REGISTRY_RESOURCEID(IDR_MIDIOUT)
-DECLARE_NOT_AGGREGATABLE(CMIDIOut)
+DECLARE_REGISTRY_RESOURCEID(IDR_MIDIIN)
+DECLARE_NOT_AGGREGATABLE(CMIDIIn)
 
 DECLARE_PROTECT_FINAL_CONSTRUCT()
 
-BEGIN_COM_MAP(CMIDIOut)
+BEGIN_COM_MAP(CMIDIIn)
   COM_INTERFACE_ENTRY(ISupportErrorInfo)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
-  COM_INTERFACE_ENTRY(IMIDIEventHandler)
 END_COM_MAP()
 
 // IRunnable
@@ -61,20 +59,14 @@ public:
   STDMETHOD(Init)(IUnknown * configuration);
   STDMETHOD(Destroy)();
 
-// IMIDIEventHandler
-public:
-  STDMETHOD(HandleEvent)(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length);
-  STDMETHOD(HandleSysEx)(LONGLONG usDelta, BYTE * data, LONG length);
-  STDMETHOD(HandleRealTime)(LONGLONG usDelta, BYTE data);
+protected:
+  static void CALLBACK MidiInProc(HMIDIIN hmi, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
 
 protected:
-  static void CALLBACK MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-protected:
-  bool MidiOutOpen(bool isInteractive = true);
-  void MidiOutClose(void);
-  CString MidiOutGetName(void);
-  CString MidiOutGetError(MMRESULT errCode);
+  bool MidiInOpen(bool isInteractive = true);
+  void MidiInClose(void);
+  CString MidiInGetName(void);
+  CString MidiInGetError(MMRESULT errCode);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -85,8 +77,8 @@ protected:
 // Other member variables
 protected:
   CString m_deviceName;
-  HMIDIOUT m_hMidiOut;
-  CThread m_gcThread;
+  HMIDIIN m_hMidiIn;
+  CThread m_recThread;
 
 // Interfaces to dependency modules
 protected:
@@ -94,4 +86,4 @@ protected:
   IMIDIEventHandlerPtr m_midiOut;
 };
 
-#endif //__MIDIOUT_H_
+#endif //__MIDIIN_H_

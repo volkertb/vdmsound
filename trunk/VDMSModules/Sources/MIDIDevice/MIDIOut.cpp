@@ -318,7 +318,7 @@ bool CMIDIOut::MidiOutOpen(bool isInteractive) {
     return true;
 
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
-  if ((time(NULL) - lastRetry) < MIDIOPEN_RETRY_INTERVAL) {
+  if ((time(NULL) - lastRetry) < MIDIOUT_OPEN_RETRY_INTERVAL) {
     return false;           // another attempt to open the device was made very recently; don't overdo it
   } else {
     lastRetry = time(NULL);
