@@ -85,7 +85,7 @@ public:
 
 // IDMAHandler
 public:
-  STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred);
+  STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred, LONG * isTooSlow);
   STDMETHOD(HandleAfterTransfer)(BYTE channel, ULONG transferred, LONG isTerminalCount);
 
 protected:
