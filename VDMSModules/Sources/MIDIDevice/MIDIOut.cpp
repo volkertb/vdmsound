@@ -228,7 +228,7 @@ unsigned int CMIDIOut::Run(CThread& thread) {
         _ASSERTE(midiHdr != NULL);
         _ASSERTE(midiHdr->lpData != NULL);
         _ASSERTE(midiHdr->dwUser != NULL);
-        _ASSERTE(midiHdr->dwFlags & MHDR_DONE == MHDR_DONE);
+        _ASSERTE((midiHdr->dwFlags & MHDR_DONE) == MHDR_DONE);
 
         if ((errCode = midiOutUnprepareHeader(hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
           CString args = Format(_T("0x%08x, %p, %d"), hMidiOut, midiHdr, sizeof(*midiHdr));
