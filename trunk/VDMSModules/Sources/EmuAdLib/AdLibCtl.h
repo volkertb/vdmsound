@@ -90,7 +90,7 @@ class ATL_NO_VTABLE CAdLibCtl :
 {
 public:
 	CAdLibCtl()
-    : m_instanceID(-1), m_AdLibFSM(this)
+    : m_instanceID(-1), m_AdLibFSM(this, CAdLibCtlFSM::TYPE_OPL2)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ADLIBCTL)
@@ -107,7 +107,8 @@ END_COM_MAP()
 
 // IAdLibHWEmulationLayer
 public:
-  void setOPLReg(int address, int value);
+  void resetOPL(void);
+  void setOPLReg(int regSet, int regIdx, int value);
   OPLTime_t getTimeMicros(void);
   void logError(const char* message);
   void logWarning(const char* message);
@@ -161,7 +162,8 @@ protected:
 protected:
   struct OPLMessage {
     DWORD timestamp;
-    int address;
+    int regSet;
+    int regIdx;
     int value;
   };
 

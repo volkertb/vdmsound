@@ -3,6 +3,8 @@
 #include "EmuAdLib.h"
 #include "AdLibCtl.h"
 
+#include <stdexcept>
+
 /////////////////////////////////////////////////////////////////////////////
 
 #define USE_OPL2  1
@@ -139,12 +141,12 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return ce.Error();          // Propagate the error
   }
 
-  // Put the OPL in a known state
-  m_AdLibFSM.reset();
-
   // Initialize the OPL software synthesizer
   if (FAILED(hr = OPLCreate(m_sampleRate)))
     return hr;
+
+  // Put the OPL in a known state
+  m_AdLibFSM.OPLReset();
 
   // Create the playback thread (converts FM information to PCM)
   m_playbackThread.Create(this, _T("AdLib Playback"), true);      /* TODO: check that creation was successful */
@@ -161,11 +163,11 @@ STDMETHODIMP CAdLibCtl::Destroy() {
   if (m_playbackThread.GetThreadHandle() != NULL)
     m_playbackThread.Cancel();
 
+  // Put the OPL in a known state
+  m_AdLibFSM.OPLReset();
+
   // Release the OPL software synthesizer
   OPLDestroy();
-
-  // Put the OPL in a known state
-  m_AdLibFSM.reset();
 
   // Release the Wave-out module
   m_waveOut = NULL;
@@ -311,11 +313,13 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
         // Program the OPL (functions will return after the UpdateHandler()
         //  callback has been called)
 #if USE_OPL2
-        MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.address);
+        _ASSERTE(OPLMsg.regSet == 0);
+
+        MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.regIdx);
         MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
 #elif USE_OPL3
-        MAME::YMF262Write(OPL_CHIP0, 0, OPLMsg.address);
-        MAME::YMF262Write(OPL_CHIP0, 1, OPLMsg.value);
+        MAME::YMF262Write(OPL_CHIP0, 0 + OPLMsg.regSet << 1, OPLMsg.regIdx);
+        MAME::YMF262Write(OPL_CHIP0, 1 + OPLMsg.regSet << 1, OPLMsg.value);
 #endif
       }
 
@@ -465,23 +469,12 @@ HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
   if (data == NULL)
     return E_POINTER;
 
-  switch (address) {
-    case 0:   // the address/status port
-#if USE_OPL2
-      *data = m_AdLibFSM.getStatus() | 0x06;
-#elif USE_OPL3
-      *data = m_AdLibFSM.getStatus();
-#endif
-      return S_OK;
-
-    case 1:   // the data port
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to read from write-only port (IN 0x%3x)"), address + m_basePort));
-      *data = 0xff;
-      return S_FALSE;
-
-    default:
-      *data = 0xff;
-      return E_FAIL;
+  try {
+    *data = m_AdLibFSM.OPLRead(address & 0xff);
+    return S_OK;
+  } catch (std::runtime_error& e) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, e.what());
+    return E_FAIL;
   }
 }
 
@@ -489,17 +482,12 @@ HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
 // This function will write a value to one of the OPL ports
 //
 HRESULT CAdLibCtl::OPLWrite(BYTE address, BYTE data) {
-  switch (address) {
-    case 0:   // the address/status port
-      m_AdLibFSM.setAddress(data);
-      return S_OK;
-
-    case 1:   // the data port
-      m_AdLibFSM.putData(data);
-      return S_OK;
-
-    default:
-      return E_FAIL;
+  try {
+    m_AdLibFSM.OPLWrite(address & 0xff, data);
+    return S_OK;
+  } catch (std::runtime_error& e) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, e.what());
+    return E_FAIL;
   }
 }
 
@@ -509,11 +497,20 @@ HRESULT CAdLibCtl::OPLWrite(BYTE address, BYTE data) {
 // IMPU401HWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
 
-void CAdLibCtl::setOPLReg(int address, int value) {
+void CAdLibCtl::resetOPL(void) {
+#if USE_OPL2
+  MAME::YM3812ResetChip(OPL_CHIP0);
+#elif USE_OPL3
+  MAME::YMF262ResetChip(OPL_CHIP0);
+#endif
+}
+
+void CAdLibCtl::setOPLReg(int regSet, int regIdx, int value) {
   OPLMessage msg;
 
   msg.timestamp = timeGetTime();
-  msg.address   = address;
+  msg.regSet    = regSet;
+  msg.regIdx    = regIdx;
   msg.value     = value;
 
   m_OPLMsgQueue.put(msg);
