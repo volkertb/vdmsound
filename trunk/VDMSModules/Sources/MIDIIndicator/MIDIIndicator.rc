@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,1
+ FILEVERSION 1,0,4,2
  PRODUCTVERSION 2,0,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -73,7 +73,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "MIDIIndicator Module\0"
-            VALUE "FileVersion", "1, 0, 4, 1\0"
+            VALUE "FileVersion", "1, 0, 4, 2\0"
             VALUE "InternalName", "MIDIIndicator\0"
             VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "MIDIIndicator.DLL\0"

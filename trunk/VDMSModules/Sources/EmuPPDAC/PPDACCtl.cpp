@@ -314,7 +314,6 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
   }
 
   CByteArray buffer;
-  double avgSampleLength = 0.0;
 
   while (true) {
     if (thread.GetMessage(&message, false)) {       // non-blocking message-"peek"
@@ -337,24 +336,18 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
         double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
         ASSERT(scalingFactor >= 0.0);
 
-        double sampleLength  = scalingFactor * m_sampleRate * ((m_curTime - m_lastTime) / 1000000.0) / m_bufPtr;
+        double sampleLength  = min(m_sampleRate / 5000.0, scalingFactor * m_sampleRate * ((m_curTime - m_lastTime) / 1000000.0) / m_bufPtr);
         ASSERT(sampleLength  >= 0.0);
 
-        if (avgSampleLength == 0.0) {
-          avgSampleLength = sampleLength;
-        } else {
-          avgSampleLength = 0.9 * avgSampleLength + 0.1 * sampleLength;
-        }
-
         // Adjust buffer size, if necessary
-        int bufSize = (int)(avgSampleLength * m_bufPtr + 0.5);
+        int bufSize = (int)(sampleLength * m_bufPtr + 0.5);
 
         if (buffer.GetUpperBound() + 1 < bufSize)
           buffer.SetSize(bufSize);
 
         // Resample DAC data into the buffer
         for (int i = 0; i < bufSize; i++)
-          buffer[i] = m_buffer[(int)(i / avgSampleLength)];
+          buffer[i] = m_buffer[(int)(i / sampleLength)];
 
         m_lastTime = m_curTime;
         m_bufPtr   = 0;
