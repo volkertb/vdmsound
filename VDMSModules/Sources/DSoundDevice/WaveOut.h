@@ -75,7 +75,9 @@ protected:
 
 protected:
   bool DSoundOpen(bool isInteractive = true);
+  bool DSoundOpenBuffer(void);
   void DSoundClose(void);
+  void DSoundCloseBuffer(void);
   HRESULT DSoundOpenHelper(void);
   CString DSoundGetName(LPGUID lpGUID = NULL);
 

@@ -104,7 +104,7 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
 }
 
 STDMETHODIMP CWaveOut::Destroy() {
-  // Release Directsound
+  // Release Directsound device
   if (m_lpDirectSound != NULL)
     DSoundClose();
 
@@ -136,71 +136,55 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
      buffer
    */
 
-  if ((m_lpDirectSound == NULL) && (!DSoundOpen(false))) {
+  if ((m_lpDirectSound == NULL) && (!DSoundOpen(false)))
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
-  } else {
-    _ASSERTE(m_lpDirectSound != NULL);
 
-    // Check if the buffer has to be (re)created either because it was not
-    //  created before, or following a change in playback format that requires
-    //  the buffer to be released then created again with the new format
-    if ((m_lpDirectSoundBuffer == NULL) ||
-        (m_waveFormat.nChannels != channels) ||
-        (m_waveFormat.nSamplesPerSec * (1.00 - TOLERANCE_FREQ / 100.0) > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
-        (m_waveFormat.nSamplesPerSec * (1.00 + TOLERANCE_FREQ / 100.0) < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
-        (m_waveFormat.wBitsPerSample != bitsPerSample))
-    {
-      // Gain exclusive access to the DSound buffer and related variables
-      CSingleLock lock(&m_mutex, TRUE);
+  // Check if the buffer has to be (re)created either because it was not
+  //  created before, or following a change in playback format that requires
+  //  the buffer to be released then created again with the new format
+  if ((m_lpDirectSoundBuffer == NULL) ||
+      (m_waveFormat.nChannels != channels) ||
+      (m_waveFormat.nSamplesPerSec * (1.00 - TOLERANCE_FREQ / 100.0) > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
+      (m_waveFormat.nSamplesPerSec * (1.00 + TOLERANCE_FREQ / 100.0) < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
+      (m_waveFormat.wBitsPerSample != bitsPerSample))
+  {
+    // If the buffer is open, try to close it first
+    if (m_lpDirectSoundBuffer != NULL)
+      DSoundCloseBuffer();
 
-      // If the buffer is created, try to release it first
-      if (m_lpDirectSoundBuffer != NULL) {
-        m_lpDirectSoundBuffer->Stop();
-        m_lpDirectSoundBuffer->Release();
-        m_lpDirectSoundBuffer = NULL;
-      }
+    // Gain exclusive access to the DSound buffer and related variables
+    CSingleLock lock(&m_mutex, TRUE);
 
-      // Change the format
-      m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-      m_waveFormat.nChannels = channels;
-      m_waveFormat.nSamplesPerSec = samplesPerSec;
-      m_waveFormat.nAvgBytesPerSec = channels * samplesPerSec * bitsPerSample / 8;
-      m_waveFormat.nBlockAlign = channels * bitsPerSample / 8;
-      m_waveFormat.wBitsPerSample = bitsPerSample;
-      m_waveFormat.cbSize = 0;
+    // Change the format
+    m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+    m_waveFormat.nChannels = channels;
+    m_waveFormat.nSamplesPerSec = samplesPerSec;
+    m_waveFormat.nAvgBytesPerSec = channels * samplesPerSec * bitsPerSample / 8;
+    m_waveFormat.nBlockAlign = channels * bitsPerSample / 8;
+    m_waveFormat.wBitsPerSample = bitsPerSample;
+    m_waveFormat.cbSize = 0;
 
-      // Compute desired buffer length (in bytes)
-      m_bufferLen = (int)((m_bufferDuration / 1000.0) * m_waveFormat.nAvgBytesPerSec);
-      m_bufferLen = m_bufferLen + 4 - (m_bufferLen % 4);  // make sure we are properly aligned for stereo 16-bit sound
-      m_bufferLen = max(DSBSIZE_MIN, min(DSBSIZE_MAX, m_bufferLen));  // make sure the value falls within the acceptable DirectSound bounds
+    // Compute desired buffer length (in bytes)
+    m_bufferLen = (int)((m_bufferDuration / 1000.0) * m_waveFormat.nAvgBytesPerSec);
+    m_bufferLen = m_bufferLen + 4 - (m_bufferLen % 4);  // make sure we are properly aligned for stereo 16-bit sound
+    m_bufferLen = max(DSBSIZE_MIN, min(DSBSIZE_MAX, m_bufferLen));  // make sure the value falls within the acceptable DirectSound bounds
 
-      // Fill in the buffer-creation structure
-      DSBUFFERDESC DSBufferDesc;
-      memset(&DSBufferDesc, 0, sizeof(DSBufferDesc));
-      DSBufferDesc.dwSize = sizeof(DSBufferDesc);
-      DSBufferDesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2;
-      DSBufferDesc.dwBufferBytes = m_bufferLen;
-      DSBufferDesc.dwReserved = 0;
-      DSBufferDesc.lpwfxFormat = &m_waveFormat;
+    // Open the buffer with the new format
+    DSoundOpenBuffer();
 
-      // Create the buffer with the new format
-      if (FAILED(hr = m_lpDirectSound->CreateSoundBuffer(&DSBufferDesc, &m_lpDirectSoundBuffer, NULL)))
-        hrThis = hr;
+    if ((m_lpDirectSoundBuffer != NULL) && FAILED(hr = m_lpDirectSoundBuffer->Play(0, 0, DSBPLAY_LOOPING)))
+      hrThis = hr;
 
-      if ((m_lpDirectSoundBuffer != NULL) && FAILED(hr = m_lpDirectSoundBuffer->Play(0, 0, DSBPLAY_LOOPING)))
-        hrThis = hr;
+    // Initialize local buffer state
+    m_DSoundLatency = 0;  // the DSound latency for this audio format is unknown yet
+    m_bufferPos = 0;      // we are at the start of the buffer (no data is enqueued yet)
+    m_playedBytes = 0;    // no bytes went through DSound yet
+    m_sentBytes = 0;      // no bytes came from the application for playback yet
+    m_lastPlayPos = 0;    // we are at the start of the buffer (playback did not begin yet)
 
-      // Initialize local buffer state
-      m_DSoundLatency = 0;  // the DSound latency for this audio format is unknown yet
-      m_bufferPos = 0;      // we are at the start of the buffer (no data is enqueued yet)
-      m_playedBytes = 0;    // no bytes went through DSound yet
-      m_sentBytes = 0;      // no bytes came from the application for playback yet
-      m_lastPlayPos = 0;    // we are at the start of the buffer (playback did not begin yet)
-
-      // Compute the ideal amount of buffering (in bytes)
-      m_bufferedLo = m_waveFormat.nAvgBytesPerSec * m_bufOpRange / 1000;
-      m_bufferedHi = m_bufferedLo * 2;
-    }
+    // Compute the ideal amount of buffering (in bytes)
+    m_bufferedLo = m_waveFormat.nAvgBytesPerSec * m_bufOpRange / 1000;
+    m_bufferedHi = m_bufferedLo * 2;
   }
 
   // Forward the call to other module(s) daisy-chained after us (if any)
@@ -220,18 +204,14 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
   HRESULT hrThis = S_OK, hrThat = S_OK, hr;
   DOUBLE loadThis = 1.0, loadThat = 1.0;
 
-  if ((m_lpDirectSound == NULL) && (!DSoundOpen(false))) {
+  if (((m_lpDirectSound == NULL) && (!DSoundOpen(false))) ||
+      ((m_lpDirectSoundBuffer == NULL) && (!DSoundOpenBuffer())))
+  {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
   } else {
-    _ASSERTE(m_lpDirectSound != NULL);
-
     try {
       // Gain exclusive access to the DSound buffer and related variables
       CSingleLock lock(&m_mutex, TRUE);
-
-      // Verify whether the DirectSound buffer exists
-      if (m_lpDirectSoundBuffer == NULL)
-        throw E_HANDLE;
 
       // Get an process playback indicators from the DSound buffer
       DWORD dwCurrentWriteCursor, dwCurrentReadCursor;  // safe-write and read cursors in the DSound buffer
@@ -455,11 +435,8 @@ bool CWaveOut::DSoundOpen(bool isInteractive) {
     return true;
 
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
-  if ((time(NULL) - lastRetry) < WAVEOPEN_RETRY_INTERVAL) {
+  if ((time(NULL) - lastRetry) < WAVEOPEN_RETRY_INTERVAL)
     return false;           // another attempt to open the device was made very recently; don't overdo it
-  } else {
-    lastRetry = time(NULL);
-  }
 
   HRESULT hr;
 
@@ -488,24 +465,67 @@ bool CWaveOut::DSoundOpen(bool isInteractive) {
   if (m_lpDirectSound != NULL) {  // The device was opened successfully
     isErrLog    = true;     // Next time we get an error, log it
     isErrPrompt = true;     // Next time we get an error, prompt the user (if interactive)
+    lastRetry   = 0;        // If the device is closed and reopened within WAVEOPEN_RETRY_INTERVAL, don't complain
     return true;
   } else {                  // The device could not be open, and the user did not retry
+    lastRetry = time(NULL); // Remember not to try to reopen the device within WAVEOPEN_RETRY_INTERVAL from a failure
     return false;
   }
+}
+
+//
+// Opens a secondary buffer on the currently-open DSound device
+//
+bool CWaveOut::DSoundOpenBuffer(void) {
+  // Don't open the buffer if it's already open
+  if (m_lpDirectSoundBuffer != NULL)
+    return true;
+
+  // Don't bother any further if the device isn't open
+  if (m_lpDirectSound == NULL)
+    return false;
+
+  // Fill in the buffer-creation structure
+  DSBUFFERDESC DSBufferDesc;
+  memset(&DSBufferDesc, 0, sizeof(DSBufferDesc));
+  DSBufferDesc.dwSize = sizeof(DSBufferDesc);
+  DSBufferDesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2;
+  DSBufferDesc.dwBufferBytes = m_bufferLen;
+  DSBufferDesc.dwReserved = 0;
+  DSBufferDesc.lpwfxFormat = &m_waveFormat;
+
+  // Gain exclusive access to the DSound buffer and related variables
+  CSingleLock lock(&m_mutex, TRUE);
+
+  HRESULT hr;
+
+  // Create the buffer with the given format
+  if (FAILED(hr = m_lpDirectSound->CreateSoundBuffer(&DSBufferDesc, &m_lpDirectSoundBuffer, NULL)))
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open a secondary buffer on device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)hr, (LPCTSTR)FormatMessage(hr)));
+
+  return (m_lpDirectSoundBuffer != NULL);
 }
 
 //
 // Closes the DSound device specified in the module's settings
 //
 void CWaveOut::DSoundClose(void) {
-  if (m_lpDirectSoundBuffer != NULL) {
-    m_lpDirectSoundBuffer->Release(); // Release the COM interface
-    m_lpDirectSoundBuffer = NULL;     // Lose the pointer
-  }
+  DSoundCloseBuffer();                // First, try to close any pending buffers
 
   if (m_lpDirectSound != NULL) {
     m_lpDirectSound->Release();       // Release the COM interface
     m_lpDirectSound = NULL;           // Lose the pointer
+  }
+}
+
+//
+// Closes a secondary buffer on the currently-open DSound device
+//
+void CWaveOut::DSoundCloseBuffer(void) {
+  if (m_lpDirectSoundBuffer != NULL) {
+    m_lpDirectSoundBuffer->Stop();
+    m_lpDirectSoundBuffer->Release();
+    m_lpDirectSoundBuffer = NULL;
   }
 }
 
