@@ -27,17 +27,18 @@ protected:
 
 // Member variables
 protected:
-  CString m_lastEdtFile;
+  CString m_lastEdtIcofile_val;
   VLPUtil::CComKeepAlive _autocomplete;    // COM must be present during the entire lifespan of any autocomplete controls
+  CContextHelp m_help;
 
 // Public MFC stuff
 public:
 // Dialog Data
 	//{{AFX_DATA(CChangeIconDlg)
 	enum { IDD = IDD_CHANGEICON };
-	CEdit	m_edtFile;
+	CEdit	m_edtIcofile;
 	CIconListBox m_lstIcons;
-	CString	m_edtFile_val;
+	CString	m_edtIcofile_val;
 	int		m_lstIcons_val;
 	//}}AFX_DATA
 
@@ -57,7 +58,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSetfocusLstIcons();
 	afx_msg void OnDblclkLstIcons();
-	afx_msg void OnButFilebrowse();
+	afx_msg void OnButIcobrowse();
 	virtual void OnOK();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()

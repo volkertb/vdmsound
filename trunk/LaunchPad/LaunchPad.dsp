@@ -294,6 +294,10 @@ SOURCE=.\ChangeIconDlg.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\ContextHelp.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\IconListBox.cpp
 # End Source File
 # Begin Source File
@@ -340,6 +344,10 @@ SOURCE=.\BasicSettingsPage.h
 # Begin Source File
 
 SOURCE=.\ChangeIconDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ContextHelp.h
 # End Source File
 # Begin Source File
 
@@ -392,6 +400,75 @@ SOURCE=.\LaunchPadShellEx.rgs
 # Begin Source File
 
 SOURCE=.\Resource.h
+
+!IF  "$(CFG)" == "LaunchPad - Win32 Debug"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Debug"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinSize"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinDependency"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinSize"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinDependency"
+
+# Begin Custom Build
+TargetName=LaunchPad
+InputPath=.\Resource.h
+
+"Help\$(TargetName).hm" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	makehm IDC_,HIDC_,0x0 Resource.h Help\$(TargetName).hm
+
+# End Custom Build
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -405,6 +482,147 @@ SOURCE=.\VDMSound.ico
 
 SOURCE=.\LaunchPad.idl
 # ADD MTL /tlb ".\LaunchPad.tlb" /h "LaunchPad.h" /iid "LaunchPad_i.c" /Oicf
+# End Source File
+# End Group
+# Begin Group "HelpFiles"
+
+# PROP Default_Filter "hpj;hm;rtf"
+# Begin Source File
+
+SOURCE=.\Help\LaunchPad.hpj
+
+!IF  "$(CFG)" == "LaunchPad - Win32 Debug"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\Debug
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Debug"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\DebugU
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinSize"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\ReleaseMinSize
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Release MinDependency"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\ReleaseMinDependency
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinSize"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\ReleaseUMinSize
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "LaunchPad - Win32 Unicode Release MinDependency"
+
+USERDEP__LAUNC="Help\LaunchPad.hm"	"Help\LaunchPad.rtf"	
+# Begin Custom Build
+OutDir=.\ReleaseUMinDependency
+InputPath=.\Help\LaunchPad.hpj
+InputName=LaunchPad
+
+"$(OutDir)\$(InputName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	start /wait hcw /C /E /M "Help\$(InputName).hpj" 
+	if errorlevel 1 goto :Error 
+	if not exist "Help\$(InputName).hlp" goto :Error 
+	copy "Help\$(InputName).hlp" $(OutDir) 
+	goto :done 
+	:Error 
+	echo "Help\$(InputName).hpj(1)" : error: Problem encountered creating help file 
+	type "Help\$(InputName).log" 
+	:done 
+	
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\Help\LaunchPad.rtf
 # End Source File
 # End Group
 # Begin Source File

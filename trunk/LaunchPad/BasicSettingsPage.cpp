@@ -24,8 +24,6 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CBasicSettingsPage property page
 
-IMPLEMENT_DYNCREATE(CBasicSettingsPage, CPropertyPage)
-
 CBasicSettingsPage::CBasicSettingsPage(const CStringArray& fileNames) : CPropertyPage(CBasicSettingsPage::IDD), m_settings(fileNames)
 {
 	//{{AFX_DATA_INIT(CBasicSettingsPage)
@@ -250,7 +248,6 @@ void CBasicSettingsPage::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CBasicSettingsPage, CPropertyPage)
 	//{{AFX_MSG_MAP(CBasicSettingsPage)
 	ON_WM_DESTROY()
-	ON_WM_HELPINFO()
 	ON_BN_CLICKED(IDC_BUT_CHANGE, OnButChange)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -261,6 +258,9 @@ END_MESSAGE_MAP()
 BOOL CBasicSettingsPage::OnInitDialog() 
 {
 	CPropertyPage::OnInitDialog();
+
+  // Enable context help
+  m_help.Attach(this);
 
   // Verify that we have the right to access the files
   int i, numFailures;
@@ -307,19 +307,12 @@ void CBasicSettingsPage::OnDestroy()
   m_icoApp.DeleteIcon();
 }
 
-BOOL CBasicSettingsPage::OnHelpInfo(HELPINFO* pHelpInfo) 
-{
-	// TODO: Add your message handler code here and/or call default
-	
-	return CPropertyPage::OnHelpInfo(pHelpInfo);
-}
-
-
 BOOL CBasicSettingsPage::OnCommand(WPARAM wParam, LPARAM lParam) 
 {
   ASSERT(::GetDlgItem(m_hWnd, LOWORD(wParam)) == (HWND)lParam);
 
-  if ((LOWORD(wParam) != IDC_EDT_DOSCMD) &&
+  if ((GetDlgItem(LOWORD(wParam)) != NULL) &&
+      (LOWORD(wParam) != IDC_EDT_DOSCMD) &&
       (LOWORD(wParam) != IDC_BUT_CHANGE) &&
       (LOWORD(wParam) != IDC_BUT_ADVANCED))
   {
@@ -339,30 +332,30 @@ void CBasicSettingsPage::OnButChange()
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  CString edtFile, edtArgs, edtDir, iconLocation;
+  CString edtDosProgram, edtDosArgs, edtDosDir, iconLocation;
 
-  m_settings.GetValue(_T("program"), _T("executable"), edtFile);
-  m_settings.GetValue(_T("program"), _T("params"), edtArgs);
-  m_settings.GetValue(_T("program"), _T("workdir"), edtDir);
+  m_settings.GetValue(_T("program"), _T("executable"), edtDosProgram);
+  m_settings.GetValue(_T("program"), _T("params"), edtDosArgs);
+  m_settings.GetValue(_T("program"), _T("workdir"), edtDosDir);
 
-  edtFile = VLPUtil::GetAbsolutePath(edtFile, edtDir, FALSE);
+  edtDosProgram = VLPUtil::GetAbsolutePath(edtDosProgram, edtDosDir, FALSE);
 
   m_settings.GetValue(_T("program"), _T("icon"), iconLocation);
 
-  dlgBrowse.m_edtFile_val  = edtFile;
-  dlgBrowse.m_edtArgs_val  = edtArgs;
-  dlgBrowse.m_edtDir_val   = edtDir;
-  dlgBrowse.m_iconLocation = iconLocation;
+  dlgBrowse.m_edtDosprogram_val = edtDosProgram;
+  dlgBrowse.m_edtDosargs_val    = edtDosArgs;
+  dlgBrowse.m_edtDosdir_val     = edtDosDir;
+  dlgBrowse.m_iconLocation      = iconLocation;
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:
       // If got back empty strings then leave unchanged
-      if (edtFile.Compare(dlgBrowse.m_edtFile_val) != 0)
-        m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtFile_val);
-      if (edtArgs.Compare(dlgBrowse.m_edtArgs_val) != 0)
-        m_settings.SetValue(_T("program"), _T("params"), dlgBrowse.m_edtArgs_val);
-      if (edtDir.Compare(dlgBrowse.m_edtDir_val) != 0)
-        m_settings.SetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
+      if (edtDosProgram.Compare(dlgBrowse.m_edtDosprogram_val) != 0)
+        m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtDosprogram_val);
+      if (edtDosArgs.Compare(dlgBrowse.m_edtDosargs_val) != 0)
+        m_settings.SetValue(_T("program"), _T("params"), dlgBrowse.m_edtDosargs_val);
+      if (edtDosDir.Compare(dlgBrowse.m_edtDosdir_val) != 0)
+        m_settings.SetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDosdir_val);
 
       if (iconLocation.Compare(dlgBrowse.m_iconLocation) != 0)
         m_settings.SetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);

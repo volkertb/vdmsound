@@ -16,12 +16,11 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CChangeIconDlg dialog
 
-
 CChangeIconDlg::CChangeIconDlg(CWnd* pParent /*=NULL*/)
-  : CDialog(CChangeIconDlg::IDD, pParent), m_lastEdtFile(_T(""))
+  : CDialog(CChangeIconDlg::IDD, pParent), m_lastEdtIcofile_val(_T(""))
 {
 	//{{AFX_DATA_INIT(CChangeIconDlg)
-	m_edtFile_val = _T("");
+	m_edtIcofile_val = _T("");
 	m_lstIcons_val = -1;
 	//}}AFX_DATA_INIT
 }
@@ -33,15 +32,15 @@ BOOL CChangeIconDlg::UpdateIconList(void) {
 
   UpdateData(TRUE);
 
-  if (m_edtFile_val.IsEmpty()) {
+  if (m_edtIcofile_val.IsEmpty()) {
     m_lstIcons.UnloadIcons();
-  } else if (m_edtFile_val.CollateNoCase(m_lastEdtFile) != 0) {
+  } else if (m_edtIcofile_val.CollateNoCase(m_lastEdtIcofile_val) != 0) {
     CString iconPath;
     int iconIndex;
-    VLPUtil::ParseIconLocation(m_edtFile_val, iconPath, iconIndex);
+    VLPUtil::ParseIconLocation(m_edtIcofile_val, iconPath, iconIndex);
 
-    m_edtFile_val = iconPath;
-    m_lastEdtFile = m_edtFile_val;
+    m_edtIcofile_val     = iconPath;
+    m_lastEdtIcofile_val = m_edtIcofile_val;
 
     switch (m_lstIcons.LoadIcons(iconPath)) {
       case -1:
@@ -77,10 +76,10 @@ void CChangeIconDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CChangeIconDlg)
-	DDX_Control(pDX, IDC_EDT_FILE, m_edtFile);
+	DDX_Control(pDX, IDC_EDT_ICOFILE, m_edtIcofile);
+	DDX_Text(pDX, IDC_EDT_ICOFILE, m_edtIcofile_val);
+	DDV_MaxChars(pDX, m_edtIcofile_val, 79);
 	DDX_Control(pDX, IDC_LST_ICONS, m_lstIcons);
-	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
-	DDV_MaxChars(pDX, m_edtFile_val, 79);
 	DDX_LBIndex(pDX, IDC_LST_ICONS, m_lstIcons_val);
 	//}}AFX_DATA_MAP
 }
@@ -90,7 +89,7 @@ BEGIN_MESSAGE_MAP(CChangeIconDlg, CDialog)
 	//{{AFX_MSG_MAP(CChangeIconDlg)
 	ON_LBN_SETFOCUS(IDC_LST_ICONS, OnSetfocusLstIcons)
 	ON_LBN_DBLCLK(IDC_LST_ICONS, OnDblclkLstIcons)
-	ON_BN_CLICKED(IDC_BUT_FILEBROWSE, OnButFilebrowse)
+	ON_BN_CLICKED(IDC_BUT_ICOBROWSE, OnButIcobrowse)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -101,9 +100,14 @@ BOOL CChangeIconDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+  // Enable context help
+  m_help.Attach(this);
+
+  // Load list of icons
   UpdateIconList();
 
-  VLPUtil::EnableAutoComplete(m_edtFile.GetSafeHwnd());
+  // Enable auto-complete for file names
+  VLPUtil::EnableAutoComplete(m_edtIcofile.GetSafeHwnd());
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -114,7 +118,7 @@ void CChangeIconDlg::OnSetfocusLstIcons()
   CWaitCursor wait;
 
   if (!UpdateIconList()) {
-    GotoDlgCtrl(GetDlgItem(IDC_EDT_FILE));
+    GotoDlgCtrl(GetDlgItem(IDC_EDT_ICOFILE));
   }
 }
 
@@ -125,7 +129,7 @@ void CChangeIconDlg::OnDblclkLstIcons()
   }
 }
 
-void CChangeIconDlg::OnButFilebrowse() 
+void CChangeIconDlg::OnButIcobrowse() 
 {
   CWaitCursor wait;
 
@@ -135,10 +139,10 @@ void CChangeIconDlg::OnButFilebrowse()
 
   UpdateData(TRUE);     // save all changes that occured in the GUI
 
-  CFileDialog dlgFile(TRUE, NULL, m_edtFile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, strFilter, this);
+  CFileDialog dlgFile(TRUE, NULL, m_edtIcofile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, strFilter, this);
 
   if (dlgFile.DoModal() == IDOK) {
-    m_edtFile_val = dlgFile.GetPathName();
+    m_edtIcofile_val = dlgFile.GetPathName();
     UpdateData(FALSE);  // update the GUI to reflect any changed settings
     UpdateIconList();
   }

@@ -16,14 +16,13 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CBasicBrowseDlg dialog
 
-
 CBasicBrowseDlg::CBasicBrowseDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CBasicBrowseDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CBasicBrowseDlg)
-	m_edtArgs_val = _T("");
-	m_edtFile_val = _T("");
-	m_edtDir_val = _T("");
+	m_edtDosargs_val = _T("");
+	m_edtDosprogram_val = _T("");
+	m_edtDosdir_val = _T("");
 	//}}AFX_DATA_INIT
 }
 
@@ -32,23 +31,23 @@ void CBasicBrowseDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicBrowseDlg)
-	DDX_Control(pDX, IDC_EDT_DIR, m_edtDir);
-	DDX_Control(pDX, IDC_EDT_FILE, m_edtFile);
-	DDX_Text(pDX, IDC_EDT_ARGS, m_edtArgs_val);
-	DDV_MaxChars(pDX, m_edtArgs_val, 63);
-	DDX_Text(pDX, IDC_EDT_FILE, m_edtFile_val);
-	DDV_MaxChars(pDX, m_edtFile_val, 63);
-	DDX_Text(pDX, IDC_EDT_DIR, m_edtDir_val);
-	DDV_MaxChars(pDX, m_edtDir_val, 63);
+	DDX_Control(pDX, IDC_EDT_DOSPROGRAM, m_edtDosprogram);
+	DDX_Text(pDX, IDC_EDT_DOSPROGRAM, m_edtDosprogram_val);
+	DDV_MaxChars(pDX, m_edtDosprogram_val, 63);
+	DDX_Text(pDX, IDC_EDT_DOSARGS, m_edtDosargs_val);
+	DDV_MaxChars(pDX, m_edtDosargs_val, 63);
+	DDX_Control(pDX, IDC_EDT_DOSDIR, m_edtDosdir);
+	DDX_Text(pDX, IDC_EDT_DOSDIR, m_edtDosdir_val);
+	DDV_MaxChars(pDX, m_edtDosdir_val, 63);
 	//}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CBasicBrowseDlg, CDialog)
 	//{{AFX_MSG_MAP(CBasicBrowseDlg)
-	ON_BN_CLICKED(IDC_BUT_FILEBROWSE, OnButFilebrowse)
+	ON_BN_CLICKED(IDC_BUT_DOSPROGRAMBROWSE, OnButDosprogrambrowse)
 	ON_BN_CLICKED(IDC_BUT_CHANGEICON, OnButChangeicon)
-	ON_EN_UPDATE(IDC_EDT_FILE, OnUpdateEdtFile)
+	ON_EN_UPDATE(IDC_EDT_DOSPROGRAM, OnUpdateEdtdosprogram)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -59,13 +58,17 @@ BOOL CBasicBrowseDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-  VLPUtil::EnableAutoComplete(m_edtFile.GetSafeHwnd());
+  // Enable context help
+  m_help.Attach(this);
+
+  // Enable auto-complete for file names
+  VLPUtil::EnableAutoComplete(m_edtDosprogram.GetSafeHwnd());
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void CBasicBrowseDlg::OnButFilebrowse() 
+void CBasicBrowseDlg::OnButDosprogrambrowse() 
 {
   CWaitCursor wait;
 
@@ -73,12 +76,12 @@ void CBasicBrowseDlg::OnButFilebrowse()
   CString strTmp1, strTmp2;
 
   UpdateData(TRUE);     // save all changes that occured in the GUI
-	COpenDOSProgramDialog dlgFile(m_edtFile_val, this);
+	COpenDOSProgramDialog dlgFile(m_edtDosprogram_val, this);
 
   switch (dlgFile.DoModal()) {
     case IDOK:
-      m_edtFile_val = dlgFile.GetPathName();
-      m_edtDir_val = VLPUtil::GetDirectory(m_edtFile_val);
+      m_edtDosprogram_val = dlgFile.GetPathName();
+      m_edtDosdir_val     = VLPUtil::GetDirectory(m_edtDosprogram_val);
       UpdateData(FALSE);  // update the GUI to reflect any changed settings
       break;
 
@@ -101,11 +104,11 @@ void CBasicBrowseDlg::OnButChangeicon()
   CString strTmp1, strTmp2;
   CChangeIconDlg dlgIcon(this);
 
-  dlgIcon.m_edtFile_val = m_iconLocation;
+  dlgIcon.m_edtIcofile_val = m_iconLocation;
 
   switch (dlgIcon.DoModal()) {
     case IDOK:
-      m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
+      m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtIcofile_val, max(0, dlgIcon.m_lstIcons_val));
       break;
 
     case IDCANCEL:
@@ -119,9 +122,9 @@ void CBasicBrowseDlg::OnButChangeicon()
   }
 }
 
-void CBasicBrowseDlg::OnUpdateEdtFile() 
+void CBasicBrowseDlg::OnUpdateEdtdosprogram() 
 {
   CString strDir;
-  m_edtFile.GetWindowText(strDir);
-  m_edtDir.SetWindowText(VLPUtil::GetDirectory(strDir));
+  m_edtDosprogram.GetWindowText(strDir);
+  m_edtDosdir.SetWindowText(VLPUtil::GetDirectory(strDir));
 }
