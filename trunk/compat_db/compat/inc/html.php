@@ -229,9 +229,9 @@
 
     if ($html_shows_modif) {
       echo('<table border="0" cellspacing="0" cellpadding="7" width="100%"><tr valign="middle" style="color: #9f9f9f; font-size: 75%">');
-      echo('<td width="150" align="left">&nbsp;</td><td align="center">');
+      echo('<td width="30%" align="left"><font color="white">This database is dedicated in memory of <a href="http://groups.google.com/groups?selm=6D2dnR9SduZl_OOjXTWcqg%40comcast.com"><b>Felix&nbsp;&quot;yot&quot;&nbsp;Jakschitsch</b></a>, its initial developer.</font></td><td align="center">');
       HtmlSendLastModified();
-      echo('</td><td width="150" align="right">' . HtmlMakeImage('pics/browser.gif', 'Designed for') . HtmlMakeLink(HtmlMakeImage('pics/iexplorer.gif', 'Internet Explorer', 0, 3, 0), 'http://www.microsoft.com/ie/') . HtmlMakeLink(HtmlMakeImage('pics/mozilla.gif', 'Mozilla'), 'http://www.mozilla.org/') . '</td>');
+      echo('</td><td width="30%" align="right">' . HtmlMakeImage('pics/browser.gif', 'Designed for') . HtmlMakeLink(HtmlMakeImage('pics/iexplorer.gif', 'Internet Explorer', 0, 3, 0), 'http://www.microsoft.com/ie/') . HtmlMakeLink(HtmlMakeImage('pics/mozilla.gif', 'Mozilla'), 'http://www.mozilla.org/') . '</td>');
       echo('</tr></table>');
     }
 
@@ -339,7 +339,9 @@
 
     $numCols = 6;
 
-    echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'reports_num' => 'number of reports', 'updated' => 'last update time'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% applications by %sortkey% %sortasc%</div></th>') . '</tr>');
+    if (count($appsList) > 1) {
+      echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'reports_num' => 'number of reports', 'updated' => 'last update time'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% applications by %sortkey% %sortasc%</div></th>') . '</tr>');
+    }
 
     echo('<tr>' .
       '<th align="left">Title' . __HtmlMakeSortKeyInline($url, 'title_text', $sortkey, $sortasc) . '</th>' .
@@ -435,7 +437,9 @@
       $numCols = 4;
     }
 
-    echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('updated' => 'last update time', 'user_text' => 'report contributor', 'title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'osver_text' => 'operating system', 'emuver_text' => 'emulator'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% reports by %sortkey% %sortasc%</div></th>') . '</tr>');
+    if (count($reportList) > 1) {
+      echo('<tr>' . __HtmlMakeSortKeyDropdown($url, Array('updated' => 'last update time', 'user_text' => 'report contributor', 'title_text' => 'application title', 'appver_text' => 'application version', 'distrib_text' => 'distribution media', 'osver_text' => 'operating system', 'emuver_text' => 'emulator'), $sortkey, $sortasc, '<th class="opaque1_bevel" colspan="' . $numCols . '" align="left"><div style="font: message-box">%go!Sort% reports by %sortkey% %sortasc%</div></th>') . '</tr>');
+    }
 
     if ($loggedIn) {
       $userinfo = AuthGetUserInformation();

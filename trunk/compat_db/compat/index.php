@@ -90,10 +90,8 @@
 
   if ($loggedin) {
     $hdr = 'My compatibility reports';
-    $ftr = 'All my reports';
   } else {
     $hdr = 'Latest compatibility reports';
-    $ftr = 'All reports';
   }
 
   echo('</td><td align="right" width="40%">');
@@ -101,7 +99,7 @@
 
   if ($myReports && (count($myReports) > 0)) {
     $myReports_fullCount = AppsGetLastNumRows();
-    HtmlSendReportList($myReports, $loggedin, true, ($myReports_fullCount > count($myReports)) ? HtmlMakeLink($ftr . '...', 'list.php', Array('userid' => AuthGetUserId(), 'sortkey' => 'updated', 'sortasc' => false)) : NULL);
+    HtmlSendReportList($myReports, $loggedin, true, ($myReports_fullCount > count($myReports)) ? ($loggedin ? HtmlMakeLink('All my reports...', 'list.php', Array('userid' => AuthGetUserId(), 'sortkey' => 'updated', 'sortasc' => false)) . '<br>' : '') . HtmlMakeLink('More reports...', 'list.php', Array('sortkey' => 'updated', 'sortasc' => false)) : NULL);
   } else {
     if ($loggedin) {
       $errMsg = 'You have not yet submitted any compatibility reports';

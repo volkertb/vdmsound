@@ -552,15 +552,15 @@ $result=MysqlQuery('SELECT COUNT(DISTINCT Reports.Applications_id) ' . substr($q
   // Gets various tables
   //
   function AppsGetDistributionTypes() {
-    return MysqlQueryAssoc('SELECT * FROM DistributionTypes');
+    return MysqlQueryAssoc('SELECT * FROM DistributionTypes ORDER BY id');
   }
   function AppsGetCompatTypes() {
-    return MysqlQueryAssoc('SELECT * FROM CompatTypes');
+    return MysqlQueryAssoc('SELECT * FROM CompatTypes ORDER BY id');
   }
   function AppsGetEMUVerTypes() {
-    return MysqlQueryAssoc('SELECT * FROM EMUVerTypes');
+    return MysqlQueryAssoc('SELECT * FROM EMUVerTypes ORDER BY id');
   }
   function AppsGetOSVerTypes() {
-    return MysqlQueryAssoc('SELECT * FROM OSVerTypes');
+    return MysqlQueryAssoc('SELECT * FROM OSVerTypes ORDER BY id');
   }
 ?>
