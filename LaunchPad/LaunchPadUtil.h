@@ -101,6 +101,7 @@ namespace VLPUtil {
   HRESULT GetSpecialFolderPath(CString& result, int nFolder, HWND hwndOwner = NULL);
 
   CString GetExpandedPath(LPCTSTR filePath);
+  CString GetShortPath(LPCTSTR fileLongPath);
 
   HRESULT EnableAutoComplete(HWND hwndEdit);
 

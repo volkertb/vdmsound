@@ -18,7 +18,7 @@ static char THIS_FILE[] = __FILE__;
 // CWizardPage_Custom_2 property page
 
 CWizardPage_Custom_2::CWizardPage_Custom_2(WizardContainer& wizard)
- : CPropertyPageEx(CWizardPage_Custom_2::IDD), m_wizard(wizard)
+ : CPropertyPageEx(CWizardPage_Custom_2::IDD, 0, IDS_TXT_WIZPROPPAGE_CUSTOM_2_T, IDS_TXT_WIZPROPPAGE_CUSTOM_2_S), m_wizard(wizard)
 {
 	//{{AFX_DATA_INIT(CWizardPage_Custom_2)
 		// NOTE: the ClassWizard will add member initialization here

@@ -559,7 +559,7 @@ BOOL CRUNWITHVDMSThread::SetupPIF(CPIFFile& PIFFile, CINIFile& INIFile) {
     autoexec += vdms_winnt_dos_Autoexec + _T("\r\n");
   }
 
-  autoexec += VLPUtil::GetVDMSFilePath(_T("dosdrv.exe")) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
+  autoexec += VLPUtil::GetShortPath(VLPUtil::GetVDMSFilePath(_T("dosdrv.exe"))) + _T(" \"-i:") + INIFile.GetFileName() + _T("\"\r\n");
 
   //
   // PIF

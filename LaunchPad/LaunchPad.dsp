@@ -56,7 +56,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\Debug
 TargetPath=.\Debug\LaunchPad.dll
@@ -92,7 +92,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\DebugU
 TargetPath=.\DebugU\LaunchPad.dll
@@ -134,7 +134,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseMinSize
 TargetPath=.\ReleaseMinSize\LaunchPad.dll
@@ -170,7 +170,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseMinDependency
 TargetPath=.\ReleaseMinDependency\LaunchPad.dll
@@ -206,7 +206,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseUMinSize
 TargetPath=.\ReleaseUMinSize\LaunchPad.dll
@@ -248,7 +248,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:advapi32.dll /delayload:shlwapi.dll
+# ADD LINK32 delayimp.lib /nologo /subsystem:windows /dll /machine:I386 /delayload:shell32.dll /delayload:advapi32.dll /delayload:shlwapi.dll
 # Begin Custom Build - Performing registration
 OutDir=.\ReleaseUMinDependency
 TargetPath=.\ReleaseUMinDependency\LaunchPad.dll

@@ -944,8 +944,11 @@ HRESULT VLPUtil::GetSpecialFolderPath(CString& result, int nFolder, HWND hwndOwn
   HRESULT hr;
 
   try {
-throw 1; // TODO: remove test case
-    hr = SHGetSpecialFolderPath(hwndOwner, result.GetBuffer(MAX_PATH), nFolder, TRUE);
+    LPTSTR szResult = result.GetBuffer(MAX_PATH);
+
+    ASSERT(szResult != NULL);
+
+    hr = SHGetSpecialFolderPath(hwndOwner, szResult, nFolder, TRUE);
     result.ReleaseBuffer();
     return hr;
   } catch (...) {
@@ -959,7 +962,11 @@ throw 1; // TODO: remove test case
     if (FAILED(hr = SHGetSpecialFolderLocation(NULL, nFolder, &pidl)))
       return hr;
 
-    if (!SHGetPathFromIDList(pidl, result.GetBuffer(MAX_PATH))) {
+    LPTSTR szResult = result.GetBuffer(MAX_PATH);
+
+    ASSERT(szResult != NULL);
+
+    if (!SHGetPathFromIDList(pidl, szResult)) {
       result.ReleaseBuffer();
       return E_FAIL;
     }
@@ -976,14 +983,39 @@ throw 1; // TODO: remove test case
 // Expands any environment variables in the given path
 //
 CString VLPUtil::GetExpandedPath(LPCTSTR filePath) {
-  TCHAR tmpBuf[MAX_PATH + 1];
+  CString retVal;
 
-  DWORD nSize = ExpandEnvironmentStrings(filePath, tmpBuf, sizeof(tmpBuf) / sizeof(tmpBuf[0]));
+  LPTSTR szRetVal = retVal.GetBuffer(MAX_PATH);
 
-  if ((nSize < 1) && (nSize > (sizeof(tmpBuf) / sizeof(tmpBuf[0])))) {
+  ASSERT(szRetVal != NULL);
+
+  DWORD nSize = ExpandEnvironmentStrings(filePath, szRetVal, MAX_PATH);
+  retVal.ReleaseBuffer();
+
+  if ((nSize < 1) || (nSize > MAX_PATH)) {
     return CString(filePath);
   } else {
-    return CString(tmpBuf);
+    return retVal;
+  }
+}
+
+//
+//
+//
+CString VLPUtil::GetShortPath(LPCTSTR fileLongPath) {
+  CString retVal;
+
+  LPTSTR szRetVal = retVal.GetBuffer(MAX_PATH);
+
+  ASSERT(szRetVal != NULL);
+
+  DWORD nSize = GetShortPathName(fileLongPath, szRetVal, MAX_PATH);
+  retVal.ReleaseBuffer();
+
+  if ((nSize < 1) || (nSize > MAX_PATH)) {
+    return CString(fileLongPath);
+  } else {
+    return retVal;
   }
 }
 

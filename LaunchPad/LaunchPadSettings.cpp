@@ -420,9 +420,6 @@ BOOL CLaunchPadSettings::GetPrivateProfileString(LPCTSTR lpAppName, LPCTSTR lpKe
 
   ASSERT(szTmpBuf != NULL);
 
-  if (szTmpBuf == NULL)
-    return FALSE;
-
   ::GetPrivateProfileString(lpAppName, lpKeyName, tmpDefault, szTmpBuf, TMP_BUF_SIZE, lpFileName);
 
   tmpBuf.ReleaseBuffer();                             // give tmpBuf back control of its internal storage
@@ -458,9 +455,6 @@ BOOL CLaunchPadSettings::GetPrivateProfileSectionNames(CStringArray& result, LPC
 
   ASSERT(szTmpBuf != NULL);
 
-  if (szTmpBuf == NULL)
-    return FALSE;
-
   DWORD bufLen = ::GetPrivateProfileSectionNames(szTmpBuf, TMP_BUF_SIZE, lpFileName);
 
   if (bufLen < TMP_BUF_SIZE - 2) {
@@ -494,9 +488,6 @@ BOOL CLaunchPadSettings::GetPrivateProfileSection(LPCTSTR lpAppName, CStringArra
   LPTSTR szTmpBuf = tmpBuf.GetBuffer(TMP_BUF_SIZE);   // obtain direct access to result's internal storage (reserve TMP_BUF_SIZE characters)
 
   ASSERT(szTmpBuf != NULL);
-
-  if (szTmpBuf == NULL)
-    return FALSE;
 
   DWORD bufLen = ::GetPrivateProfileSection(lpAppName, szTmpBuf, TMP_BUF_SIZE, lpFileName);
 
