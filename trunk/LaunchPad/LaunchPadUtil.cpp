@@ -441,11 +441,19 @@ HRESULT VLPUtil::LoadDIBFromIcon(
   LPCTSTR lpIconName,
   HBRUSH hBgBrush,
   UINT cx,
-  UINT cy)
+  UINT cy,
+  BOOL stretch,
+  UINT cx1,
+  UINT cy1)
 {
   CDC memDC;
   CBrush bgBrush;
   HICON hIcon;
+
+  if (stretch) {
+    cx1 = cx;
+    cy1 = cy;
+  }
 
   if ((HBITMAP)bmp != NULL)
     bmp.DeleteObject();
@@ -465,10 +473,10 @@ HRESULT VLPUtil::LoadDIBFromIcon(
 
   bgBrush.Detach();
 
-  if ((hIcon = (HICON)::LoadImage(hInstance, lpIconName, IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR))== NULL)
+  if ((hIcon = (HICON)::LoadImage(hInstance, lpIconName, IMAGE_ICON, cx1, cy1, LR_DEFAULTCOLOR)) == NULL)
     return HRESULT_FROM_WIN32(GetLastError());
 
-  ::DrawIconEx(memDC.m_hDC, 0, 0, hIcon, cx, cy, 0, NULL, DI_NORMAL);
+  ::DrawIconEx(memDC.m_hDC, ((int)cx - (int)cx1) / 2, ((int)cy - (int)cy1) / 2, hIcon, cx1, cy1, 0, NULL, DI_NORMAL);
   ::DestroyIcon(hIcon);
 
   memDC.SelectObject(oldBmp);

@@ -78,7 +78,7 @@ namespace VLPUtil {
   HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control);
 
   // GDI helper functions
-  HRESULT LoadDIBFromIcon(CDIBitmap& bmp, HINSTANCE hInstance, LPCTSTR lpIconName, HBRUSH hBgBrush, UINT cx = 0, UINT cy = 0);
+  HRESULT LoadDIBFromIcon(CDIBitmap& bmp, HINSTANCE hInstance, LPCTSTR lpIconName, HBRUSH hBgBrush, UINT cx = 0, UINT cy = 0, BOOL stretch = TRUE, UINT cx1 = 0, UINT cy1 = 0);
 
   // Shell helper functions
   void ParseIconLocation(LPCTSTR iconLocation, CString& iconPath, int& iconIndex);

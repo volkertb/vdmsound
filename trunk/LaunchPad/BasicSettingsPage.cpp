@@ -48,7 +48,7 @@ HRESULT CBasicSettingsPage::AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
   psp.dwFlags     = pBasicSettingsPage->m_psp.dwFlags | PSP_USEICONID | PSP_USECALLBACK | PSP_USEREFPARENT;
   psp.hInstance   = pBasicSettingsPage->m_psp.hInstance;
   psp.pszTemplate = pBasicSettingsPage->m_psp.pszTemplate;
-  psp.pszIcon     = (LPCTSTR)MAKEINTRESOURCE(IDI_APPICON);
+  psp.pszIcon     = (LPCTSTR)MAKEINTRESOURCE(IDI_ICON2);
   psp.pszTitle    = pBasicSettingsPage->m_psp.pszTitle;
   psp.pfnDlgProc  = pBasicSettingsPage->m_psp.pfnDlgProc;
   psp.lParam      = (LONG)pBasicSettingsPage;
@@ -290,7 +290,7 @@ void CBasicSettingsPage::OnButChange()
       break;
 
     default:
-      tmpStr1.FormatMessage(IDS_ERR_UNKNOWN, GetLastError());
+      tmpStr1.FormatMessage(IDS_MSG_UNKNOWNERR, GetLastError());
       GetWindowText(tmpStr2);
       MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONERROR);
   }

@@ -106,11 +106,11 @@ HRESULT CLaunchPadShellEx::GetCommandString(UINT idCmd, UINT uFlags, UINT* pwRes
 
     switch (uFlags) {
       case GCS_HELPTEXTA:
-        LoadStringA(AfxGetResourceHandle(), IDS_HLP_RUNWITHVDMS, (LPSTR)pszName, cchMax);
+        LoadStringA(AfxGetResourceHandle(), IDS_TXT_RUNWITHVDMSHLP, (LPSTR)pszName, cchMax);
         return S_OK;
 
       case GCS_HELPTEXTW:
-        LoadStringW(AfxGetResourceHandle(), IDS_HLP_RUNWITHVDMS, (LPWSTR)pszName, cchMax);
+        LoadStringW(AfxGetResourceHandle(), IDS_TXT_RUNWITHVDMSHLP, (LPWSTR)pszName, cchMax);
         return S_OK;
 
       case GCS_VALIDATEA:
@@ -160,9 +160,12 @@ HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT id
     int chkW = GetSystemMetrics(SM_CXMENUCHECK);
     int chkH = GetSystemMetrics(SM_CYMENUCHECK);
 
+    int icoW = (int)(chkW / 16.0 + 0.5) * 16;
+    int icoH = (int)(chkH / 16.0 + 0.5) * 16;
+
     ASSERT((HBITMAP)m_contextMenuBmp == NULL);
 
-    VLPUtil::LoadDIBFromIcon(m_contextMenuBmp, AfxGetResourceHandle(), MAKEINTRESOURCE(IDI_APPICON), CBrush(0xffffff), chkW, chkH);
+    VLPUtil::LoadDIBFromIcon(m_contextMenuBmp, AfxGetResourceHandle(), MAKEINTRESOURCE(IDI_ICON2), CBrush(0xffffff), chkW, chkH, FALSE, icoW, icoH);
 
     InsertMenu(hMenu, indexMenu, MF_BYPOSITION, idCmdFirst + numMenuItems, strRunWithVDMS);
     SetMenuItemBitmaps(hMenu, indexMenu, MF_BYPOSITION, m_contextMenuBmp, m_contextMenuBmp);
@@ -269,7 +272,7 @@ HRESULT CLaunchPadShellEx::GetInfoTip(DWORD dwFlags, LPWSTR* ppwszTip) {
     strTmp = VLPUtil::GetAbsolutePath(progExec, FALSE, progWDir) + _T(" ") + progParams;
     strTmp.TrimLeft(); strTmp.TrimRight();
 
-    strToolTip.FormatMessage(IDS_HLP_SHTOOLTIP, (LPCTSTR)strTmp);
+    strToolTip.FormatMessage(IDS_MSG_SHTOOLTIP, (LPCTSTR)strTmp);
 
     if ((*ppwszTip = (LPWSTR)pMalloc->Alloc((strToolTip.GetLength() + 1) * sizeof(wchar_t))) == NULL)
       return E_OUTOFMEMORY;
