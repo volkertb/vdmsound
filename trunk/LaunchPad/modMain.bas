@@ -9,6 +9,8 @@ Sub Main()
   Set fMainForm = New frmMain
 
   ' Initialize
+  modConfig.iniFileName = modIniFile.MakeIniPathStr(App.Path, "LaunchPad.ini")
+  modIniFile.EnsurePathExists iniFileName
   modConfig.LoadCategories fMainForm
 
   ' Start the GUI

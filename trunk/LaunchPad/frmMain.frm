@@ -291,7 +291,7 @@ Begin VB.Form frmMain
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "02:05 AM"
+            TextSave        =   "06:15 AM"
          EndProperty
       EndProperty
    End
@@ -464,7 +464,7 @@ Private Sub Form_Resize()
   SizeControls imgSplitter.Left
 End Sub
 
-Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Single, y As Single)
   With imgSplitter
     picSplitter.Move .Left, .Top, .Width \ 2, .Height - 20
   End With
@@ -472,11 +472,11 @@ Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, x As Sing
   mbMoving = True
 End Sub
 
-Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Single, y As Single)
   Dim sglPos As Single
   
   If mbMoving Then
-    sglPos = x + imgSplitter.Left
+    sglPos = X + imgSplitter.Left
     If sglPos < sglSplitLimit Then
       picSplitter.Left = sglSplitLimit
     ElseIf sglPos > Me.Width - sglSplitLimit Then
@@ -487,27 +487,27 @@ Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, x As Sing
   End If
 End Sub
 
-Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
   SizeControls picSplitter.Left
   picSplitter.Visible = False
   mbMoving = False
 End Sub
 
-Private Sub tvTreeView_DragDrop(Source As Control, x As Single, y As Single)
+Private Sub tvTreeView_DragDrop(Source As Control, X As Single, y As Single)
   If Source = imgSplitter Then
-    SizeControls x
+    SizeControls X
   End If
 End Sub
 
-Sub SizeControls(x As Single)
+Sub SizeControls(X As Single)
   On Error Resume Next
   
   'set the width
-  If x < 1500 Then x = 1500
-  If x > (Me.Width - 1500) Then x = Me.Width - 1500
-  tvTreeView.Width = x
-  imgSplitter.Left = x
-  lvListView.Left = x + 40
+  If X < 1500 Then X = 1500
+  If X > (Me.Width - 1500) Then X = Me.Width - 1500
+  tvTreeView.Width = X
+  imgSplitter.Left = X
+  lvListView.Left = X + 40
   lvListView.Width = Me.Width - (tvTreeView.Width + 140)
   lblTitle(0).Width = tvTreeView.Width
   lblTitle(1).Left = lvListView.Left + 20
@@ -691,7 +691,7 @@ Private Sub mnuTreeViewRename_Click()
   tvTreeView.StartLabelEdit
 End Sub
 
-Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
   If Button = 2 Then  ' Check if right mouse button was clicked.
     PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton
   End If
@@ -699,10 +699,11 @@ End Sub
 
 Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
   sbStatusBar.Panels.Item(1).Text = Node.Key
+  modConfig.LoadApplications Me, Node.Key
 End Sub
 
 Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
-  If modConfig.RenameCategory(tvTreeView.SelectedItem, NewString) <> 0 Then
+  If modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString) <> 0 Then
     MsgBox "The category '" & NewString & "' already exists.  Please choose another name."
     Cancel = 1
   Else
