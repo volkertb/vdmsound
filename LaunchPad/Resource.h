@@ -8,10 +8,12 @@
 #define IDS_TXT_MULTIPLEVALUES          120
 #define IDS_TXT_RUNWITHVDMS             130
 #define IDS_TXT_RUNWITHVDMSHLP          131
-#define IDS_MSG_UNKNOWNERR              200
+#define IDS_MSG_UNEXPECTEDERR           200
 #define IDS_MSG_ICONERROR               201
 #define IDS_MSG_NOICONS                 202
 #define IDS_MSG_SHTOOLTIP               203
+#define IDS_MSG_COMMITERR               204
+#define IDS_MSG_SECURITYERR             205
 
 #define IDR_LAUNCHPADSHELLEX            101
 

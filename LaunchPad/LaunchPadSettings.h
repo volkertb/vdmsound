@@ -7,6 +7,8 @@ class CLaunchPadSettings {
 	  virtual ~CLaunchPadSettings(void);
 
   public:
+    VOID GetFileNames(CStringArray& fileNames) const;
+
     HRESULT GetValue(LPCTSTR section, LPCTSTR key, CString& value, BOOL* isIndeterminate = NULL, LPCTSTR defValue = _T(""));
     HRESULT SetValue(LPCTSTR section, LPCTSTR key, LPCTSTR value, BOOL doWriteThrough = FALSE);
     HRESULT UnsetValue(LPCTSTR section, LPCTSTR key);

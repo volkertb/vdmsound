@@ -48,10 +48,6 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
       if (DragQueryFile(hDrop, uFileIdx, szFileName, MAX_PATH) == 0)
         continue;
 
-      // Skip over directories
-      if (VLPUtil::IsDirectory(szFileName))
-        continue;
-
       // Add the filename to our list of files to act on
       m_fileNames.Add(szFileName);
     }

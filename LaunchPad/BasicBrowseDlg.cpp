@@ -67,6 +67,8 @@ BOOL CBasicBrowseDlg::OnInitDialog()
 
 void CBasicBrowseDlg::OnButFilebrowse() 
 {
+  CWaitCursor wait;
+
   UpdateData(TRUE);     // save all changes that occured in the GUI
 	COpenDOSProgramDialog dlgFile(m_edtFile_val, this);
 
@@ -79,6 +81,8 @@ void CBasicBrowseDlg::OnButFilebrowse()
 
 void CBasicBrowseDlg::OnButChangeicon() 
 {
+  CWaitCursor wait;
+
   CChangeIconDlg dlgIcon(this);
 
   dlgIcon.m_edtFile_val = m_iconLocation;

@@ -28,7 +28,8 @@ CChangeIconDlg::CChangeIconDlg(CWnd* pParent /*=NULL*/)
 
 BOOL CChangeIconDlg::UpdateIconList(void) {
   BOOL retVal = TRUE;
-  CString tmpStr1, tmpStr2;
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
 
   UpdateData(TRUE);
 
@@ -44,16 +45,17 @@ BOOL CChangeIconDlg::UpdateIconList(void) {
 
     switch (m_lstIcons.LoadIcons(iconPath)) {
       case -1:
-        tmpStr1.FormatMessage(IDS_MSG_ICONERROR, GetLastError(), (LPCTSTR)iconPath);
-        GetWindowText(tmpStr2);
-        MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONWARNING);
+        lastError = GetLastError();
+        strTmp1.FormatMessage(IDS_MSG_ICONERROR, (LPCTSTR)iconPath, (int)lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+        GetWindowText(strTmp2);
+        MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONWARNING);
         retVal = FALSE;
         break;
 
       case 0:
-        tmpStr1.FormatMessage(IDS_MSG_NOICONS, (LPCTSTR)iconPath);
-        GetWindowText(tmpStr2);
-        MessageBox(tmpStr1, tmpStr2, MB_OK | MB_ICONWARNING);
+        strTmp1.FormatMessage(IDS_MSG_NOICONS, (LPCTSTR)iconPath);
+        GetWindowText(strTmp2);
+        MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONWARNING);
         retVal = FALSE;
         break;
 
@@ -109,6 +111,8 @@ BOOL CChangeIconDlg::OnInitDialog()
 
 void CChangeIconDlg::OnSetfocusLstIcons() 
 {
+  CWaitCursor wait;
+
   if (!UpdateIconList()) {
     GotoDlgCtrl(GetDlgItem(IDC_EDT_FILE));
   }
@@ -123,6 +127,8 @@ void CChangeIconDlg::OnDblclkLstIcons()
 
 void CChangeIconDlg::OnButFilebrowse() 
 {
+  CWaitCursor wait;
+
   CString strFilter;
   strFilter.LoadString(IDS_TXT_FILTER2);
   strFilter += _T('|');
@@ -140,6 +146,8 @@ void CChangeIconDlg::OnButFilebrowse()
 
 void CChangeIconDlg::OnOK() 
 {
+  CWaitCursor wait;
+
   if (UpdateIconList()) {
   	CDialog::OnOK();
   }

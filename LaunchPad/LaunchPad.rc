@@ -256,10 +256,12 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_MSG_UNKNOWNERR      "An unknown error has occured. (0x%1!08x!)"
-    IDS_MSG_ICONERROR       "Cannot open the file %2. (0x%1!08x!)"
-    IDS_MSG_NOICONS         "The file %1 contains no icons."
+    IDS_MSG_UNEXPECTEDERR   "An unexpected error has occured:%n%2 (0x%1!08x!)"
+    IDS_MSG_ICONERROR       "Cannot open the file '%1':%n%3 (0x%2!08x!)"
+    IDS_MSG_NOICONS         "The file '%1' contains no icons."
     IDS_MSG_SHTOOLTIP       "Program: %1"
+    IDS_MSG_COMMITERR       "Could not commit all changes:%n%2 (0x%1!08x!)"
+    IDS_MSG_SECURITYERR     "%1%nCould not gain full access to the specified file(s) because of insufficient security privileges.%nYou may encounter access problems when displaying and/or saving your changes."
 END
 
 #endif    // English (U.S.) resources
