@@ -94,7 +94,7 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   m_deviceName = DSoundGetName(&m_deviceGUID);                    // Obtain information about the device (name and GUID)
 
   // Create the garbage-collector thread (manages packets that have finished playing)
-  m_gcThread.Create(this, true);      /* TODO: check that creation was successful */
+  m_gcThread.Create(this, _T("DirectSound Garbage Collector"), true);      /* TODO: check that creation was successful */
   m_gcThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
   m_gcThread.Resume();
 

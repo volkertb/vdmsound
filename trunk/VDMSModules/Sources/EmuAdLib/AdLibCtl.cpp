@@ -139,7 +139,7 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return hr;
 
   // Create the playback thread (converts FM information to PCM)
-  m_playbackThread.Create(this, true);      /* TODO: check that creation was successful */
+  m_playbackThread.Create(this, _T("AdLib Playback"), true);      /* TODO: check that creation was successful */
   m_playbackThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
   m_playbackThread.Resume();
 
