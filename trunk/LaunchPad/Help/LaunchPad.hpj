@@ -1,0 +1,17 @@
+; This file is maintained by HCW. Do not modify this file directly.
+
+[OPTIONS]
+LCID=0x409 0x0 0x0 ; English (United States)
+REPORT=Yes
+TITLE=VDMSound LaunchPad
+COPYRIGHT=VDMSound LaunchPad %date
+HLP=LaunchPad.hlp
+
+[FILES]
+LaunchPad.rtf
+
+[FONTS]
+Verdana=MS Sans Serif ; Standardize the look
+
+[MAP]
+#include <LaunchPad.hm>
