@@ -13,6 +13,7 @@
 #include "MIDIToolkit_i.c"
 #include "MIDIMapper.h"
 #include "MIDISplitter.h"
+#include "MIDIDelay.h"
 
 
 CComModule _Module;
@@ -20,6 +21,7 @@ CComModule _Module;
 BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_MIDIMapper, CMIDIMapper)
 OBJECT_ENTRY(CLSID_MIDISplitter, CMIDISplitter)
+OBJECT_ENTRY(CLSID_MIDIDelay, CMIDIDelay)
 END_OBJECT_MAP()
 
 class CMIDIToolkitApp : public CWinApp
