@@ -149,7 +149,7 @@ protected:
   CThread m_joyPollThread;    // thread that regularly polls the Windows driver
   CCriticalSection m_mutex;   // regulates concurrent access to the device data in m_joyInfo (regulate access by the poll thread + forced access by some I/O traps)
   JoyEmuState m_state;        // joystick information
-  bool m_pollRequest;
+  volatile bool m_pollRequest;
 
 // Interfaces to dependency modules
 protected:
