@@ -1,16 +1,18 @@
 #include "stdafx.h"
 
 #include "Thread.h"
-#include "MFCUtil.h"
+
+#include <eh.h>
 
 CThread::CThread(
     IRunnable* target,
+    LPCTSTR targetName,
     bool suspended,
     unsigned int stackSize)
   : m_hThread(NULL), m_pTarget(NULL)
 {
   if (target != NULL) {
-    Create(target, suspended, stackSize);
+    Create(target, targetName, suspended, stackSize);
   }
 }
 
@@ -19,44 +21,18 @@ CThread::~CThread(void) {
     Join(0);
 }
 
-unsigned int WINAPI CThread::ThreadProc(
-    LPVOID lpParam)
-{
-  CThread* pThis = (CThread*)(lpParam);
-  IRunnable* pRunnable = ((pThis != NULL) ? pThis->m_pTarget : NULL);
-
-  ASSERT(pRunnable != NULL);
-
-  unsigned int status;
-
-  try {
-    status = pRunnable->Run(*pThis);
-  } catch (...) {
-    if (MessageBox(Format(_T("Unhandled exception in thread %d (0x%08x).\n\nDo you want to continue?"), (int)(pThis->GetThreadID()), (int)(pThis->GetThreadHandle())),
-                          _T("Error"),
-                   MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
-    {
-      throw;
-    }
-
-    status = -1;
-  }
-
-  _endthreadex(status);
-
-  return status;
-}
-
 bool CThread::Create(
     IRunnable* target,
+    LPCTSTR targetName,
     bool suspended,
     unsigned int stackSize)
 {
   ASSERT(m_hThread == NULL);
   ASSERT(target != NULL);
 
-  m_pTarget    = target;
-  m_dwThreadID = 0;
+  m_pTarget      = target;
+  m_szTargetName = targetName;
+  m_dwThreadID   = 0;
 
   if ((m_hThread = (HANDLE)(::_beginthreadex(NULL, stackSize, ThreadProc, this, CREATE_SUSPENDED, (unsigned*)(&m_dwThreadID)))) == NULL)
     return false;
@@ -117,6 +93,10 @@ IRunnable* CThread::GetTarget(void) {
   return m_pTarget;
 }
 
+LPCTSTR CThread::GetTargetName(void) {
+  return m_szTargetName;
+}
+
 DWORD CThread::GetThreadID(void) {
   ASSERT(m_hThread != NULL);
   return m_dwThreadID;
@@ -146,4 +126,55 @@ bool CThread::GetMessage(
   } else {
     return (::PeekMessage(message, NULL, 0, 0, PM_REMOVE | PM_NOYIELD) != 0);
   }
+}
+
+unsigned int WINAPI CThread::ThreadProc(
+    LPVOID lpParam)
+{
+  CThread* pThis = (CThread*)(lpParam);
+  IRunnable* pRunnable = ((pThis != NULL) ? pThis->m_pTarget : NULL);
+
+  ASSERT(pRunnable != NULL);
+
+  _set_se_translator(ThreadSETranslator);
+
+  unsigned int status;
+
+  do {
+    try {
+      status = pRunnable->Run(*pThis);
+      break;
+    } catch (CException* ce) {
+      TCHAR buf[1024];
+      if ((!ce) || (!ce->GetErrorMessage(buf, sizeof(buf)/sizeof(buf[0])))) {
+        _tcscpy(buf, _T("(no description available)"));
+      }
+
+      if (MessageBox(Format(_T("An exception occured in thread %d (%s).\n\n%s\n\nDo you want to continue?"), (int)(pThis->GetThreadID()), pThis->GetTargetName(), buf),
+                            _T("Error"),
+                     MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
+      {
+        throw;
+      }
+    } catch (...) {
+      if (MessageBox(Format(_T("An unknown exception occured in thread %d (%s).\n\nDo you want to continue?"), (int)(pThis->GetThreadID()), (int)(pThis->GetTargetName())),
+                            _T("Error"),
+                     MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
+      {
+        throw;
+      }
+    }
+  } while (true);
+
+  _endthreadex(status);
+
+  return status;
+}
+
+void CThread::ThreadSETranslator(
+  unsigned int exCode,
+  EXCEPTION_POINTERS* pExInfo)
+{
+//MessageBox((LPCTSTR)FormatMessage(_T("%1!08x!/%2!08x!"), false, pExInfo->ExceptionRecord->ExceptionCode, pExInfo->ExceptionRecord->ExceptionAddress), _T("BUUUU"), MB_OK);
+  throw new CWin32StdException(TRUE, pExInfo ? pExInfo->ExceptionRecord : NULL);
 }

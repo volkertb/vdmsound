@@ -87,7 +87,7 @@ STDMETHODIMP CMIDIOut::Init(IUnknown * configuration) {
   m_deviceName = MidiOutGetName();    // Obtain information about the device (its name)
 
   // Create the garbage-collector thread (frees up memory allocated during asynchronous MIDI SysEx uploads)
-  m_gcThread.Create(this, true);      /* TODO: check that creation was successful */
+  m_gcThread.Create(this, _T("MIDI-Out Garbage Collector"), true);      /* TODO: check that creation was successful */
   m_gcThread.SetPriority(THREAD_PRIORITY_LOWEST);
   m_gcThread.Resume();
 
