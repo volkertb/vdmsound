@@ -96,6 +96,14 @@ Language=English
 One or more dependency cycles were detected between the emulation modules:%n%n%1%n%nThe following modules cannot, therefore, be intialized:%n%n%2%nDo you want to continue?%0
 .
 
+MessageId=
+Severity=Error
+Facility=Application
+SymbolicName=MSG_ERR_TIPS
+Language=English
+An error was encountered while attempting to load and display the Tip of the Day:%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nThe initialization process will now continue.%0
+.
+
 
 ; /////////////////////////////////////////////////////////////////////////////
 

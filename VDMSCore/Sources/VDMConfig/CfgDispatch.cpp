@@ -30,6 +30,7 @@ void InitializeModule(const std::string&, const CVDMConfig&, const modulemap_t&,
 void DestroyModule(const IUnknownPtr&);
 CString StringFromGUID(const GUID& guid);
 CString FormatCOMError(const _com_error& ce);
+BOOL ShowTips(const CString&);
 
 class CInstantiationError : public CException {
   public:
@@ -195,6 +196,14 @@ STDAPI CfgInitialize(char* INIFiles) {
                LoadString(IDS_MBT_EXCEPTION),
                MB_OK, MB_ICONERROR);
     return E_FAIL;
+  }
+
+  // Show the tip of the day
+  if (!ShowTips(_T("/Software/Freeware/VDMSound"))) {
+      DWORD lastError = GetLastError();
+      MessageBox(FormatMessage(MSG_ERR_TIPS, false, NULL, 0, false, lastError, (LPCTSTR)FormatMessage(lastError)),
+                 LoadString(IDS_MBT_ERROR),
+                 MB_OK, MB_ICONEXCLAMATION);
   }
 
   return S_OK;
@@ -392,4 +401,69 @@ CString FormatCOMError(
   }
 
   return retVal;
+}
+
+//
+// Shows the "Tip of the Day" dialog
+//
+
+typedef BOOL (WINAPI* LPFNTODINITIALIZE)(LPCTSTR);
+typedef BOOL (WINAPI* LPFNTODTODISENABLED)(BOOL*);
+typedef BOOL (WINAPI* LPFNTODSHOWTIPS)(VOID);
+
+BOOL ShowTips(
+    const CString& regPath)
+{
+  HMODULE hCfgLib;
+  LPFNTODINITIALIZE lpfnTODInitialize;
+  LPFNTODTODISENABLED lpfnTODIsEnabled;
+  LPFNTODSHOWTIPS lpfnTODShowTips;
+
+#ifdef _UNICODE
+  static LPCSTR lpszTODInitializeName = "TODInitializeW";
+#else
+  static LPCSTR lpszTODInitializeName = "TODInitializeA";
+#endif
+
+  hCfgLib = LoadLibrary(_T("TipOfDay.dll"));
+
+  if (hCfgLib == NULL)
+    return FALSE;       // error loading library
+
+  // Initialize
+
+  lpfnTODInitialize = (LPFNTODINITIALIZE)GetProcAddress(hCfgLib, lpszTODInitializeName);
+
+  if (lpfnTODInitialize == NULL)
+    return FALSE;       // error loading function
+
+  if (!((*lpfnTODInitialize)(regPath)))
+    return FALSE;       // error in function
+
+  // Check if tips should be shown
+
+  BOOL isEnabled = FALSE;
+
+  lpfnTODIsEnabled = (LPFNTODTODISENABLED)GetProcAddress(hCfgLib, "TODIsEnabled");
+
+  if (lpfnTODIsEnabled == NULL)
+    return FALSE;       // error loading function
+
+  if (!((*lpfnTODIsEnabled)(&isEnabled)))
+    return FALSE;       // error in function
+
+  if (!isEnabled)
+    return TRUE;        // user chose not to show the tips, but no error was encountered
+
+  // Show the tips
+
+  lpfnTODShowTips = (LPFNTODSHOWTIPS)GetProcAddress(hCfgLib, "TODShowTips");
+
+  if (lpfnTODShowTips == NULL)
+    return FALSE;       // error loading function
+
+  if (!((*lpfnTODShowTips)()))
+    return FALSE;       // error in function
+
+  return TRUE;
 }
