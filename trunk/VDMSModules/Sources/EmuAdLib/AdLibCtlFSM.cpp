@@ -66,7 +66,7 @@ char CAdLibCtlFSM::getStatus(void) {
 # endif
 
   // Check if Timer 1 has expired
-  if ((m_timer1.isEnabled) && ((t_now > (m_timer1.timebase + m_timer1.timeout)) || (t_now < m_timer1.timebase))) {
+  if ((m_timer1.isEnabled) && ((t_now >= (m_timer1.timebase + m_timer1.timeout)) || (t_now < m_timer1.timebase))) {
     // Compute the most recent moment when the counter rolled over (expired)
     m_timer1.timebase = t_now - ((t_now - m_timer1.timebase) % m_timer1.timeout);
     // If the timer is not masked, set the corresponding status bit(s)
@@ -74,7 +74,7 @@ char CAdLibCtlFSM::getStatus(void) {
   }
 
   // Check if Timer 2 has expired
-  if ((m_timer2.isEnabled) && ((t_now > (m_timer2.timebase + m_timer2.timeout)) || (t_now < m_timer2.timebase))) {
+  if ((m_timer2.isEnabled) && ((t_now >= (m_timer2.timebase + m_timer2.timeout)) || (t_now < m_timer2.timebase))) {
     // Compute the most recent moment when the counter rolled over (expired)
     m_timer2.timebase = t_now - ((t_now - m_timer2.timebase) % m_timer2.timeout);
     // If the timer is not masked, set the corresponding status bit(s)
@@ -112,13 +112,13 @@ void CAdLibCtlFSM::putData(char data) {
   switch (m_regIdx) {
     case 0x02:    // Timer 1 count
       m_timer1.timeout = OPL_T1_PERIOD * (256 - (data & 0xff));
-      sprintf(buf, "Reprogramming OPL timer 1, counter value = %d.", data & 0xff);
+      sprintf(buf, "Reprogramming OPL timer 1, counter value = %d (T = %5.3fms).", data & 0xff, (float)(m_timer1.timeout/1000.0));
       m_hwemu->logInformation(buf);
       return;
 
     case 0x03:    // Timer 2 count
       m_timer2.timeout = OPL_T2_PERIOD * (256 - (data & 0xff));
-      sprintf(buf, "Reprogramming OPL timer 2, counter value = %d.", data & 0xff);
+      sprintf(buf, "Reprogramming OPL timer 2, counter value = %d (T = %5.3fms).", data & 0xff, (float)(m_timer2.timeout/1000.0));
       m_hwemu->logInformation(buf);
       return;
 
