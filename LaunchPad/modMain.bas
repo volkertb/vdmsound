@@ -9,7 +9,7 @@ Sub Main()
   Set fMainForm = New frmMain
 
   ' Initialize
-  modConfig.Initialize fMainForm
+  modConfig.LoadCategories fMainForm
 
   ' Start the GUI
   fMainForm.Show
