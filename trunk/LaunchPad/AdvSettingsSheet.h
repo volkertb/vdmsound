@@ -9,6 +9,10 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define WM_SAVESETTINGS   (WM_APP + 0x100)
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include "ContextHelp.h"
 
 #include "AdvSettingsPage_Program.h"
@@ -20,15 +24,41 @@
 #include "AdvSettingsPage_Joy.h"
 
 /////////////////////////////////////////////////////////////////////////////
+// CSettingsContainer
+
+class CSettingsContainer
+{
+// Construction
+public:
+  CSettingsContainer(CLaunchPadSettings& settings) : m_settingsOriginal(settings), m_settings(settings)
+    { }
+
+// Utility
+public:
+  void Save(void)
+    { m_settingsOriginal = m_settings; }
+
+// Member variables
+protected:
+  CLaunchPadSettings& m_settingsOriginal; // reference to original settings
+  CLaunchPadSettings  m_settings;         // working copy of settings, to be transferred to original settings when approved
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 // CAdvSettingsSheet
 
-class CAdvSettingsSheet : public CPropertySheet
+class CAdvSettingsSheet
+ : public    CPropertySheet,
+   protected CSettingsContainer // pathetic hack to get m_settings constructed before m_p1...7
 {
 // Construction
 public:
 	CAdvSettingsSheet(CLaunchPadSettings& settings, UINT nIDCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
 	CAdvSettingsSheet(CLaunchPadSettings& settings, LPCTSTR pszCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
 
+// Utility
 protected:
   void Init(void);
 
@@ -64,7 +94,7 @@ public:
 	// Generated message map functions
 protected:
 	//{{AFX_MSG(CAdvSettingsSheet)
-		// NOTE - the ClassWizard will add and remove member functions here.
+	afx_msg LRESULT OnSaveSettings(WPARAM wParam, LPARAM lParam);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

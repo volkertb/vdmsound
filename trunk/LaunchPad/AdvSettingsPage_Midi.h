@@ -26,6 +26,8 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
@@ -38,16 +40,24 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Midi)
 	enum { IDD = IDD_ADVPROPPAGE_MIDI };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CComboBox	m_cmbSysexindicator;
+	CComboBox	m_cmbMpuport;
+	CComboBox	m_cmbMpuoutdev;
+	CComboBox	m_cmbMpuirq;
+	CButton	m_chkUsempu;
+	CButton	m_chkMpuoutdev;
+	CButton	m_butMidimapbrowse;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Midi)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +65,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Midi)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkUsempu();
+	afx_msg void OnChkMpuoutdev();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

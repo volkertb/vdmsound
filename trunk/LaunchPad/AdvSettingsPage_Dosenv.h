@@ -26,6 +26,8 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_CONFIG(BOOL bSave, BOOL bEnabled = TRUE);
+  VOID SyncGUIData_AUTOEXEC(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
@@ -38,16 +40,23 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Dosenv)
 	enum { IDD = IDD_ADVPROPPAGE_DOSENV };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CEdit	m_edtConfigsys;
+	CEdit	m_edtAutoexecbat;
+	CButton	m_chkHimemsys;
+	CButton	m_chkDosumb;
+	CButton	m_chkConfigsys;
+	CButton	m_chkAutoexecbat;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Dosenv)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +64,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Dosenv)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkConfigsys();
+	afx_msg void OnChkAutoexecbat();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -26,6 +26,7 @@ public:
 // Helper functions
 protected:
   VOID SyncGUIData(BOOL bSave = TRUE);
+  VOID SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
 
 // Member variables
 protected:
@@ -38,16 +39,25 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Joy)
 	enum { IDD = IDD_ADVPROPPAGE_JOY };
-		// NOTE - ClassWizard will add data members here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	CSpinButtonCtrl	m_spnJoyscalemin;
+	CSpinButtonCtrl	m_spnJoyscalemax;
+	CComboBox	m_cmbJoyscalemin;
+	CComboBox	m_cmbJoyscalemax;
+	CComboBox	m_cmbJoyport;
+	CComboBox	m_cmbJoypoll;
+	CButton	m_chkUsejoy;
+	CButton	m_butJoymapbrowse;
 	//}}AFX_DATA
 
 
 // Overrides
 	// ClassWizard generate virtual function overrides
 	//{{AFX_VIRTUAL(CAdvSettingsPage_Joy)
+	public:
+	virtual BOOL OnApply();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -55,6 +65,7 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAdvSettingsPage_Joy)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnChkUsejoy();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

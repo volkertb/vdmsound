@@ -16,14 +16,16 @@ static char THIS_FILE[] = __FILE__;
 
 CAdvSettingsSheet::CAdvSettingsSheet(CLaunchPadSettings& settings, UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheet(nIDCaption, pParentWnd, iSelectPage),
-   m_p1(settings), m_p2(settings), m_p3(settings), m_p4(settings), m_p5(settings), m_p6(settings), m_p7(settings)
+   CSettingsContainer(settings),
+   m_p1(m_settings), m_p2(m_settings), m_p3(m_settings), m_p4(m_settings), m_p5(m_settings), m_p6(m_settings), m_p7(m_settings)
 {
   Init();
 }
 
 CAdvSettingsSheet::CAdvSettingsSheet(CLaunchPadSettings& settings, LPCTSTR pszCaption, CWnd* pParentWnd, UINT iSelectPage)
  : CPropertySheet(pszCaption, pParentWnd, iSelectPage),
-   m_p1(settings), m_p2(settings), m_p3(settings), m_p4(settings), m_p5(settings), m_p6(settings), m_p7(settings)
+   CSettingsContainer(settings),
+   m_p1(m_settings), m_p2(m_settings), m_p3(m_settings), m_p4(m_settings), m_p5(m_settings), m_p6(m_settings), m_p7(m_settings)
 {
   Init();
 }
@@ -45,7 +47,7 @@ void CAdvSettingsSheet::Init(void) {
 
 BEGIN_MESSAGE_MAP(CAdvSettingsSheet, CPropertySheet)
 	//{{AFX_MSG_MAP(CAdvSettingsSheet)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
+	ON_MESSAGE(WM_SAVESETTINGS, OnSaveSettings)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -60,4 +62,11 @@ BOOL CAdvSettingsSheet::OnInitDialog()
   m_help.Attach(this);
 
 	return bResult;
+}
+
+LRESULT CAdvSettingsSheet::OnSaveSettings(WPARAM wParam, LPARAM lParam)
+{
+  Save();
+
+  return 0;
 }
