@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "launchpad.h"
 #include "PIFFile.h"
+#include "LaunchPadUtil.h"
 
 #include <memory>
 
@@ -306,7 +307,7 @@ BOOL CPIFFile::Create(
       return FALSE;
     }
 
-    ToANSI(m_configFile.GetFileName(), m_PIF.winNT3.szConfig, _LENOF(m_PIF.winNT3.szConfig));
+    ToANSI(VLPUtil::GetShortPath(m_configFile.GetFileName()), m_PIF.winNT3.szConfig, _LENOF(m_PIF.winNT3.szConfig));
   }
 
   if (autoexec != NULL) {
@@ -322,7 +323,7 @@ BOOL CPIFFile::Create(
       return FALSE;
     }
 
-    ToANSI(m_autoexecFile.GetFileName(), m_PIF.winNT3.szAutoexec, _LENOF(m_PIF.winNT3.szAutoexec));
+    ToANSI(VLPUtil::GetShortPath(m_autoexecFile.GetFileName()), m_PIF.winNT3.szAutoexec, _LENOF(m_PIF.winNT3.szAutoexec));
   }
 
   if (!m_PIFFile.Create(VLP_PREFIX, PIF_EXTENSION))
@@ -380,10 +381,17 @@ void CPIFFile::SetWindowTitle(LPCTSTR szTitle) {
 //
 //
 void CPIFFile::SetProgram(LPCTSTR szExecutable, LPCTSTR szArguments) {
+  CString strExecutable = VLPUtil::GetShortPath(szExecutable);
   CString strCmdLine;
-  strCmdLine.Format(_T("\"%s\" %s"), szExecutable, szArguments);
+  strCmdLine.Format(_T("\"%s\" %s"), (LPCTSTR)strExecutable, szArguments);
 
-  ToOEM(szExecutable, m_PIF.basic.szProgFName, _LENOF(m_PIF.basic.szProgFName));
+  ASSERT(strExecutable.GetLength() < _LENOF(m_PIF.basic.szProgFName));
+  ASSERT(_tcslen(szArguments)      < _LENOF(m_PIF.basic.szParams));
+  ASSERT(_tcslen(szArguments)      < _LENOF(m_PIF.win386.szParams));
+  ASSERT(strCmdLine.GetLength()    < _LENOF(m_PIF.winNT4.szCmdLineA));
+  ASSERT(strCmdLine.GetLength()    < _LENOF(m_PIF.winNT4.szCmdLineW));
+
+  ToOEM(strExecutable, m_PIF.basic.szProgFName, _LENOF(m_PIF.basic.szProgFName));
   ToOEM(szArguments, m_PIF.basic.szParams, _LENOF(m_PIF.basic.szParams));
   ToOEM(szArguments, m_PIF.win386.szParams, _LENOF(m_PIF.win386.szParams));
 
@@ -395,10 +403,16 @@ void CPIFFile::SetProgram(LPCTSTR szExecutable, LPCTSTR szArguments) {
 //
 //
 void CPIFFile::SetWorkDir(LPCTSTR szWDir) {
-  ToOEM(szWDir, m_PIF.basic.szWorkingDir, _LENOF(m_PIF.basic.szWorkingDir));
+  CString strWDir = VLPUtil::GetShortPath(szWDir);
 
-  ToANSI(szWDir, m_PIF.winNT4.szWorkDirA, _LENOF(m_PIF.winNT4.szWorkDirA));
-  ToUNICODE(szWDir, m_PIF.winNT4.szWorkDirW, _LENOF(m_PIF.winNT4.szWorkDirW));
+  ASSERT(strWDir.GetLength() < _LENOF(m_PIF.basic.szWorkingDir));
+  ASSERT(strWDir.GetLength() < _LENOF(m_PIF.winNT4.szWorkDirA));
+  ASSERT(strWDir.GetLength() < _LENOF(m_PIF.winNT4.szWorkDirW));
+
+  ToOEM(strWDir, m_PIF.basic.szWorkingDir, _LENOF(m_PIF.basic.szWorkingDir));
+
+  ToANSI(strWDir, m_PIF.winNT4.szWorkDirA, _LENOF(m_PIF.winNT4.szWorkDirA));
+  ToUNICODE(strWDir, m_PIF.winNT4.szWorkDirW, _LENOF(m_PIF.winNT4.szWorkDirW));
 }
 
 //
@@ -407,9 +421,15 @@ void CPIFFile::SetWorkDir(LPCTSTR szWDir) {
 void CPIFFile::SetIcon(LPCTSTR szIcon, LONG iconID) {
   m_PIF.winVMM.wIconID = iconID;
 
-  ToANSI(szIcon, m_PIF.winVMM.szIconFile, _LENOF(m_PIF.winVMM.szIconFile));
-  ToANSI(szIcon, m_PIF.winNT4.szIconFileA, _LENOF(m_PIF.winNT4.szIconFileA));
-  ToUNICODE(szIcon, m_PIF.winNT4.szIconFileW, _LENOF(m_PIF.winNT4.szIconFileW));
+  CString strIcon = VLPUtil::GetShortPath(szIcon);
+
+  ASSERT(strIcon.GetLength() < _LENOF(m_PIF.winVMM.szIconFile));
+  ASSERT(strIcon.GetLength() < _LENOF(m_PIF.winNT4.szIconFileA));
+  ASSERT(strIcon.GetLength() < _LENOF(m_PIF.winNT4.szIconFileW));
+
+  ToANSI(strIcon, m_PIF.winVMM.szIconFile, _LENOF(m_PIF.winVMM.szIconFile));
+  ToANSI(strIcon, m_PIF.winNT4.szIconFileA, _LENOF(m_PIF.winNT4.szIconFileA));
+  ToUNICODE(strIcon, m_PIF.winNT4.szIconFileW, _LENOF(m_PIF.winNT4.szIconFileW));
 }
 
 //
