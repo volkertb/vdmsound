@@ -5,11 +5,11 @@ Begin VB.Form frmMain
    ClientHeight    =   5775
    ClientLeft      =   165
    ClientTop       =   735
-   ClientWidth     =   7815
+   ClientWidth     =   10035
    Icon            =   "frmMain.frx":0000
    LinkTopic       =   "Form1"
    ScaleHeight     =   5775
-   ScaleWidth      =   7815
+   ScaleWidth      =   10035
    StartUpPosition =   3  'Windows Default
    Begin MSComctlLib.ImageList imlToolbar1 
       Left            =   5400
@@ -108,14 +108,18 @@ Begin VB.Form frmMain
       MaskColor       =   128
       _Version        =   393216
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
-         NumListImages   =   2
+         NumListImages   =   3
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
             Picture         =   "frmMain.frx":1526
-            Key             =   "Folder Open"
+            Key             =   "Desktop"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1638
-            Key             =   "Folder Closed"
+            Picture         =   "frmMain.frx":1680
+            Key             =   "Open Folder"
+         EndProperty
+         BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmMain.frx":17DA
+            Key             =   "Closed Folder"
          EndProperty
       EndProperty
    End
@@ -132,51 +136,51 @@ Begin VB.Form frmMain
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   12
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":174A
+            Picture         =   "frmMain.frx":1934
             Key             =   "New File"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":183A
+            Picture         =   "frmMain.frx":1A24
             Key             =   "New Folder"
          EndProperty
          BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1932
+            Picture         =   "frmMain.frx":1B1C
             Key             =   "Cut"
          EndProperty
          BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1A16
+            Picture         =   "frmMain.frx":1C00
             Key             =   "Copy"
          EndProperty
          BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1B0E
+            Picture         =   "frmMain.frx":1CF8
             Key             =   "Paste"
          EndProperty
          BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1C0E
+            Picture         =   "frmMain.frx":1DF8
             Key             =   "Delete"
          EndProperty
          BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1CFA
+            Picture         =   "frmMain.frx":1EE4
             Key             =   "Properties"
          EndProperty
          BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1DF2
+            Picture         =   "frmMain.frx":1FDC
             Key             =   "View Large Icons"
          EndProperty
          BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1EEA
+            Picture         =   "frmMain.frx":20D4
             Key             =   "View Small Icons"
          EndProperty
          BeginProperty ListImage10 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":1FE2
+            Picture         =   "frmMain.frx":21CC
             Key             =   "View List"
          EndProperty
          BeginProperty ListImage11 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":20D6
+            Picture         =   "frmMain.frx":22C0
             Key             =   "View Details"
          EndProperty
          BeginProperty ListImage12 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmMain.frx":21D2
+            Picture         =   "frmMain.frx":23BC
             Key             =   "Refresh"
          EndProperty
       EndProperty
@@ -206,12 +210,22 @@ Begin VB.Form frmMain
       _ExtentY        =   8467
       _Version        =   393217
       Indentation     =   0
-      LineStyle       =   1
       PathSeparator   =   "."
       Sorted          =   -1  'True
       Style           =   7
       ImageList       =   "imlTreeIcons"
       Appearance      =   1
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      OLEDragMode     =   1
+      OLEDropMode     =   1
    End
    Begin MSComctlLib.ListView lvListView 
       Height          =   4800
@@ -223,8 +237,11 @@ Begin VB.Form frmMain
       _ExtentX        =   9895
       _ExtentY        =   8467
       Sorted          =   -1  'True
+      MultiSelect     =   -1  'True
       LabelWrap       =   -1  'True
       HideSelection   =   -1  'True
+      OLEDragMode     =   1
+      AllowReorder    =   -1  'True
       FullRowSelect   =   -1  'True
       _Version        =   393217
       Icons           =   "imlListIcons32"
@@ -233,6 +250,7 @@ Begin VB.Form frmMain
       BackColor       =   -2147483643
       BorderStyle     =   1
       Appearance      =   1
+      OLEDragMode     =   1
       NumItems        =   1
       BeginProperty ColumnHeader(1) {BDD1F052-858B-11D1-B16A-00C0F0283628} 
          Key             =   "name"
@@ -248,11 +266,11 @@ Begin VB.Form frmMain
       Height          =   300
       Left            =   0
       ScaleHeight     =   300
-      ScaleWidth      =   7815
+      ScaleWidth      =   10035
       TabIndex        =   2
       TabStop         =   0   'False
       Top             =   360
-      Width           =   7815
+      Width           =   10035
       Begin VB.Label lblTitle 
          BorderStyle     =   1  'Fixed Single
          Caption         =   "DOS Applications"
@@ -282,8 +300,8 @@ Begin VB.Form frmMain
       Left            =   0
       TabIndex        =   1
       Top             =   0
-      Width           =   7815
-      _ExtentX        =   13785
+      Width           =   10035
+      _ExtentX        =   17701
       _ExtentY        =   635
       ButtonWidth     =   609
       ButtonHeight    =   582
@@ -415,55 +433,64 @@ Begin VB.Form frmMain
       Left            =   0
       TabIndex        =   0
       Top             =   5505
-      Width           =   7815
-      _ExtentX        =   13785
+      Width           =   10035
+      _ExtentX        =   17701
       _ExtentY        =   476
       _Version        =   393216
       BeginProperty Panels {8E3867A5-8586-11D1-B16A-00C0F0283628} 
          NumPanels       =   3
          BeginProperty Panel1 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             AutoSize        =   1
-            Object.Width           =   8229
+            Object.Width           =   12144
             Text            =   "Status"
             TextSave        =   "Status"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "7/10/01"
+            TextSave        =   "8/10/01"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "00:32 AM"
+            TextSave        =   "01:08 AM"
          EndProperty
       EndProperty
+   End
+   Begin VB.Label Label1 
+      Caption         =   "Label1"
+      Height          =   255
+      Left            =   8520
+      TabIndex        =   8
+      Top             =   2880
+      Width           =   1095
    End
    Begin VB.Image picMSDOS32 
       Height          =   480
       Left            =   8280
-      Picture         =   "frmMain.frx":22D2
+      Picture         =   "frmMain.frx":24BC
       Top             =   2040
       Width           =   480
    End
    Begin VB.Image picMSDOS16 
       Height          =   240
       Left            =   8280
-      Picture         =   "frmMain.frx":25DC
+      Picture         =   "frmMain.frx":27C6
       Top             =   1680
       Width           =   240
    End
    Begin VB.Image imgSplitter 
       Height          =   4785
       Left            =   2280
-      MousePointer    =   9  'Size W E
+      MouseIcon       =   "frmMain.frx":2D50
+      MousePointer    =   99  'Custom
       Top             =   705
       Width           =   150
    End
    Begin VB.Menu mnuFile 
       Caption         =   "&File"
       Begin VB.Menu mnuFileNew 
-         Caption         =   "&New"
+         Caption         =   "Ne&w"
          Begin VB.Menu mnuFileNewCategory 
             Caption         =   "&Category"
          End
@@ -554,8 +581,17 @@ Begin VB.Form frmMain
    Begin VB.Menu mnuTreeViewMenu 
       Caption         =   "tvTreeViewPopup"
       Visible         =   0   'False
+      Begin VB.Menu mnuTreeViewExpandAll 
+         Caption         =   "E&xpand All"
+      End
+      Begin VB.Menu mnuTreeViewCollapseAll 
+         Caption         =   "&Collapse All"
+      End
+      Begin VB.Menu mnuTreeViewMenuBar0 
+         Caption         =   "-"
+      End
       Begin VB.Menu mnuTreeViewNew 
-         Caption         =   "&New"
+         Caption         =   "Ne&w"
          Begin VB.Menu mnuTreeViewNewCategory 
             Caption         =   "&Category"
          End
@@ -570,12 +606,37 @@ Begin VB.Form frmMain
          Caption         =   "&Delete"
       End
    End
+   Begin VB.Menu mnuListViewMenu 
+      Caption         =   "lvListViewPopup"
+      Visible         =   0   'False
+      Begin VB.Menu mnuListViewNewApplication 
+         Caption         =   "New DOS &Application"
+      End
+      Begin VB.Menu mnuListViewRename 
+         Caption         =   "Rena&me"
+      End
+      Begin VB.Menu mnuListViewDelete 
+         Caption         =   "&Delete"
+      End
+   End
 End
 Attribute VB_Name = "frmMain"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+' Last known primary selection (when the applications pane
+'  was last synchronized)
+'
+Private lastNode As Node
+
+'============================================================================
+'
+' Wizard-generated code
+'
+'============================================================================
+
 Const NAME_COLUMN = 0
 Const TYPE_COLUMN = 1
 Const SIZE_COLUMN = 2
@@ -590,20 +651,7 @@ Private Sub Form_Load()
   Me.Top = GetSetting(App.Title, "Settings", "MainTop", 1000)
   Me.Width = GetSetting(App.Title, "Settings", "MainWidth", 6500)
   Me.Height = GetSetting(App.Title, "Settings", "MainHeight", 6500)
-  lvListView.View = Val(GetSetting(App.Title, "Settings", "ViewMode", "0"))
-End Sub
-
-Private Sub Form_Paint()
-  Select Case lvListView.View
-    Case lvwIcon
-      tbToolBar.Buttons(LISTVIEW_MODE0).Value = tbrPressed
-    Case lvwSmallIcon
-      tbToolBar.Buttons(LISTVIEW_MODE1).Value = tbrPressed
-    Case lvwList
-      tbToolBar.Buttons(LISTVIEW_MODE2).Value = tbrPressed
-    Case lvwReport
-      tbToolBar.Buttons(LISTVIEW_MODE3).Value = tbrPressed
-  End Select
+  SelectListingMode Val(GetSetting(App.Title, "Settings", "ViewMode", "0"))
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
@@ -658,75 +706,6 @@ Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, x As Single
   mbMoving = False
 End Sub
 
-Private Sub mnuFileDelete_Click()
-  Select Case modMain.fMainForm.ActiveControl.Tag
-     Case "CtlCategories"
-      mnuTreeViewDelete_Click
-    Case "CtlApplications"
-  End Select
-End Sub
-
-Private Sub mnuFileNewApplication_Click()
-'''
-'
-End Sub
-
-Private Sub mnuFileNewCategory_Click()
-  Dim strText As String
-  strText = "New Category"
-
-  Dim catIndex As Integer
-  catIndex = 2
-
-  Do Until modTreeUtil.GetNodeByText(tvTreeView, tvTreeView.SelectedItem, strText) Is Nothing
-    strText = "New Category (" & catIndex & ")"
-    catIndex = catIndex + 1
-  Loop
-
-  Dim tvNode As Node
-  Set tvNode = modConfig.AddCategory(tvTreeView, tvTreeView.SelectedItem, strText)
-
-  If Not tvNode Is Nothing Then
-    modMain.SelectCategory tvNode
-    tvTreeView.StartLabelEdit
-  End If
-End Sub
-
-Private Sub mnuTreeViewDelete_Click()
-  Dim tvNode As Node
-  Set tvNode = tvTreeView.SelectedItem
-
-  If Not tvNode Is Nothing Then
-    If MsgBox("This will erase the category '" & tvNode.Text & "' and all other categories and applications contained within." & Chr$(13) & "Are you sure you want to continue?", vbYesNo + vbDefaultButton2 + vbExclamation, "Delete '" & tvNode.Text & "'") = vbYes Then
-      Dim tvParentNode As Node
-      If tvNode.Parent Is Nothing Then
-        Set tvParentNode = tvNode.Next
-      Else
-        Set tvParentNode = tvNode.Parent
-      End If
-
-      modConfig.DeleteCategory tvTreeView, tvNode
-
-      modMain.SelectCategory tvParentNode
-    End If
-  End If
-End Sub
-
-Private Sub mnuTreeViewNewApplication_Click()
-  mnuFileNewApplication_Click
-End Sub
-
-Private Sub mnuTreeViewNewCategory_Click()
-  mnuFileNewCategory_Click
-End Sub
-
-Private Sub mnuViewArrangeIcons_Click()
-  ' Force the view to rearrange
-  lvListView.Arrange = lvwAutoTop
-  ' Switch back, allowing the icons to be moved again
-  lvListView.Arrange = lvwNone
-End Sub
-
 Private Sub tvTreeView_DragDrop(Source As Control, x As Single, y As Single)
   If Source = imgSplitter Then
     SizeControls x
@@ -735,7 +714,7 @@ End Sub
 
 Sub SizeControls(x As Single)
   On Error Resume Next
-  
+
   'set the width
   If x < 1500 Then x = 1500
   If x > (Me.Width - 1500) Then x = Me.Width - 1500
@@ -787,13 +766,13 @@ Private Sub tbToolBar_ButtonClick(ByVal Button As MSComctlLib.Button)
     Case "Paste"
 '     mnuEditPaste_Click
     Case "View Large Icons"
-      lvListView.View = lvwIcon
+      SelectListingMode lvwIcon
     Case "View Small Icons"
-      lvListView.View = lvwSmallIcon
+      SelectListingMode lvwSmallIcon
     Case "View List"
-      lvListView.View = lvwList
+      SelectListingMode lvwList
     Case "View Details"
-      lvListView.View = lvwReport
+      SelectListingMode lvwReport
   End Select
 End Sub
 
@@ -837,41 +816,6 @@ Private Sub mnuHelpContents_Click()
 
 End Sub
 
-Private Sub mnuViewWebBrowser_Click()
-  'ToDo: Add 'mnuViewWebBrowser_Click' code.
-  MsgBox "Add 'mnuViewWebBrowser_Click' code."
-End Sub
-
-Private Sub mnuViewOptions_Click()
-  'ToDo: Add 'mnuViewOptions_Click' code.
-  MsgBox "Add 'mnuViewOptions_Click' code."
-End Sub
-
-Private Sub mnuViewRefresh_Click()
-  modConfig.LoadCategories tvTreeView
-  modMain.SelectCategory tvTreeView.SelectedItem
-End Sub
-
-Private Sub mnuVAIByDate_Click()
-  'ToDo: Add 'mnuVAIByDate_Click' code.
-'  lvListView.SortKey = DATE_COLUMN
-End Sub
-
-Private Sub mnuVAIByName_Click()
-  'ToDo: Add 'mnuVAIByName_Click' code.
-'  lvListView.SortKey = NAME_COLUMN
-End Sub
-
-Private Sub mnuVAIBySize_Click()
-  'ToDo: Add 'mnuVAIBySize_Click' code.
-'  lvListView.SortKey = SIZE_COLUMN
-End Sub
-
-Private Sub mnuVAIByType_Click()
-  'ToDo: Add 'mnuVAIByType_Click' code.
-'  lvListView.SortKey = TYPE_COLUMN
-End Sub
-
 Private Sub mnuViewStatusBar_Click()
   mnuViewStatusBar.Checked = Not mnuViewStatusBar.Checked
   sbStatusBar.Visible = mnuViewStatusBar.Checked
@@ -889,42 +833,367 @@ Private Sub mnuFileClose_Click()
   Unload Me
 End Sub
 
+'============================================================================
 '
 ' Custom code
 '
+'============================================================================
 
-Private Sub mnuFileRename_Click()
-  Select Case modMain.fMainForm.ActiveControl.Tag
-     Case "CtlCategories"
-      mnuTreeViewRename_Click
-    Case "CtlApplications"
-  End Select
+'----------------------------------------------------------------------------
+' UTILITY PROCEDURES
+'----------------------------------------------------------------------------
+
+'
+' Gets the tree view node to which context-menu commands should apply
+'
+Public Function GetContextNode( _
+) As Node
+  If tvTreeView.DropHighlight Is Nothing Then
+    Set GetContextNode = tvTreeView.SelectedItem
+  Else
+    Set GetContextNode = tvTreeView.DropHighlight
+  End If
+End Function
+
+'
+' Gets the list view items to which context-menu commands should apply
+'
+Public Function GetContextItems( _
+  Optional isSingleSelection As Boolean = True _
+) As Collection
+  Dim collRetVal As New Collection
+
+  If isSingleSelection Then
+    collRetVal.Add lvListView.SelectedItem
+  Else
+    Dim lvThisItem As ListItem
+    For Each lvThisItem In lvListView.ListItems
+      If lvThisItem.Selected Then collRetVal.Add lvThisItem
+    Next
+  End If
+
+  Set GetContextItems = collRetVal
+End Function
+
+'
+' Changes the primary selection in the category tree view
+'
+Public Sub SelectCategory( _
+  tvNode As Node _
+)
+  ' Update the tree control state
+  Set tvTreeView.SelectedItem = tvNode
+  Set tvTreeView.DropHighlight = Nothing
+
+  ' Don't update the applicatiosn list view (costly) if the
+  '  main selection hasn't changed
+  If lastNode Is tvNode Then Exit Sub
+  Set lastNode = tvNode
+
+  tvNode.EnsureVisible
+  modConfig.LoadApplications lvListView, tvNode.Key
+  modConfig.SetLastSelectedCategory tvTreeView
 End Sub
 
-Private Sub mnuTreeViewRename_Click()
-  tvTreeView.StartLabelEdit
-End Sub
+'
+' Changes the way the applications list view is displayed
+'
+Public Sub SelectListingMode( _
+  lngMode As Long _
+)
+  lvListView.View = lngMode
 
-Private Sub tvTreeView_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
-  Dim tvNode As Node
-  Set tvNode = tvTreeView.HitTest(x, y)
-  modMain.SelectCategory tvNode
-End Sub
+  If lngMode = lvwIcon Then
+    tbToolBar.Buttons(LISTVIEW_MODE0).Value = tbrPressed
+    mnuListViewMode.Item(0).Checked = True
+  Else
+    mnuListViewMode.Item(0).Checked = False
+  End If
 
-Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
-  If Button = 2 Then  ' Check if right mouse button was clicked.
-    PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton
+  If lngMode = lvwSmallIcon Then
+    tbToolBar.Buttons(LISTVIEW_MODE1).Value = tbrPressed
+    mnuListViewMode.Item(1).Checked = True
+  Else
+    mnuListViewMode.Item(1).Checked = False
+  End If
+
+  If lngMode = lvwList Then
+    tbToolBar.Buttons(LISTVIEW_MODE2).Value = tbrPressed
+    mnuListViewMode.Item(2).Checked = True
+  Else
+    mnuListViewMode.Item(2).Checked = False
+  End If
+
+  If lngMode = lvwReport Then
+    tbToolBar.Buttons(LISTVIEW_MODE3).Value = tbrPressed
+    mnuListViewMode.Item(3).Checked = True
+  Else
+    mnuListViewMode.Item(3).Checked = False
   End If
 End Sub
 
-Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
-  sbStatusBar.Panels.Item(1).Text = Node.Key
-  modMain.SelectCategory Node
+'----------------------------------------------------------------------------
+' UTILITY PROCEDURES (2)
+'----------------------------------------------------------------------------
+
+'
+' Pops up the tree view context menu
+'
+Public Sub PopUpCategoriesContextMenu( _
+  x As Single, _
+  y As Single _
+)
+  Dim tvContextNode As Node
+  Set tvContextNode = GetContextNode()
+
+  If tvContextNode Is Nothing Then Exit Sub
+
+  ' Update context menu based on the node on which any context-menu
+  '  operations will be performed
+  If tvContextNode.Parent Is Nothing Then
+    mnuTreeViewDelete.Enabled = False ' don't delete the root node
+  Else
+    mnuTreeViewDelete.Enabled = True
+  End If
+
+  If tvContextNode.Children > 0 Then
+    mnuTreeViewExpandAll.Enabled = True
+    mnuTreeViewCollapseAll.Enabled = True
+  Else
+    mnuTreeViewExpandAll.Enabled = False
+    mnuTreeViewCollapseAll.Enabled = False
+  End If
+
+  PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton, x, y
 End Sub
 
+'
+' Pops up the list view context menu
+'
+Public Sub PopUpApplicationsContextMenu( _
+  x As Single, _
+  y As Single _
+)
+  Dim lvContextItems As Collection
+  Set lvContextItems = GetContextItems(False)
+
+  If lvContextItems.Count = 1 Then
+    mnuListViewRename.Enabled = True
+  Else
+    mnuListViewRename.Enabled = False
+  End If
+
+  If lvContextItems.Count > 0 Then
+    mnuListViewDelete.Enabled = True
+  Else
+    mnuListViewDelete.Enabled = False
+  End If
+
+  PopupMenu mnuListViewMenu, vbPopupMenuRightButton, x, y
+End Sub
+
+'----------------------------------------------------------------------------
+' MAIN MENU
+'----------------------------------------------------------------------------
+
+'
+' New Application command.  Creates a new application
+'  placeholder in the currently selected category
+'
+Private Sub mnuFileNewApplication_Click()
+  On Error Resume Next
+
+  ' Node under which to create the category
+  Dim tvContextNode As Node
+  Set tvContextNode = GetContextNode()
+
+  ' New application (default) name
+  Dim strText As String
+  strText = "New Application"
+
+  ' Discriminator, in case the default name is already taken
+  Dim appIndex As Integer
+  appIndex = 2
+
+  ' Look for a name that does not already exist
+  Do Until modListUtil.GetItemByText(lvListView, strText) Is Nothing
+    strText = "New Application (" & appIndex & ")"
+    appIndex = appIndex + 1
+  Loop
+
+  ' Add the application
+  If tvContextNode <> tvTreeView.SelectedItem Then
+    modConfig.AddApplication Nothing, tvContextNode.Key, strText
+  Else
+    Dim lvItem As ListItem
+    Set lvItem = modConfig.AddApplication(lvListView, tvContextNode.Key, strText)
+
+    ' If the application was added successfully, select it and prompt the
+    '  user for a new name (start editing on its label)
+    If Not lvItem Is Nothing Then
+      lvListView.SelectedItem = lvItem
+      lvListView.StartLabelEdit
+    End If
+  End If
+End Sub
+
+'
+' New Category command.  Creates a new category
+'  under the currently selected category
+'
+Private Sub mnuFileNewCategory_Click()
+  On Error Resume Next
+
+  ' Node under which to create the category
+  Dim tvContextNode As Node
+  Set tvContextNode = GetContextNode()
+
+  ' New category (default) name
+  Dim strText As String
+  strText = "New Category"
+
+  ' Discriminator, in case the default name is already taken
+  Dim catIndex As Integer
+  catIndex = 2
+
+  ' Look for a name that does not already exist
+  Do Until modTreeUtil.GetNodeByText(tvTreeView, tvContextNode, strText) Is Nothing
+    strText = "New Category (" & catIndex & ")"
+    catIndex = catIndex + 1
+  Loop
+
+  ' Add the category
+  Dim tvNode As Node
+  Set tvNode = modConfig.AddCategory(tvTreeView, tvContextNode, strText)
+
+  ' If the category was added successfully, select it and prompt the
+  '  user for a new name (start editing on its label)
+  If Not tvNode Is Nothing Then
+    SelectCategory tvNode
+    tvTreeView.StartLabelEdit
+  End If
+End Sub
+
+'
+' Rename command. Performs a rename on either the
+'  tree view or list view depending on which one has the focus
+'
+Private Sub mnuFileRename_Click()
+  On Error Resume Next
+
+  ' See if the categories or applications panes are active
+  Select Case ActiveControl.Tag
+     Case "CtlCategories"
+      mnuTreeViewRename_Click
+    Case "CtlApplications"
+      mnuListViewRename_Click
+  End Select
+End Sub
+
+'
+' Delete command from the File menu. Performs a delete on either the
+'  tree view or list view depending on which one has the focus
+'
+Private Sub mnuFileDelete_Click()
+  On Error Resume Next
+
+  ' See if the categories or applications panes are active
+  Select Case ActiveControl.Tag
+    Case "CtlCategories"
+      mnuTreeViewDelete_Click
+    Case "CtlApplications"
+      mnuListViewDelete_Click
+  End Select
+End Sub
+
+'
+' Arrange the icons in the applications list view
+'
+Private Sub mnuViewArrangeIcons_Click()
+  On Error Resume Next
+
+  ' Force the view to rearrange
+  lvListView.Arrange = lvwAutoTop
+  ' Switch back, allowing the icons to be moved again
+  lvListView.Arrange = lvwNone
+End Sub
+
+'
+' Refresh the categories list in the categories tree view by
+'  resynchronizing with the INI file
+'
+Private Sub mnuViewRefresh_Click()
+  On Error Resume Next
+
+  modConfig.LoadCategories tvTreeView
+  SelectCategory modConfig.GetLastSelectedCategory(tvTreeView)
+End Sub
+
+'
+' Change the way applications are displayed in the list view
+'
+Private Sub mnuListViewMode_Click(Index As Integer)
+  On Error Resume Next
+
+  Select Case Index
+    Case 0
+      SelectListingMode lvwIcon
+    Case 1
+      SelectListingMode lvwSmallIcon
+    Case 2
+      SelectListingMode lvwList
+    Case 3
+      SelectListingMode lvwReport
+  End Select
+End Sub
+
+'----------------------------------------------------------------------------
+' CATEGORIES TREE VIEW
+'----------------------------------------------------------------------------
+
+'
+' Pops up a context menu on a category (on the tree view)
+'
+Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+  On Error Resume Next
+
+  If Button = 2 Then  ' Check if right mouse button was clicked.
+    ' Pop up the menu
+    PopUpCategoriesContextMenu tvTreeView.Left + x, tvTreeView.Top + y
+  End If
+End Sub
+
+'
+' Pops up a context menu on a category (on the tree view)
+'
+Private Sub tvTreeView_KeyUp(KeyCode As Integer, Shift As Integer)
+  On Error Resume Next
+
+  If KeyCode = 93 Then  ' check for 'context-menu' key
+    ' Pop up the menu
+    PopUpCategoriesContextMenu tvTreeView.Left, tvTreeView.Top
+  End If
+End Sub
+
+'
+' Synchronizes the applications pane (list view) with the
+'  currently selected category
+'
+Private Sub tvTreeView_NodeClick(ByVal Node As MSComctlLib.Node)
+  On Error Resume Next
+
+  sbStatusBar.Panels.Item(1).Text = Node.Text
+  SelectCategory Node
+End Sub
+
+'
+' Validates a category rename (in the tree view)
+'
 Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
+  On Error Resume Next
+
   If Len(NewString) > 0 Then
-    Select Case modConfig.RenameCategory(tvTreeView, tvTreeView.SelectedItem, NewString)
+    Select Case modConfig.RenameCategory(tvTreeView, GetContextNode(), NewString)
       Case 0
         Cancel = 0
       Case 1
@@ -936,5 +1205,213 @@ Private Sub tvTreeView_AfterLabelEdit(Cancel As Integer, NewString As String)
   Else
     MsgBox "Please type in a valid name."
     Cancel = 1
+  End If
+End Sub
+
+'
+' Make sure the "Root" node is always expanded
+'
+Private Sub tvTreeView_Collapse(ByVal Node As MSComctlLib.Node)
+  On Error Resume Next
+
+  If Node.Parent Is Nothing Then
+    Node.Expanded = True
+  End If
+End Sub
+
+'
+'
+'
+Private Sub tvTreeView_OLEDragOver(Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single, State As Integer)
+  On Error Resume Next
+
+  Select Case State
+    Case vbEnter
+    Case vbOver
+      Dim tvNode As Node
+      Set tvNode = tvTreeView.HitTest(x, y)
+      tvTreeView.DropHighlight = tvNode
+    Case vbLeave
+      tvTreeView.DropHighlight = Nothing
+  End Select
+End Sub
+
+'----------------------------------------------------------------------------
+' CATEGORIES TREE VIEW CONTEXT MENU
+'----------------------------------------------------------------------------
+
+'
+' Expand all nodes
+'
+Private Sub mnuTreeViewExpandAll_Click()
+  On Error Resume Next
+  ExpandCollapseAllNodes GetContextNode(), True
+End Sub
+
+'
+' Collapse all nodes
+'
+Private Sub mnuTreeViewCollapseAll_Click()
+  On Error Resume Next
+  ExpandCollapseAllNodes GetContextNode(), False
+End Sub
+
+'
+' New Application command.  Creates a new application
+'  placeholder in the currently selected category
+'
+Private Sub mnuTreeViewNewApplication_Click()
+  mnuFileNewApplication_Click
+End Sub
+
+'
+' New Category command.  Creates a new category
+'  under the currently selected category
+'
+Private Sub mnuTreeViewNewCategory_Click()
+  mnuFileNewCategory_Click
+End Sub
+
+'
+' Rename command. Initiates a category rename (on the tree view)
+'
+Private Sub mnuTreeViewRename_Click()
+  On Error Resume Next
+
+  ' First make the context-menu selection into our primary selection
+  SelectCategory GetContextNode()
+  ' Edit the primary selection
+  tvTreeView.StartLabelEdit
+End Sub
+
+'
+' Delete command. Recursively delete a category and applications under it
+'
+Private Sub mnuTreeViewDelete_Click()
+  On Error Resume Next
+
+  ' Node to delete
+  Dim tvContextNode As Node
+  Set tvContextNode = GetContextNode()
+
+  If tvContextNode.Parent Is Nothing Then Exit Sub
+
+  If MsgBox("Are you sure you want to remove the category '" & tvContextNode.Text & "' and all its contents?", vbYesNo + vbDefaultButton1 + vbExclamation, "Delete '" & tvContextNode.Text & "'") = vbYes Then
+    Dim tvParentNode As Node
+    If tvContextNode.Parent Is Nothing Then
+      Set tvParentNode = tvContextNode.Next
+    Else
+      Set tvParentNode = tvContextNode.Parent
+    End If
+
+    modConfig.DeleteCategory tvTreeView, tvContextNode
+
+    SelectCategory tvParentNode
+  End If
+End Sub
+
+'----------------------------------------------------------------------------
+' APPLICATIONS LIST VIEW
+'----------------------------------------------------------------------------
+
+'
+' Pops up a context menu on an application (on the list view)
+'
+Private Sub lvListView_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+  On Error Resume Next
+
+  If Button = 2 Then  ' Check if right mouse button was clicked.
+    ' Pop up the menu
+    PopUpApplicationsContextMenu lvListView.Left + x, lvListView.Top + y
+  End If
+End Sub
+
+'
+' Pops up a context menu on an application (on the list view)
+'
+Private Sub lvListView_KeyUp(KeyCode As Integer, Shift As Integer)
+  On Error Resume Next
+
+  If KeyCode = 93 Then  ' check for 'context-menu' key
+    ' Pop up the menu
+    PopUpCategoriesContextMenu lvListView.Left, lvListView.Top
+  End If
+End Sub
+
+Private Sub lvListView_OLEStartDrag(Data As MSComctlLib.DataObject, AllowedEffects As Long)
+  On Error Resume Next
+
+' TODO: implement
+End Sub
+
+'
+' Validates an application rename (in the list view)
+'
+Private Sub lvListView_AfterLabelEdit(Cancel As Integer, NewString As String)
+  On Error Resume Next
+
+  If Len(NewString) > 0 Then
+    Select Case modConfig.RenameApplication(lvListView, lvListView.SelectedItem, NewString)
+      Case 0
+        Cancel = 0
+      Case 1
+        MsgBox "The application '" & NewString & "' already exists." & Chr$(13) & "Please choose another name."
+        Cancel = 1
+      Case Else
+        Cancel = 1
+    End Select
+  Else
+    MsgBox "Please type in a valid name."
+    Cancel = 1
+  End If
+End Sub
+
+'----------------------------------------------------------------------------
+' APPLICATIONS LIST VIEW CONTEXT MENU
+'----------------------------------------------------------------------------
+
+'
+' New Application command.  Creates a new application
+'  placeholder in the currently selected category
+'
+Private Sub mnuListViewNewApplication_Click()
+  mnuFileNewApplication_Click
+End Sub
+
+'
+' Rename command. Initiates an application rename (on the list view)
+'
+Private Sub mnuListViewRename_Click()
+  On Error Resume Next
+
+  ' Edit the primary selection
+  lvListView.StartLabelEdit
+End Sub
+
+'
+' Delete command. Recursively delete a category and applications under it
+'
+Private Sub mnuListViewDelete_Click()
+  On Error Resume Next
+
+  ' Items to delete
+  Dim lvContextItems As Collection
+  Set lvContextItems = GetContextItems(False)
+
+  If lvContextItems.Count <= 0 Then Exit Sub
+
+  Dim strPrompt As String
+
+  If lvContextItems.Count = 1 Then
+    strPrompt = "'" & lvContextItems(1).Text & "'"
+  Else
+    strPrompt = lvContextItems.Count & " items"
+  End If
+
+  If MsgBox("Are you sure you want to delete " & strPrompt & "?", vbYesNo + vbDefaultButton1 + vbExclamation, "Delete " & strPrompt) = vbYes Then
+    Dim lvItem As ListItem
+    For Each lvItem In lvContextItems
+      modConfig.DeleteApplication lvListView, lvItem, tvTreeView.SelectedItem.Key
+    Next
   End If
 End Sub

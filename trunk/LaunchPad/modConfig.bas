@@ -5,6 +5,75 @@ Attribute VB_Name = "modConfig"
 Public iniFileName As String
 
 '
+' Allocates a uniquely identifying key (for either categories or
+'  applications, based on prefix) inside the main INI file
+'
+Private Function AllocateKey( _
+  strPrefix As String _
+)
+
+  Dim strKey As String
+
+  For i = 0 To &H7FFFFFFF
+    strKey = Hex(i)
+    strKey = Mid$("00000000", Len(strKey) + 1) & strKey
+
+    If Len(ReadIniSection(iniFileName, strPrefix & strKey)) <= 0 Then
+      AllocateKey = strPrefix & strKey
+      Exit Function
+    End If
+  Next
+
+  AlloateKey = ""
+  Exit Function
+End Function
+
+'
+' Deletes any references a parent section might have to a given section
+'
+Private Sub DeleteParentReferences( _
+  ByVal strKey As String, _
+  ByVal strParentKey As String _
+)
+
+  ' Remove references to this element from the parent category
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
+
+  Dim numDeletes As Long
+  numDeletes = 0
+
+  strKey = LCase$(strKey)
+
+  ' Go through the elements listed in the parent
+  For i = 0 To numItems - 1
+    Dim itemValue As String
+    itemValue = modIniFile.ReadIniString(iniFileName, strParentKey, "item" & Format$(i))
+
+    If numDeletes > 0 Then
+      modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(i - numDeletes), itemValue
+    End If
+
+    If LCase$(itemValue) = strKey Then
+      numDeletes = numDeletes + 1
+    End If
+  Next
+
+  ' Finally remove the trailing element(s) and shorten the children list count
+  If numDeletes > 0 Then
+    modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems - numDeletes)
+  End If
+
+  For j = 1 To numDeletes
+    modIniFile.DeleteIniString iniFileName, strParentKey, "item" & Format$(numItems - j)
+  Next
+End Sub
+
+'----------------------------------------------------------------------------
+' CATEGORIES
+'----------------------------------------------------------------------------
+
+'
 ' Loads categories from the main .ini file
 '
 Public Function LoadCategories( _
@@ -15,11 +84,11 @@ Public Function LoadCategories( _
 
   On Error GoTo Error
 
-  ' Empty the categories tree
+  ' Empty the categories tree and
   tvTree.Nodes.Clear
 
   ' Load top-level categories, skipping the first (root) level category
-  LoadCategory tvTree, "cat.root", Nothing, 1
+  LoadCategory tvTree, "cat.root", Nothing
 
   LoadCategories = 0
   Exit Function
@@ -36,18 +105,19 @@ End Function
 Private Sub LoadCategory( _
   tvTree As TreeView, _
   strKey As String, _
-  tvParentNode As Node, _
-  ByVal lngSkip As Long _
+  tvParentNode As Node _
 )
+
   ' Get the category's name
   Dim strText As String
   strText = StrDecode(modIniFile.ReadIniString(iniFileName, strKey, "name"))
 
   ' Create this category in the tree (unless we have to skip some levels)
   Dim tvThisNode As Node
-  If lngSkip > 0 Then
-    lngSkip = lngSkip - 1
-    Set tvThisNode = tvParentNode
+  If tvParentNode Is Nothing Then
+    If Len(strText) <= 0 Then strText = "VDMS Desktop"
+    Set tvThisNode = modTreeUtil.AddNode(tvTree, Nothing, strText, strKey, "Desktop", "Desktop")
+    tvThisNode.Expanded = True
   Else
     Set tvThisNode = modTreeUtil.AddNode(tvTree, tvParentNode, strText, strKey)
   End If
@@ -62,7 +132,7 @@ Private Sub LoadCategory( _
     itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
 
     If LCase$(Left$(itemValue, 4)) = "cat." Then
-      LoadCategory tvTree, itemValue, tvThisNode, lngSkip
+      LoadCategory tvTree, itemValue, tvThisNode
     End If
   Next
 End Sub
@@ -77,27 +147,19 @@ Public Function GetLastSelectedCategory( _
 End Function
 
 '
-' Allocates a uniquely identifying key (for either categories or
-'  applications, based on prefix) inside the main INI file
 '
-Private Function AllocateKey( _
-  strPrefix As String _
-)
+'
+Public Function SetLastSelectedCategory( _
+  tvTree As TreeView _
+) As Long
+  On Error GoTo Error
 
-  Dim strKey As String
+  modIniFile.WriteIniString modConfig.iniFileName, "general", "lastCat", tvTree.SelectedItem.Key
 
-  For i = 0 To &H7FFFFFFF
-    strKey = Hex(i)
-    strKey = Mid$("00000000", Len(strKey) + 1) & strKey
-
-    If Len(ReadIniSection(iniFileName, strPrefix & strKey)) < 1 Then
-      AllocateKey = strPrefix & strKey
-      Exit Function
-    End If
-  Next
-
-  AlloateKey = ""
+  SetLastSelectedCategory = 0
   Exit Function
+Error:
+  SetLastSelectedCategory = -1
 End Function
 
 '
@@ -118,18 +180,18 @@ Public Function AddCategory( _
   modIniFile.WriteIniString iniFileName, strKey, "name", StrEncode(strText)
   
   Dim strParentKey As String
-  If tvParentNode Is Nothing Then
-    strParentKey = "cat.root"
-  Else
-    strParentKey = tvParentNode.Key
-  End If
+  strParentKey = tvParentNode.Key
 
   Dim numItems As Long
   numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
   modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems + 1)
   modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(numItems), strKey
 
-  Set AddCategory = modTreeUtil.AddNode(tvTree, tvParentNode, strText, strKey)
+  If tvTree Is Nothing Then
+    Set AddCategory = Nothing
+  Else
+    Set AddCategory = modTreeUtil.AddNode(tvTree, tvParentNode, strText, strKey)
+  End If
   Exit Function
 
 Error:
@@ -169,7 +231,7 @@ Error:
   modError.ReportError "Unable to rename category to '" & strNewText & "'."
   On Error Resume Next
   modTreeUtil.RenameNode tvTree, tvNode, strOldText ' roll back changes
-  RenameCategory = -1
+  RenameCategory = -1   ' return, error
 End Function
 
 '
@@ -185,69 +247,36 @@ Public Function DeleteCategory( _
   Dim strKey As String
   strKey = tvNode.Key
 
-  Dim strParentKey As String
+  ' We have to locate and erase any reference the parent category might have
+  '  to this element, otherwise those references will point to non-existent
+  '  sections in the INI file
+  DeleteParentReferences strKey, tvNode.Parent.Key
 
-  If tvNode.Parent Is Nothing Then
-    strParentKey = "cat.root"
-  Else
-    strParentKey = tvNode.Parent.Key
-  End If
-
-  If DeleteCategory_Helper(strKey, strParentKey) <> 0 Then
+  ' Perform a recursive delete on this category and everything below it
+  If DeleteCategory_Helper(strKey) <> 0 Then
     LoadCategories tvTree ' an error resulted in only a partial delete, so we resynchronize
   Else
     modTreeUtil.RemoveNode tvTree, tvNode ' the delete was successful, remove the branch from the GUI
   End If
+  DeleteCategory = 0  ' return, success
   Exit Function
 
 Error:
   modError.ReportError "An error was encountered while deleting the category '" & strKey & "'."
-  DeleteCategory = -1
+  DeleteCategory = -1 ' return, error
 End Function
 
 '
 '
 '
 Private Function DeleteCategory_Helper( _
-  strKey As String, _
-  strParentKey As String _
+  strKey As String _
 )
 
   On Error GoTo Error
 
   Dim numItems As Long
   Dim itemValue As String
-
-  ' If a parent is specified then we have to locate and erase any reference
-  '  it might have to this element, otherwise those references will point to
-  '  non-existent sections in the INI file
-  If strParentKey <> "" Then
-    Dim isRefDeleted As Long
-    isRefDeleted = 0
-
-    Dim strLCaseKey As String
-    strLCaseKey = LCase$(strKey)
-
-    ' Remove references to this element from the parent category
-    numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
-
-    ' Make an inventory of the elements listed in the parent
-    For i = 0 To numItems - 1
-      itemValue = modIniFile.ReadIniString(iniFileName, strParentKey, "item" & Format$(i))
-
-      If isRefDeleted <> 0 Then
-        modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(i - 1), itemValue
-      ElseIf LCase$(itemValue) = strLCaseKey Then
-        isRefDeleted = 1
-      End If
-    Next
-
-    ' Finally remove the trailing element and shorten the children list by one
-    If isRefDeleted <> 0 Then
-      modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems - 1)
-      modIniFile.DeleteIniString iniFileName, strParentKey, "item" & Format$(numItems - 1)
-    End If
-  End If
 
   ' If dealing with a category we have to recursively delete any
   '  sub-categories or applications
@@ -258,18 +287,22 @@ Private Function DeleteCategory_Helper( _
     ' Delete each sub-category and/or application listed
     For i = 0 To numItems - 1
       itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
-      If DeleteCategory_Helper(itemValue, "") <> 0 Then GoTo Error
+      If DeleteCategory_Helper(itemValue) <> 0 Then GoTo Error
     Next
   End If
 
   ' Finally erase the element's section from the INI file
   modIniFile.DeleteIniSection iniFileName, strKey
-  DeleteCategory_Helper = 0 ' return, success
+  DeleteCategory_Helper = 0   ' return, success
   Exit Function
 
 Error:
   DeleteCategory_Helper = -1  ' return, partial or complete failure
 End Function
+
+'----------------------------------------------------------------------------
+' APPLICATIONS
+'----------------------------------------------------------------------------
 
 '
 ' Loads list of applications for a given category from the main .ini file
@@ -373,6 +406,39 @@ Error_UseDefaultIcon:
 End Sub
 
 '
+' Adds an application to the category tree and main INI file
+'
+Public Function AddApplication( _
+  lvList As ListView, _
+  strParentKey As String, _
+  strText As String _
+) As ListItem
+
+  On Error GoTo Error
+
+  Dim strKey As String
+  strKey = modConfig.AllocateKey("app.")
+
+  modIniFile.WriteIniString iniFileName, strKey, "name", StrEncode(strText)
+
+  Dim numItems As Long
+  numItems = Val(modIniFile.ReadIniString(iniFileName, strParentKey, "count"))
+  modIniFile.WriteIniString iniFileName, strParentKey, "count", Format$(numItems + 1)
+  modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(numItems), strKey
+
+  If lvList Is Nothing Then
+    Set AddApplication = Nothing
+  Else
+    Set AddApplication = modListUtil.AddItem(lvList, strText, strKey)
+  End If
+  Exit Function
+
+Error:
+  modError.ReportError "Unable to create application '" & strText & "'."
+  Set AddApplication = Nothing
+End Function
+
+'
 ' Attempts to rename an application.  If the function is successful, the
 '  function returns zero, otherwise (e.g. if the application name already
 '  exists), it returns a non-zero value.
@@ -396,7 +462,7 @@ Public Function RenameApplication( _
     ' Rename category inside .ini file
     modIniFile.WriteIniString iniFileName, lvItem.Key, "name", StrEncode(strNewText)
 
-    RenameApplication = 0  ' return, the item was successfully renamed
+    RenameApplication = 0 ' return, the item was successfully renamed
   End If
   Exit Function
 
@@ -404,8 +470,43 @@ Error:
   modError.ReportError "Unable to rename application to '" & strNewText & "'."
   On Error Resume Next
   modListUtil.RenameItem lvList, lvItem, strOldText ' roll back changes
-  RenameApplication = -1
+  RenameApplication = -1  ' return, error
 End Function
+
+'
+'
+'
+Public Function DeleteApplication( _
+  lvList As ListView, _
+  lvItem As ListItem, _
+  strParentKey As String _
+) As Long
+
+  On Error GoTo Error
+
+  Dim strKey As String
+  strKey = lvItem.Key
+
+  ' We have to locate and erase any reference the parent category might have
+  '  to this element, otherwise those references will point to non-existent
+  '  sections in the INI file
+  DeleteParentReferences strKey, strParentKey
+
+  ' Finally erase the element's section from the INI file
+  modIniFile.DeleteIniSection iniFileName, strKey
+
+  modListUtil.RemoveItem lvList, lvItem ' remove the item from the GUI
+  DeleteApplication = 0   ' return, success
+  Exit Function
+
+Error:
+  modError.ReportError "An error was encountered while deleting the application '" & strKey & "'."
+  DeleteApplication = -1  ' return, error
+End Function
+
+'----------------------------------------------------------------------------
+' STRING ENCODING/DECODING
+'----------------------------------------------------------------------------
 
 '
 ' Encodes all non-ANSI, non-alphanumeric characters using the

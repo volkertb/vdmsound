@@ -8,7 +8,9 @@ Public Function AddNode( _
   tvTree As TreeView, _
   tvParentNode As Node, _
   ByVal strText As String, _
-  ByVal strKey As String _
+  ByVal strKey As String, _
+  Optional strIcon As String = "Closed Folder", _
+  Optional strSelIcon As String = "Open Folder" _
 ) As Node
 
   Dim tvNode As Node
@@ -19,9 +21,9 @@ Public Function AddNode( _
 
   If tvDupeNode Is Nothing Then
     If tvParentNode Is Nothing Then
-      Set tvNode = tvTree.Nodes.Add(, , strKey, strText, "Folder Closed", "Folder Open") ' return, new node created
+      Set tvNode = tvTree.Nodes.Add(, , strKey, strText, strIcon, strSelIcon) ' return, new node created
     Else
-      Set tvNode = tvTree.Nodes.Add(tvParentNode, tvwChild, strKey, strText, "Folder Closed", "Folder Open") ' return, new node created
+      Set tvNode = tvTree.Nodes.Add(tvParentNode, tvwChild, strKey, strText, strIcon, strSelIcon) ' return, new node created
     End If
   Else
     Set tvNode = tvDupeNode  ' return, the existing node
@@ -41,6 +43,8 @@ Public Function RenameNode( _
   tvNode As Node, _
   ByVal strNewText As String _
 ) As Integer
+
+  Debug.Assert Not tvNode Is Nothing
 
   Dim dupeNode As Node
   Set dupeNode = GetNodeByText(tvTree, tvNode.Parent, strNewText)
@@ -62,6 +66,8 @@ Public Sub RemoveNode( _
   tvTree As TreeView, _
   tvNode As Node _
 )
+  Debug.Assert Not tvNode Is Nothing
+
   Dim tvChildNode As Node
   Set tvChildNode = tvNode.Child
 
@@ -102,7 +108,7 @@ Public Function GetNodeByText( _
   ByVal strText As String _
 ) As Node
 
-  If tvTree.Nodes.Count < 1 Then GoTo Error_NotFound
+  If tvTree.Nodes.Count <= 0 Then GoTo Error_NotFound
 
   Dim tvSiblingNode As Node
 
@@ -127,3 +133,27 @@ Public Function GetNodeByText( _
 Error_NotFound:
   Set GetNodeByText = Nothing
 End Function
+
+'
+' Recursively expands or collapses the given node and all sub-nodes
+'
+Public Sub ExpandCollapseAllNodes( _
+  tvNode As Node, _
+  isExpanded As Boolean _
+)
+
+  Debug.Assert Not tvNode Is Nothing
+
+  Dim tvChildNode As Node
+  Set tvChildNode = tvNode.Child
+
+  ' Go through all child nodes
+  Do Until tvChildNode Is Nothing
+    ExpandCollapseAllNodes tvChildNode, isExpanded
+    Set tvChildNode = tvChildNode.Next
+  Loop
+
+  tvNode.Expanded = isExpanded
+End Sub
+
+
