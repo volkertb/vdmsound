@@ -270,28 +270,6 @@ void InstantiateModule(
 }
 
 //
-// Attempts to load the threshold for error-logging detail from the loader
-//   section corresponding to the given module in the .INI file
-//
-int GetModuleLoggingDetail(
-    const std::string& moduleName,
-    const CVDMConfig& config)
-{
-  int threshold;
-  std::string thresholdStr = "";
-
-  try {
-    config.getValue(moduleName, CVDMConfig::SEC_LOADER, "detail", thresholdStr);
-  } catch (CVDMConfig::nokey_error& /*nke*/) { }
-
-  if (sscanf(thresholdStr.c_str(), "%d", &threshold) != 1) {
-    threshold = LOG_WARNING; // by default, don't log anything less severe than warnings
-  }
-
-  return threshold;
-}
-
-//
 // Attempts to initialize a COM emulation module
 //
 void InitializeModule(
@@ -318,9 +296,7 @@ void InitializeModule(
 
     _ASSERTE(pCQ != NULL);
 
-    int loggingLevel = GetModuleLoggingDetail(moduleName, config);
-
-    pCQ->Init(CfgEnvironment(moduleName, config, modules, loggingLevel));
+    pCQ->Init(CfgEnvironment(moduleName, config, modules));
 
     if (FAILED(hr = pCQ->QueryInterface(__uuidof(IUnknown), (void**)(&pQuery))))
       throw _com_error(hr);     // Failure

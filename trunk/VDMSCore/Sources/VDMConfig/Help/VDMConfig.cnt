@@ -6,6 +6,7 @@
 2 INI sections=HLP_INI_FILES_SECTIONS
 2 Description of INI sections
 3 The loader section=HLP_INI_FILES_SECTIONS_LOADER
+3 The debug section=HLP_INI_FILES_SECTIONS_DEBUG
 3 The dependency section=HLP_INI_FILES_SECTIONS_DEPENDS
 3 The configuration section=HLP_INI_FILES_SECTIONS_CONFIG
 1 Error Messages
