@@ -5,12 +5,24 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+/* TODO: put these in a .mc file or something */
+#define MSG_ERR_INTERFACE _T("The dependency module '%1' does not support the '%2' interface.%0")
+
+/////////////////////////////////////////////////////////////////////////////
+
 #define INI_STR_VDMSERVICES   L"VDMSrv"
+#define INI_STR_DMACTL        L"DMACtl"
+#define INI_STR_WAVEOUT       L"WaveOut"
 
 #define INI_STR_BASEPORT      L"port"
 #define INI_STR_IRQLINE       L"IRQ"
 #define INI_STR_DMA8CHANNEL   L"DMA8"
 #define INI_STR_DMA16CHANNEL  L"DMA16"
+
+/////////////////////////////////////////////////////////////////////////////
+
+#define MK_SEGMENT(physicalAddr)  ((physicalAddr) >> 4)
+#define MK_OFFSET(physicalAddr)   ((physicalAddr) & 0x000f)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -33,6 +45,7 @@ STDMETHODIMP CSBCompatCtl::InterfaceSupportsErrorInfo(REFIID riid)
   {
     &IID_IVDMBasicModule,
     &IID_IIOHandler,
+    &IID_IDMAHandler
   };
   for (int i=0; i < sizeof(arr) / sizeof(arr[0]); i++)
   {
@@ -63,40 +76,75 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
   // Initialize configuration and VDM services
   try {
     // Obtain the Query objects (for intialization purposes)
-    Depends    = configuration; // Dependency query object
-    Config     = configuration; // Configuration query object
+    Depends   = configuration;  // Dependency query object
+    Config    = configuration;  // Configuration query object
 
     // Obtain VDM Services instance (if available)
     IUnknownPtr VDMServices
-               = Depends->Get(INI_STR_VDMSERVICES);
-    m_BaseSrv  = VDMServices;   // Base services (registers, interrupts, etc)
-    m_IOSrv    = VDMServices;   // I/O services (I/O port hooks)
+              = Depends->Get(INI_STR_VDMSERVICES);
+    m_BaseSrv = VDMServices;    // Base services (registers, interrupts, etc)
+    m_IOSrv   = VDMServices;    // I/O services (I/O port hooks)
+
+    if (m_BaseSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMBaseServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+    if (m_IOSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+
+    // Obtain a DMA transfer management instance
+    m_DMACtl  = Depends->Get(INI_STR_DMACTL);
+
+    if (m_DMACtl == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_DMACTL), _T("IDMAController")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
     // Try to obtain the SB settings, use defaults if none specified
     m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x220, 16, false);
     m_IRQLine  = CFG_Get(Config, INI_STR_IRQLINE, 7, 10, false);
     m_DMA8Channel  = CFG_Get(Config, INI_STR_DMA8CHANNEL, 1, 10, false);
     m_DMA16Channel = CFG_Get(Config, INI_STR_DMA16CHANNEL, 5, 10, false);
+
+    // Try to obtain an interface to a Wave-out module, use NULL if none available
+    m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
   }
 
-  IVDMSERVICESLib::IIOHandler* pHandler = NULL; // IIOHandler interface to <this>
+  IVDMSERVICESLib::IIOHandler* pIOHandler = NULL; // IIOHandler interface to <this>
 
   // Register the I/O handlers
   try {
     // Obtain a COM IIOHandler interface on this C++ object
-    if (FAILED(hr = QueryInterface(__uuidof(IVDMSERVICESLib::IIOHandler), (void**)(&pHandler))))
+    if (FAILED(hr = QueryInterface(__uuidof(IVDMSERVICESLib::IIOHandler), (void**)(&pIOHandler))))
       throw _com_error(hr);     // Failure
 
     // Add this object as an I/O handler on the specified port range
-    m_IOSrv->AddIOHook(m_basePort, 16, IVDMSERVICESLib::OP_SINGLE_BYTE, IVDMSERVICESLib::OP_SINGLE_BYTE, pHandler);
+    m_IOSrv->AddIOHook(m_basePort, 16, IVDMSERVICESLib::OP_SINGLE_BYTE, IVDMSERVICESLib::OP_SINGLE_BYTE, pIOHandler);
 
-    pHandler->Release();        // Take back the AddRef in QueryInterface above
+    pIOHandler->Release();      // Take back the AddRef in QueryInterface above
   } catch (_com_error& ce) {
-    if (pHandler != NULL)
-      pHandler->Release();      // Release the (unused) interface
+    if (pIOHandler != NULL)
+      pIOHandler->Release();    // Release the (unused) interface
+
+    SetErrorInfo(0, ce.ErrorInfo());
+    return ce.Error();          // Propagate the error
+  }
+
+  IDMACLib::IDMAHandler* pDMAHandler = NULL;      // IDMAHandler interface to <this>
+
+  // Register the DMA handler(s)
+  try {
+    // Obtain a COM IDMAHandler interface on this C++ object
+    if (FAILED(hr = QueryInterface(__uuidof(IDMACLib::IDMAHandler), (void**)(&pDMAHandler))))
+      throw _com_error(hr);     // Failure
+
+    // Add this object as a handler on the specified DMA channels
+    m_DMACtl->AddDMAHandler(m_DMA8Channel, pDMAHandler);
+    m_DMACtl->AddDMAHandler(m_DMA16Channel, pDMAHandler);
+
+    pDMAHandler->Release();     // Take back the AddRef in QueryInterface above
+  } catch (_com_error& ce) {
+    if (pDMAHandler != NULL)
+      pDMAHandler->Release();   // Release the (unused) interface
 
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
@@ -122,12 +170,15 @@ STDMETHODIMP CSBCompatCtl::Destroy() {
   // put the DSP in a known state
   m_SBDSP.reset();
 
+  // Release the Wave-out module
+  m_waveOut = NULL;
+
   // Release the VDM Services module
   m_IOSrv   = NULL;
   m_BaseSrv = NULL;
 
   // Release the runtime environment
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("MPU401Ctl released")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl released")));
   RTE_Set(m_env, NULL);
 
   return S_OK;
@@ -267,11 +318,83 @@ STDMETHODIMP CSBCompatCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT cou
 
 
 /////////////////////////////////////////////////////////////////////////////
+// IDMAHandler
+/////////////////////////////////////////////////////////////////////////////
+STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxBytes, LONG isDescending, ULONG * transferred) {
+  if (transferred == NULL)
+    return E_POINTER;
+
+  BYTE buf[65536];  /* TODO: can be as much as 4 times larger for ADPCM2 */
+
+  /* TODO: inquire: xfer 0 bytes if IRQ was not acknowledged? */
+  ULONG toTransfer = ((m_avgBandwidth * (timeGetTime() - m_transferStartTime)) / 1000) - m_transferredBytes;
+  toTransfer = toTransfer > maxBytes ? maxBytes : toTransfer;
+  m_transferredBytes += toTransfer;
+
+  _ASSERTE(physicalAddr < 0x100000);  // fits in segment:offset ?
+
+  try {
+    m_BaseSrv->GetMemory(MK_SEGMENT(physicalAddr), MK_OFFSET(physicalAddr), IVDMSERVICESLib::ADDR_V86, buf, toTransfer);
+  } catch (_com_error& ce) {
+    CString args = Format(_T("0x%04x, 0x%04x, %d, %p, %d"), MK_SEGMENT(physicalAddr), MK_OFFSET(physicalAddr), IVDMSERVICESLib::ADDR_V86, buf, toTransfer);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("GetMemory(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
+
+//memcpy(buf,(const void*)(physicalAddr|0x100000),toTransfer);
+
+  if (m_waveOut != NULL) try {
+    m_waveOut->PlayData(buf, toTransfer);
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%p, %d"), buf, toTransfer);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p (%04x:%04x), type = %d, mode = %d, dir = %d, A/I = %d"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)MK_SEGMENT(physicalAddr), (int)MK_OFFSET(physicalAddr), (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+
+  *transferred = toTransfer;
+
+  return S_OK;
+}
+
+STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, LONG isTerminalCount) {
+  if (m_transferredBytes % m_DSPBlockSize < transferred) {
+    generateInterrupt();
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting: after %dms, %d bytes"), (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes));
+  }
+
+  return S_OK;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 // IMPU401HWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
 
-void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int avgBytesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit) {
+void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit) {
   // TODO: implement
+  m_transferStartTime = timeGetTime();
+  m_transferredBytes = 0;
+  m_avgBandwidth = numChannels * samplesPerSecond * bitsPerSample / 8;
+  m_DSPBlockSize = numChannels * samplesPerBlock * bitsPerSample / 8;
+
+  _ASSERTE(m_avgBandwidth > 0);
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transferring (%s) %s, %dHz, %dbps, %d samples, %s"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown>"), numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown>"), samplesPerSecond, bitsPerSample, samplesPerBlock, isAutoInit ? _T("auto-init") : _T("single-cycle")));
+
+  if (m_waveOut != NULL) try {
+    m_waveOut->SetFormat(numChannels, samplesPerSecond, bitsPerSample); /* TODO: decide how to treat/decompress ADPCM: as 8 or as 16-bit? */
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%d, %d, %d"), numChannels, samplesPerSecond, bitsPerSample);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
+
+  try {
+    m_DMACtl->InitiateTransfer(m_DMA8Channel);  /* TODO: select channel based on mixer's DMA channel mask */
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%d"), m_DMA8Channel);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("InitiateTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
 }
 
 void CSBCompatCtl::pauseTransfer(transfer_t type) {
@@ -288,6 +411,13 @@ void CSBCompatCtl::stopTransfer(transfer_t type) {
 
 void CSBCompatCtl::generateInterrupt(void) {
   // TODO: implement
+  try {
+    /* TODO: set interrupt "mask" in mixer */
+    m_BaseSrv->SimulateInterrupt(IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%d, %d, %d"), IVDMSERVICESLib::INT_MASTER, m_IRQLine, 1);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SimulateInterrupt(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
 }
 
 void CSBCompatCtl::logError(const char* message) {
