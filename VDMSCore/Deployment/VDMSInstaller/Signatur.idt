@@ -1,0 +1,13 @@
+Signature	FileName	MinVersion	MaxVersion	MinSize	MaxSize	MinDate	MaxDate	Languages
+s72	s255	S20	S20	I4	I4	I4	I4	S255
+Signature	Signature
+asycfilt_dll	asycfilt.dll	2.40.4275						
+atl_dll	atl.dll	3.00.8449						
+comcat_dll	comcat.dll	4.71						
+mfc42_dll	mfc42.dll	6.00.8665.0						
+mfc42u_dll	mfc42u.dll	6.00.8665.0						
+msvcirt_dll	msvcirt.dll	6.00.8168.0						
+msvcp60_dll	msvcp60.dll	6.00.8972.0						
+msvcrt_dll	msvcrt.dll	6.00.8797.0						
+oleaut32_dll	oleaut32.dll	2.40.4275						
+olepro32_dll	olepro32.dll	5.0.4275						
