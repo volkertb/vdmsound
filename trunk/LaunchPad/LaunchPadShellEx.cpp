@@ -10,6 +10,8 @@
 #include "LaunchPadSettings.h"
 #include "LaunchPadUtil.h"
 
+#include "winxp.h"
+
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -26,6 +28,7 @@ static char THIS_FILE[]=__FILE__;
 HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDataObj, HKEY hProgID) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     INITCOMMONCONTROLSEX iccex = {
       sizeof(INITCOMMONCONTROLSEX), ICC_UPDOWN_CLASS
@@ -58,6 +61,7 @@ HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDa
 HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     // Only display the property page if all files are of type "VDMSound LaunchPad"
     for (int i = 0; i < m_fileNames.GetSize(); i++) {
@@ -109,6 +113,7 @@ HRESULT CLaunchPadShellEx::GetCommandString(UINT idCmd, UINT uFlags, UINT* pwRes
 HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     if (HIWORD(lpici->lpVerb) != 0)
       return E_INVALIDARG;
@@ -132,6 +137,7 @@ HRESULT CLaunchPadShellEx::InvokeCommand(LPCMINVOKECOMMANDINFO lpici) {
 HRESULT CLaunchPadShellEx::QueryContextMenu(HMENU hMenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     USHORT numMenuItems = 0;
 
@@ -197,6 +203,7 @@ HRESULT CLaunchPadShellEx::Load(LPCOLESTR pszFileName, DWORD dwMode) {
 HRESULT CLaunchPadShellEx::DragEnter(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     // Set default value in case of unexpected return and reset drag'n'drop FSM
     *pdwEffect = DROPEFFECT_NONE;
@@ -225,6 +232,7 @@ HRESULT CLaunchPadShellEx::DragEnter(LPDATAOBJECT pDataObject, DWORD grfKeyState
 HRESULT CLaunchPadShellEx::DragOver(DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     m_dragndropFSM.DragOver(grfKeyState, pdwEffect);
 
@@ -236,6 +244,9 @@ HRESULT CLaunchPadShellEx::DragOver(DWORD grfKeyState, POINTL pt, LPDWORD pdwEff
 
 HRESULT CLaunchPadShellEx::DragLeave(VOID) {
   try {
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
+
     m_dragndropFSM.DragLeave();
 
     return S_OK;
@@ -247,6 +258,7 @@ HRESULT CLaunchPadShellEx::DragLeave(VOID) {
 HRESULT CLaunchPadShellEx::Drop(LPDATAOBJECT pDataObject, DWORD grfKeyState, POINTL pt, LPDWORD pdwEffect) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     ASSERT(m_fileNames.GetSize() == 1);
     ASSERT(m_dropNames.GetSize() == 1);
@@ -275,6 +287,7 @@ HRESULT CLaunchPadShellEx::Extract(LPCTSTR pszFile, UINT nIconIndex, HICON* phic
 HRESULT CLaunchPadShellEx::GetIconLocation(UINT uFlags, LPTSTR szIconFile, UINT cchMax, LPINT piIndex, UINT* pwFlags) {
   try {
     AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    XAC_MANAGE_STATE();
 
     ASSERT(m_fileNames.GetSize() == 1);
 
