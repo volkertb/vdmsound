@@ -4,6 +4,7 @@
 //
 #define IDS_PROJNAME                    100
 #define IDR_PROPERTYSHEETSHELLEX        102
+#define IDD_PROPPAGE                    105
 
 // Next default values for new objects
 // 
