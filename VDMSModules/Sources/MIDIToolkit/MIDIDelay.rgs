@@ -1,0 +1,25 @@
+HKCR
+{
+	MIDIToolkit.MIDIDelay.1 = s 'MIDIDelay Class'
+	{
+		CLSID = s '{816E3CC2-A0AF-11D5-9D8C-00A024112F81}'
+	}
+	MIDIToolkit.MIDIDelay = s 'MIDIDelay Class'
+	{
+		CLSID = s '{816E3CC2-A0AF-11D5-9D8C-00A024112F81}'
+		CurVer = s 'MIDIToolkit.MIDIDelay.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {816E3CC2-A0AF-11D5-9D8C-00A024112F81} = s 'MIDIDelay Class'
+		{
+			ProgID = s 'MIDIToolkit.MIDIDelay.1'
+			VersionIndependentProgID = s 'MIDIToolkit.MIDIDelay'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{2C220FD1-0125-11D5-9C68-00A024112F81}'
+		}
+	}
+}

@@ -34,4 +34,13 @@ library MIDITOOLKITLib
 		[default] interface IVDMBasicModule;
 		interface IMIDIEventHandler;
 	};
+	[
+		uuid(816E3CC2-A0AF-11D5-9D8C-00A024112F81),
+		helpstring("MIDIDelay Class")
+	]
+	coclass MIDIDelay
+	{
+		[default] interface IVDMBasicModule;
+		interface IMIDIEventHandler;
+	};
 };

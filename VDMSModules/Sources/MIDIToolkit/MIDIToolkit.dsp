@@ -288,6 +288,10 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\MIDIDelay.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\MIDIMapper.cpp
 # End Source File
 # Begin Source File
@@ -309,6 +313,10 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\MIDIDelay.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\MIDIMapper.h
 # End Source File
 # Begin Source File
@@ -323,6 +331,10 @@ SOURCE=.\StdAfx.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\MIDIDelay.rgs
+# End Source File
 # Begin Source File
 
 SOURCE=.\MIDIMapper.rgs
