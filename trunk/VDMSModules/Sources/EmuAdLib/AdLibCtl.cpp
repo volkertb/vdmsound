@@ -21,6 +21,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define OPL_INTERNAL_FREQ     3600000   // The OPL operates at 3.6MHz
+#define OPL_NUM_CHIPS         1         // Number of OPL chips
+#define OPL_CHIP0             0
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -298,8 +300,8 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
 
         // Program the OPL (functions will return after the UpdateHandler()
         //  callback has been called)
-        MAME::OPLWrite(m_OPL, 0, OPLMsg.address);
-        MAME::OPLWrite(m_OPL, 1, OPLMsg.value);
+        MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.address);
+        MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
       }
 
       // Did we process any OPL writes (was the OPL kept active) ?
@@ -362,11 +364,11 @@ HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
   instances[m_instanceID] = this;
 
   // Initialize the OPL software synthesizer, return an error if failed
-  if ((m_OPL = MAME::OPLCreate(OPL_TYPE_YM3812, OPL_INTERNAL_FREQ, sampleRate)) == NULL)
+  if (MAME::YM3812Init(OPL_NUM_CHIPS, OPL_INTERNAL_FREQ, sampleRate))
     return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
 
   // Install the callback handler(s)
-  MAME::OPLSetUpdateHandler(m_OPL, OPLUpdateHandler, m_instanceID);
+  MAME::YM3812SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
 
   return S_OK;
 }
@@ -379,8 +381,7 @@ void CAdLibCtl::OPLDestroy(void) {
   CSingleLock lock(&OPLMutex, TRUE);
 
   // Release the OPL software synthesizer
-  if (m_OPL != NULL)
-    MAME::OPLDestroy(m_OPL);
+  MAME::YM3812Shutdown();
 
   // Release the slot in the static instance array
   if (m_instanceID >= 0)
@@ -405,7 +406,7 @@ void CAdLibCtl::OPLPlay(DWORD deltaTime) {
     // Compute how many samples we should transfer
     long toTransfer = min(65536, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
 
-    MAME::YM3812UpdateOne(m_OPL, buf, toTransfer);
+    MAME::YM3812UpdateOne(OPL_CHIP0, buf, toTransfer);
 
     // Play the data, and update the load factor
     try {

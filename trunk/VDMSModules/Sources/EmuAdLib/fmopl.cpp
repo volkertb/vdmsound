@@ -24,7 +24,7 @@ namespace MAME {
     operator char*() const { return (char*)m_ptr; }
   };
 
-  /* Bring in Tatsuyuki Satoh's OPL emulation */
+  /* Bring in the MAME OPL emulation */
 # define HAS_YM3812 1
 # include "fmopl.c"
 
