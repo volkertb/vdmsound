@@ -233,8 +233,8 @@ STDMETHODIMP CTransferMgr::StopTransfer(BYTE channel, LONG synchronous) {
 unsigned int CTransferMgr::Run(CThread& thread) {
   MSG message;
 
-  static IDMAHANDLERSLib::TTYPE_T types[4] = { TRT_VERIFY, TRT_WRITE, TRT_READ, TRT_INVALID };
-  static IDMAHANDLERSLib::TMODE_T modes[4] = { MOD_DEMAND, MOD_SINGLE, MOD_BLOCK, MOD_CASCADE };
+  static const IDMAHANDLERSLib::TTYPE_T types[4] = { TRT_VERIFY, TRT_WRITE, TRT_READ, TRT_INVALID };
+  static const IDMAHANDLERSLib::TMODE_T modes[4] = { MOD_DEMAND, MOD_SINGLE, MOD_BLOCK, MOD_CASCADE };
 
   _ASSERTE(thread.GetThreadID() == m_DMAThread.GetThreadID());
 
