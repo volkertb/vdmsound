@@ -104,6 +104,11 @@ void CAdLibCtlFSM::setAddress(char data) {
 void CAdLibCtlFSM::putData(char data) {
   char buf[1024];
 
+# ifdef _DEBUG
+  sprintf(buf, "OPL write 0x%02x to register 0x%02x", data & 0xff, m_regIdx & 0xff);
+  m_hwemu->logInformation(buf);
+# endif
+
   switch (m_regIdx) {
     case 0x02:    // Timer 1 count
       m_timer1.timeout = OPL_T1_PERIOD * (256 - (data & 0xff));
