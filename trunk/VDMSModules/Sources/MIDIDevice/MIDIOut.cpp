@@ -90,7 +90,8 @@ STDMETHODIMP CMIDIOut::Destroy() {
     MidiOutClose();
 
   // Signal the GC thread to quit
-  gcThread.Cancel();
+  if (gcThread.GetThreadHandle() != NULL)
+    gcThread.Cancel();
 
   // Release the MIDI-out module
   m_midiOut = NULL;
@@ -157,12 +158,14 @@ STDMETHODIMP CMIDIOut::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length) {
     MMRESULT errCode;
 
     if ((errCode = midiOutPrepareHeader(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
+      CString args = Format(_T("0x%08x, %p, %d"), m_hMidiOut, midiHdr, sizeof(*midiHdr));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
       AfxThrowUserException();
     }
 
     if ((errCode = midiOutLongMsg(m_hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutPrepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
+      CString args = Format(_T("0x%08x, %p, %d"), m_hMidiOut, midiHdr, sizeof(*midiHdr));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutLongMsg(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
       AfxThrowUserException();
     }
   } catch (CMemoryException * pme) {
@@ -198,7 +201,9 @@ STDMETHODIMP CMIDIOut::HandleRealTime(LONGLONG usDelta, BYTE data) {
 unsigned int CMIDIOut::Run(CThread& thread) {
   MSG message;
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)gcThread.GetThreadHandle(), (int)gcThread.GetThreadID()));
+  _ASSERTE(thread.GetThreadID() == gcThread.GetThreadID());
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
   while (thread.GetMessage(&message)) {
     MMRESULT errCode;
@@ -226,7 +231,8 @@ unsigned int CMIDIOut::Run(CThread& thread) {
         _ASSERTE(midiHdr->dwFlags & MHDR_DONE == MHDR_DONE);
 
         if ((errCode = midiOutUnprepareHeader(hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutUnprepareHeader on device %d ('%s'): 0x%08x - %s"), m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
+          CString args = Format(_T("0x%08x, %p, %d"), hMidiOut, midiHdr, sizeof(*midiHdr));
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutUnprepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
         }
 
         delete[] (CHAR*)(midiHdr->lpData);
