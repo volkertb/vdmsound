@@ -206,21 +206,19 @@ STDMETHODIMP CPPDACCtl::HandleOUTB(USHORT outPort, BYTE data) {
 
   ULONG CS, EIP;
 
-  int numSamples;
-
   switch (outPort - m_basePort) {
     case 0:
-      m_lastTime = m_curTime;
-      m_curTime  = getTimeMicros();
-
-      if (m_lastTime == 0)
-        m_lastTime = m_curTime;
-
-      numSamples = max(0, min((int)sizeof(m_buffer) - m_bufPtr - 1, (int)(min(2.0, max(0.0, 1 / m_renderLoad)) * m_sampleRate * 1e-6 * (m_curTime - m_lastTime))));
-
       m_lock.Lock(100);
-      memset((void*)(&(m_buffer[m_bufPtr])), data & 0xff, numSamples);
-      m_bufPtr += numSamples;
+
+      if (m_bufPtr < sizeof(m_buffer)) {
+        m_curTime = getTimeMicros();
+
+        if (m_lastTime == 0)
+          m_lastTime = m_curTime;
+
+        m_buffer[m_bufPtr++] = data & 0xff;
+      }
+
       m_lock.Unlock();
 
       return S_OK;
@@ -315,6 +313,9 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
   }
 
+  CByteArray buffer;
+  double avgSampleLength = 0.0;
+
   while (true) {
     if (thread.GetMessage(&message, false)) {       // non-blocking message-"peek"
       switch (message.message) {
@@ -329,15 +330,46 @@ unsigned int CPPDACCtl::Run(CThread& thread) {
       m_lock.Lock(100);
 
       // Play the data, and update the load factor
-      if (m_bufPtr > 0) try {
-        m_renderLoad = m_waveOut->PlayData((BYTE*)(m_buffer), m_bufPtr);
-      } catch (_com_error& ce) {
-        CString args = Format(_T("%p, %d"), m_buffer, m_bufPtr);
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
-      }
+      if (m_bufPtr > 0) {
+        ASSERT(m_curTime >= m_lastTime);
 
-      m_bufPtr = 0;
-      m_lock.Unlock();
+        // Compute per-sample scaling factor
+        double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
+        ASSERT(scalingFactor >= 0.0);
+
+        double sampleLength  = scalingFactor * m_sampleRate * ((m_curTime - m_lastTime) / 1000000.0) / m_bufPtr;
+        ASSERT(sampleLength  >= 0.0);
+
+        if (avgSampleLength == 0.0) {
+          avgSampleLength = sampleLength;
+        } else {
+          avgSampleLength = 0.9 * avgSampleLength + 0.1 * sampleLength;
+        }
+
+        // Adjust buffer size, if necessary
+        int bufSize = (int)(avgSampleLength * m_bufPtr + 0.5);
+
+        if (buffer.GetUpperBound() + 1 < bufSize)
+          buffer.SetSize(bufSize);
+
+        // Resample DAC data into the buffer
+        for (int i = 0; i < bufSize; i++)
+          buffer[i] = m_buffer[(int)(i / avgSampleLength)];
+
+        m_lastTime = m_curTime;
+        m_bufPtr   = 0;
+
+        m_lock.Unlock();
+
+        try {
+          m_renderLoad = m_waveOut->PlayData(buffer.GetData(), bufSize);
+        } catch (_com_error& ce) {
+          CString args = Format(_T("%p, %d"), m_buffer, m_bufPtr);
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+        }
+      } else {
+        m_lock.Unlock();
+      }
 
       Sleep(30);
     }
