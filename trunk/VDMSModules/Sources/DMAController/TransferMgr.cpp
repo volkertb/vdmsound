@@ -268,7 +268,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
             ULONG numData = 0;
             ULONG maxData = DMAInfo.count + 1ul;
 
-            if (m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending, &numData)) {
+            if (m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[(DMAInfo.mode >> 2) & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending, &numData)) {
               isSlow = true;    // remember to boost the DMA activity frequency, this handler is not too happy with it as it is now
             }
 
