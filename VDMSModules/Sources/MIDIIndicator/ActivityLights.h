@@ -31,7 +31,7 @@ class ATL_NO_VTABLE CActivityLights :
 {
 public:
 	CActivityLights()
-    : ledID(LED_SCROLLLOCK), isIndicatorOn(false)
+    : m_ledID(LED_SCROLLLOCK), m_isIndicatorOn(false)
   {	};
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ACTIVITYLIGHTS)
