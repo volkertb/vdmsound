@@ -216,6 +216,9 @@ int unloadConfiguration(void) {
 // Give audio feedback with regard to VDMS's status (loading/unloading).
 //
 void SignalVDMSStatus(bool isLoaded) {
+
+# if 0
+
   if (isLoaded) {
     Beep(1000,50);
     Beep(2000,60);
@@ -225,6 +228,9 @@ void SignalVDMSStatus(bool isLoaded) {
     Beep(2000,60);
     Beep(1000,80);
   }
+
+# endif
+
 }
 
 
