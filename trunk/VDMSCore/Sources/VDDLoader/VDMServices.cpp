@@ -15,9 +15,9 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define _VDMS_ENABLE_SVC_LOG 1
+#define _VDMS_ENABLE_SVC_LOG 0
 
-#ifdef _VDMS_ENABLE_SVC_LOG
+#if _VDMS_ENABLE_SVC_LOG != 0
 
 # include <mmsystem.h>
 # pragma comment ( lib , "winmm.lib" )
@@ -61,11 +61,11 @@
 
 #else
 
-# define VDMS_TRACE_INIT
-# define VDMS_TRACE_DESTROY
+# define VDMS_TRACE_INIT      void
+# define VDMS_TRACE_DESTROY   void
 # define VDMS_TRACE
 
-#endif  // _VDMS_ENABLE_SVC_LOG
+#endif  // _VDMS_ENABLE_SVC_LOG != 0
 
 /////////////////////////////////////////////////////////////////////////////
 
