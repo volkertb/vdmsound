@@ -77,7 +77,7 @@ void CMPU401CtlFSM::putData(
 // Called when a data byte is read from the MPU-401's data port
 //
 char CMPU401CtlFSM::getData(void) {
-  BYTE data = 0xff;
+  BYTE data = MSG_CMD_ACK;
 
   if (!m_inBuf.getByte(&data)) {    // Input (buffered) data from the MIDI device
     m_hwemu->logError("Attempted to read from empty MPU-401 inbound FIFO");
