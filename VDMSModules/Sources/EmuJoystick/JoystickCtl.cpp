@@ -159,19 +159,24 @@ STDMETHODIMP CJoystickCtl::HandleINB(USHORT inPort, BYTE * data) {
     return E_POINTER;
 
   switch (inPort - m_basePort) {
-    case 0:
-  // return button state / axis bits
-  /* format of the byte to be returned:
-                        +-------------------------------+
-                        | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
-                        +-------------------------------+
-                          |   |   |   |   |   |   |   |
-  Joystick B, Button 2 ---+   |   |   |   |   |   |   +--- Joystick A, X Axis
-  Joystick B, Button 1 -------+   |   |   |   |   +------- Joystick A, Y Axis
-  Joystick A, Button 2 -----------+   |   |   +----------- Joystick B, X Axis
-  Joystick A, Button 1 ---------------+   +--------------- Joystick B, Y Axis */
+    case 0:   // return button state / axis bits
+
+      /**
+       **  Format of the byte to be returned:
+       **
+       **                        +-------------------------------+
+       **                        | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+       **                        +-------------------------------+
+       **                          |   |   |   |   |   |   |   |
+       **  Joystick B, Button 2 ---+   |   |   |   |   |   |   +--- Joystick A, X Axis
+       **  Joystick B, Button 1 -------+   |   |   |   |   +------- Joystick A, Y Axis
+       **  Joystick A, Button 2 -----------+   |   |   +----------- Joystick B, X Axis
+       **  Joystick A, Button 1 ---------------+   +--------------- Joystick B, Y Axis
+       **/
 
       *data = 0xff;
+
+      m_pollRequest = true;   // request an asynchronous update on the joystick buttons' state
 
       if (m_joyInfo[0].isPresent) {
         *data = (BYTE)CHANGE_BIT(*data, 0, m_joyInfo[0].XCount > 0);
@@ -204,10 +209,10 @@ STDMETHODIMP CJoystickCtl::HandleINB(USHORT inPort, BYTE * data) {
 STDMETHODIMP CJoystickCtl::HandleOUTB(USHORT outPort, BYTE data) {
   switch (outPort - m_basePort) {
     case 0:
-      m_mutex.Lock();         // gain exclusive access to joystick state
-      updateJoyState(JOYSTICKID1, m_joyInfo[0], true, true);  // update information about
-      updateJoyState(JOYSTICKID2, m_joyInfo[1], true, true);  //  both buttons and coordinates.
-      m_mutex.Unlock();       // release joystick state after having updated it
+      m_mutex.Lock();           // gain exclusive access to joystick state
+      updateJoyState(JOYSTICKID1, m_joyInfo[0], true, true);    // update information about
+      updateJoyState(JOYSTICKID2, m_joyInfo[1], true, true);    //  both buttons and coordinates.
+      m_mutex.Unlock();         // release joystick state after having updated it
 
       return S_OK;
 
@@ -272,10 +277,23 @@ unsigned int CJoystickCtl::Run(CThread& thread) {
           break;
       }
     } else {
-      m_mutex.Lock();         // gain exclusive access to joystick state
-      updateJoyState(JOYSTICKID1, m_joyInfo[0], false, true); // update the button information,
-      updateJoyState(JOYSTICKID2, m_joyInfo[1], false, true); //  but not the coordinate data.
-      m_mutex.Unlock();       // release joystick state after having updated it
+
+      // Optimization: we could update the joystick buttons' state every m_pollInterval
+      //  milliseconds; if, however, nobody is reading from the joystick port, we would
+      //  be calling the joystick driver gratuitously.  We therefore check a simple boolean
+      //  flag that is set whenever the joystick port is read, which tells us that a state
+      //  update is desirable (we do not use more sophisticated mechanisms for performance
+      //  reasons, as the joystick port is usually read at microsecond (!) intervals).  As
+      //  soon as the update is performed, we reset the boolean flag.
+
+      if (m_pollRequest) {      // check if an asynchronous state update is requested
+        m_mutex.Lock();         // gain exclusive access to joystick state
+        updateJoyState(JOYSTICKID1, m_joyInfo[0], false, true); // update the button information,
+        updateJoyState(JOYSTICKID2, m_joyInfo[1], false, true); //  but not the coordinate data.
+        m_mutex.Unlock();       // release joystick state after having updated it
+
+        m_pollRequest = false;  // the update is complete => reset the request flag
+      }
 
       Sleep((DWORD)m_pollInterval);
     }

@@ -39,6 +39,7 @@ protected:
 
 public:
   CJoystickCtl()
+    : m_pollRequest(true)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_JOYSTICKCTL)
@@ -90,6 +91,7 @@ protected:
   CThread m_joyPollThread;    // thread that regularly polls the Windows driver
   CCriticalSection m_mutex;   // regulates concurrent access to the device data in m_joyInfo (regulate access by the poll thread + forced access by some I/O traps)
   JoyInfo m_joyInfo[2];       // joystick information
+  bool m_pollRequest;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
