@@ -54,6 +54,7 @@ END_COM_MAP()
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
   short getDSPVersion(void);
+  void startTransfer(transfer_t type, char E2Reply, bool isSynchronous = false);
   void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous = false);
   void stopTransfer(transfer_t type, bool isSynchronous = false);
   void pauseTransfer(transfer_t type);
@@ -111,6 +112,8 @@ protected:
   int m_activeDMAChannel;
   transfer_t m_transferType;
   double m_renderLoad;
+
+  BYTE m_E2Reply;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;

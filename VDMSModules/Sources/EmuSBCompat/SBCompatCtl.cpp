@@ -363,9 +363,36 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   if (channel != m_activeDMAChannel)
     return S_FALSE;
 
+  // If we are dealing with a DSP command 0xe2 1-byte transfer, do it now
+  if (m_transferType == TT_E2CMD) {
+    // No matter what, transfer 1 byte
+    *transferred = 1;
+
+    // Verify that DMA transfer type and expected transfer type match
+    if (type != TRT_WRITE) {
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("HandleTransfer: DMA transfer type mismatch, expected WRITE for 0xe2 DSP command, but found %s (%d) instead"), type == TRT_VERIFY ? _T("VERIFY") : type == TRT_READ ? _T("READ") : type == TRT_INVALID ? _T("INVALID") : _T("<unknown>"), (int)type));
+      return S_FALSE;
+    } else {
+      try {
+        m_BaseSrv->SetMemory(0, physicalAddr, IVDMSERVICESLib::ADDR_PHYSICAL, &m_E2Reply, 1);
+      } catch (_com_error& ce) {
+        CString args = Format(_T("0x%04x, 0x%04x, %d, %p, %d"), 0, physicalAddr, IVDMSERVICESLib::ADDR_PHYSICAL, &m_E2Reply, 1);
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("GetMemory(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+        return S_FALSE;
+      } return S_OK;
+    }
+  }
+
   // If transfer is paused, don't process any bytes
   if (m_isPaused)
     return S_OK;
+
+  // On SB16: if the last IRQ was not acknowledged, don't process any bytes
+  if ((getDSPVersion() >= 0x0400) &&
+      (m_bitsPerSample != 16 ? m_SBDSP.get8BitIRQ() : m_SBDSP.get16BitIRQ()))
+  {
+    return S_OK;
+  }
 
   // Get the current time
   DWORD currentTime = timeGetTime();
@@ -396,8 +423,6 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   int bufSize;                // how much relevant data is stored in the buffer <buf>
   BYTE buf[65536];            // temporary storage for processing (e.g. dcompressing) data 
-
-  /* TODO: inquire: xfer 0 bytes if IRQ was not acknowledged ? */
 
   // Compute by how much this transfer should be boosted or diminished, based
   //   on playback performance (playback buffer overrun/underrun)
@@ -437,7 +462,11 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   switch (m_transferType) {
     case TT_PLAYBACK:
-      _ASSERTE(type == TRT_WRITE);
+      // First verify that DMA transfer type and expected transfer type match
+      if (type != TRT_READ) {
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("HandleTransfer: DMA transfer type mismatch, expected READ for playback, but found %s (%d) instead"), type == TRT_VERIFY ? _T("VERIFY") : type == TRT_WRITE ? _T("WRITE") : type == TRT_INVALID ? _T("INVALID") : _T("<unknown>"), (int)type));
+        break;  // although this is an exceptional situation, continue and report the bytes as transferred (instead of aborting and transferring 0 bytes)
+      }
 
       // Retrieve the data from memory
       try {
@@ -476,8 +505,13 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
       } break;
 
     case TT_RECORD:
-      _ASSERTE(type == TRT_READ);
       _ASSERTE(m_codec == CODEC_PCM);
+
+      // First verify that DMA transfer type and expected transfer type match
+      if (type != TRT_WRITE) {
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("HandleTransfer: DMA transfer type mismatch, expected WRITE for recording, but found %s (%d) instead"), type == TRT_VERIFY ? _T("VERIFY") : type == TRT_READ ? _T("READ") : type == TRT_INVALID ? _T("INVALID") : _T("<unknown>"), (int)type));
+        break;  // although this is an exceptional situation, continue and report the bytes as transferred (instead of aborting and transferring 0 bytes)
+      }
 
       /* TODO: grab data from actual wave-in */
 
@@ -486,7 +520,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
       // Put the data into memory
       try {
-        if (isDescending) {     // is data transferred in reverse order ?
+        if (isDescending) {   // is data transferred in reverse order ?
           bufferReverse(buf, toTransfer, channel < 4);  // re-arrange (swap) data so that it is ordered normally
           m_BaseSrv->SetMemory(0, physicalAddr - toTransfer + 1, IVDMSERVICESLib::ADDR_PHYSICAL, buf, toTransfer);
         } else {
@@ -497,6 +531,10 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetMemory(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
         return S_FALSE;
       } break;
+
+    case TT_E2CMD:
+      ASSERT(FALSE);  // should never get here
+      return S_FALSE;
 
     default:
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("HandleTransfer: Internal state error -- unknown transfer type (%d)"), m_transferType));
@@ -524,29 +562,47 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
   if (channel != m_activeDMAChannel)
     return S_FALSE;
 
-  if (channel < 4) {          // 8-bit DMA transfer, keep BYTE count as BYTE count
-    lastTransfer = transferred;
-  } else {                    // 16-bit DMA transfer, convert WORD count into BYTE count
-    lastTransfer = 2 * transferred;
+  switch (m_transferType) {
+    case TT_PLAYBACK:
+    case TT_RECORD:
+      if (channel < 4) {      // 8-bit DMA transfer, keep BYTE count as BYTE count
+        lastTransfer = transferred;
+      } else {                // 16-bit DMA transfer, convert WORD count into BYTE count
+        lastTransfer = 2 * transferred;
+      }
+
+      overShoot = m_transferredBytes % m_DSPBlockSize;  // how many bytes were transferred above the point where an IRQ should be generated
+
+      if (lastTransfer > overShoot) {   // we passed one or more IRQ generation points during the last transfer
+        int numInterrupts = ((lastTransfer - overShoot - 1) / m_DSPBlockSize) + 1;
+
+        _ASSERTE(numInterrupts <= 1);
+
+        if (m_bitsPerSample != 16) {
+          m_SBDSP.set8BitIRQ();
+        } else {
+          m_SBDSP.set16BitIRQ();
+        }
+
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
+      }
+
+      return S_OK;
+
+    case TT_E2CMD:
+      // We transferred what we had to transfer, now clean up
+      try {
+        m_DMACtl->AbortTransfer(m_activeDMAChannel, false); // *must* be asynchronous, otherwise we deadlock
+      } catch (_com_error& ce) {
+        CString args = Format(_T("%d"), m_activeDMAChannel);
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+        return S_FALSE;
+      } return S_OK;
+
+    default:
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("HandleAfterTransfer: Internal state error -- unknown transfer type (%d)"), m_transferType));
+      return S_FALSE;
   }
-
-  overShoot = m_transferredBytes % m_DSPBlockSize;  // how many bytes were transferred above the point where an IRQ should be generated
-
-  if (lastTransfer > overShoot) {   // we passed one or more IRQ generation points during the last transfer
-    int numInterrupts = ((lastTransfer - overShoot - 1) / m_DSPBlockSize) + 1;
-
-    _ASSERTE(numInterrupts <= 1);
-
-    if (m_bitsPerSample != 16) {
-      m_SBDSP.set8BitIRQ();
-    } else {
-      m_SBDSP.set16BitIRQ();
-    }
-
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
-  }
-
-  return S_OK;
 }
 
 
@@ -559,12 +615,35 @@ short CSBCompatCtl::getDSPVersion(void) {
   return m_DSPVersion;
 }
 
+void CSBCompatCtl::startTransfer(transfer_t type, char E2Reply, bool isSynchronous) {
+  _ASSERTE(type == TT_E2CMD);
+
+  // Abort any active transfers
+  stopTransfer(type, true);
+
+  // Set up the transfer state
+  m_transferType     = type;
+  m_activeDMAChannel = m_DMA8Channel;
+  m_E2Reply          = E2Reply;
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Starting DMA transfer (DSP command 0xe2) on ch. %d"), m_activeDMAChannel));
+
+  // Start the DMA transfer
+  try {
+    m_DMACtl->InitiateTransfer(m_activeDMAChannel, isSynchronous);
+  } catch (_com_error& ce) {
+    CString args = Format(_T("%d"), m_activeDMAChannel);
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("InitiateTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+  }
+}
+
 void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous) {
+  _ASSERTE((type == TT_PLAYBACK) || (type == TT_RECORD));
   _ASSERTE((numChannels == 1) || (numChannels == 2));
   _ASSERTE((bitsPerSample == 2) || (bitsPerSample == 3) || (bitsPerSample == 4) || (bitsPerSample == 8) || (bitsPerSample == 16));
 
   // Abort any active transfers
-  stopTransfer(type, false);
+  stopTransfer(type, true);
 
   // Adjust sample rates to fit in acceptable interval
   if (samplesPerSecond < 4000) {
@@ -585,9 +664,18 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
   m_numChannels = numChannels;          // audio channels (1 = mono, 2 = stereo)
   m_codec = codec;                      // CODEC to be used for converting DMA data
   m_isPaused = false;                   // can start transferring ASAP
-  m_activeDMAChannel = (bitsPerSample != 16 ? m_DMA8Channel : m_DMA16Channel);   /* TODO: must also be able to handle 16-bit data through 8-bit DMA channels when 16-bit channels are masked out in mixer registers (16-bit aliasing) */
+
   m_transferType = type;
   m_renderLoad = 1.00;
+
+  if (bitsPerSample != 16) {
+    m_SBDSP.ack8BitIRQ();               // clear any pending IRQs
+    m_activeDMAChannel = m_DMA8Channel;
+  } else {
+    m_SBDSP.ack16BitIRQ();              // clear any pending IRQs
+    /* TODO: must also be able to handle 16-bit data through 8-bit DMA channels when 16-bit channels are masked out in mixer registers (16-bit aliasing) */
+    m_activeDMAChannel = m_DMA16Channel;
+  }
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Starting DMA transfer (%s) on ch. %d (%s, %d samples/block): %d-bit %s %dHz, %s"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown transfer type>"), m_activeDMAChannel, isAutoInit ? _T("auto-init") : _T("single-cycle"), samplesPerBlock, bitsPerSample, numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown aurality>"), samplesPerSecond, codec == CODEC_PCM ? _T("unsigned PCM") : codec == CODEC_PCM_SIGNED ? _T("signed PCM") : codec == CODEC_ADPCM_2 ? _T("ADPCM 2") : codec == CODEC_ADPCM_3 ? _T("ADPCM 3") : codec == CODEC_ADPCM_4 ? _T("ADPCM 4") : _T("<unknown codec>")));
 
@@ -610,8 +698,6 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
 
 /* TODO: should wait for the current block to finish, generate the interript,
    and only then stop the DMA transaction */
-/* TODO: does DREQ have to stay asserted (i.e. the xfer is not stopped)
-   until IRQAck? */
 void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
   try {
     m_DMACtl->AbortTransfer(m_activeDMAChannel, isSynchronous);
@@ -621,13 +707,6 @@ void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
   }
 }
 
-/* TODO: while the xfer is paused, do we (also) deassert DREQ ? If yes,
-   then instead of only modifying m_isPaused also STOP the DMA transfer,
-   this will take care of DREQ *but* probably not a good idea, since 
-   as it is now the transfer manager will reset its A/I count & address
-   (which it saved when the xfer first started) to whatever value they might
-   happen to have when the xfer is (re)started as part of the DSP resume,
-   which is clearly bad -- I really hope DREQ stays asserted. :) */
 void CSBCompatCtl::pauseTransfer(transfer_t type) {
   if (!m_isPaused) {
     m_transferPauseTime = timeGetTime();
