@@ -34,6 +34,10 @@
     $reportid = NULL;
 
     if (isset($title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment)) {
+      $title   = stripslashes($title);
+      $version = stripslashes($version);
+      $comment = stripslashes($comment);
+
       if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, /*false*/true)) {
         $style = 'success';
         $text  = 'Your report has been added to the database';
@@ -58,6 +62,10 @@
     }
   } else if ($action == 'edit') {
     if (isset($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment)) {
+      $title   = stripslashes($title);
+      $version = stripslashes($version);
+      $comment = stripslashes($comment);
+
       if (AppsAddReport($reportid, $title, $distrib, $version, $os, $emu, $cvideo, $ckeyboard, $cmouse, $cjoystick, $cspeaker, $csb, $cadlib, $cmidi, $cgus, $cdisk, $cio, $ctimer, $comment, /*false*/true)) {
         $style = 'success';
         $text  = 'Your report has been updated';
@@ -141,11 +149,14 @@
   if ($gui == 1) {
     echo('<h1 class="' . $style . '">' . $text . '</h1>');
 
-    echo('<form method="post" action="' . $SCRIPT_NAME . '"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
+    echo('<form method="post" action="' . $SCRIPT_NAME . '" name="form_new"><table border="0" cellspacing="2" cellpadding="3" width="100%">');
 
     echo('<tr><td colspan="2" align="center" style="font: italic bold 125% serif; padding-top: 10px">General information</td></tr>');
 
-    echo('<tr><td align="right" width="50%">Title:</td><td align="left" width="50%"><input class="flat1" type="text" size="24" name="title" value="' . $title . '" maxlength="255"></td></tr>');
+    echo('<tr><td align="right" width="50%">Title:</td><td align="left" width="50%"><input class="flat1" type="text" size="24" name="title" value="' . $title . '" maxlength="255">' . '&nbsp;');
+    echo('<script language="javascript"><!--' . "\n" . 'document.write("<input type=\\"button\\" class=\\"flat2\\" value=\\"Validate...\\" title=\\"Validate the application title against MobyGames\' database\\" onclick=\\"window.open(\'http://www.mobygames.com/search/quick?quickSearch=\' + escape(document.form_new.title.value), \'mobyframe\')\\">");' . "\n" . '//--></script>');
+    echo('</td></tr>');
+
     echo('<tr><td align="right">Distribution:</td><td align="left"><select class="flat1" name="distrib">');
     HtmlSendOptions($distribTypes, 'id', 'description', $distrib);
     echo('</select></td></tr>');

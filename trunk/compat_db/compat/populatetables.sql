@@ -40,15 +40,16 @@ INSERT INTO EMUVerTypes VALUES (501,'DosBox 0.2','speaker,sb,adlib','icons/blank
 INSERT INTO OSVerTypes VALUES ('','Unspecified OS','icons/blank.gif');
 INSERT INTO OSVerTypes VALUES (1000,'DOS 5.0','icons/dos.gif');
 INSERT INTO OSVerTypes VALUES (1001,'DOS 6.0','icons/dos.gif');
-INSERT INTO OSVerTypes VALUES (1002,'DOS 6.22','icons/dos.gif');
-INSERT INTO OSVerTypes VALUES (1003,'DOS 7.0','icons/dos.gif');
+INSERT INTO OSVerTypes VALUES (1002,'DOS 6.2','icons/dos.gif');
+INSERT INTO OSVerTypes VALUES (1003,'DOS 7.x','icons/dos.gif');
+INSERT INTO OSVerTypes VALUES (1004,'DOS 8.x','icons/dos.gif');
 INSERT INTO OSVerTypes VALUES (2010,'Windows 3.1','icons/win3x.gif');
 INSERT INTO OSVerTypes VALUES (2011,'Windows 3.11','icons/win3x.gif');
 INSERT INTO OSVerTypes VALUES (2100,'Windows 95','icons/win9x.gif');
-INSERT INTO OSVerTypes VALUES (2101,'Windows 95A (OSR1)','icons/win9x.gif');
-INSERT INTO OSVerTypes VALUES (2102,'Windows 95B (OSR2)','icons/win9x.gif');
-INSERT INTO OSVerTypes VALUES (2103,'Windows 95B (OSR2.1)','icons/win9x.gif');
-INSERT INTO OSVerTypes VALUES (2104,'Windows 95C','icons/win9x.gif');
+INSERT INTO OSVerTypes VALUES (2101,'Windows 95 SP1','icons/win9x.gif');
+INSERT INTO OSVerTypes VALUES (2102,'Windows 95A (OSR1)','icons/win9x.gif');
+INSERT INTO OSVerTypes VALUES (2103,'Windows 95B (OSR2/2.1)','icons/win9x.gif');
+INSERT INTO OSVerTypes VALUES (2104,'Windows 95C (OSR2.5)','icons/win9x.gif');
 INSERT INTO OSVerTypes VALUES (2110,'Windows 98','icons/win9x.gif');
 INSERT INTO OSVerTypes VALUES (2111,'Windows 98 SE','icons/win9x.gif');
 INSERT INTO OSVerTypes VALUES (2120,'Windows ME','icons/winme.gif');
@@ -68,3 +69,4 @@ INSERT INTO News VALUES (1,'2002-02-24 08:06:24',20020224080624,'Finally...','St
 INSERT INTO News VALUES (2,'2002-03-03 10:09:33',20020309120849,'Progress','Finished and tested user authentication, user profile editing, user registration and password reset.\r\nUploaded basic list of games from http://www.mobygames.com/ .');
 INSERT INTO News VALUES (3,'2002-03-10 12:12:55',20020310121255,'More progress','HTML layout pretty stable.');
 INSERT INTO News VALUES (4,'2002-03-17 15:02:11',20020317150211,'Almost there','Added report creation page, but not fully functional yet.');
+INSERT INTO News VALUES (5,'2002-03-24 10:00:00',20020324100000,'Ready for test-drive','Everything is pretty much functional and ready for beta-testing.  DATA MAY BE DISCARDED, so do not spend too much time on reporting all your games, just do the minimum necessary for testing.');

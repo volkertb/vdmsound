@@ -64,6 +64,13 @@
   //
   // Perform an SQL query on the mysql database
   //
+  function MysqlMakeSafe($string) {
+    return mysql_escape_string($string);
+  }
+
+  //
+  // Perform an SQL query on the mysql database
+  //
   function MysqlQuery($query) {
     global $mysql_linkid;
     ErrSetLastError();
