@@ -41,20 +41,4 @@ class CThread {
     IRunnable* m_pTarget;
 };
 
-//
-//
-//
-class CCriticalSection {
-  public:
-    CCriticalSection(void) { InitializeCriticalSection(&section); }
-    virtual ~CCriticalSection(void) { DeleteCriticalSection(&section); }
-
-  public:
-    inline void lock(void) { EnterCriticalSection(&section); }
-    inline void unlock(void) { LeaveCriticalSection(&section); }
-
-  protected:
-    CRITICAL_SECTION section;
-};
-
 #endif // __THREAD_H__
