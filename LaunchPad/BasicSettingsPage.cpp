@@ -14,6 +14,14 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
+
+// Following defines whether to try to take advantage of undocumented
+//  functionality (with copious safety checks, of course) to force our
+//  property page in the foreground
+
+#define __CHEAT_PROPERTYSHEETACTIVATION 1
+
+/////////////////////////////////////////////////////////////////////////////
 // CBasicSettingsPage property page
 
 IMPLEMENT_DYNCREATE(CBasicSettingsPage, CPropertyPage)
@@ -41,11 +49,13 @@ HRESULT CBasicSettingsPage::AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
   if (!pBasicSettingsPage)
     return E_OUTOFMEMORY;
 
+  _Module.Lock();               // prevent the DLL from being unloaded while the property sheet is active
+
   PROPSHEETPAGE psp;
   memset(&psp, 0, sizeof(psp));
 
   psp.dwSize      = sizeof(psp);
-  psp.dwFlags     = pBasicSettingsPage->m_psp.dwFlags | PSP_USEICONID | PSP_USECALLBACK | PSP_USEREFPARENT;
+  psp.dwFlags     = pBasicSettingsPage->m_psp.dwFlags | PSP_USEICONID | PSP_USECALLBACK;
   psp.hInstance   = pBasicSettingsPage->m_psp.hInstance;
   psp.pszTemplate = pBasicSettingsPage->m_psp.pszTemplate;
   psp.pszIcon     = (LPCTSTR)MAKEINTRESOURCE(IDI_ICON2);
@@ -53,28 +63,60 @@ HRESULT CBasicSettingsPage::AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
   psp.pfnDlgProc  = pBasicSettingsPage->m_psp.pfnDlgProc;
   psp.lParam      = (LONG)pBasicSettingsPage;
   psp.pfnCallback = PropPageCallbackProc;
-  psp.pcRefParent = (UINT*)(&(_Module.m_nLockCnt));   // prevent the DLL from being unloaded while the property sheet is active
 
   // Obtain the Win32 property sheet handle
   HPROPSHEETPAGE hPage = CreatePropertySheetPage(&psp);
 
   if (!hPage) {
+    _Module.Unlock();           // rollback
     delete pBasicSettingsPage;
     return HRESULT_FROM_WIN32(GetLastError());
   }
 
-  // Call the callback function to add the page to a property sheet
+#if __CHEAT_PROPERTYSHEETACTIVATION
+
+  BOOL isPotentialPSH = FALSE;                        // initial impression based on lParam type (pointer to data, etc.)
+  PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;   // pointer to (suspected) proerty sheet structure
+  PROPSHEETHEADER initialPSHData;                     // snapshot of the suspected structure before adding our page
+
+  try {
+    if (AfxIsValidAddress((const void*)lParam, sizeof(PROPSHEETHEADER), TRUE)) {
+      isPotentialPSH = TRUE;
+      PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;
+      initialPSHData = *pPSH;
+    }
+  } catch (...) { }
+
+#endif
+
+  // Invoke the callback function to add the page to a property sheet
   if (!lpfnAddPageProc(hPage, lParam)) {
+    _Module.Unlock();           // rollback
     DestroyPropertySheetPage(hPage);
     delete pBasicSettingsPage;
     return E_UNEXPECTED;
   }
 
-#if 0
-  if (AfxIsValidAddress((const void*)lParam, sizeof(PROPSHEETHEADER), TRUE)) {
-    PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;
-    pPSH->nStartPage = pPSH->nPages - 1;
-  }
+#if __CHEAT_PROPERTYSHEETACTIVATION
+
+  try {
+    if (isPotentialPSH && AfxIsValidAddress((const void*)lParam, sizeof(PROPSHEETHEADER), TRUE)) {
+      DWORD pId;                                      // process ID of the suspected property sheet parent window
+
+      if ((pPSH->dwSize     == initialPSHData.dwSize) &&
+          (pPSH->dwFlags    == initialPSHData.dwFlags) &&
+          (pPSH->hwndParent == initialPSHData.hwndParent) &&
+          (pPSH->hInstance  == initialPSHData.hInstance) &&
+          (pPSH->nPages     == initialPSHData.nPages + 1)
+            &&
+          (IsWindow(pPSH->hwndParent)) &&
+          (GetWindowThreadProcessId(pPSH->hwndParent, &pId), pId == GetCurrentProcessId()))
+      {
+        pPSH->nStartPage = initialPSHData.nPages;     // make our page the start page
+      }
+    }
+  } catch (...) { }
+
 #endif
 
   return S_OK;
@@ -93,12 +135,15 @@ UINT CALLBACK CBasicSettingsPage::PropPageCallbackProc(HWND hWnd, UINT uMsg, LPP
 
   switch (uMsg) {
     case PSPCB_CREATE:
+      TRACE(_T("LaunchPad: module lock count at property sheet creation is %d\n"), _Module.GetLockCount());
       // Do nothing
       break;
 
     case PSPCB_RELEASE:
       TRACE(_T("LaunchPad: automatically deleting CBasicSettingsPage from heap\n"));
       delete pBasicSettingsPage;
+      _Module.Unlock();         // the DLL can now be unloaded (unless other locks remain)
+      TRACE(_T("LaunchPad: module lock count after property sheet release is %d\n"), _Module.GetLockCount());
       break;
 
     default:

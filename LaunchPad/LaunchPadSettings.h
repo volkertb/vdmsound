@@ -3,6 +3,7 @@
 
 class CLaunchPadSettings {
   public:
+	  CLaunchPadSettings(const CString& fileName);
 	  CLaunchPadSettings(const CStringArray& fileNames);
 	  virtual ~CLaunchPadSettings(void);
 
