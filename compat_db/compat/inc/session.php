@@ -9,7 +9,7 @@
   // Methods
   ////////////////////////////////////////////////////////////////////////////
 
-  function SessionStart($cache = 'private') {
+  function SessionStart($cache = ''/*'private'*/) {  // php bug with IE6
     session_cache_limiter($cache);
     return session_start();
   }

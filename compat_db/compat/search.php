@@ -18,6 +18,9 @@
   if (!isset($i)) $i = 0;
   if (!isset($n)) $n = 25;
 
+  $navtrk = true;
+  $errmsg = 'Unknown error';
+
   if (isset($byletter)) {
     if ($byletter == '#') {
       $appquery = '^[^a-zA-Z]';
@@ -32,7 +35,6 @@
     $errmsg = 'No applications whose names begin with this letter were found';
   } else if (isset($query)) {
     $hdrText  = 'Search results';
-    $errmsg = 'No applications whose names match the query string were found';
 
     if ($exact == 'yes') {
       $appquery = $query;
@@ -45,17 +47,22 @@
         array_push($appquery, '%' . $term . '%');
       }
     }
+
+    $errmsg = 'No applications whose names match the query string were found';
   } else {
-    echo('Advanced search form');
+    echo('TODO: Advanced search form');
   }
 
+  if (!isset($sortkey)) $sortkey = 'title_text';
+  if (!isset($sortasc)) $sortasc = true;
+
   if (isset($appquery, $queryOp)) {
-    $myApps = AppsGetByName($appquery, $queryOp, true, 'title_text', true, $i, $n, false);
+    $myApps = AppsGetByName($appquery, $queryOp, true, $sortkey, $sortasc, $i, $n, $navtrk);
 
     echo('<h1 class="normal">' . $hdrText . '</h1>');
 
     if ($myApps && (count($myApps) > 0)) {
-      HtmlSendAppsList($myApps, HtmlMakeResultsInfo($i, $n, AppsGetLastNumRows(), 'Applications', $REQUEST_URI));
+      HtmlSendAppsList($myApps, HtmlMakeResultsInfo($i, $n, AppsGetLastNumRows(), 'Applications', $REQUEST_URI), $REQUEST_URI, $sortkey, $sortasc);
     } else {
       echo('<h2 class="normal">' . $errmsg . '</h2>');
     }
