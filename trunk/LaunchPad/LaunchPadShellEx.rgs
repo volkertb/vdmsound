@@ -1,8 +1,4 @@
-HKCU
-{
-Software
-{
-Classes
+HKCR
 {
 	LaunchPad.LaunchPadShellEx.1 = s 'LaunchPadShellEx Class'
 	{
@@ -30,27 +26,77 @@ Classes
 			}
 		}
 	}
-	ForceRemove .vlp = s 'vdms.vlpfile'
-	ForceRemove vdms.vlpfile = s 'VDMSound Shortcut'
+	.vlp = s 'vlpfile'
+	NoRemove vlpfile = s 'VDMSound Shortcut'
 	{
 		val EditFlags = d 1
 		val IsShortcut = s ''
 		val NeverShowExt = s ''
-		ShellEx = s 'LaunchPadShellEx Class'
+		NoRemove ShellEx = s 'LaunchPadShellEx Class'
 		{
 			{00021500-0000-0000-C000-000000000046} = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
 			IconHandler = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
 			DropHandler = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
-			ContextMenuHandlers
+			NoRemove ContextMenuHandlers
 			{
 				'VDMSound LaunchPad' = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
 			}
-			PropertySheetHandlers
+			NoRemove PropertySheetHandlers
+			{
+				'VDMSound LaunchPad' = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
+			}
+		}
+	}
+	NoRemove batfile
+	{
+		NoRemove ShellEx = s 'LaunchPadShellEx Class'
+		{
+			NoRemove ContextMenuHandlers
+			{
+				'VDMSound LaunchPad' = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
+			}
+		}
+	}
+	NoRemove comfile
+	{
+		NoRemove ShellEx = s 'LaunchPadShellEx Class'
+		{
+			NoRemove ContextMenuHandlers
+			{
+				'VDMSound LaunchPad' = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
+			}
+		}
+	}
+	NoRemove exefile
+	{
+		NoRemove ShellEx = s 'LaunchPadShellEx Class'
+		{
+			NoRemove ContextMenuHandlers
 			{
 				'VDMSound LaunchPad' = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
 			}
 		}
 	}
 }
-}
+HKLM
+{
+	NoRemove SOFTWARE
+	{
+		NoRemove Microsoft
+		{
+			NoRemove Windows
+			{
+				NoRemove CurrentVersion
+				{
+					NoRemove 'Shell Extensions'
+					{
+						NoRemove Approved
+						{
+							val '{64BC5640-700F-4E7E-8462-D3092DD74B0F}' = s 'VDMSound LaunchPad'
+						}
+					}
+				}
+			}
+		}
+	}
 }
