@@ -58,7 +58,7 @@ public:
   void stopTransfer(transfer_t type, bool isSynchronous = false);
   void pauseTransfer(transfer_t type);
   void resumeTransfer(transfer_t type);
-  void generateInterrupt(void);
+  void generateInterrupt(int count = 1);
   void logError(const char* message);
   void logWarning(const char* message);
   void logInformation(const char* message);
