@@ -71,7 +71,7 @@ protected:
   static void CALLBACK MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
 
 protected:
-  void MidiOutOpen(void);
+  bool MidiOutOpen(bool isInteractive = true);
   void MidiOutClose(void);
   CString MidiOutGetName(void);
   CString MidiOutGetError(MMRESULT errCode);

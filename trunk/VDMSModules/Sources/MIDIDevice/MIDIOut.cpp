@@ -114,8 +114,8 @@ STDMETHODIMP CMIDIOut::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMIDIOut::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  if (m_hMidiOut == NULL)
-    MidiOutOpen();
+  if ((m_hMidiOut == NULL) && (!MidiOutOpen()))
+    return S_FALSE;         // The device is not open, and an attempt to open it failed
 
   union {
     DWORD dwData;
@@ -139,8 +139,8 @@ STDMETHODIMP CMIDIOut::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length) {
   if (data == NULL)
     return E_POINTER;
 
-  if (m_hMidiOut == NULL)
-    MidiOutOpen();
+  if ((m_hMidiOut == NULL) && (!MidiOutOpen()))
+    return S_FALSE;         // The device is not open, and an attempt to open it failed
 
   MIDIHDR* midiHdr = NULL;
   LPSTR sysExMsg = NULL;
@@ -245,7 +245,7 @@ unsigned int CMIDIOut::Run(CThread& thread) {
         break;
     }
   }
-  
+
   DWORD lastError = GetLastError();
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
 
@@ -292,27 +292,30 @@ void CALLBACK CMIDIOut::MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, D
 //
 // Opens the MIDI device specified in the module's settings
 //
-void CMIDIOut::MidiOutOpen(void) {
+bool CMIDIOut::MidiOutOpen(bool isInteractive) {
   static bool isErrPrompt = true;
   static time_t lastRetry = 0;
 
+  // Don't open the device if it's already open
+  if (m_hMidiOut != NULL)
+    return true;
+
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
   if ((time(NULL) - lastRetry) < MIDIOPEN_RETRY_INTERVAL) {
-    return;   // another attempt to open the device was made very recently; don't overdo it
+    return false;           // another attempt to open the device was made very recently; don't overdo it
   } else {
     lastRetry = time(NULL);
   }
-
-  // Don't open the device if it's already open
-  if (m_hMidiOut != NULL)
-    return;
 
   MMRESULT errCode;
 
   // Attempt to open the MIDI-out device
   while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, (DWORD)MidiOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
     if (!isErrPrompt)       // did the user select not to be prompted again ?
-      break;                // stop trying
+      return false;         // stop trying
+
+    if (!isInteractive)     // do we want to pop up a message box ?
+      return false;         // stop trying
 
     if (MessageBox(FormatMessage(MSG_ERR_E_OPENDEVICE, false, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)),
                    _T("MIDI-out Device Error"), /* TODO: LoadString(...) */
@@ -320,9 +323,11 @@ void CMIDIOut::MidiOutOpen(void) {
     {
       isErrPrompt = false;  // the user does not whish to be prompted again !
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)MidiOutGetError(errCode)));
-      break;                // stop trying
+      return false;         // stop trying
     }
   }
+
+  return (m_hMidiOut != NULL);
 }
 
 //
