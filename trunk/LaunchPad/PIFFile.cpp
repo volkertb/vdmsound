@@ -404,7 +404,7 @@ void CPIFFile::SetWorkDir(LPCTSTR szWDir) {
 //
 //
 //
-void CPIFFile::SetIcon(LPCTSTR szIcon, int iconID) {
+void CPIFFile::SetIcon(LPCTSTR szIcon, LONG iconID) {
   m_PIF.winVMM.wIconID = iconID;
 
   ToANSI(szIcon, m_PIF.winVMM.szIconFile, _LENOF(m_PIF.winVMM.szIconFile));
@@ -415,14 +415,14 @@ void CPIFFile::SetIcon(LPCTSTR szIcon, int iconID) {
 //
 //
 //
-void CPIFFile::SetCloseOnExit(bool closeOnExit) {
+void CPIFFile::SetCloseOnExit(BOOL closeOnExit) {
   _CHANGEBIT(m_PIF.basic.wFlags1, closeOnExit, PIF_BAS_CLOSEONEXIT);
 }
 
 //
 //
 //
-void CPIFFile::SetMemory(int EMS, int XMS) {
+void CPIFFile::SetMemory(LONG EMS, LONG XMS) {
   m_PIF.win386.wMaxEMSMem  = EMS;
   m_PIF.win386.wReqEMSMem  = EMS;
 
@@ -433,7 +433,7 @@ void CPIFFile::SetMemory(int EMS, int XMS) {
 //
 //
 //
-void CPIFFile::SetFullScreen(bool fullScreen) {
+void CPIFFile::SetFullScreen(BOOL fullScreen) {
   _CHANGEBIT(m_PIF.win386.dwFlags1, fullScreen, PIF_386_FULLSCREEN);
   _CHANGEBIT(m_PIF.winVMM.wFlags2,  fullScreen, PIF_VMM_FULLSCREEN);
 }
@@ -441,7 +441,7 @@ void CPIFFile::SetFullScreen(bool fullScreen) {
 //
 //
 //
-void CPIFFile::SetFastPaste(bool fastPaste) {
+void CPIFFile::SetFastPaste(BOOL fastPaste) {
   _CHANGEBIT(m_PIF.win386.dwFlags1, fastPaste, PIF_386_FASTPASTE);
   _CHANGEBIT(m_PIF.winVMM.wFlags3,  fastPaste, PIF_VMM_FASTPASTE);
 }
@@ -449,9 +449,30 @@ void CPIFFile::SetFastPaste(bool fastPaste) {
 //
 //
 //
-void CPIFFile::SetWarnOnClose(bool warnOnClose) {
+void CPIFFile::SetWarnOnClose(BOOL warnOnClose) {
   _CHANGEBIT(m_PIF.win386.dwFlags1, !warnOnClose, PIF_386_ALLOWCLOSE);
-  _CHANGEBIT(m_PIF.winVMM.wFlags1, !warnOnClose, PIF_VMM_NOWARNONEXIT);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !warnOnClose, PIF_VMM_NOWARNONEXIT);
+}
+
+//
+//
+//
+void CPIFFile::SetWinKeys(BOOL useAltTab, BOOL useAltEsc, BOOL useCtrlEsc, BOOL usePrtSc, BOOL useAltPrtSc, BOOL useAltEnter, BOOL useAltSpace) {
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useAltTab,   PIF_386_NOALTTAB);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useAltEsc,   PIF_386_NOALTESC);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useCtrlEsc,  PIF_386_NOCTRLESC);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !usePrtSc,    PIF_386_NOPRTSC);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useAltPrtSc, PIF_386_NOALTPRTSC);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useAltEnter, PIF_386_NOALTENTER);
+  _CHANGEBIT(m_PIF.win386.dwFlags1, !useAltSpace, PIF_386_NOALTSPACE);
+
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useAltTab,   PIF_VMM_NOALTTAB);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useAltEsc,   PIF_VMM_NOALTESC);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useCtrlEsc,  PIF_VMM_NOCTRLESC);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !usePrtSc,    PIF_VMM_NOPRTSC);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useAltPrtSc, PIF_VMM_NOALTPRTSC);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useAltEnter, PIF_VMM_NOALTENTER);
+  _CHANGEBIT(m_PIF.winVMM.wFlags1,  !useAltSpace, PIF_VMM_NOALTSPACE);
 }
 
 //
@@ -586,7 +607,7 @@ void CPIFFile::Reset(void) {
 //
 //
 //
-void CPIFFile::ToANSI(LPCTSTR src, LPSTR dst, int ncch) {
+void CPIFFile::ToANSI(LPCTSTR src, LPSTR dst, LONG ncch) {
   ASSERT(src != NULL);
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);
@@ -603,7 +624,7 @@ void CPIFFile::ToANSI(LPCTSTR src, LPSTR dst, int ncch) {
 //
 //
 //
-void CPIFFile::ToOEM(LPCTSTR src, LPSTR dst, int ncch) {
+void CPIFFile::ToOEM(LPCTSTR src, LPSTR dst, LONG ncch) {
   ASSERT(src != NULL);
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);
@@ -616,7 +637,7 @@ void CPIFFile::ToOEM(LPCTSTR src, LPSTR dst, int ncch) {
 //
 //
 //
-void CPIFFile::ToUNICODE(LPCTSTR src, LPWSTR dst, int ncch) {
+void CPIFFile::ToUNICODE(LPCTSTR src, LPWSTR dst, LONG ncch) {
   ASSERT(src != NULL);
   ASSERT(dst != NULL);
   ASSERT(ncch > 0);

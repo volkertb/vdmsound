@@ -73,19 +73,20 @@ public:
   void SetWindowTitle(LPCTSTR szTitle);
   void SetProgram(LPCTSTR szExecutable, LPCTSTR szArguments);
   void SetWorkDir(LPCTSTR szWDir);
-  void SetIcon(LPCTSTR szIcon, int iconID = 0);
-  void SetCloseOnExit(bool closeOnExit);
-  void SetMemory(int EMS, int XMS);
-  void SetFullScreen(bool fullScreen);
-  void SetFastPaste(bool fastPaste);
-  void SetWarnOnClose(bool warnOnClose);
+  void SetIcon(LPCTSTR szIcon, LONG iconID = 0);
+  void SetCloseOnExit(BOOL closeOnExit);
+  void SetMemory(LONG EMS, LONG XMS);
+  void SetFullScreen(BOOL fullScreen);
+  void SetFastPaste(BOOL fastPaste);
+  void SetWarnOnClose(BOOL warnOnClose);
+  void SetWinKeys(BOOL useAltTab, BOOL useAltEsc, BOOL useCtrlEsc, BOOL usePrtSc, BOOL useAltPrtSc, BOOL useAltEnter, BOOL useAltSpace);
 
   void Reset(void);
 
 protected:
-  static void ToANSI(LPCTSTR src, LPSTR dst, int ncch);
-  static void ToOEM(LPCTSTR src, LPSTR dst, int ncch);
-  static void ToUNICODE(LPCTSTR src, LPWSTR dst, int ncch);
+  static void ToANSI(LPCTSTR src, LPSTR dst, LONG ncch);
+  static void ToOEM(LPCTSTR src, LPSTR dst, LONG ncch);
+  static void ToUNICODE(LPCTSTR src, LPWSTR dst, LONG ncch);
 
 protected:
   inline getPIFOffset(const void* ptr)
