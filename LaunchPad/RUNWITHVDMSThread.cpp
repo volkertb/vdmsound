@@ -878,7 +878,7 @@ CString CRUNWITHVDMSThread::GetOPLType(LPCTSTR oplMode, LPCTSTR sbVersion) {
   } else {  // auto, and others
     int vMajor, vMinor;
     short DSPVersion;
-    if (_stscanf(sbVersion, "%d.%d", &vMajor, &vMinor) != 2) {
+    if (_stscanf(sbVersion, _T("%d.%d"), &vMajor, &vMinor) != 2) {
       DSPVersion = 0x0405;  // 4.05 (SoundBlaster 16)
     } else {
       DSPVersion = MAKEWORD((BYTE)vMinor, (BYTE)vMajor);
