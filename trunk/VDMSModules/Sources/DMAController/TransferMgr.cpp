@@ -176,7 +176,7 @@ STDMETHODIMP CTransferMgr::StartTransfer(BYTE channel, LONG synchronous) {
 		return E_INVALIDARG;
 
   // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
-  CSingleLock lock(&m_mutex, TRUE);
+//CSingleLock lock(&m_mutex, TRUE); // !! bad idea; syncronous start will deadlock because of S/C & 0xe2 cmd DMA stop
 
   if (m_DMAThread.PostMessage(UM_DMA_START, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -197,7 +197,7 @@ STDMETHODIMP CTransferMgr::StopTransfer(BYTE channel, LONG synchronous) {
 		return E_INVALIDARG;
 
   // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
-  CSingleLock lock(&m_mutex, TRUE);
+//CSingleLock lock(&m_mutex, TRUE); // !! bad idea; syncronous start will deadlock because of S/C & 0xe2 cmd DMA stop
 
   if (m_DMAThread.PostMessage(UM_DMA_STOP, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
