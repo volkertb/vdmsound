@@ -109,6 +109,7 @@ protected:
   int m_numChannels;
   codec_t m_codec;
   bool m_isPaused;
+  bool m_isAutoInit;
   int m_activeDMAChannel;
   transfer_t m_transferType;
   double m_renderLoad;

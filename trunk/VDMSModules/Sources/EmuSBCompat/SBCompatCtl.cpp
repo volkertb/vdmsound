@@ -453,7 +453,7 @@ _XYZ("5");
   BYTE buf[65536];            // temporary storage for processing (e.g. dcompressing) data 
 
   // Compute by how much this transfer should be boosted or diminished, based on
-  //   playback performance (feedback indicating playback buffer overrun/underrun)
+  //  playback performance (feedback indicating playback buffer overrun/underrun)
   double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
 
   // Compute the maximum amount of bytes we can exchange in this transaction
@@ -462,14 +462,14 @@ _XYZ("5");
       maxData << alignment);                                  // DMA terminal count limit
 
   // Compute how many bytes should be transferred based on average bandwidth, on
-  //   the time elapsed since the last transfer (+/- 1 time uncertainty), and on
-  //   the scaling factor computed above.
+  //  the time elapsed since the last transfer (+/- 1 time uncertainty), and on
+  //  the scaling factor computed above.
   long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(deltaTime + 1)) / 1000.0);
-
+// ***DragonSphere*** // toTransfer=m_DSPBlockSize/2;
   // Round (down) the number of bytes to transfer in such a way so that
-  //   the transfer will not break a 16-bit sample down the middle, split a
-  //   left/right sample pair (for stereo data), or be misaligned on a 16-bit
-  //   boundary when transferring across 16-bit DMA channels
+  //  the transfer will not break a 16-bit sample down the middle, split a
+  //  left/right sample pair (for stereo data), or be misaligned on a 16-bit
+  //  boundary when transferring across 16-bit DMA channels
   toTransfer = round(toTransfer, max((m_numChannels - 1) + (m_bitsPerSample >> 4), alignment)); // rounding boundaries: 2^0 for mono 8-bit over 8-bit DMA channels, 2^1 for 16-bit mono or 8-bit stereo over any DMA channels, <OR> 8-bit mono over 16-bit DMA channels, 2^2 for 16-bit stereo (any DMA channels)
 
 _XYZ((bstr_t)Format(_T(" % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n"), m_transferredBytes, toTransfer, maxTransfer, (int)deltaTime, m_renderLoad, toTransfer + (toTransfer - maxTransfer), toTransfer + (toTransfer - maxTransfer) > m_DSPBlockSize ? '^' : ' '));
@@ -478,13 +478,13 @@ _XYZ((bstr_t)Format(_T(" % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n"), m_transfe
   if (toTransfer > maxTransfer) {
     // Decide whether we are doing alright, or if we need to boost DMA performance;
     // To do this, see how much we have to sacrifice in this particular transfer in
-    //   order not to violate the maxTransfer limit (toTransfer - maxTransfer), and
-    //   see if that amount can be in turn recuperated during the next transfer
-    //   (assuming toTransfer and maxTransfer would remain pretty much the same),
-    //   still without violating any constraints.
+    //  order not to violate the maxTransfer limit (toTransfer - maxTransfer), and
+    //  see if that amount can be in turn recuperated during the next transfer
+    //  (assuming toTransfer and maxTransfer would remain pretty much the same),
+    //  still without violating any constraints.
     if (toTransfer + (toTransfer - maxTransfer) > m_DSPBlockSize) {
       // What we sacrificed in this transfer cannot be recuperated during the next
-      //   transfer, so request a boost.
+      //  transfer, so request a boost.
       *isTooSlow = true;      // request an increase in DMA servicing frequency
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, _T("DMA updates too infrequent (unable to keep up with desired transfer rate), requesting boost"));
     }
@@ -493,7 +493,7 @@ _XYZ((bstr_t)Format(_T(" % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n"), m_transfe
     toTransfer = maxTransfer;
   } else {
     // Occasionally round up the value so that we don't end up with ridiculously
-    //   small amounts of data to transfer, after clipping, in the next transaction
+    //  small amounts of data to transfer, after clipping, in the next transaction
     if ((maxTransfer - toTransfer) < 128) {
       toTransfer = maxTransfer;
     }
@@ -611,17 +611,12 @@ _XYZ((bstr_t)Format(_T(" % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n"), m_transfe
 STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, LONG isTerminalCount) {
   long lastTransfer, overShoot;
 
-_XYZ("$");
-
   // Lock all transfer variables (DMA ch., sample rate, etc.)
   CSingleLock lock(&m_mutex, TRUE);
-_XYZ("%");
 
   // If this notification does not concern the active DMA channel, ignore it
   if (channel != m_activeDMAChannel)
     return S_FALSE;
-
-_XYZ("A");
 
   switch (m_transferType) {
     case TT_PLAYBACK:
@@ -646,20 +641,25 @@ _XYZ("A");
         }
 
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
+
+        if (!m_isAutoInit) try {
+          m_DMACtl->StopTransfer(m_activeDMAChannel, false); // *must* be asynchronous, otherwise we deadlock
+        } catch (_com_error& ce) {
+          CString args = Format(_T("%d"), m_activeDMAChannel);
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("StopTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+          return S_FALSE;
+        } return S_OK;
       }
 
-_XYZ("D");
       return S_OK;
 
     case TT_E2CMD:
       // We transferred what we had to transfer, now clean up
-_XYZ("B");
       try {
         m_DMACtl->StopTransfer(m_activeDMAChannel, false); // *must* be asynchronous, otherwise we deadlock
-_XYZ("C");
       } catch (_com_error& ce) {
         CString args = Format(_T("%d"), m_activeDMAChannel);
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("StopTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
         return S_FALSE;
       } return S_OK;
 
@@ -741,6 +741,7 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
   m_numChannels = numChannels;          // audio channels (1 = mono, 2 = stereo)
   m_codec = codec;                      // CODEC to be used for converting DMA data
   m_isPaused = false;                   // can start transferring ASAP
+  m_isAutoInit = isAutoInit;            // indicates whether the SB should treat this as an A/I xfer
 
   m_transferType = type;
   m_renderLoad = 1.00;
@@ -785,7 +786,7 @@ void CSBCompatCtl::stopTransfer(transfer_t type, bool isSynchronous) {
     m_DMACtl->StopTransfer(m_activeDMAChannel, isSynchronous);
   } catch (_com_error& ce) {
     CString args = Format(_T("%d"), m_activeDMAChannel);
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("AbortTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("StopTransfer(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
   }
 }
 
