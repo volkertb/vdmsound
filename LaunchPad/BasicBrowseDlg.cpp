@@ -69,13 +69,27 @@ void CBasicBrowseDlg::OnButFilebrowse()
 {
   CWaitCursor wait;
 
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
+
   UpdateData(TRUE);     // save all changes that occured in the GUI
 	COpenDOSProgramDialog dlgFile(m_edtFile_val, this);
 
-  if (dlgFile.DoModal() == IDOK) {
-    m_edtFile_val = dlgFile.GetPathName();
-    m_edtDir_val = VLPUtil::GetDirectory(m_edtFile_val);
-    UpdateData(FALSE);  // update the GUI to reflect any changed settings
+  switch (dlgFile.DoModal()) {
+    case IDOK:
+      m_edtFile_val = dlgFile.GetPathName();
+      m_edtDir_val = VLPUtil::GetDirectory(m_edtFile_val);
+      UpdateData(FALSE);  // update the GUI to reflect any changed settings
+      break;
+
+    case IDCANCEL:
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
   }
 }
 
@@ -83,12 +97,25 @@ void CBasicBrowseDlg::OnButChangeicon()
 {
   CWaitCursor wait;
 
+  DWORD lastError = ERROR_SUCCESS;
+  CString strTmp1, strTmp2;
   CChangeIconDlg dlgIcon(this);
 
   dlgIcon.m_edtFile_val = m_iconLocation;
 
-  if (dlgIcon.DoModal() == IDOK) {
-    m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
+  switch (dlgIcon.DoModal()) {
+    case IDOK:
+      m_iconLocation.Format(_T("%s,%d"), dlgIcon.m_edtFile_val, max(0, dlgIcon.m_lstIcons_val));
+      break;
+
+    case IDCANCEL:
+      break;
+
+    default:
+      lastError = GetLastError();
+      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
+      GetWindowText(strTmp2);
+      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
   }
 }
 
