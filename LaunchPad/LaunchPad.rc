@@ -105,8 +105,8 @@ IDR_LAUNCHPADSHELLEX    REGISTRY DISCARDABLE    "LaunchPadShellEx.rgs"
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_APPICON             ICON    DISCARDABLE     "VDMSound.ico"
-IDI_UNKNOWNICON         ICON    DISCARDABLE     "Unknown.ico"
-IDI_MULTIPLEICON        ICON    DISCARDABLE     "Multiple.ico"
+IDI_ICON1               ICON    DISCARDABLE     "icon1.ico"
+IDI_ICON2               ICON    DISCARDABLE     "icon2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -158,8 +158,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     RTEXT           "&Program:",IDC_STATIC,7,7,40,14,SS_CENTERIMAGE
     EDITTEXT        IDC_EDT_FILE,52,7,136,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "&...",IDC_BUT_FILEBROWSE,188,7,14,14,NOT WS_TABSTOP,
-                    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "&...",IDC_BUT_FILEBROWSE,188,7,14,14,0,WS_EX_CLIENTEDGE
     RTEXT           "&Arguments:",IDC_STATIC,7,24,40,14,SS_CENTERIMAGE
     EDITTEXT        IDC_EDT_ARGS,52,24,150,14,ES_AUTOHSCROLL
     RTEXT           "&Run in:",IDC_STATIC,7,41,40,14,SS_CENTERIMAGE
@@ -234,29 +233,33 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
-//
-
-IDB_MENUICON1           BITMAP  DISCARDABLE     "menuicon1.bmp"
-IDB_MENUICON2           BITMAP  DISCARDABLE     "menuicon2.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // String Table
 //
 
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_PROJNAME            "VDMSound LaunchPad"
-    IDS_TXT_MULTIPLEVALUES  "(multiple values)"
-    IDS_ERR_UNKNOWN         "An unknown error has occured. (0x%1!08x!)"
-    IDS_MSG_ICONERROR       "Cannot open the file %2. (0x%1!08x!)"
-    IDS_MSG_NOICONS         "The file %1 contains no icons."
     IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
     IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_TXT_MULTIPLEVALUES  "(multiple values)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     IDS_TXT_RUNWITHVDMS     "Run with &VDMS"
-    IDS_HLP_RUNWITHVDMS     "Run with DOS sound and joystick support"
-    IDS_HLP_SHTOOLTIP       "Program: %1"
+    IDS_TXT_RUNWITHVDMSHLP  "Run with DOS sound and joystick support"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_MSG_UNKNOWNERR      "An unknown error has occured. (0x%1!08x!)"
+    IDS_MSG_ICONERROR       "Cannot open the file %2. (0x%1!08x!)"
+    IDS_MSG_NOICONS         "The file %1 contains no icons."
+    IDS_MSG_SHTOOLTIP       "Program: %1"
 END
 
 #endif    // English (U.S.) resources

@@ -353,6 +353,14 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\icon1.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\icon2.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPad.rc
 # End Source File
 # Begin Source File
@@ -361,27 +369,7 @@ SOURCE=.\LaunchPadShellEx.rgs
 # End Source File
 # Begin Source File
 
-SOURCE=.\menuicon.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=.\menuicon1.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=.\menuicon2.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=.\Multiple.ico
-# End Source File
-# Begin Source File
-
 SOURCE=.\Resource.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Unknown.ico
 # End Source File
 # Begin Source File
 
