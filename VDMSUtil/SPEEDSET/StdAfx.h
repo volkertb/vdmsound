@@ -36,6 +36,9 @@ extern "C" {
 #include <mmsystem.h>
 #pragma comment ( lib , "winmm.lib" )
 
+#include <crtdbg.h>
+#include <stdio.h>
+
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
