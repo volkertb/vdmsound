@@ -66,6 +66,20 @@ class COpenDOSProgramDialog : public CFileDialog {
 
 
 //////////////////////////////////////////////////////////////////////
+// COpenMAPFileDialog
+//////////////////////////////////////////////////////////////////////
+
+class COpenMAPFileDialog : public CFileDialog {
+  public:
+    COpenMAPFileDialog(LPCTSTR lpszFileName = NULL, CWnd* pParentWnd = NULL);
+
+  protected:
+    CString m_strFilter;
+};
+
+
+
+//////////////////////////////////////////////////////////////////////
 // VLPUtil
 //////////////////////////////////////////////////////////////////////
 
@@ -77,7 +91,7 @@ namespace VLPUtil {
   // GUI helper functions
   HRESULT SyncCheckBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
-  HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
+  HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, CString& otherValueStorage, LPCTSTR selValue1, ...);
   HRESULT SyncEditBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CWnd& control, LPCTSTR defValue = _T(""));
   HRESULT SyncGroup(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
 
@@ -100,6 +114,7 @@ namespace VLPUtil {
   // Other shell helper functions
   BOOL isVLPFile(LPCTSTR fName);
   BOOL isMSDOSFile(LPCTSTR fName);
+  CString GetVDMSFilePath(LPCTSTR fileName);
 
   // NT security helper functions
   HRESULT GetEffectiveRights(LPCTSTR pObjectName, SE_OBJECT_TYPE ObjectType, PACCESS_MASK pAccessRights);
