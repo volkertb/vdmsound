@@ -270,6 +270,26 @@ STDMETHODIMP CSBCompatCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT cou
 // IMPU401HWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
 
+void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int avgBytesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit) {
+  // TODO: implement
+}
+
+void CSBCompatCtl::pauseTransfer(transfer_t type) {
+  // TODO: implement
+}
+
+void CSBCompatCtl::resumeTransfer(transfer_t type) {
+  // TODO: implement
+}
+
+void CSBCompatCtl::stopTransfer(transfer_t type) {
+  // TODO: implement
+}
+
+void CSBCompatCtl::generateInterrupt(void) {
+  // TODO: implement
+}
+
 void CSBCompatCtl::logError(const char* message) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, (LPCTSTR)CString(message));
 }
@@ -278,3 +298,6 @@ void CSBCompatCtl::logWarning(const char* message) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, (LPCTSTR)CString(message));
 }
 
+void CSBCompatCtl::logInformation(const char* message) {
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, (LPCTSTR)CString(message));
+}

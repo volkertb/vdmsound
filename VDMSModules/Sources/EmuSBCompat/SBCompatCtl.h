@@ -48,8 +48,14 @@ END_COM_MAP()
 
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
+  void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int avgBytesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit);
+  void pauseTransfer(transfer_t type);
+  void resumeTransfer(transfer_t type);
+  void stopTransfer(transfer_t type);
+  void generateInterrupt(void);
   void logError(const char* message);
   void logWarning(const char* message);
+  void logInformation(const char* message);
 
 // ISupportsErrorInfo
 public:
