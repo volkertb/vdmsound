@@ -35,7 +35,7 @@ class ATL_NO_VTABLE CMIDIOut :
 public:
   CMIDIOut()
     : m_hMidiOut(NULL), m_deviceName(_T("<unknown>"))
-    { };
+    { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_MIDIOUT)
 DECLARE_NOT_AGGREGATABLE(CMIDIOut)
@@ -66,6 +66,9 @@ public:
   STDMETHOD(HandleEvent)(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length);
   STDMETHOD(HandleSysEx)(LONGLONG usDelta, BYTE * data, LONG length);
   STDMETHOD(HandleRealTime)(LONGLONG usDelta, BYTE data);
+
+protected:
+  static void CALLBACK MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
 
 protected:
   void MidiOutOpen(void);

@@ -16,6 +16,10 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define UM_MOM_ERROR      (WM_USER + 0x100)
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
@@ -206,9 +210,9 @@ unsigned int CMIDIOut::Run(CThread& thread) {
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Garbage collector thread created (handle = 0x%08x, ID = %d)"), (int)thread.GetThreadHandle(), (int)thread.GetThreadID()));
 
   while (thread.GetMessage(&message)) {
-    MMRESULT errCode;
     HMIDIOUT hMidiOut = (HMIDIOUT)(message.wParam);
     MIDIHDR* midiHdr = (MIDIHDR*)(message.lParam);
+    MMRESULT errCode = (MMRESULT)(message.lParam);
 
     switch (message.message) {
       case WM_QUIT:
@@ -224,19 +228,17 @@ unsigned int CMIDIOut::Run(CThread& thread) {
         break;
 
       case MM_MOM_DONE:
-        _ASSERTE(hMidiOut == m_hMidiOut);
         _ASSERTE(midiHdr != NULL);
         _ASSERTE(midiHdr->lpData != NULL);
         _ASSERTE(midiHdr->dwUser != NULL);
         _ASSERTE((midiHdr->dwFlags & MHDR_DONE) == MHDR_DONE);
 
-        if ((errCode = midiOutUnprepareHeader(hMidiOut, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
-          CString args = Format(_T("0x%08x, %p, %d"), hMidiOut, midiHdr, sizeof(*midiHdr));
-          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("midiOutUnprepareHeader(%s) on device %d ('%s'): 0x%08x - %s"), (LPCTSTR)args, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
-        }
-
         delete[] (CHAR*)(midiHdr->lpData);
         delete (MIDIHDR*)(midiHdr->dwUser);
+        break;
+
+      case UM_MOM_ERROR:
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("MidiOut (hMidiOut = 0x%08x) error on device %d ('%s'): 0x%08x - %s"), hMidiOut, m_deviceID, (LPCTSTR)(m_deviceName), (int)errCode, (LPCTSTR)(MidiOutGetError(errCode))));
         break;
 
       default:
@@ -255,6 +257,37 @@ unsigned int CMIDIOut::Run(CThread& thread) {
 /////////////////////////////////////////////////////////////////////////////
 // Utility functions
 /////////////////////////////////////////////////////////////////////////////
+
+//
+// Callback function invoked by MIDI driver when the device is opened/closed,
+//   or when a (SysEx) buffer finishes playing.
+//
+void CALLBACK CMIDIOut::MidiOutProc(HMIDIOUT hmo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2) {
+  MMRESULT errCode;
+  CMIDIOut* pThis = (CMIDIOut*)dwInstance;
+  MIDIHDR* midiHdr = (MIDIHDR*)(dwParam1);
+
+  _ASSERTE(pThis != NULL);
+
+  try {
+    switch (wMsg) {
+      case MOM_OPEN:
+        pThis->gcThread.PostMessage(MM_MOM_OPEN, (WPARAM)hmo, NULL);
+        break;
+      case MOM_CLOSE:
+        pThis->gcThread.PostMessage(MM_MOM_CLOSE, (WPARAM)hmo, NULL);
+        break;
+      case MOM_DONE:
+        _ASSERTE(hmo == pThis->m_hMidiOut);
+        _ASSERTE(midiHdr != NULL);
+        if ((errCode = midiOutUnprepareHeader(hmo, midiHdr, sizeof(*midiHdr))) != MMSYSERR_NOERROR) {
+          pThis->gcThread.PostMessage(UM_MOM_ERROR, (WPARAM)hmo, (LPARAM)errCode);
+        } else {
+          pThis->gcThread.PostMessage(MM_MOM_DONE, (WPARAM)hmo, (LPARAM)dwParam1);
+        } break;
+    }
+  } catch (...) { }
+}
 
 //
 // Opens the MIDI device specified in the module's settings
@@ -277,7 +310,7 @@ void CMIDIOut::MidiOutOpen(void) {
   MMRESULT errCode;
 
   // Attempt to open the MIDI-out device
-  while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, gcThread.GetThreadID(), (DWORD)(this), CALLBACK_THREAD)) != MMSYSERR_NOERROR) {
+  while ((errCode = midiOutOpen(&m_hMidiOut, m_deviceID, (DWORD)MidiOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
     if (!isErrPrompt)       // did the user select not to be prompted again ?
       break;                // stop trying
 

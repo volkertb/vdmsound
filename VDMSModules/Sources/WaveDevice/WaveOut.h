@@ -71,6 +71,9 @@ public:
   STDMETHOD(PlayData)(BYTE * data, LONG length);
 
 protected:
+  static void CALLBACK WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+protected:
   void WaveOutOpen(void);
   void WaveOutClose(void);
   CString WaveOutGetName(void);
