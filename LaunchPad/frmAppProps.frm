@@ -10,6 +10,7 @@ Begin VB.Form frmAppProps
    Icon            =   "frmAppProps.frx":0000
    KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
+   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
    ScaleHeight     =   5280
@@ -17,6 +18,24 @@ Begin VB.Form frmAppProps
    ShowInTaskbar   =   0   'False
    WhatsThisButton =   -1  'True
    WhatsThisHelp   =   -1  'True
+   Begin MSComctlLib.ImageList imlIcons 
+      Left            =   720
+      Top             =   4680
+      _ExtentX        =   1005
+      _ExtentY        =   1005
+      BackColor       =   -2147483643
+      ImageWidth      =   16
+      ImageHeight     =   16
+      MaskColor       =   12632256
+      _Version        =   393216
+      BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
+         NumListImages   =   1
+         BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
+            Picture         =   "frmAppProps.frx":000C
+            Key             =   "default"
+         EndProperty
+      EndProperty
+   End
    Begin VB.PictureBox picOptions 
       BorderStyle     =   0  'None
       Height          =   3795
@@ -31,60 +50,73 @@ Begin VB.Form frmAppProps
       Begin VB.Frame fraExecutables 
          Caption         =   "&Executable(s)"
          Height          =   1755
-         Left            =   120
-         TabIndex        =   9
+         Left            =   60
+         TabIndex        =   10
          Top             =   1920
-         Width           =   4815
+         Width           =   4935
+         Begin VB.CommandButton butExecutable 
+            Height          =   315
+            Left            =   4380
+            MaskColor       =   &H00FF00FF&
+            Picture         =   "frmAppProps.frx":05A6
+            Style           =   1  'Graphical
+            TabIndex        =   16
+            ToolTipText     =   "Browse for file..."
+            Top             =   720
+            UseMaskColor    =   -1  'True
+            Width           =   375
+         End
          Begin VB.CommandButton butExecutablesTest 
-            Caption         =   "&Test program"
+            Caption         =   "&Test executable"
             Enabled         =   0   'False
             Height          =   345
             Left            =   1800
-            TabIndex        =   15
+            TabIndex        =   17
             Top             =   1230
-            Width           =   1455
+            Width           =   1695
          End
          Begin VB.TextBox edtDirectory 
             Height          =   315
             Left            =   1800
-            TabIndex        =   11
+            TabIndex        =   12
             Top             =   300
-            Width           =   2415
+            Width           =   2475
          End
          Begin VB.CommandButton butDirectory 
             Height          =   315
-            Left            =   4260
-            MaskColor       =   &H00FFFFFF&
-            Picture         =   "frmAppProps.frx":000C
+            Left            =   4380
+            MaskColor       =   &H00FF00FF&
+            Picture         =   "frmAppProps.frx":0692
             Style           =   1  'Graphical
-            TabIndex        =   12
-            ToolTipText     =   "Browse..."
+            TabIndex        =   13
+            ToolTipText     =   "Browse for folder..."
             Top             =   300
             UseMaskColor    =   -1  'True
-            Width           =   315
+            Width           =   375
          End
          Begin VB.ComboBox lstExecutable 
             Height          =   315
             Left            =   1800
-            TabIndex        =   14
+            Sorted          =   -1  'True
+            TabIndex        =   15
             Top             =   720
-            Width           =   2775
+            Width           =   2475
          End
          Begin VB.CommandButton butExecutablesMore 
             Caption         =   "Mo&re..."
             Enabled         =   0   'False
             Height          =   345
-            Left            =   3360
-            TabIndex        =   16
+            Left            =   3660
+            TabIndex        =   18
             Top             =   1230
-            Width           =   1215
+            Width           =   1095
          End
          Begin VB.Label lblDirectory 
             Alignment       =   1  'Right Justify
             Caption         =   "Program &directory:"
             Height          =   255
             Left            =   120
-            TabIndex        =   10
+            TabIndex        =   11
             Top             =   360
             Width           =   1575
          End
@@ -93,7 +125,7 @@ Begin VB.Form frmAppProps
             Caption         =   "Main e&xecutable:"
             Height          =   255
             Left            =   120
-            TabIndex        =   13
+            TabIndex        =   14
             Top             =   780
             Width           =   1575
          End
@@ -101,10 +133,22 @@ Begin VB.Form frmAppProps
       Begin VB.Frame fraGeneral 
          Caption         =   "&General"
          Height          =   1695
-         Left            =   120
+         Left            =   60
          TabIndex        =   2
          Top             =   120
-         Width           =   4815
+         Width           =   4935
+         Begin VB.CommandButton butIcon 
+            Height          =   330
+            Left            =   4380
+            MaskColor       =   &H00FF00FF&
+            Picture         =   "frmAppProps.frx":077E
+            Style           =   1  'Graphical
+            TabIndex        =   9
+            ToolTipText     =   "Browse for file..."
+            Top             =   1140
+            UseMaskColor    =   -1  'True
+            Width           =   375
+         End
          Begin VB.TextBox edtCategory 
             BackColor       =   &H8000000F&
             Height          =   315
@@ -112,27 +156,27 @@ Begin VB.Form frmAppProps
             Locked          =   -1  'True
             TabIndex        =   4
             Top             =   300
-            Width           =   2775
+            Width           =   2955
          End
          Begin VB.TextBox edtName 
             Height          =   315
             Left            =   1800
             TabIndex        =   6
             Top             =   720
-            Width           =   2775
+            Width           =   2955
          End
          Begin MSComctlLib.ImageCombo lstIcon 
             Height          =   330
             Left            =   1800
             TabIndex        =   8
             Top             =   1140
-            Width           =   2775
-            _ExtentX        =   4895
+            Width           =   2475
+            _ExtentX        =   4366
             _ExtentY        =   582
             _Version        =   393216
             ForeColor       =   -2147483640
             BackColor       =   -2147483643
-            Text            =   "(default)"
+            ImageList       =   "imlIcons"
          End
          Begin VB.Label lblIcon 
             Alignment       =   1  'Right Justify
@@ -164,7 +208,6 @@ Begin VB.Form frmAppProps
          Begin VB.Image picProgramIcon 
             Height          =   480
             Left            =   240
-            Picture         =   "frmAppProps.frx":0086
             Top             =   420
             Width           =   480
          End
@@ -177,7 +220,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   22
+      TabIndex        =   24
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -189,7 +232,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   21
+      TabIndex        =   23
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -201,7 +244,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   20
+      TabIndex        =   22
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -213,7 +256,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   19
+      TabIndex        =   21
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -225,7 +268,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   18
+      TabIndex        =   20
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -237,7 +280,7 @@ Begin VB.Form frmAppProps
       Left            =   210
       ScaleHeight     =   3795
       ScaleWidth      =   5085
-      TabIndex        =   17
+      TabIndex        =   19
       TabStop         =   0   'False
       Top             =   750
       Width           =   5085
@@ -256,31 +299,31 @@ Begin VB.Form frmAppProps
       BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
          NumListImages   =   7
          BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":0390
+            Picture         =   "frmAppProps.frx":086A
             Key             =   "Program"
          EndProperty
          BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":04EA
+            Picture         =   "frmAppProps.frx":09C4
             Key             =   "Memory"
          EndProperty
          BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":0644
+            Picture         =   "frmAppProps.frx":0B1E
             Key             =   "Sound"
          EndProperty
          BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":079E
+            Picture         =   "frmAppProps.frx":0C78
             Key             =   "Music"
          EndProperty
          BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":08F8
+            Picture         =   "frmAppProps.frx":0DD2
             Key             =   "Joystick"
          EndProperty
          BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":0A52
+            Picture         =   "frmAppProps.frx":0F2C
             Key             =   "Video"
          EndProperty
          BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-            Picture         =   "frmAppProps.frx":0BAC
+            Picture         =   "frmAppProps.frx":1086
             Key             =   "Troubleshooting"
          EndProperty
       EndProperty
@@ -289,7 +332,7 @@ Begin VB.Form frmAppProps
       Caption         =   "&Apply"
       Height          =   345
       Left            =   4320
-      TabIndex        =   25
+      TabIndex        =   27
       Top             =   4800
       Width           =   1095
    End
@@ -298,7 +341,7 @@ Begin VB.Form frmAppProps
       Caption         =   "Cancel"
       Height          =   345
       Left            =   3120
-      TabIndex        =   24
+      TabIndex        =   26
       Top             =   4800
       Width           =   1095
    End
@@ -307,7 +350,7 @@ Begin VB.Form frmAppProps
       Default         =   -1  'True
       Height          =   345
       Left            =   1920
-      TabIndex        =   23
+      TabIndex        =   25
       Top             =   4800
       Width           =   1095
    End
@@ -391,6 +434,18 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+'
+' Private state variables
+'
+Private strLastDirectory As String
+Private idxLastIcon As Integer
+
+'============================================================================
+'
+' Wizard-generated code
+'
+'============================================================================
+
 Option Explicit
 
 Private Sub cmdApply_Click()
@@ -421,11 +476,6 @@ Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
     End If
 End Sub
 
-Private Sub Form_Load()
-    'center the form
-    Me.Move (Screen.Width - Me.Width) / 2, (Screen.Height - Me.Height) / 2
-End Sub
-
 Private Sub tbsOptions_Click()
     
     Dim i As Integer
@@ -441,4 +491,368 @@ Private Sub tbsOptions_Click()
         End If
     Next
     
+End Sub
+
+'============================================================================
+'
+' Custom code
+'
+'============================================================================
+
+'----------------------------------------------------------------------------
+' UTILITY PROCEDURES
+'----------------------------------------------------------------------------
+
+'
+' Splits a path into a directory and a file name around the last '\' present
+'  in the path (if any).  If no '\' can be found, the path is assumed to be
+'  a file name, and the directory name is empty
+'
+Private Sub splitPath( _
+  ByVal strPath As String, _
+  ByRef strDirectory As String, _
+  ByRef strFile As String _
+)
+
+  Dim splitPos As Integer
+  splitPos = InStrRev(strPath, "\")
+
+  strFile = Mid(strPath, splitPos + 1)
+  strDirectory = Left$(strPath, splitPos)
+End Sub
+
+'
+' Checks whether the given path is an absolute UNC or DOS path,
+'  or whether it looks like a relative path
+'
+Private Function isAbsolutePath( _
+  ByVal strPath As String _
+) As Boolean
+
+  If Mid$(strPath, 1, 2) = "\\" Then
+    isAbsolutePath = True   ' UNC absolute path
+  ElseIf Mid$(strPath, 2, 1) = ":" Then
+    isAbsolutePath = True   ' DOS absolute path
+  Else
+    isAbsolutePath = False  ' looks like a relative path
+  End If
+End Function
+
+
+'
+' Given an absolute path, this function checks it against the given
+'  base directory and sees if a relative path can be found
+'
+Private Function makeRelativePath( _
+  ByVal strPath As String, _
+  ByVal strBaseDir As String _
+) As String
+
+  ' Check whether whether the given base directory exists at all,
+  '  whether the given path is non-empty, and whether the given path
+  '  is already relative
+  If Not isAbsolutePath(strBaseDir) Or _
+     Len(strPath) < 1 Or _
+     Not isAbsolutePath(strPath) _
+  Then
+    makeRelativePath = strPath
+    Exit Function
+  End If
+
+  ' Make sure directory ends with a trailing '\'
+  If Right$(strBaseDir, 1) <> "\" Then strBaseDir = strBaseDir & "\"
+
+  ' Check if base directoy is a parent in the path
+  If LCase$(strBaseDir) = LCase$(Left$(strPath, Len(strBaseDir))) Then
+    makeRelativePath = Mid$(strPath, Len(strBaseDir) + 1)
+  Else
+    makeRelativePath = strPath
+  End If
+End Function
+
+'
+' Given a relative path, this function constructs an absolute
+'  path
+'
+Private Function makeAbsoultePath( _
+  ByVal strPath As String, _
+  ByVal strBaseDir As String _
+) As String
+
+  ' Check whether whether the given base directory exists at all,
+  '  whether the given path is non-empty, and whether the given path
+  '  is already absoulte
+  If Not isAbsolutePath(strBaseDir) Or _
+     Len(strPath) < 1 Or _
+     isAbsolutePath(strPath) _
+  Then
+    makeAbsoultePath = strPath
+    Exit Function
+  End If
+
+  ' Make sure directory ends with a trailing '\'
+  If Right$(strBaseDir, 1) <> "\" Then strBaseDir = strBaseDir & "\"
+
+  ' Check if the path is semi-absolute (starts from the root of the directory
+  '  hierarchy but is relative to a drive or server)
+  If Left$(strPath, 1) = "\" Then
+    makeAbsoultePath = Mid$(strBaseDir, InStr(3, strBaseDir, "\")) & Mid$(strPath, 2)
+  Else
+    makeAbsoultePath = strBaseDir & strPath
+  End If
+End Function
+
+'----------------------------------------------------------------------------
+' UTILITY PROCEDURES (2)
+'----------------------------------------------------------------------------
+
+'
+' Called when the text in the 'directory' edit box changes
+'
+Private Sub onDirectoryChange( _
+)
+
+  Dim strNewDirectory As String, strNewExecutable As String, strNewIcon As String
+  strNewDirectory = edtDirectory.Text
+
+  ' Ensure we have a trailing '\' (simplifies new vs. old folder comparisons)
+  If Right$(edtDirectory.Text, 1) <> "\" Then strNewDirectory = strNewDirectory & "\"
+
+  ' Look at the executable currently in the "Executable" box and make it relative
+  '  to the new path in the 'directory' edit box
+  strNewExecutable = makeRelativePath(makeAbsoultePath(lstExecutable.Text, strLastDirectory), strNewDirectory)
+
+  ' Look at the icon currently in the "Icons" box and make it relative
+  '  to the new path in the 'directory' edit box
+  strNewIcon = makeRelativePath(makeAbsoultePath(lstIcon.Text, strLastDirectory), strNewDirectory)
+
+  ' If the directory changed, rescan the quick-list of executables
+  If LCase$(strNewDirectory) <> LCase$(strLastDirectory) Then
+    Dim strFile As String
+
+    On Error Resume Next
+
+    ' Rebuild the executables and icons list
+    strFile = FileSystem.Dir(strNewDirectory & "*.???", vbNormal + vbReadOnly + vbHidden + vbSystem)
+
+    Dim iconsImageList As ImageList
+
+    lstIcon.ComboItems.Clear
+    lstIcon.Text = strNewIcon
+
+    Set iconsImageList = lstIcon.ImageList
+    Set lstIcon.ImageList = Nothing
+    iconsImageList.ListImages.Clear
+    iconsImageList.ListImages.Add , "", modMain.fMainForm.picMSDOS16.Picture
+    Set lstIcon.ImageList = iconsImageList
+
+    lstExecutable.Clear
+    lstExecutable.Text = strNewExecutable
+
+    Do While Len(strFile) > 0
+      If LCase$(Right$(strFile, 4)) = ".bat" Or _
+         LCase$(Right$(strFile, 4)) = ".com" Or _
+         LCase$(Right$(strFile, 4)) = ".exe" _
+      Then
+        lstExecutable.AddItem strFile
+      ElseIf LCase$(Right$(strFile, 4)) = ".ico" Then
+        Dim strLCaseKey As String
+        strLCaseKey = LCase$(strFile)
+        iconsImageList.ListImages.Add , strLCaseKey, LoadPicture(strNewDirectory & strFile, , , 16, 16)
+        lstIcon.ComboItems.Add , strLCaseKey, strFile, strLCaseKey, strLCaseKey
+      End If
+
+      strFile = FileSystem.Dir
+    Loop
+
+    ' Make sure the icon shows (Windows limitation)
+    onIconChange
+  End If
+
+  strLastDirectory = strNewDirectory
+End Sub
+
+'
+' Called when the text in the 'icons' list box changes
+'
+Private Sub onIconChange( _
+)
+
+  If Len(lstIcon.Text) < 1 Then Exit Sub
+
+  ' Look at the executable currently in the "Executable" box and make it relative
+  '  to the path in the 'directory' edit box
+  If isAbsolutePath(lstIcon.Text) Then
+    lstIcon.Text = makeRelativePath(lstIcon.Text, edtDirectory.Text)
+  End If
+
+  ' Set the main (32x32) icon
+  setProgramIcon
+
+  ' If the icon path is not already in the drop-down, add it as the
+  '  first list item with its icon and select it (otherwise Windows
+  '  loses the icon!)
+  Dim item As ComboItem
+  Dim strLCaseKey As String
+  strLCaseKey = LCase$(lstIcon.Text)
+
+  On Error Resume Next
+
+  Set item = lstIcon.ComboItems.item(strLCaseKey)
+
+  ' If the icon in the edit part of the combo is not in the list then add it
+  If item Is Nothing Then
+    ' Load the icon into the icon list (so that it can be associated with a list item)
+    lstIcon.ImageList.ListImages.Add , strLCaseKey, LoadPicture(makeAbsoultePath(lstIcon.Text, edtDirectory.Text), , , 16, 16)
+
+    If lstIcon.ComboItems.Count < 1 Then GoTo EmptyList
+
+    If lstIcon.ComboItems.item(1).Tag = "custom" Then
+      Set item = lstIcon.ComboItems.item(1)
+      item.Key = strLCaseKey
+      item.Image = strLCaseKey
+      item.SelImage = strLCaseKey
+      item.Text = lstIcon.Text
+    Else
+EmptyList:
+      Set item = lstIcon.ComboItems.Add(1, strLCaseKey, lstIcon.Text, strLCaseKey, strLCaseKey)
+      item.Tag = "custom"
+    End If
+  End If
+
+  lstIcon.SelectedItem = item
+End Sub
+
+'
+' Called when the text in the 'executable(s)' list box changes
+'
+Private Sub onExecutableChange( _
+)
+
+  If Len(lstExecutable.Text) < 1 Then Exit Sub
+
+  ' Look at the executable currently in the "Executable" box and make it relative
+  '  to the path in the 'directory' edit box
+  If isAbsolutePath(lstExecutable.Text) Then
+    lstExecutable.Text = makeRelativePath(lstExecutable.Text, edtDirectory.Text)
+  End If
+End Sub
+
+'----------------------------------------------------------------------------
+' UTILITY PROCEDURES (3)
+'----------------------------------------------------------------------------
+
+'
+' Called when the text in the 'executable(s)' list box changes
+'
+Private Sub setProgramIcon( _
+)
+  On Error Resume Next
+  Set picProgramIcon.Picture = LoadPicture(makeAbsoultePath(lstIcon.Text, edtDirectory.Text), , , 32, 32)
+End Sub
+
+'----------------------------------------------------------------------------
+' FORM METHODS
+'----------------------------------------------------------------------------
+
+'
+'
+'
+Private Sub Form_Load()
+  'center the form
+  Me.Move (Screen.Width - Me.Width) / 2, (Screen.Height - Me.Height) / 2
+
+  strLastDirectory = ""
+End Sub
+
+'----------------------------------------------------------------------------
+' PROGRAM TAB METHODS
+'----------------------------------------------------------------------------
+
+'
+' Browse for icon files
+'
+Private Sub butIcon_Click()
+  Dim strPath As String
+  strPath = makeAbsoultePath(lstIcon.Text, edtDirectory.Text)
+
+  Dim strDirectory As String, strFile As String
+  splitPath strPath, strDirectory, strFile
+  If Len(strDirectory) < 1 Then strDirectory = edtDirectory.Text
+
+  strFile = modComDlg.DialogFile(Me.hWnd, 1, "Open Icon File", strFile, "Icon Files (*.ico)" & Chr$(0) & "*.ico" & Chr$(0) & "All Files" & Chr$(0) & "*.*", strDirectory, "")
+
+  If Len(strFile) > 0 Then
+    lstIcon.Text = strFile
+    onIconChange
+  End If
+End Sub
+
+'
+' Browse for program directory
+'
+Private Sub butDirectory_Click()
+  Dim strDirectory As String
+  strDirectory = BrowseFolder(Me.hWnd, "Browse for Folder")
+
+  If Len(strDirectory) > 0 Then
+    edtDirectory.Text = strDirectory
+    onDirectoryChange
+  End If
+End Sub
+
+'
+' Browse for program executables
+'
+Private Sub butExecutable_Click()
+  Dim strPath As String
+  strPath = makeAbsoultePath(lstExecutable.Text, edtDirectory.Text)
+
+  Dim strDirectory As String, strFile As String
+  splitPath strPath, strDirectory, strFile
+  If Len(strDirectory) < 1 Then strDirectory = edtDirectory.Text
+
+  strFile = modComDlg.DialogFile(Me.hWnd, 1, "Open Executable File", strFile, "All Executable Files (*.bat,*.com,*.exe)" & Chr$(0) & "*.bat;*.com;*.exe" & Chr$(0) & "Batch Files (*.bat)" & Chr$(0) & "*.bat" & Chr$(0) & "Program Files (*.com,*.exe)" & Chr$(0) & "*.com;*.exe" & Chr$(0) & "All Files" & Chr$(0) & "*.*", strDirectory, "")
+
+  If Len(strFile) > 0 Then
+    lstExecutable.Text = strFile
+    onExecutableChange
+  End If
+End Sub
+
+'
+' Update relative paths in icons & executables when the
+'  program base directory changes
+'
+Private Sub edtDirectory_Validate(Cancel As Boolean)
+  Cancel = False
+  onDirectoryChange
+End Sub
+
+'
+' Update main (32x32) program icon when selection changes inside the
+'  icons combo box/list
+'
+Private Sub lstIcon_Click()
+  If Not lstIcon.SelectedItem Is Nothing Then
+    If idxLastIcon <> lstIcon.SelectedItem.Index Then
+      setProgramIcon
+    End If
+  End If
+End Sub
+
+'
+' If the icon path is absolute then make it relative when leaving the edit box
+'
+Private Sub lstIcon_Validate(Cancel As Boolean)
+  Cancel = False
+  onIconChange
+End Sub
+
+'
+' If the executable path is absolute then make it relative when leaving the edit box
+'
+Private Sub lstExecutable_Validate(Cancel As Boolean)
+  Cancel = False
+  onExecutableChange
 End Sub

@@ -1,5 +1,5 @@
-modMain = 22, 22, 555, 498, 
-frmMain = 66, 66, 688, 477, , 22, 22, 555, 498, C
+modMain = 22, 22, 555, 498, C
+frmMain = 66, 66, 688, 477, C, 22, 22, 628, 498, C
 frmAbout = 88, 88, 599, 564, C, 44, 44, 577, 520, C
 modComDlg = 88, 88, 621, 564, C
 modIniFile = 12, 178, 634, 589, C
@@ -7,4 +7,4 @@ modConfig = 66, 66, 599, 542, C
 modError = 154, 154, 653, 630, C
 modTreeUtil = 176, 176, 687, 652, C
 modListUtil = 198, 198, 709, 674, C
-frmAppProps = 0, 0, 622, 376, Z, 198, 198, 709, 674, C
+frmAppProps = 0, 0, 622, 376, Z, 146, 49, 657, 525, C
