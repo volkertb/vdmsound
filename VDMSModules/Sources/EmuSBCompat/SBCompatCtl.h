@@ -99,6 +99,7 @@ protected:
 
 protected:
   DWORD m_lastTransferTime;
+  DWORD m_transferStartTime;
   DWORD m_transferPauseTime;
   long m_transferredBytes;
   long m_avgBandwidth;
