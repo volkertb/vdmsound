@@ -258,7 +258,7 @@ CString AFXAPI LoadString(
 
   try {
     retVal.LoadString(nID);
-  } catch (CMemoryException& /*cme*/) { };
+  } catch (CMemoryException& /*cme*/) { }
 
   return retVal;
 }

@@ -37,6 +37,7 @@ class CSBCompatCtlMixer {
     void setIRQSelect(int IRQ);
     void setDMASelect(int DMA8, int DMA16);
     void setIRQStatus(IRQSource_t source, bool isPending);
+    bool isStereoOutput(void);
 
   protected:
     void reset(char data);
@@ -55,14 +56,17 @@ class CSBCompatCtlMixer {
 
   protected:
     int m_regIdx;
-    char __dummy[256];        // use for compatibility: remembers values for registers that are not (yet) supported
+    char __dummy[256];          // use for compatibility: remembers values for registers that are not (yet) supported
     char m_IRQSelect, m_DMASelect, m_IRQStatus;
     char m_lastValue;
-    int m_masterL, m_masterR, // master volume
-        m_dacL, m_dacR,       // digital-to-analogue (DAC) volume
-        m_lineL, m_lineR,     // line-in volume
-        m_cdaL, m_cdaR,       // CD audio volume
-        m_mic;                // microphone volume (mono)
+    int  m_masterL, m_masterR,  // master volume
+         m_dacL, m_dacR,        // digital-to-analogue (DAC) volume
+         m_lineL, m_lineR,      // line-in volume
+         m_cdaL, m_cdaR,        // CD audio volume
+         m_mic;                 // microphone volume (mono)
+    bool m_isOutStereo,         // is the output stereo ?
+         m_isOutFiltered,       // is the output filtered ?
+         m_isInFiltered;        // is the input filtered ?
 
   protected:
     ISBMixerHWEmulationLayer* m_hwemu;

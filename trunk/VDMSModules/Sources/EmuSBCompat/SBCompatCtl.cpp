@@ -6,7 +6,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /* TODO: put these in a .mc file or something */
-#define MSG_ERR_INTERFACE _T("The dependency module '%1' does not support the '%2' interface.%0")
+#define MSG_ERR_INTERFACE   _T("The dependency module '%1' does not support the '%2' interface.%0")
+#define MSG_ERR_FMT_VERSION _T("The version string '%1' is not properly formatted.  Please use a value of the form X.Y, where X is the major and Y is the minor version.%0")
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -14,6 +15,7 @@
 #define INI_STR_DMACTL        L"DMACtl"
 #define INI_STR_WAVEOUT       L"WaveOut"
 
+#define INI_STR_DSPVERSION    L"version"
 #define INI_STR_BASEPORT      L"port"
 #define INI_STR_IRQLINE       L"IRQ"
 #define INI_STR_DMA8CHANNEL   L"DMA8"
@@ -31,6 +33,7 @@
 
 long round(long, int);
 void bufferReverse(BYTE*, int, bool);
+int CODEC_UnsignedPCM_decode(BYTE*, int, int);
 int CODEC_SignedPCM_decode(BYTE*, int, int);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -97,6 +100,15 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     if (m_DMACtl == NULL)
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_DMACTL), _T("IDMAController")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
+    // Try to obtain the SB version to emulate (affects small details on how the DSP behaves)
+    int vMajor, vMinor;
+    _bstr_t versionStr = CFG_Get(Config, INI_STR_DSPVERSION, L"4.05", false);
+
+    if (sscanf((LPCSTR)versionStr, "%d.%d", &vMajor, &vMinor) != 2)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_FMT_VERSION, /*false, NULL, 0, */false, (LPCTSTR)versionStr), __uuidof(IVDMBasicModule), E_ABORT);
+
+    m_DSPVersion = MAKEWORD((BYTE)vMinor, (BYTE)vMajor);
+
     // Try to obtain the SB settings, use defaults if none specified
     m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x220, 16, false);
     m_IRQLine  = CFG_Get(Config, INI_STR_IRQLINE, 7, 10, false);
@@ -161,7 +173,7 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
   m_SBMixer.setIRQSelect(m_IRQLine);
   m_SBMixer.setDMASelect(m_DMA8Channel, m_DMA16Channel);
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl initialized (base port = 0x%03x, IRQ = %d, 8-bit DMA = %d, 16-bit DMA = %d)"), m_basePort, m_IRQLine, m_DMA8Channel, m_DMA16Channel));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl initialized (DSP version = %d.%02d, base port = 0x%03x, IRQ = %d, 8-bit DMA = %d, 16-bit DMA = %d)"), HIBYTE(m_DSPVersion) & 0xff, LOBYTE(m_DSPVersion) & 0xff, m_basePort, m_IRQLine, m_DMA8Channel, m_DMA16Channel));
 
   return S_OK;
 }
@@ -222,11 +234,15 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
 
     case 0x00:
     case 0x02:
-    case 0x07:  // not documented
     case 0x08:
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to read from unsupported FM port (IN 0x%3x)"), inPort));
+      *data = *data;       // Do not modify AL; this can help in passing some DOS games' tests (e.g. Day of the Tentacle)
+      return S_FALSE;
+
+    case 0x07:  // not documented
     case 0x0b:  // not documented
     case 0x0d:  // not documented, although unofficially mentioned ("Timer Interrupt Clear") in Baresel & Jackson
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to read from unsupported port (IN 0x%3x)"), inPort));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to read from undocumented port (IN 0x%3x)"), inPort));
       *data = 0xff;
       return S_FALSE;
 
@@ -267,12 +283,15 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
     case 0x01:
     case 0x02:
     case 0x03:
-    case 0x07:  // not documented
     case 0x08:
     case 0x09:
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to write to unsupported FM port (OUT 0x%3x, 0x%02x)"), outPort, data));
+      return S_FALSE;
+
+    case 0x07:  // not documented
     case 0x0b:  // not documented
     case 0x0d:  // not documented, although unofficially mentioned ("Timer Interrupt Clear") in Baresel & Jackson
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to write to unsupported port (OUT 0x%3x, 0x%02x)"), outPort, data));
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to write to undocumented port (OUT 0x%3x, 0x%02x)"), outPort, data));
       return S_FALSE;
 
     case 0x0a:
@@ -383,7 +402,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   // Decode/decompress the data (if necessary)
   switch (m_codec) {
     case CODEC_PCM:
-      bufSize = toTransfer;   // no decoding necessary; there is a 1:1 correspondence
+      bufSize = CODEC_UnsignedPCM_decode(buf, toTransfer, m_bitsPerSample);
       break;
     case CODEC_PCM_SIGNED:
       bufSize = CODEC_SignedPCM_decode(buf, toTransfer, m_bitsPerSample);
@@ -446,6 +465,10 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
 /////////////////////////////////////////////////////////////////////////////
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 /////////////////////////////////////////////////////////////////////////////
+
+short CSBCompatCtl::getDSPVersion(void) {
+  return m_DSPVersion;
+}
 
 void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous) {
   // TODO: implement (recording vs. playback, codecs, etc.)
@@ -588,9 +611,9 @@ inline void bufferReverse(
 }
 
 //
-// Performs signed-PCM decoding in-place.
+// Performs unsigned-PCM decoding in-place.
 //
-inline int CODEC_SignedPCM_decode(
+inline int CODEC_UnsignedPCM_decode(
     BYTE* buf,
     int bufSize,
     int bitsPerSample)
@@ -599,12 +622,32 @@ inline int CODEC_SignedPCM_decode(
   WORD* buf16;
 
   switch (bitsPerSample) {
-    case 8: /* 8-bit quantities */
-      for (i = 0; i < bufSize; i++) buf[i] += 0x80;
+    case 8:   /* 8-bit quantities */
       return bufSize;
-    case 16:
+    case 16:  /* 16-bit quantities */
       buf16 = (WORD*)buf;
       for (i = 0; i < bufSize / 2; i++) buf16[i] += 0x8000;
+      return bufSize;
+    default:
+      return bufSize;
+  }
+}
+
+//
+// Performs signed-PCM decoding in-place.
+//
+inline int CODEC_SignedPCM_decode(
+    BYTE* buf,
+    int bufSize,
+    int bitsPerSample)
+{
+  int i;
+
+  switch (bitsPerSample) {
+    case 8:   /* 8-bit quantities */
+      for (i = 0; i < bufSize; i++) buf[i] += 0x80;
+      return bufSize;
+    case 16:  /* 16-bit quantities */
       return bufSize;
     default:
       return bufSize;

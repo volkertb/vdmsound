@@ -45,14 +45,14 @@ void CMIDIInputBuffer::putRealTime(unsigned char data) {
 /////////////////////////////////////////////////////////////////////////////
 
 void CMIDIInputBuffer::reset(void) {
-  m_mutex.lock();
+  m_mutex.Lock();
 
   while (!m_buf.empty())
     m_buf.pop();                    // flush the buffer
 
   m_isEmptyBuf = true;              // mark as empty
   m_IRQPending = false;             // clear interrupt
-  m_mutex.unlock();
+  m_mutex.Unlock();
 }
 
 void CMIDIInputBuffer::putByte(unsigned char data) {

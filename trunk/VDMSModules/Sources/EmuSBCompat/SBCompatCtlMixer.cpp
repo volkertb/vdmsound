@@ -26,7 +26,8 @@ CSBCompatCtlMixer::CSBCompatCtlMixer(ISBMixerHWEmulationLayer* hwemu)
     m_IRQSelect((char)0xf0),  // bits 7..4 reserved: '1' when read
     m_DMASelect((char)0x00),  // bits 2, 4 reserved: '0' when read
     m_IRQStatus((char)0x10),  // bits 7..3 reserved: 10h for v4.04, 20h for v4.05, 80h for v4.12
-    m_lastValue((char)0x00)   // TODO: default value?  Gets updatet on 'getValue' only?  On 'putValue' as well?
+    m_lastValue((char)0x00),  // TODO: default value?  Gets updated on 'getValue' only?  On 'putValue' as well?
+    m_isOutStereo(false)
 {
   _ASSERTE(m_hwemu != NULL);
 }
@@ -52,6 +53,10 @@ void CSBCompatCtlMixer::reset(void) {
   setLineLevel(0x00, 0x00, 0);
   setCDALevel(0x00, 0x00, 0);
   setMicLevel(0x00, 0);
+
+  m_isOutStereo   = false;
+  m_isOutFiltered = false;
+  m_isInFiltered  = false;
   /* TODO: reset additional registers as they are implemented */
 }
 
@@ -82,7 +87,7 @@ void CSBCompatCtlMixer::setValue(
       reset(value);
       return;
 
-    case 0x02:  /* master volume */
+    case 0x02:  /* master volume (SB-Pro only) */
     case 0x22:  /* master volume */
       setMasterVol(B_HI(value, 4), B_LO(value, 4), 8 - 4);  // highest 4 bits = "left", lowest 4 = "right"; only 4 out of 8 bits (8 - 4) used for representation
       return;
@@ -97,8 +102,9 @@ void CSBCompatCtlMixer::setValue(
       setMicLevel(B_LO(value, 3), 8 - 3);
       return;
 
-    case 0x0e:  /* output/stereo select */
-      // TODO: implement
+    case 0x0e:  /* output/stereo select (SB-Pro only) */
+      m_isOutFiltered = ((value & 0x20) != 0);
+      m_isOutStereo   = ((value & 0x02) != 0);
       return;
 
     case 0x28:  /* CD audio level */
@@ -216,7 +222,7 @@ char CSBCompatCtlMixer::getValue(void) {
       m_hwemu->logWarning(msgBuf);
       return 0x00;
 
-    case 0x02:  /* master volume */
+    case 0x02:  /* master volume (SB-Pro only) */
     case 0x22:  /* master volume */
       getMasterVol(&left, &right, 8 - 4);
       return (char)B_MK(left, right, 4);
@@ -231,10 +237,10 @@ char CSBCompatCtlMixer::getValue(void) {
       getMicLevel(&right, 8 - 3);
       return (char)B_MK(0, right, 3);
 
-    case 0x0e:  /* output/stereo select */
-      // TODO: implement
-      sprintf(msgBuf, "Attempted to read from unimplemented output stereo select register (register = 0x%02x)", m_regIdx);
-      m_hwemu->logWarning(msgBuf);
+    case 0x0e:  /* output/stereo select (SB-Pro only) */
+      return (char)(0x11 |
+        (m_isOutFiltered ? 0x20 : 0x00) |
+        (m_isOutStereo ? 0x02 : 0x00));
       break;
 
     case 0x28:  /* CD audio level */
@@ -371,7 +377,7 @@ void CSBCompatCtlMixer::setIRQStatus(
     IRQSource_t source,             // on whose behalf the interrupt was generated
     bool isPending)                 // was the interrupt just generated (pending), or acknowledged (must clear)?
 {
-/*_ASSERTE((source >= 0) && (source <= 2));*/
+  _ASSERTE((source >= 0) && (source <= 2));
 
   int mask = 1 << source;
 
@@ -380,6 +386,13 @@ void CSBCompatCtlMixer::setIRQStatus(
   } else {
     m_IRQStatus &= (~mask);         // clear the bit
   }
+}
+
+//
+// (SB-Pro only) Test whether the output was selected as stereo
+//
+bool CSBCompatCtlMixer::isStereoOutput(void) {
+  return m_isOutStereo;
 }
 
 

@@ -37,7 +37,7 @@ class ATL_NO_VTABLE CSBCompatCtl :
 public:
   CSBCompatCtl()
     : m_SBMixer(this), m_SBDSP(this, &m_SBMixer)
-    { };
+    { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_SBCOMPATCTL)
 DECLARE_NOT_AGGREGATABLE(CSBCompatCtl)
@@ -53,18 +53,15 @@ END_COM_MAP()
 
 // ISBDSPHWEmulationLayer, ISBMixerHWEmulationLayer
 public:
+  short getDSPVersion(void);
   void startTransfer(transfer_t type, int numChannels, int samplesPerSecond, int bitsPerSample, int samplesPerBlock, codec_t codec, bool isAutoInit, bool isSynchronous = false);
   void stopTransfer(transfer_t type, bool isSynchronous = false);
   void pauseTransfer(transfer_t type);
   void resumeTransfer(transfer_t type);
-  void generateInterruptSB8(void);
-  void generateInterruptSB16(void);
+  void generateInterrupt(void);
   void logError(const char* message);
   void logWarning(const char* message);
   void logInformation(const char* message);
-
-protected:
-  void generateInterrupt(void);
 
 // ISupportsErrorInfo
 public:
@@ -94,6 +91,7 @@ public:
 protected:
   CSBCompatCtlMixer m_SBMixer;
   CSBCompatCtlDSP m_SBDSP;
+  short m_DSPVersion;
   int m_basePort;
   int m_IRQLine;
   int m_DMA8Channel;

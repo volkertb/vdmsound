@@ -57,13 +57,13 @@ class CMIDIInputBuffer
     bool getByte(unsigned char* data);
 
     inline bool isEmpty(void)
-      { return m_isEmptyBuf; };
+      { return m_isEmptyBuf; }
     inline bool isFull(void)
-      { return (m_buf.size() > MAX_MIDI_BUF); };
+      { return (m_buf.size() > MAX_MIDI_BUF); }
 
   protected:
     inline void _QUEUEPUT_PROLOGUE(void) {
-      m_mutex.lock();
+      m_mutex.Lock();
       if (isFull()) {
         std::ostringstream oss;
         oss << std::setbase(10) << "MIDI-in buffer is full (" << m_buf.size() << "  bytes), flushing.";
@@ -78,17 +78,17 @@ class CMIDIInputBuffer
         m_hwemu->generateInterrupt();
         m_IRQPending = true;
       }
-      m_mutex.unlock();
+      m_mutex.Unlock();
     }
 
     inline void _QUEUEGET_PROLOGUE(void) {
-      m_mutex.lock();
+      m_mutex.Lock();
       m_isEmptyBuf = (m_buf.size() <= 1);
     }
 
     inline void _QUEUEGET_EPILOGUE(void) {
       m_IRQPending = false;
-      m_mutex.unlock();
+      m_mutex.Unlock();
     }
 
   protected:
@@ -115,9 +115,9 @@ class CMIDIOutputBuffer {
     void putByte(unsigned char data);
 
     inline bool isEmpty(void)
-      { return m_buf.empty(); };
+      { return m_buf.empty(); }
     inline bool isFull(void)
-      { return (m_buf.size() > MAX_MIDI_BUF); };
+      { return (m_buf.size() > MAX_MIDI_BUF); }
 
   protected:
     std::vector<unsigned char> m_buf;
