@@ -368,6 +368,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   // Get the current time
   DWORD currentTime = timeGetTime();
+  DWORD deltaTime = currentTime - m_lastTransferTime;
   m_lastTransferTime = currentTime;
 
   // Performance 'hack' (quick-DMA)
@@ -381,7 +382,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
     m_transferredBytes += toTransfer;
 
 #   if _DEBUG
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d (quick-DMA)"), (int)(currentTime - m_lastTransferTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d (quick-DMA)"), (int)(deltaTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
 #   endif
 
     *transferred = maxData;
@@ -401,15 +402,16 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   //   on playback performance (playback buffer overrun/underrun)
   double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
 
-# if 0
   // Compute how many bytes should be transferred based on average bandwidth and
-  //   the time elapsed since the last transfer
-  long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(currentTime - m_lastTransferTime)) / 1000.0);
-# else
-  // Compute how many bytes should be transferred based on average bandwidth,
-  //   time elapsed since the transfer started, and bytes transferred to date
-  long toTransfer = max(0, ((m_avgBandwidth * (double)(currentTime - m_transferStartTime)) / 1000.0 - m_transferredBytes));
-#endif
+  //   the time elapsed since the last transfer (+/- 1 time uncertainty)
+  long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(deltaTime + 1)) / 1000.0);
+
+  // Ensure that the number of bytes to transfer do not span more than one
+  //   DSP block (avoids having to generate more than one interrupt per transfer)
+  if (toTransfer > m_DSPBlockSize) {
+    toTransfer = m_DSPBlockSize;
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, _T("DMA updates too infrequent -- unable to keep up with desired transfer rate"));
+  }
 
   // Round (down) the number of bytes to transfer in such a way so that
   //   the transfer will not break a 16-bit sample down the middle, or split
@@ -500,7 +502,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   }
 
 # if _DEBUG
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d; load factor = %0.5f"), (int)(currentTime - m_lastTransferTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit, (float)m_renderLoad));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d; load factor = %0.5f"), (int)(deltaTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit, (float)m_renderLoad));
 # endif
 
   // Update DMA state upon return
@@ -530,6 +532,8 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
 
   if (lastTransfer > overShoot) {   // we passed one or more IRQ generation points during the last transfer
     int numInterrupts = ((lastTransfer - overShoot - 1) / m_DSPBlockSize) + 1;
+
+    _ASSERTE(numInterrupts <= 1);
 
     if (m_bitsPerSample != 16) {
       m_SBDSP.set8BitIRQ(numInterrupts);
