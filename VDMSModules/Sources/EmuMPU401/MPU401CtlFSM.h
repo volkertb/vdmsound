@@ -21,11 +21,11 @@ class CMPU401CtlFSM
 
   public:
     inline void putEvent(unsigned char status, unsigned char data1, unsigned char data2, unsigned char length)
-      { m_inBuf.putEvent(status, data1, data2, length); };
+      { m_inBuf.putEvent(status, data1, data2, length); }
     inline void putSysEx(const unsigned char * data, long length)
-      { m_inBuf.putSysEx(data, length); };
+      { m_inBuf.putSysEx(data, length); }
     inline void putRealTime(unsigned char data)
-      { m_inBuf.putRealTime(data); };
+      { m_inBuf.putRealTime(data); }
 
   public:
     void reset(void);

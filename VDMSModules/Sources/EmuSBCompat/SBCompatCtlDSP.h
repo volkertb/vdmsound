@@ -5,7 +5,7 @@ class CSBCompatCtlMixer;
 
 //
 // This interface abstracts some of the hardware details in the DSP's
-//  world
+//   world
 //
 class ISBDSPHWEmulationLayer {
   public:
@@ -13,6 +13,7 @@ class ISBDSPHWEmulationLayer {
     enum codec_t { CODEC_PCM, CODEC_PCM_SIGNED, CODEC_ADPCM_2, CODEC_ADPCM_3, CODEC_ADPCM_4 };
 
   public:
+    virtual short getDSPVersion(void) = 0;
     virtual void startTransfer(
         transfer_t type,        // playback (output) or recording (input)
         int numChannels,        // 1 = mono, 2 = stereo
@@ -61,8 +62,10 @@ class CSBCompatCtlDSP {
     void set16BitIRQ(void);
 
   protected:
+    void stopAllDMA(bool isSynchronous);
     bool processCommand(unsigned char command);
     const char* getCopyright(void);
+    int getNumChannels(void);
 
   protected:
     inline void setNumSamples(int numSamples)
@@ -71,15 +74,11 @@ class CSBCompatCtlDSP {
       { m_useTimeConstant = false; m_sampleRate = sampleRate; }
     inline void setTimeConstant(int timeConstant)
       { m_useTimeConstant = true; m_timeConstant = timeConstant; }
-    inline void setNumChannels(int numChannels)
-      { m_numChannels = numChannels; }
 
     inline int getNumSamples(void)
       { return m_numSamples; }
     inline int getSampleRate(void)
       { return m_useTimeConstant ? (1000000 / ((256 - m_timeConstant) * getNumChannels())) : m_sampleRate; }
-    inline int getNumChannels(void)
-      { return m_numChannels; }
 
   protected:
     std::queue<unsigned char> m_bufOut;
@@ -89,7 +88,7 @@ class CSBCompatCtlDSP {
 
     bool m_isRstAsserted, m_isSpeakerEna;
     bool m_useTimeConstant;
-    int m_sampleRate, m_timeConstant, m_numChannels;
+    int m_sampleRate, m_timeConstant;
     int m_numSamples;
 
     bool m_is8BitIRQPending, m_is16BitIRQPending;

@@ -7,6 +7,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+
 #undef MKWORD
 #undef LOBYTE
 #undef HIBYTE
@@ -15,10 +16,6 @@
 #define LOBYTE(word) ((word) & 0xff)
 #define HIBYTE(word) (((word) >> 8) & 0xff)
 
-/////////////////////////////////////////////////////////////////////////////
-
-/* TODO: make this ocnfigurable from VDMS.ini file? */
-#define DSP_VERSION   0x0405
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -64,15 +61,9 @@ void CSBCompatCtlDSP::reset(void) {
   m_lastCommand  = (char)0x00;
 
   setNumSamples(0);
-  setNumChannels(1);
   setSampleRate(11025);
 
-  // stop all pending DMA operations
-  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, true);
-  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, true);
-
-  if (m_is8BitIRQPending) ack8BitIRQ();
-  if (m_is16BitIRQPending) ack16BitIRQ();
+  stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
 }
 
 //
@@ -93,6 +84,7 @@ void CSBCompatCtlDSP::reset(char data) {
       case DSP_S_HIGHSPEED:
         m_hwemu->logInformation("DSP reset - exiting high-speed mode");
         m_state = DSP_S_NORMAL;
+        stopAllDMA(true); // stop all DMA activity and wait until DREQ is deasserted
         break;
 
       default:
@@ -174,6 +166,13 @@ char CSBCompatCtlDSP::getData(void) {
       if (!m_bufOut.empty()) {
         char data = m_bufOut.front();
         m_bufOut.pop();
+
+#       ifdef _DEBUG
+        char msgBuf[1024];
+        sprintf(msgBuf, "Replying to last DSP command: 0x%02x (%d bytes left in buffer)", data & 0xff, m_bufOut.size());
+        m_hwemu->logInformation(msgBuf);
+#       endif
+
         return data;
       } else {
         return (char)0xff;
@@ -264,9 +263,17 @@ void CSBCompatCtlDSP::set16BitIRQ(void) {
 }
 
 
-
 /////////////////////////////////////////////////////////////////////////////
 
+
+void CSBCompatCtlDSP::stopAllDMA(bool isSynchronous) {
+  // stop all pending DMA operations
+  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, isSynchronous);
+  m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, isSynchronous);
+
+  if (m_is8BitIRQPending) ack8BitIRQ();
+  if (m_is16BitIRQPending) ack16BitIRQ();
+}
 
 bool CSBCompatCtlDSP::processCommand(unsigned char command) {
   _ASSERTE(m_bufIn.size() > 0);
@@ -296,7 +303,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x91:  /* 091h : DMA DAC, 8-bit (High Speed) */
       /* TODO: set state to DSP_S_HIGHSPEED for cmd. 0x91 (implement when DMA single-cycle terminal count
          notification is functional, to automatically switch out of high-speed at the end of transfer) */
-      if ((command == 0x91) && (DSP_VERSION < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x91) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
         m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x91 (DMA DAC 8-bit high-speed)");
 
       m_hwemu->startTransfer(
@@ -317,11 +324,17 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x1c:  /* 01Ch : Auto-Initialize DMA DAC, 8-bit */
     case 0x90:  /* 090h : Auto-Initialize DMA DAC, 8-bit (High Speed) */
-      if ((command == 0x90) && (DSP_VERSION < 0x0400))  // high-speed not supported on v4.xx+
+      if ((command == 0x90) && (m_hwemu->getDSPVersion() < 0x0400))  // high-speed not supported on v4.xx+
         m_state = DSP_S_HIGHSPEED;  // set state to high-speed; can only get out by resetting the DSP
 
-      m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
-          getSampleRate(), 8, getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
+      m_hwemu->startTransfer(
+          ISBDSPHWEmulationLayer::TT_PLAYBACK,
+          getNumChannels(),
+          getSampleRate(),
+          8,
+          getNumSamples(),
+          ISBDSPHWEmulationLayer::CODEC_PCM,
+          true);
       return true;
 
     case 0x1f:  /* 01Fh : Auto-Initialize DMA DAC, 2-bit ADPCM Reference */
@@ -412,7 +425,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x41:  /* 041h : Set Output Sample Rate */
       /* TODO: inquire: LSL6 (16-bit sound over 8-bit DMA) treats sample rate as "byte rate" (not 16 bit-samples rate) -- BECAUSE LSL6 does 16 bit over 8-bit DMA?! */
-      setSampleRate(MKWORD(m_bufIn[1], m_bufIn[2])); 
+      setSampleRate(MKWORD(m_bufIn[1], m_bufIn[2]));  // sample rate independent from number of channels
       return true;
 
     case 0x42:  /* 042h : Set Input Sample Rate */
@@ -529,8 +542,8 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xe1:  /* 0E1h : DSP Version */
       /* TODO: maybe make this configurable?! */
-      m_bufOut.push(HIBYTE(DSP_VERSION));  // major
-      m_bufOut.push(LOBYTE(DSP_VERSION));  // minor
+      m_bufOut.push(HIBYTE(m_hwemu->getDSPVersion()));  // major
+      m_bufOut.push(LOBYTE(m_hwemu->getDSPVersion()));  // minor
       return true;
 
     case 0xe3:  /* 0E3h : DSP Copyright */
@@ -593,4 +606,12 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
 const char* CSBCompatCtlDSP::getCopyright(void) {
   return "COPYRIGHT (C) CREATIVE TECHNOLOGY LTD, 1992.";
+}
+
+int CSBCompatCtlDSP::getNumChannels(void) {
+  if (m_hwemu->getDSPVersion() < 0x0400) {
+    return (m_sbmix->isStereoOutput() ? 2 : 1);
+  } else {
+    return 1;
+  }
 }

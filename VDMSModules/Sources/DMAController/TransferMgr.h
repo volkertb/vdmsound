@@ -28,7 +28,7 @@
 struct DMAChannel {
   DMAChannel(void)
     : handler(NULL), isActive(false), inProgress(false), addr(0x0000), count(0xffff)
-    { };
+    { }
   IDMAHANDLERSLib::IDMAHandlerPtr handler;
   bool isActive;
   bool inProgress;
@@ -48,8 +48,7 @@ class ATL_NO_VTABLE CTransferMgr :
 {
 public:
 	CTransferMgr()
-	{
-	}
+	{	}
 
 DECLARE_REGISTRY_RESOURCEID(IDR_TRANSFERMGR)
 DECLARE_NOT_AGGREGATABLE(CTransferMgr)
@@ -83,9 +82,9 @@ public:
 	STDMETHOD(AbortTransfer)(BYTE channel, LONG synchronous);
 
 protected:
-  CThread DMAThread;
-  DMAChannel channels[NUM_DMA_CHANNELS];
-  /* TODO: add DMA handlers here */
+  CThread m_DMAThread;
+  CEvent m_event;
+  DMAChannel m_channels[NUM_DMA_CHANNELS];
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
