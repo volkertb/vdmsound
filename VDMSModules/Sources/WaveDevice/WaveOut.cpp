@@ -54,7 +54,6 @@ STDMETHODIMP CWaveOut::InterfaceSupportsErrorInfo(REFIID riid)
 }
 
 
-FILE* xyz=NULL;
 /////////////////////////////////////////////////////////////////////////////
 // IVDMBasicModule
 /////////////////////////////////////////////////////////////////////////////
@@ -75,7 +74,7 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
     m_deviceID = CFG_Get(Config, INI_STR_DEVICEID, -1, 10, false);
 
     // Obtain the buffer operating range (milliseconds)
-    m_bufOpRange = CFG_Get(Config, INI_STR_BUFOPRANGE, 50, 10, false);
+    m_bufOpRange = CFG_Get(Config, INI_STR_BUFOPRANGE, 125, 10, false);
 
     // Try to obtain an interface to a Wave-out module, use NULL if none available
     m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, true);   // do not complain if no such module available
@@ -92,7 +91,7 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   m_gcThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("WaveOut initialized (device ID = %d, '%s')"), m_deviceID, (LPCTSTR)m_deviceName));
-xyz=fopen("jitter.txt","wb");
+
   return S_OK;
 }
 
@@ -100,7 +99,7 @@ STDMETHODIMP CWaveOut::Destroy() {
   // Release the Wave device
   if (m_hWaveOut != NULL)
     WaveOutClose();
-if(xyz) fclose(xyz);
+
   // Signal the GC thread to quit
   if (m_gcThread.GetThreadHandle() != NULL)
     m_gcThread.Cancel();
@@ -242,7 +241,11 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       // The data was enqueued successfully => update buffer byte count
       LONG lastBufferedBytes = InterlockedExchangeAdd(&m_bufferedBytes, length);
 
-      loadThis = min((double)/*lastBufferedBytes*/m_bufferedBytes / m_bufferedLo,1.0);
+      if (lastBufferedBytes < m_bufferedLo) {
+        loadThis = (double)lastBufferedBytes / m_bufferedLo;
+      } else if (lastBufferedBytes > m_bufferedHi) {
+        loadThis = (double)lastBufferedBytes / m_bufferedHi;
+      }
     } catch (CMemoryException * pme) {
       TCHAR errMsg[1024] = _T("<no description available>");
       pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
