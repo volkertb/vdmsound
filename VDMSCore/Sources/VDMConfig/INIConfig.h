@@ -7,8 +7,9 @@ class CVDMConfig {
   public:
     enum section_t {
       SEC_LOADER  = 0,
-      SEC_DEPENDS = 1,
-      SEC_CONFIG  = 2
+      SEC_DEBUG   = 1,
+      SEC_DEPENDS = 2,
+      SEC_CONFIG  = 3
     };
 
   public:
@@ -91,6 +92,7 @@ class CINIConfig :
 
   protected:
     const std::string prefix_default;
+    const std::string suffix_debug;
     const std::string suffix_depends;
     const std::string suffix_config;
 };
