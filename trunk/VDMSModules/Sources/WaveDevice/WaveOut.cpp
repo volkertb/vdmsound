@@ -126,7 +126,7 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
           break;
         default:
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("waveOutClose(0x%08x) on device %d ('%s'): 0x%08x - %s"), (int)m_hWaveOut, (int)m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-          return S_OK;
+          return S_FALSE;
       }
     }
 
@@ -155,6 +155,12 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
   LPSTR waveData = NULL;
 
   try {
+
+    /* TODO: get rid of this silly new/delete scheme; replace with static,
+       pre-allocated circular buffer (size specifiable in VDMS.ini?) and
+       pre-allocated WAVEHDR's that point at consecutive locations in the
+       buffer -- new/delete is too inefficient */
+
     waveHdr  = new WAVEHDR;
     waveData = new CHAR[length];
 
@@ -233,7 +239,7 @@ unsigned int CWaveOut::Run(CThread& thread) {
         _ASSERTE(waveHdr != NULL);
         _ASSERTE(waveHdr->lpData != NULL);
         _ASSERTE(waveHdr->dwUser != NULL);
-        _ASSERTE(waveHdr->dwFlags & MHDR_DONE == MHDR_DONE);
+        _ASSERTE((waveHdr->dwFlags & MHDR_DONE) == MHDR_DONE);
 
         if ((errCode = waveOutUnprepareHeader(hWaveOut, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
           CString args = Format(_T("0x%08x, %p, %d"), hWaveOut, waveHdr, sizeof(*waveHdr));
