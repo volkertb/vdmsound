@@ -1,0 +1,25 @@
+HKCR
+{
+	VDDLoader.VDMServices.1 = s 'VDMServices Class'
+	{
+		CLSID = s '{507AC2BE-DC6F-11D4-9C37-00A024112F81}'
+	}
+	VDDLoader.VDMServices = s 'VDMServices Class'
+	{
+		CLSID = s '{507AC2BE-DC6F-11D4-9C37-00A024112F81}'
+		CurVer = s 'VDDLoader.VDMServices.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {507AC2BE-DC6F-11D4-9C37-00A024112F81} = s 'VDMServices Class'
+		{
+			ProgID = s 'VDDLoader.VDMServices.1'
+			VersionIndependentProgID = s 'VDDLoader.VDMServices'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{9F2F8D7B-DA82-11D4-9C30-00A024112F81}'
+		}
+	}
+}

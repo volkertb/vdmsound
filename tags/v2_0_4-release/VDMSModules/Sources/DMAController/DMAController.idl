@@ -1,0 +1,28 @@
+// DMAController.idl : IDL source for DMAController.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (DMAController.tlb) and marshalling code.
+
+import "oaidl.idl";
+
+[
+	uuid(72948C21-05C3-11D5-9C72-00A024112F81),
+	version(1.0),
+	helpstring("DMAController 1.0 Type Library")
+]
+library DMACONTROLLERLib
+{
+	import "IVDMModule.idl";
+	import "IDMAC.idl";
+
+	[
+		uuid(72948C2F-05C3-11D5-9C72-00A024112F81),
+		helpstring("TransferMgr Class")
+	]
+	coclass TransferMgr
+	{
+		[default] interface IVDMBasicModule;
+		interface IDMAController;
+	};
+};

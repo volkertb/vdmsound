@@ -1,0 +1,25 @@
+HKCR
+{
+	EmuJoystick.JoystickCtl.1 = s 'JoystickCtl Class'
+	{
+		CLSID = s '{F675312E-ECE0-4FD3-B96F-2E84597E6000}'
+	}
+	EmuJoystick.JoystickCtl = s 'JoystickCtl Class'
+	{
+		CLSID = s '{F675312E-ECE0-4FD3-B96F-2E84597E6000}'
+		CurVer = s 'EmuJoystick.JoystickCtl.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {F675312E-ECE0-4FD3-B96F-2E84597E6000} = s 'JoystickCtl Class'
+		{
+			ProgID = s 'EmuJoystick.JoystickCtl.1'
+			VersionIndependentProgID = s 'EmuJoystick.JoystickCtl'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{8CFD797F-162B-4C9A-9D68-BDBEDA3007D8}'
+		}
+	}
+}
