@@ -19,14 +19,15 @@
 <?php HtmlBeginHeader(); ?>
 <?php HtmlBeginBody(); ?>
 
-<p><center><font size="4"><b><?php
+<?php
   if ($success) {
-    echo("You have been logged out.");
+    echo('<h2 class="normal">You have been logged out.</h2>');
   } else {
-    echo("You were not logged in.");
+    echo('<h2 class="normal">You were not logged in.</h2>');
   }
-?></b></font></p>
-<p><b><?php echo(HtmlMakeLink('Login', 'login.php')); ?></b> | <?php echo(HtmlMakeLink('Back', $HTTP_REFERER)); ?></center></p>
+
+  echo('<p align="center"><b>' . HtmlMakeLink('Login', 'login.php') . '</b> | ' . HtmlMakeLink('Back', $HTTP_REFERER) );
+?>
 
 <?php HtmlBeginFooter(); ?>
 <?php HtmlSendLastModified(); ?>
