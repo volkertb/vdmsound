@@ -38,6 +38,7 @@ void CAdvSettingsPage_Compat::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHK_NETWARE, m_chkNetware);
 	DDX_Control(pDX, IDC_CHK_EMS, m_chkEms);
 	DDX_Control(pDX, IDC_CHK_DPMI, m_chkDpmi);
+	DDX_Control(pDX, IDC_CHK_CLIPOPF, m_chkClipopf);
 	DDX_Control(pDX, IDC_CHK_CDROM, m_chkCdrom);
 	//}}AFX_DATA_MAP
 }
@@ -70,6 +71,7 @@ BOOL CAdvSettingsPage_Compat::SyncGUIData(BOOL bSave) {
 
   // Protected mode
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.pmode"),   _T("useDPMI"),    m_chkDpmi,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.pmode"),   _T("useCLIPOPF"), m_chkClipopf, TRUE);
 
   // Video
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.video"),   _T("useVESA"),    m_chkVesa,    FALSE);

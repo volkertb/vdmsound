@@ -252,6 +252,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
 
   const CString str_identity_map = VLPUtil::GetVDMSFilePath(_T("identity.map"));
 
+  const CString str_vdmspath     = VLPUtil::GetVDMSFilePath(_T(""));
+
   const int log_none     = 256;
   const int log_errors   = 192;
   const int log_warnings = 128;
@@ -275,6 +277,11 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   BOOL    vdms_midi_useDevOut       = SettingGetBool  (_T("vdms.midi"),     _T("useDevOut"),    TRUE);
   LONG    vdms_midi_devOutType      = SettingGetLong  (_T("vdms.midi"),     _T("devOutType"),   (LONG)DeviceUtil::DEV_MIDI);
   LONG    vdms_midi_devOutID        = SettingGetLong  (_T("vdms.midi"),     _T("devOutID"),     -1);
+  BOOL    vdms_midi_useFileOut      = SettingGetBool  (_T("vdms.midi"),     _T("useFileOut"),   FALSE);
+  CString vdms_midi_fileOut         = SettingGetString(_T("vdms.midi"),     _T("fileOut"),      str_vdmspath);
+  BOOL    vdms_midi_useDevIn        = SettingGetBool  (_T("vdms.midi"),     _T("useDevIn"),     FALSE);
+  LONG    vdms_midi_devInType       = SettingGetLong  (_T("vdms.midi"),     _T("devInType"),    (LONG)DeviceUtil::DEV_MIDI);
+  LONG    vdms_midi_devInID         = SettingGetLong  (_T("vdms.midi"),     _T("devInID"),      0);
   BOOL    vdms_midi_useSysExLed     = SettingGetBool  (_T("vdms.midi"),     _T("useSysExLed"),  TRUE);
   CString vdms_midi_sysExLed        = SettingGetString(_T("vdms.midi"),     _T("sysExLed"),     _T("scroll"));
 
@@ -291,6 +298,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   LONG    vdms_sb_dsp_devOutType    = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
   LONG    vdms_sb_dsp_devOutID      = SettingGetLong  (_T("vdms.sb.dsp"),   _T("devOutID"),     -1);
   LONG    vdms_sb_dsp_buffer        = SettingGetLong  (_T("vdms.sb.dsp"),   _T("buffer"),       75);
+  BOOL    vdms_sb_dsp_useFileOut    = SettingGetBool  (_T("vdms.sb.dsp"),   _T("useFileOut"),   FALSE);
+  CString vdms_sb_dsp_fileOut       = SettingGetString(_T("vdms.sb.dsp"),   _T("fileOut"),      str_vdmspath);
 
   BOOL    vdms_sb_fm_enabled        = SettingGetBool  (_T("vdms.sb.fm"),    _T("enabled"),      TRUE);
   LONG    vdms_sb_fm_port           = SettingGetLong  (_T("vdms.sb.fm"),    _T("port"),         0x388);
@@ -299,6 +308,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   LONG    vdms_sb_fm_devOutType     = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutType"),   (LONG)DeviceUtil::DEV_DSOUND);
   LONG    vdms_sb_fm_devOutID       = SettingGetLong  (_T("vdms.sb.fm"),    _T("devOutID"),     -1);
   LONG    vdms_sb_fm_buffer         = SettingGetLong  (_T("vdms.sb.fm"),    _T("buffer"),       75);
+  BOOL    vdms_sb_fm_useFileOut     = SettingGetBool  (_T("vdms.sb.fm"),    _T("useFileOut"),      FALSE);
+  CString vdms_sb_fm_fileOut        = SettingGetString(_T("vdms.sb.fm"),    _T("fileOut"),      str_vdmspath);
 
   BOOL    vdms_gameport_enabled     = SettingGetBool  (_T("vdms.gameport"), _T("enabled"),      TRUE);
   LONG    vdms_gameport_port        = SettingGetLong  (_T("vdms.gameport"), _T("port"),         0x201);
@@ -306,6 +317,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
   LONG    vdms_gameport_maxCoord    = SettingGetLong  (_T("vdms.gameport"), _T("maxCoord"),     250);
   LONG    vdms_gameport_pollPeriod  = SettingGetLong  (_T("vdms.gameport"), _T("pollPeriod"),   125);
   CString vdms_gameport_mapFile     = SettingGetString(_T("vdms.gameport"), _T("mapFile"),      VLPUtil::GetVDMSFilePath(_T("joy2.map")));
+
+  BOOL vdms_winnt_pmode_useCLIPOPF  = SettingGetBool  (_T("winnt.pmode"),   _T("useCLIPOPF"),   TRUE);
 
   //
   // Custom configuration
@@ -323,6 +336,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
 
   vdmsini += _T("[VDMServicesProvider]\n");
   vdmsini += _T("CLSID=VDDLoader.VDMServices\n");
+  vdmsini += _T("[VDMServicesProvider.config]\n");
+  vdmsini += _T("fixPOPF=") + CString(vdms_winnt_pmode_useCLIPOPF ? _T("1") : _T("0")) + _T("\n");
 
   //
   // MIDI
@@ -337,6 +352,8 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
     vdmsini += _T("IRQ=") + VLPUtil::FormatString(_T("%d"), vdms_midi_IRQ) + _T("\n");
     vdmsini += _T("[MPU401Controller.depends]\n");
     vdmsini += _T("VDMSrv=VDMServicesProvider\n");
+
+    // OUTPUT
 
     if (vdms_midi_mapFile.CompareNoCase(str_identity_map) != 0) {
       vdmsini += _T("MidiOut=MIDIMapper\n");
@@ -362,6 +379,18 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("[MIDIPlayer.depends]\n");
     }
 
+    if (vdms_midi_useFileOut) {
+      vdmsini += _T("MidiOut=MIDIWriter\n");
+
+      vdmsini += _T("[MIDIWriter]\n");
+      vdmsini += _T("CLSID=DiskWriter.MIDIOut\n");
+      vdmsini += _T("[MIDIWriter.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[MIDIWriter.config]\n");
+      vdmsini += _T("path=") + vdms_midi_fileOut + _T("\n");
+      vdmsini += _T("[MIDIWriter.depends]\n");
+    }
+
     if (vdms_midi_useSysExLed) {
       vdmsini += _T("MidiOut=SysExIndicator\n");
 
@@ -371,6 +400,19 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
       vdmsini += _T("[SysExIndicator.config]\n");
       vdmsini += _T("led=") + vdms_midi_sysExLed + _T("\n");
+    }
+
+    // INPUT
+
+    if (vdms_midi_useDevIn) {
+      vdmsini += _T("[MIDIRecord]\n");
+      vdmsini += _T("CLSID=") + GetDeviceID((DeviceUtil::DeviceType)vdms_midi_devInType) + _T(".MIDIIn\n");
+      vdmsini += _T("[MIDIRecord.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logmidi) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[MIDIRecord.config]\n");
+      vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_midi_devInID) + _T("\n");
+      vdmsini += _T("[MIDIRecord.depends]\n");
+      vdmsini += _T("MidiOut=MPU401Controller\n");
     }
   }
 
@@ -416,6 +458,18 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("[SBWavePlayer.config]\n");
       vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_devOutID) + _T("\n");
       vdmsini += _T("buffer=") + VLPUtil::FormatString(_T("%d"), vdms_sb_dsp_buffer) + _T("\n");
+      vdmsini += _T("[SBWavePlayer.depends]\n");
+    }
+
+    if (vdms_sb_dsp_useFileOut) {
+      vdmsini += _T("WaveOut=SBWaveWriter\n");
+
+      vdmsini += _T("[SBWaveWriter]\n");
+      vdmsini += _T("CLSID=DiskWriter.WaveOut\n");
+      vdmsini += _T("[SBWaveWriter.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[SBWaveWriter.config]\n");
+      vdmsini += _T("path=") + vdms_sb_dsp_fileOut + _T("\n");
     }
   }
 
@@ -443,6 +497,18 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("[AdLibWavePlayer.config]\n");
       vdmsini += _T("device=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_devOutID) + _T("\n");
       vdmsini += _T("buffer=") + VLPUtil::FormatString(_T("%d"), vdms_sb_fm_buffer) + _T("\n");
+      vdmsini += _T("[AdLibWavePlayer.depends]\n");
+    }
+
+    if (vdms_sb_dsp_useFileOut) {
+      vdmsini += _T("WaveOut=AdLibWaveWriter\n");
+
+      vdmsini += _T("[AdLibWaveWriter]\n");
+      vdmsini += _T("CLSID=DiskWriter.WaveOut\n");
+      vdmsini += _T("[AdLibWaveWriter.debug]\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("[AdLibWaveWriter.config]\n");
+      vdmsini += _T("path=") + vdms_sb_dsp_fileOut + _T("\n");
     }
   }
 

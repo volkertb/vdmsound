@@ -29,8 +29,10 @@ public:
 protected:
   BOOL SyncGUIData(BOOL bSave = TRUE);
   BOOL SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
-  BOOL SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
   BOOL SyncGUIData_Enabled_SysEx(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_DevOut(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_FileOut(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_DevIn(BOOL bSave, BOOL bEnabled = TRUE);
 
   VOID InitDeviceList(void);
 
@@ -38,7 +40,8 @@ protected:
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
-  DeviceUtil::DeviceInfoList m_devInfo;
+  DeviceUtil::DeviceInfoList m_devOutInfo;
+  DeviceUtil::DeviceInfoList m_devInInfo;
 
 // Public MFC stuff
 public:
@@ -46,6 +49,11 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Midi)
 	enum { IDD = IDD_ADVPROPPAGE_MIDI };
+	CButton	m_butMpuoutfilebrowse;
+	CEdit	m_edtMpuoutfile;
+	CComboBox	m_cmbMpuindev;
+	CButton	m_chkMpuoutfile;
+	CButton	m_chkMpuindev;
 	CButton	m_chkSysexindicator;
 	CEdit	m_edtMidimapbrowse;
 	CComboBox	m_cmbSysexindicator;
@@ -77,6 +85,9 @@ protected:
 	afx_msg void OnChkMpuoutdev();
 	afx_msg void OnButMidimapbrowse();
 	afx_msg void OnChkSysexindicator();
+	afx_msg void OnChkMpuindev();
+	afx_msg void OnChkMpuoutfile();
+	afx_msg void OnButMpuoutfilebrowse();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

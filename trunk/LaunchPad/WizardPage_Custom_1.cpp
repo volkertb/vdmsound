@@ -162,25 +162,10 @@ void CWizardPage_Custom_1::OnButTemplate()
 {
   CWaitCursor wait;
 
-  DWORD lastError = ERROR_SUCCESS;
-  CString strTmp;
-
   CString fileName;
   m_edtTemplate.GetWindowText(fileName);
 
-  CFileDialog dlgFile(TRUE, NULL, fileName.IsEmpty() ? VLPUtil::RenameExtension(m_wizard.exeFileName, _T(".vlp")) : fileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER5), this);
-
-  switch (dlgFile.DoModal()) {
-    case IDOK:
-      m_edtTemplate.SetWindowText(dlgFile.GetPathName());
-      break;
-
-    case IDCANCEL:
-      break;
-
-    default:
-      lastError = GetLastError();
-      strTmp.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
-      MessageBox(strTmp, NULL, MB_OK | MB_ICONERROR);
+  if (VLPUtil::BrowseForFile(fileName, TRUE, NULL, fileName.IsEmpty() ? VLPUtil::RenameExtension(m_wizard.exeFileName, _T(".vlp")) : fileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER5), this)) {
+    m_edtTemplate.SetWindowText(fileName);
   }
 }

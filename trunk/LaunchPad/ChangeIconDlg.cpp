@@ -135,10 +135,7 @@ void CChangeIconDlg::OnButIcobrowse()
 
   UpdateData(TRUE);     // save all changes that occured in the GUI
 
-  CFileDialog dlgFile(TRUE, NULL, m_edtIcofile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER2), this);
-
-  if (dlgFile.DoModal() == IDOK) {
-    m_edtIcofile_val = dlgFile.GetPathName();
+  if (VLPUtil::BrowseForFile(m_edtIcofile_val, TRUE, NULL, m_edtIcofile_val, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER2), this)) {
     UpdateData(FALSE);  // update the GUI to reflect any changed settings
     UpdateIconList();
   }

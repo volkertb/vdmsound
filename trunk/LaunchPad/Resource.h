@@ -71,11 +71,12 @@
 #define IDC_CMB_XMS                     1205
 #define IDC_GRP_PMODE                   1206
 #define IDC_CHK_DPMI                    1207
-#define IDC_GRP_VIDEO                   1208
-#define IDC_CHK_VESA                    1209
-#define IDC_GRP_OTHERS                  1210
-#define IDC_CHK_CDROM                   1211
-#define IDC_CHK_NETWARE                 1212
+#define IDC_CHK_CLIPOPF                 1208
+#define IDC_GRP_VIDEO                   1209
+#define IDC_CHK_VESA                    1210
+#define IDC_GRP_OTHERS                  1211
+#define IDC_CHK_CDROM                   1212
+#define IDC_CHK_NETWARE                 1213
 
 #define IDC_GRP_CONFIGSYS               1301
 #define IDC_CHK_HIMEMSYS                1302
@@ -189,11 +190,12 @@
 #define IDS_TXT_FILTER4_DEFEXT          10114
 #define IDS_TXT_FILTER5                 10115
 #define IDS_TXT_MULTIPLEVALUES          10120
-#define IDS_TXT_BROWSEFOLDER_TIPS       10121
-#define IDS_TXT_WIZPROPPAGE_CUSTOM_1_T  10122
-#define IDS_TXT_WIZPROPPAGE_CUSTOM_1_S  10123
-#define IDS_TXT_WIZPROPPAGE_CUSTOM_2_T  10124
-#define IDS_TXT_WIZPROPPAGE_CUSTOM_2_S  10125
+#define IDS_TXT_BROWSEPROGFOLDER_TIPS   10121
+#define IDS_TXT_BROWSEFOUTFOLDER_TIPS   10122
+#define IDS_TXT_WIZPROPPAGE_CUSTOM_1_T  10123
+#define IDS_TXT_WIZPROPPAGE_CUSTOM_1_S  10124
+#define IDS_TXT_WIZPROPPAGE_CUSTOM_2_T  10125
+#define IDS_TXT_WIZPROPPAGE_CUSTOM_2_S  10126
 #define IDS_TXT_RUNWITHVDMS             10130
 #define IDS_TXT_RUNWITHVDMSHLP          10131
 #define IDS_MSG_UNEXPECTEDERR           10200

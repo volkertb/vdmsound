@@ -215,26 +215,10 @@ void CAdvSettingsPage_Debug::OnButLogbrowse()
 {
   CWaitCursor wait;
 
-  DWORD lastError = ERROR_SUCCESS;
-  CString strTmp1, strTmp2;
-
   CString fileName;
   m_edtLogbrowse.GetWindowText(fileName);
 
-  CFileDialog dlgFile(FALSE, VLPUtil::LoadString(IDS_TXT_FILTER4_DEFEXT), fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER4), this);
-
-  switch (dlgFile.DoModal()) {
-    case IDOK:
-      m_edtLogbrowse.SetWindowText(dlgFile.GetPathName());
-      break;
-
-    case IDCANCEL:
-      break;
-
-    default:
-      lastError = GetLastError();
-      strTmp1.FormatMessage(IDS_MSG_UNEXPECTEDERR, lastError, (LPCTSTR)VLPUtil::FormatMessage(lastError, true, NULL));
-      GetWindowText(strTmp2);
-      MessageBox(strTmp1, strTmp2, MB_OK | MB_ICONERROR);
+  if (VLPUtil::BrowseForFile(fileName, FALSE, VLPUtil::LoadString(IDS_TXT_FILTER4_DEFEXT), fileName.IsEmpty() ? _T("") : VLPUtil::GetVDMSFilePath(fileName), OFN_HIDEREADONLY, VLPUtil::LoadString(IDS_TXT_FILTER4), this)) {
+    m_edtLogbrowse.SetWindowText(fileName);
   }
 }

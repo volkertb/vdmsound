@@ -31,6 +31,9 @@ void CAdvSettingsPage_Sb::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAdvSettingsPage_Sb)
+	DDX_Control(pDX, IDC_EDT_SBOUTFILE, m_edtSboutfile);
+	DDX_Control(pDX, IDC_CHK_SBOUTFILE, m_chkSboutfile);
+	DDX_Control(pDX, IDC_BUT_SBOUTFILEBROWSE, m_butSboutfilebrowse);
 	DDX_Control(pDX, IDC_SPN_SBOUTDEVBUF, m_spnSboutdevbuf);
 	DDX_Control(pDX, IDC_CMB_SBTYPE, m_cmbSbtype);
 	DDX_Control(pDX, IDC_CMB_SBPORT, m_cmbSbport);
@@ -49,6 +52,8 @@ BEGIN_MESSAGE_MAP(CAdvSettingsPage_Sb, CPropertyPage)
 	//{{AFX_MSG_MAP(CAdvSettingsPage_Sb)
 	ON_BN_CLICKED(IDC_CHK_USESB, OnChkUsesb)
 	ON_BN_CLICKED(IDC_CHK_SBOUTDEV, OnChkSboutdev)
+	ON_BN_CLICKED(IDC_BUT_SBOUTFILEBROWSE, OnButSboutfilebrowse)
+	ON_BN_CLICKED(IDC_CHK_SBOUTFILE, OnChkSboutfile)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -75,8 +80,10 @@ BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("DMA8"),       m_cmbSbdma8,      _T("1"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("DMA16"),      m_cmbSbdma16,     _T("5"));
   VLPUtil::SyncEditBox (bSave, m_settings, _T("vdms.sb.dsp"), _T("version"),    m_cmbSbtype,      _T("4.05 (SoundBlaster 16)"));
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("useDevice"),  m_chkSboutdev,    TRUE);
-  SyncGUIData_Enabled_Device(bSave, bEnabled && (m_chkSboutdev.GetCheck() != BST_UNCHECKED));
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("useDevOut"),  m_chkSboutdev,    TRUE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("useFileOut"), m_chkSboutfile,   FALSE);
+  SyncGUIData_Enabled_DevOut (bSave, bEnabled && (m_chkSboutdev.GetCheck()   != BST_UNCHECKED));
+  SyncGUIData_Enabled_FileOut(bSave, bEnabled && (m_chkSboutfile.GetCheck()  != BST_UNCHECKED));
 
   if (!bEnabled) {
     m_cmbSbport.EnableWindow(FALSE);
@@ -84,6 +91,7 @@ BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
     m_cmbSbdma8.EnableWindow(FALSE);
     m_cmbSbdma16.EnableWindow(FALSE);
     m_chkSboutdev.EnableWindow(FALSE);
+    m_chkSboutfile.EnableWindow(FALSE);
 
     m_cmbSbtype.EnableWindow(FALSE);
   } else {
@@ -93,8 +101,8 @@ BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
   return TRUE;
 }
 
-BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.dsp"), m_devInfo, m_cmbSboutdev, DeviceUtil::DEV_DSOUND, -1);
+BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled_DevOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncDevListBox(bSave, m_settings, _T("vdms.sb.dsp"), m_devOutInfo, m_cmbSboutdev, _T("Out"), DeviceUtil::DEV_DSOUND, -1);
   VLPUtil::SyncEditBox   (bSave, m_settings, _T("vdms.sb.dsp"), _T("buffer"), m_cmbSboutdevbuf, _T("75"));
 
   if (!bEnabled) {
@@ -109,12 +117,25 @@ BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) 
   return TRUE;
 }
 
+BOOL CAdvSettingsPage_Sb::SyncGUIData_Enabled_FileOut(BOOL bSave, BOOL bEnabled) {
+  VLPUtil::SyncEditBox(bSave, m_settings, _T("vdms.sb.dsp"), _T("fileOut"), m_edtSboutfile, VLPUtil::GetVDMSFilePath(_T("")));
+
+  if (!bEnabled) {
+    m_edtSboutfile.EnableWindow(FALSE);
+    m_butSboutfilebrowse.EnableWindow(FALSE);
+  } else {
+    m_butSboutfilebrowse.EnableWindow(TRUE);
+  }
+
+  return TRUE;
+}
+
 VOID CAdvSettingsPage_Sb::InitDeviceList(void) {
-  m_devInfo.RemoveAll();
+  m_devOutInfo.RemoveAll();
   m_cmbSboutdev.ResetContent();
 
-  DeviceUtil::EnumWaveOut(m_devInfo);
-  DeviceUtil::EnumDSoundOut(m_devInfo);
+  DeviceUtil::EnumWaveOut(m_devOutInfo);
+  DeviceUtil::EnumDSoundOut(m_devOutInfo);
 }
 
 
@@ -149,7 +170,7 @@ BOOL CAdvSettingsPage_Sb::OnCommand(WPARAM wParam, LPARAM lParam)
 
   if ((GetDlgItem(nID) != NULL) &&
       (nID != IDC_BUT_SBOUTFILEBROWSE) &&
-      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == BN_CLICKED)))
+      ((nCode == CBN_SELCHANGE) || (nCode == CBN_EDITCHANGE) || (nCode == EN_CHANGE) || (nCode == BN_CLICKED)))
   {
     SetModified();              // enable the "Apply" button to reflect the fact that changes were made
   }
@@ -182,6 +203,26 @@ void CAdvSettingsPage_Sb::OnChkUsesb()
 
 void CAdvSettingsPage_Sb::OnChkSboutdev() 
 {
-  SyncGUIData_Enabled_Device(TRUE); // save current combo-box selection
-  SyncGUIData_Enabled_Device(FALSE, m_chkSboutdev.GetCheck() != BST_UNCHECKED);
+  SyncGUIData_Enabled_DevOut(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_DevOut(FALSE, m_chkSboutdev.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Sb::OnChkSboutfile() 
+{
+  SyncGUIData_Enabled_FileOut(TRUE); // save current combo-box selection
+  SyncGUIData_Enabled_FileOut(FALSE, m_chkSboutfile.GetCheck() != BST_UNCHECKED);
+}
+
+void CAdvSettingsPage_Sb::OnButSboutfilebrowse() 
+{
+  CWaitCursor wait;
+
+  SyncGUIData(TRUE);        // save all changes that occured in the GUI
+
+  CString dirName;
+
+  if (VLPUtil::BrowseForFolder(dirName, BIF_RETURNONLYFSDIRS, VLPUtil::LoadString(IDS_TXT_BROWSEFOUTFOLDER_TIPS), NULL, this)) {
+    m_settings.SetValue(_T("vdms.sb.dsp"), _T("fileOut"), dirName);
+    SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
+  }
 }

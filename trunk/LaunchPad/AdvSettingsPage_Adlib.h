@@ -29,7 +29,8 @@ public:
 protected:
   BOOL SyncGUIData(BOOL bSave = TRUE);
   BOOL SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled = TRUE);
-  BOOL SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_DevOut(BOOL bSave, BOOL bEnabled = TRUE);
+  BOOL SyncGUIData_Enabled_FileOut(BOOL bSave, BOOL bEnabled = TRUE);
 
   VOID InitDeviceList(void);
 
@@ -37,7 +38,7 @@ protected:
 protected:
   CLaunchPadSettings& m_settings;
   CContextHelp m_help;
-  DeviceUtil::DeviceInfoList m_devInfo;
+  DeviceUtil::DeviceInfoList m_devOutInfo;
 
 // Public MFC stuff
 public:
@@ -45,6 +46,8 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAdvSettingsPage_Adlib)
 	enum { IDD = IDD_ADVPROPPAGE_ADLIB };
+	CEdit	m_edtFmoutfile;
+	CButton	m_chkFmoutfile;
 	CSpinButtonCtrl	m_spnFmoutdevbuf;
 	CComboBox	m_cmbFmsynthrate;
 	CComboBox	m_cmbFmport;
@@ -73,6 +76,8 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnChkUsefm();
 	afx_msg void OnChkFmoutdev();
+	afx_msg void OnChkFmoutfile();
+	afx_msg void OnButFmoutfilebrowse();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

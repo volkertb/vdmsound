@@ -105,6 +105,9 @@ namespace VLPUtil {
 
   HRESULT EnableAutoComplete(HWND hwndEdit);
 
+  BOOL BrowseForFile(CString& fileName, BOOL bOpenFileDialog, LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFileName = NULL, DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, LPCTSTR lpszFilter = NULL, CWnd* pParentWnd = NULL);
+  BOOL BrowseForFolder(CString& folderName, UINT ulFlags = BIF_RETURNONLYFSDIRS, LPCTSTR lpszTitle = NULL, LPCITEMIDLIST pidlRoot = NULL, CWnd* pParentWnd = NULL);
+
   // Other shell helper functions
   BOOL isVLPFile(LPCTSTR fName);
   BOOL isMSDOSFile(LPCTSTR fName);

@@ -138,6 +138,32 @@ HRESULT DeviceUtil::EnumDSoundOut(DeviceInfoList& result) {
 //
 //
 //
+HRESULT DeviceUtil::EnumMidiIn(DeviceInfoList& result) {
+  HRESULT hr   = S_OK;
+  UINT numDevs = midiInGetNumDevs();
+
+  DeviceInfo info;
+  MIDIINCAPS caps;
+
+  for (UINT devID = 0; devID < numDevs; devID++) {
+    MMRESULT err = midiInGetDevCaps(devID, &caps, sizeof(caps));
+
+    if (err == MMSYSERR_NOERROR) {
+      info.deviceType = DEV_MIDI;
+      info.deviceID   = devID;
+      info.deviceName = caps.szPname;
+      result.Add(info);
+    } else {
+      hr = E_FAIL;
+    }
+  }
+
+  return hr;
+}
+
+//
+//
+//
 
 //
 // Synchronizes the state of a Win32 check-box with its corresponding
@@ -149,10 +175,12 @@ HRESULT VLPUtil::SyncDevListBox(
   LPCTSTR section,                                    // ini section
   const DeviceUtil::DeviceInfoList& devInfo,          // list of devices that helps translate devType/ID <-> textual representation
   CComboBox& control,                                 // combo-box control with which the data must be synchronized
+  LPCTSTR devPrefix,                                  // "Out", "In", etc.
   DeviceUtil::DeviceType defDevType,                  // default device type
   LONG defDevID)                                      // default device ID
 {
-  ASSERT(section != NULL);
+  ASSERT(section   != NULL);
+  ASSERT(devPrefix != NULL);
 
   ASSERT_VALID(&control);
 
@@ -160,6 +188,10 @@ HRESULT VLPUtil::SyncDevListBox(
 
   if (control.m_hWnd == NULL)
     return E_INVALIDARG;
+
+  CString strDev     = CString(_T("dev"));
+  CString strDevType = strDev + devPrefix + _T("Type");
+  CString strDevID   = strDev + devPrefix + _T("ID");
 
   if (bSave) {
     int curSel = control.GetCurSel();
@@ -172,17 +204,17 @@ HRESULT VLPUtil::SyncDevListBox(
     }
 
     if ((selData == CB_ERR) || (selData < 1)) {       // an error was encountered, or selData denotes a "(multiple values)" (or an invalid) entry.
-      settings.UnsetValue(section, _T("devOutType"));
-      settings.UnsetValue(section, _T("devOutID"));
+      settings.UnsetValue(section, strDevType);
+      settings.UnsetValue(section, strDevID);
       hr = ((selData == CB_ERR) ? S_FALSE : hr);
     } else {
       HRESULT hr2;
 
       ASSERT((int)(selData - 1) < devInfo.GetSize());
 
-      if (FAILED(hr2 = settings.SetValue  (section, _T("devOutType"), FormatString(_T("%d"), devInfo[selData - 1].deviceType))))
+      if (FAILED(hr2 = settings.SetValue  (section, strDevType, FormatString(_T("%d"), devInfo[selData - 1].deviceType))))
         hr = hr2;
-      if (FAILED(hr2 = settings.SetValue  (section, _T("devOutID"),   FormatString(_T("%d"), devInfo[selData - 1].deviceID))))
+      if (FAILED(hr2 = settings.SetValue  (section, strDevID,   FormatString(_T("%d"), devInfo[selData - 1].deviceID))))
         hr = hr2;
     }
   } else {
@@ -205,8 +237,8 @@ HRESULT VLPUtil::SyncDevListBox(
     // Index of the item that will be selected as a result of data synchronization
     int curSel = -1;
 
-    if (FAILED(hr2 = settings.GetValue(section, _T("devOutType"), devType, &isDevTypeIndeterm, FormatString(_T("%d"), defDevType)))  ||
-        FAILED(hr2 = settings.GetValue(section, _T("devOutID"),   devID,   &isDevIDIndeterm,   FormatString(_T("%d"), defDevID))))
+    if (FAILED(hr2 = settings.GetValue(section, strDevType, devType, &isDevTypeIndeterm, FormatString(_T("%d"), defDevType)))  ||
+        FAILED(hr2 = settings.GetValue(section, strDevID,   devID,   &isDevIDIndeterm,   FormatString(_T("%d"), defDevID))))
     {
       bEnabled = FALSE;   // error encountered while retrieving data, so disable the control
       hr = hr2;
