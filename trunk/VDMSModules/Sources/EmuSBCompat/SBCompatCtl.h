@@ -116,6 +116,10 @@ protected:
 
   BYTE m_E2Reply;
 
+  int m_forcedSampleRate;
+  int m_forcedBitsPerSample;
+  int m_forcedNumChannels;
+
   CCriticalSection m_mutex;
 
 protected:
