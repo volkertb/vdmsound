@@ -7,6 +7,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+/* TODO: put these in a .mc file or something */
+#define MSG_ERR_INTERFACE _T("The dependency module '%1' does not support the '%2' interface.%0")
+
+/////////////////////////////////////////////////////////////////////////////
+
 #define INI_STR_VDMSERVICES   L"VDMSrv"
 #define INI_STR_MIDIOUT       L"MidiOut"
 
@@ -73,6 +78,11 @@ STDMETHODIMP CMPU401Ctl::Init(IUnknown * configuration) {
                = Depends->Get(INI_STR_VDMSERVICES);
     m_BaseSrv  = VDMServices;   // Base services (registers, interrupts, etc)
     m_IOSrv    = VDMServices;   // I/O services (I/O port hooks)
+
+    if (m_BaseSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMBaseServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+    if (m_IOSrv == NULL)
+      return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMIOServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
     // Try to obtain the MPU-401 settings, use defaults if none specified
     m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x330, 16, false);
