@@ -84,7 +84,8 @@ public:
 protected:
   CThread m_DMAThread;
   CEvent m_event;
-  DWORD m_activityInterval;
+  DWORD m_minPeriod, m_maxPeriod;
+  double m_period, m_recoveryIncrement;
   DMAChannel m_channels[NUM_DMA_CHANNELS];
 
 protected:
