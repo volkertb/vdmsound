@@ -35,6 +35,15 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+// KLUDGE: in Win2k's NTVDM it looks as if a thread's reserved stack size is
+//  awfully tiny (supposed to be 1MB), and declaring moderate to large,
+//  i.e. <512kB, buffers on the stack causes a stack overflow!
+//  We therefore use the heap for now. :(
+
+#define STACK_HEAP_WORKAROUND 1
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
@@ -530,15 +539,11 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   // Now that we know how much we need to transfer, allocate the transfer buffer
   bufSizeLimit = toTransfer * (m_codec == CODEC_ADPCM_2 ? 4 : m_codec == CODEC_ADPCM_3 ? 3 : m_codec == CODEC_ADPCM_4 ? 2 : 1);
-# if 0
-  buf = (BYTE*)_alloca(bufSizeLimit * sizeof(buf[0]));
+# if STACK_HEAP_WORKAROUND
+  std::auto_ptr<BYTE> buf_auto(new BYTE[bufSizeLimit]);
+  buf = buf_auto.get();
 # else
-  // KLUDGE: in Win2k's NTVDM it looks as if the thread's reserved
-  //  stack size is awfully tiny (supposed to be 1MB), and declaring
-  //  buf[] on the stack causes a stack overflow!
-  //  We therefore use the heap for now. :(
-  buf = new BYTE[bufSizeLimit];
-  std::auto_ptr<BYTE> buf_auto(buf);
+  buf = (BYTE*)_alloca(bufSizeLimit * sizeof(buf[0]));
 # endif
 
   /* TODO: put a limit on the frequency of "need to boost DMA" warnings; logging

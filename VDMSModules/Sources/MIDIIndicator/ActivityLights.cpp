@@ -78,6 +78,9 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
       case 2:
         m_ledID = LED_SCROLLLOCK;
         break;
+      case 3:
+        m_ledID = LED_NONE;
+        break;
       default:
         m_ledID = LED_NONE;
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An invalid value ('%s') was provided for the led identifier ('%s').  Valid values are: 'NUM', 'CAPS', 'SCROLL' and 'none'.\nUsing 'none' by default."), (LPCTSTR)ledName, (LPCTSTR)CString(INI_STR_LEDID)));
@@ -92,7 +95,7 @@ STDMETHODIMP CActivityLights::Init(IUnknown * configuration) {
     return ce.Error();                // Propagate the error
   }
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("ActivityLights initialized")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("ActivityLights initialized (led = %s)"), m_ledID == LED_NUMLOCK ? _T("NUM") : m_ledID == LED_CAPSLOCK ? _T("CAPS") : m_ledID == LED_SCROLLLOCK ? _T("SCROLL") : m_ledID == LED_NONE ? _T("(none)") : _T("???")));
 
   return S_OK;
 }
