@@ -92,10 +92,10 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// WINDOWS XP
+// 24
 //
 
-IDR_WINXP_MANIFEST      RT_MANIFEST             "LaunchPad.manifest"
+IDR_WINXP_MANIFEST      24      MOVEABLE PURE   "LaunchPad.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -114,6 +114,12 @@ IDR_LAUNCHPADSHELLEX    REGISTRY DISCARDABLE    "LaunchPadShellEx.rgs"
 IDI_APPICON             ICON    DISCARDABLE     "Resources/VDMSound.ico"
 IDI_ICON1               ICON    DISCARDABLE     "Resources/icon1.ico"
 IDI_ICON2               ICON    DISCARDABLE     "Resources/icon2.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
 IDB_WIZ_BACK_16         BITMAP  DISCARDABLE     "Resources/wizard_back_16.bmp"
 IDB_WIZ_BACK_256        BITMAP  DISCARDABLE     "Resources/wizard_back_256.bmp"
 IDB_WIZ_HEAD_16         BITMAP  DISCARDABLE     "Resources/wizard_head_16.bmp"
@@ -238,7 +244,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,109,153,45,10
     CONTROL         "Alt+Space",IDC_CHK_WINKALTSPACE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,160,140,49,10
-    LTEXT           "VDMSound Launchpad (ver. 1,0,1,0)\nBETA 5 (bugs: ntvdm@hotmail.com)",IDC_STATIC,10,173,140,18,WS_DISABLED
+    LTEXT           "VDMSound Launchpad (ver. 1,0,1,0)\nBETA 5 (bugs: ntvdm@hotmail.com)",
+                    IDC_STATIC,10,173,140,18,WS_DISABLED
     PUSHBUTTON      "&Change Icon...",IDC_BUT_CHANGEICON,157,177,60,14,
                     WS_GROUP
 END
@@ -253,17 +260,17 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,19,119,12
     RTEXT           "Total:",IDC_STATIC,133,19,22,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    LTEXT           "kB",IDC_STATIC,201,19,13,12,SS_CENTERIMAGE | NOT 
+    LTEXT           "(kB)",IDC_STATIC,197,19,17,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    COMBOBOX        IDC_CMB_EMS,158,19,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        IDC_CMB_EMS,158,19,36,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Enable extended memory (&XMS)",IDC_CHK_XMS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,32,117,12
     RTEXT           "Total:",IDC_STATIC,133,32,22,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    LTEXT           "kB",IDC_STATIC,201,32,13,12,SS_CENTERIMAGE | NOT 
+    LTEXT           "(kB)",IDC_STATIC,197,32,17,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
-    COMBOBOX        IDC_CMB_XMS,158,32,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        IDC_CMB_XMS,158,32,36,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "&Protected Mode",IDC_GRP_PMODE,6,57,211,39,WS_GROUP
     CONTROL         "Enable &DPMI support (DOSX)",IDC_CHK_DPMI,"Button",
@@ -294,14 +301,14 @@ BEGIN
     CONTROL         "Additional options:",IDC_CHK_CONFIGSYS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,47,73,10
     EDITTEXT        IDC_EDT_CONFIGSYS,14,60,196,39,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
-                    ES_WANTRETURN | WS_VSCROLL
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | 
+                    WS_VSCROLL
     GROUPBOX        "AUTOEXEC.BAT",IDC_GRP_AUTOEXECBAT,6,113,211,74,WS_GROUP
     CONTROL         "Additional options:",IDC_CHK_AUTOEXECBAT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,126,73,10
     EDITTEXT        IDC_EDT_AUTOEXECBAT,14,139,196,39,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
-                    ES_WANTRETURN | WS_VSCROLL
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | 
+                    WS_VSCROLL
 END
 
 IDD_ADVPROPPAGE_PERF DIALOG DISCARDABLE  0, 0, 224, 198
@@ -315,14 +322,14 @@ BEGIN
     CONTROL         "Try to &reduce CPU usage:",IDC_CHK_DETECTIDLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,33,98,10
     LTEXT           "    ",IDC_STATIC,24,46,89,30,SS_SUNKEN
-    CONTROL         "Slider1",IDC_SLI_PRIORITY,"msctls_trackbar32",TBS_AUTOTICKS | 
-                    WS_TABSTOP,26,48,85,16,WS_EX_TRANSPARENT
+    CONTROL         "Slider1",IDC_SLI_PRIORITY,"msctls_trackbar32",
+                    TBS_AUTOTICKS | WS_TABSTOP,26,48,85,16,WS_EX_TRANSPARENT
     LTEXT           "Low usage",IDC_STATIC,28,65,40,10,NOT WS_GROUP,
                     WS_EX_TRANSPARENT
     RTEXT           "Med. usage",IDC_STATIC,69,65,40,10,NOT WS_GROUP,
                     WS_EX_TRANSPARENT
-    CTEXT           "(multiple values)",IDC_TXT_PRIORITY_MULTI,26,65,85,10,NOT WS_GROUP | NOT WS_VISIBLE,
-                    WS_EX_TRANSPARENT
+    CTEXT           "(multiple values)",IDC_TXT_PRIORITY_MULTI,26,65,85,10,
+                    NOT WS_VISIBLE | NOT WS_GROUP,WS_EX_TRANSPARENT
     GROUPBOX        "&DMA Servicing",IDC_STATIC,6,91,211,33,WS_GROUP
     RTEXT           "&Polling period:",IDC_STATIC,9,104,48,12,SS_CENTERIMAGE
     CTEXT           "/",IDC_STATIC,101,104,10,12,SS_CENTERIMAGE
@@ -345,7 +352,7 @@ END
 IDD_ADVPROPPAGE_MIDI DIALOGEX 0, 0, 224, 198
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "MIDI"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
     CONTROL         "&Enable MIDI (MPU-401) emulation",IDC_CHK_USEMPU,"Button",
@@ -382,8 +389,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
-    PUSHBUTTON      "Mo&re...",IDC_BUT_MPUOUTDEV,172,88,37,13, WS_DISABLED |
-                    BS_CENTER | BS_VCENTER
+    PUSHBUTTON      "Mo&re...",IDC_BUT_MPUOUTDEV,172,88,37,13,BS_CENTER | 
+                    BS_VCENTER | WS_DISABLED
     CONTROL         "&File:",IDC_CHK_MPUOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_MPUOUTFILE,52,105,144,14,ES_AUTOHSCROLL
@@ -394,13 +401,13 @@ BEGIN
     CONTROL         "De&v.:",IDC_CHK_MPUINDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,139,33,12
     COMBOBOX        IDC_CMB_MPUINDEV,52,139,158,80,CBS_DROPDOWNLIST | 
-                    CBS_AUTOHSCROLL |WS_VSCROLL | WS_TABSTOP
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_ADVPROPPAGE_ADLIB DIALOGEX 0, 0, 224, 198
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "AdLib"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,120
     CONTROL         "&Enable AdLib (FM) Emulation",IDC_CHK_USEFM,"Button",
@@ -409,8 +416,8 @@ BEGIN
     RTEXT           "Base &Port:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_FMPORT,52,20,36,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "&Chip setup:",IDC_STATIC,89,20,41,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_CMB_OPLMODE,136,20,74,70,CBS_DROPDOWNLIST | 
+    RTEXT           "&Chip setup:",IDC_STATIC,89,20,51,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CMB_OPLMODE,146,20,64,70,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Synthesis:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     LTEXT           "(Hz)",IDC_STATIC,90,37,20,12,SS_CENTERIMAGE | NOT 
@@ -434,8 +441,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
-    PUSHBUTTON      "Mo&re...",IDC_BUT_FMOUTDEV,172,88,37,13, WS_DISABLED |
-                    BS_CENTER | BS_VCENTER
+    PUSHBUTTON      "Mo&re...",IDC_BUT_FMOUTDEV,172,88,37,13,BS_CENTER | 
+                    BS_VCENTER | WS_DISABLED
     CONTROL         "&File:",IDC_CHK_FMOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_FMOUTFILE,52,105,144,14,ES_AUTOHSCROLL
@@ -483,8 +490,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
-    PUSHBUTTON      "Mo&re...",IDC_BUT_SBOUTDEV,172,88,37,13, WS_DISABLED |
-                    BS_CENTER | BS_VCENTER
+    PUSHBUTTON      "Mo&re...",IDC_BUT_SBOUTDEV,172,88,37,13,BS_CENTER | 
+                    BS_VCENTER | WS_DISABLED
     CONTROL         "&File:",IDC_CHK_SBOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_SBOUTFILE,52,105,144,14,ES_AUTOHSCROLL
@@ -544,16 +551,17 @@ CAPTION "Troubleshooting"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,59
-    CONTROL         "Diagnostic &Log",IDC_CHK_VDMSLOG,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP | WS_GROUP,14,7,63,10,WS_EX_TRANSPARENT
-    RTEXT           "Log &Detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE | WS_GROUP
+    CONTROL         "Diagnostic &Log",IDC_CHK_VDMSLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,7,63,10,
+                    WS_EX_TRANSPARENT
+    RTEXT           "Log &Detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_LOGDETAIL,52,20,89,70,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Choose &File...",IDC_BUT_LOGBROWSE,147,20,62,14,BS_CENTER | 
-                    BS_VCENTER
+    PUSHBUTTON      "Choose &File...",IDC_BUT_LOGBROWSE,147,20,62,14,
+                    BS_CENTER | BS_VCENTER
     EDITTEXT        IDC_EDT_LOGBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
-    RTEXT           "&Scope:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE | WS_GROUP
+    RTEXT           "&Scope:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     CONTROL         "&MIDI",IDC_CHK_LOGMIDI,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,52,37,31,12
     CONTROL         "&AdLib",IDC_CHK_LOGADLIB,"Button",BS_AUTOCHECKBOX | 
@@ -562,25 +570,24 @@ BEGIN
                     WS_TABSTOP,147,37,58,12
     CONTROL         "&Joystick",IDC_CHK_LOGJOY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,52,48,41,12
-    CONTROL         "&Other modules",IDC_CHK_LOGOTHER,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,100,48,61,12
+    CONTROL         "&Other modules",IDC_CHK_LOGOTHER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,100,48,61,12
     GROUPBOX        "   ",IDC_STATIC,6,71,211,71
     CONTROL         "&Custom Configuration",IDC_CHK_VDMSINI,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,71,83,10,
                     WS_EX_TRANSPARENT
     EDITTEXT        IDC_EDT_VDMSINI,14,84,196,50,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
-                    ES_WANTRETURN | WS_VSCROLL
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | 
+                    WS_VSCROLL
 END
 
-
-IDD_WIZPROPPAGE_INTRO DIALOG DISCARDABLE 0, 0, 317, 200
+IDD_WIZPROPPAGE_INTRO DIALOG DISCARDABLE  0, 0, 317, 200
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "VDMSound Configuration Wizard"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Welcome to the VDMSound Configuration Wizard",IDC_TXT_WIZARDTITLE,
-                    123,7,194,40
+    LTEXT           "Welcome to the VDMSound Configuration Wizard",
+                    IDC_TXT_WIZARDTITLE,123,7,194,40
     LTEXT           "The application you are currently attempting to run has not yet been configured for use with VDMSound.",
                     IDC_STATIC,123,48,194,16
     LTEXT           "What would you like to do?",IDC_STATIC,123,71,194,8
@@ -589,16 +596,15 @@ BEGIN
     LTEXT           "Run the application using a custom setup that is specifically tailored to the application's needs. Use this option with programs that have special requirements.",
                     IDC_STATIC,135,129,182,32
     CONTROL         "Use a &default configuration",IDC_OPT_USEDEFAULT,"Button",
-                    BS_AUTORADIOBUTTON | BS_FLAT | WS_GROUP | 
-                    WS_TABSTOP,123,86,194,10
-    CONTROL         "Set up a &custom configuration",IDC_OPT_USECUSTOM,"Button",
-                    BS_AUTORADIOBUTTON | BS_FLAT | WS_TABSTOP,123,
+                    BS_AUTORADIOBUTTON | BS_FLAT | WS_GROUP | WS_TABSTOP,123,
+                    86,194,10
+    CONTROL         "Set up a &custom configuration",IDC_OPT_USECUSTOM,
+                    "Button",BS_AUTORADIOBUTTON | BS_FLAT | WS_TABSTOP,123,
                     119,194,10
-    LTEXT           "To continue, click Next.",
-                    IDC_STATIC,123,173,194,8
+    LTEXT           "To continue, click Next.",IDC_STATIC,123,173,194,8
 END
 
-IDD_WIZPROPPAGE_CUSTOM_1 DIALOG DISCARDABLE 0, 0, 317, 143
+IDD_WIZPROPPAGE_CUSTOM_1 DIALOG DISCARDABLE  0, 0, 317, 143
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "VDMSound Configuration Wizard"
 FONT 8, "MS Sans Serif"
@@ -610,33 +616,33 @@ BEGIN
                     IDC_STATIC,33,50,263,16
     LTEXT           "A new configuration will be created based on settings taken from an existing VDMSound shortcut.  You will still be able to alter the new configuration as needed.",
                     IDC_STATIC,33,84,263,24
-    CONTROL         "&Create a new configuration from scratch",IDC_OPT_MAKENEW,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,21,39,275,10
-    CONTROL         "&Reuse an existing configuration",IDC_OPT_USETEMPLATE,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,21,73,275,10
+    CONTROL         "&Create a new configuration from scratch",
+                    IDC_OPT_MAKENEW,"Button",BS_AUTORADIOBUTTON | WS_GROUP | 
+                    WS_TABSTOP,21,39,275,10
+    CONTROL         "&Reuse an existing configuration",IDC_OPT_USETEMPLATE,
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,21,73,275,10
     LTEXT           "Enter the location of the VDMSound shortcut that you want to use as a template:",
                     IDC_STATIC,33,112,263,8
     EDITTEXT        IDC_EDT_TEMPLATE,33,126,208,14,ES_AUTOHSCROLL | WS_GROUP
     PUSHBUTTON      "Browse...",IDC_BUT_TEMPLATE,246,126,50,14
 END
 
-IDD_WIZPROPPAGE_CUSTOM_2 DIALOG DISCARDABLE 0, 0, 317, 143
+IDD_WIZPROPPAGE_CUSTOM_2 DIALOG DISCARDABLE  0, 0, 317, 143
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "VDMSound Configuration Wizard"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "TODO: add stuff here",
-                    IDC_STATIC,21,1,275,16
+    LTEXT           "TODO: add stuff here",IDC_STATIC,21,1,275,16
     PUSHBUTTON      "Ad&vanced...",IDC_BUT_ADVANCED,246,126,50,14
 END
 
-IDD_WIZPROPPAGE_FINIS DIALOG DISCARDABLE 0, 0, 317, 200
+IDD_WIZPROPPAGE_FINIS DIALOG DISCARDABLE  0, 0, 317, 200
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "VDMSound Configuration Wizard"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Completing the VDMSound Configuration Wizard",IDC_TXT_WIZARDTITLE,
-                    123,7,194,40
+    LTEXT           "Completing the VDMSound Configuration Wizard",
+                    IDC_TXT_WIZARDTITLE,123,7,194,40
     LTEXT           "You have successfully configured the DOS application for use with VDMSound.",
                     IDC_STATIC,123,48,194,16
     LTEXT           "If you want VDMSound to recall this configuration the next time you run the application, tick the check box below. This will create a VDMSound shortcut in the application's folder.",
@@ -980,12 +986,12 @@ BEGIN
 0x7830, 0x3833, 0x0038, 
     IDC_CMB_OPLMODE, 0x403, 10, 0
 0x7541, 0x6f74, 0x616d, 0x6974, 0x0063, 
-    IDC_CMB_OPLMODE, 0x403, 16, 0
-0x504f, 0x324c, 0x2820, 0x6441, 0x694c, 0x2f62, 0x4253, 0x0029, 
-    IDC_CMB_OPLMODE, 0x403, 19, 0
-0x7544, 0x6c61, 0x4f2d, 0x4c50, 0x2032, 0x5328, 0x5042, 0x6f72, 0x2931, "\000"
-    IDC_CMB_OPLMODE, 0x403, 19, 0
-0x504f, 0x334c, 0x2820, 0x4253, 0x7250, 0x326f, 0x532f, 0x3142, 0x2936, "\000"
+    IDC_CMB_OPLMODE, 0x403, 5, 0
+0x504f, 0x324c, "\000" 
+    IDC_CMB_OPLMODE, 0x403, 10, 0
+0x7544, 0x6c61, 0x4f2d, 0x4c50, 0x0032, 
+    IDC_CMB_OPLMODE, 0x403, 5, 0
+0x504f, 0x334c, "\000" 
     IDC_CMB_FMSYNTHRATE, 0x403, 5, 0
 0x3038, 0x3030, "\000" 
     IDC_CMB_FMSYNTHRATE, 0x403, 6, 0
@@ -1097,26 +1103,26 @@ BEGIN
     IDS_ADVPROPERTIES       "Advanced VDMSound Properties"
     IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*||"
     IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*||"
-    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*||"
-    IDS_TXT_FILTER4         "Log Files (*.log)|*.log|All Files (*.*)|*.*||"
-    IDS_TXT_FILTER4_DEFEXT  "log"
-    IDS_TXT_FILTER5         "VDMSound Shortcut Files (*.vlp)|*.vlp||"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER4         "Log Files (*.log)|*.log|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER4_DEFEXT  "log"
+    IDS_TXT_FILTER5         "VDMSound Shortcut Files (*.vlp)|*.vlp||"
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
-    IDS_TXT_BROWSEPROGFOLDER_TIPS
+    IDS_TXT_BROWSEPROGFOLDER_TIPS 
                             "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
-    IDS_TXT_BROWSEFOUTFOLDER_TIPS
+    IDS_TXT_BROWSEFOUTFOLDER_TIPS 
                             "Please select a folder where the output file(s) will be saved:"
-    IDS_TXT_WIZPROPPAGE_CUSTOM_1_T
+    IDS_TXT_WIZPROPPAGE_CUSTOM_1_T 
                             "Set up a Custom Configuration - Step 1 of 2"
-    IDS_TXT_WIZPROPPAGE_CUSTOM_1_S
+    IDS_TXT_WIZPROPPAGE_CUSTOM_1_S 
                             "Do you want the new configuration to be based on a template?"
-    IDS_TXT_WIZPROPPAGE_CUSTOM_2_T
+    IDS_TXT_WIZPROPPAGE_CUSTOM_2_T 
                             "Set up a Custom Configuration - Step 2 of 2"
-    IDS_TXT_WIZPROPPAGE_CUSTOM_2_S
+    IDS_TXT_WIZPROPPAGE_CUSTOM_2_S 
                             "Make final tweaks, check memory usage with settings, test program\nfor n seconds, etc."
 END
 
@@ -1136,6 +1142,10 @@ BEGIN
     IDS_MSG_SECURITYERR     "%1%nCould not gain full access to the specified file(s) because of insufficient security privileges.%nYou may encounter access problems when displaying and/or saving your changes."
     IDS_MSG_NOFILEERR       "The file '%1' does not appear to exist.%nDo you want to continue?"
     IDS_MSG_NODIRERR        "The directory '%1' does not appear to exist.%nDo you want to continue?"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     IDS_MSG_NOEXECOMBATERR  "The file '%1' does not appear to be a valid MS-DOS executable or batch file.%nDo you want to continue?"
     IDS_MSG_SHORTCUTERR     "Cannot create the file '%1':%n%3 (0x%2!08x!)"
     IDS_MSG_NOVDMSOUND      "The VDMSound core program '%1' could not be found.%nPlease verify that VDMSound is properly installed,%nor that the VDMSPath environment variable points to the VDMSound directory.%nDo you want to continue?"
@@ -1155,3 +1165,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+
