@@ -61,7 +61,7 @@ STDMETHODIMP CSBCompatCtl::InterfaceSupportsErrorInfo(REFIID riid)
 
 
 
-#define _XYZ(str) fprintf(xyz,(LPCSTR)str);
+#define _XYZ(str) if(xyz) fprintf(xyz,(LPCSTR)str);
 FILE* xyz=NULL;
 
 /////////////////////////////////////////////////////////////////////////////
