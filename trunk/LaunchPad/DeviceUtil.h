@@ -40,4 +40,15 @@ namespace DeviceUtil {
   HRESULT EnumDSoundOut(DeviceInfoList& result);
 };
 
+//////////////////////////////////////////////////////////////////////
+// VLPUtil
+//////////////////////////////////////////////////////////////////////
+
+class CLaunchPadSettings;
+
+namespace VLPUtil {
+  // GUI helper functions
+  HRESULT SyncDevListBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, const DeviceUtil::DeviceInfoList& devInfo, CComboBox& control, DeviceUtil::DeviceType defDevType = DeviceUtil::DEV_UNKNOWN, LONG defDevID = -1);
+};
+
 #endif // !defined(AFX_DEVICEUTIL_H__3B79B7EA_56DF_41A8_9089_E7FFEF7CF16F__INCLUDED_)
