@@ -1,7 +1,0 @@
-dos=high, umb
-emm=RAM
-device=%SystemRoot%\system32\himem.sys
-files=40
-buffers=40
-fcbs=4,0
-stacks=9,256

@@ -1,3 +1,0 @@
-@echo Installing...
-@regsvr32 /c VDDLoader.dll
-@regsvr32 /c VDMConfig.dll
