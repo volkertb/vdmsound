@@ -37,6 +37,9 @@ class COpenDOSProgramDialog : public CFileDialog {
 
   protected:
     virtual BOOL OnFileNameOK(void);
+
+  protected:
+    CString m_strFilter;
 };
 
 

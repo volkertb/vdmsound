@@ -18,7 +18,7 @@ public:
 
 // Methods
 public:
-  int LoadIcons(LPCTSTR fName, int index = 0);
+  int LoadIcons(LPCTSTR fName);
   void UnloadIcons(void);
 
 // Member variables

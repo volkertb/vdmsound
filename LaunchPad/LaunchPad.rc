@@ -240,6 +240,12 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_PROJNAME            "LaunchPad"
+    IDS_TXT_MULTIPLEVALUES  "(multiple values)"
+    IDS_ERR_UNKNOWN         "An unknown error has occured. (0x%1!08x!)"
+    IDS_MSG_ICONERROR       "Cannot open the file %2. (0x%1!08x!)"
+    IDS_MSG_NOICONS         "The file %1 contains no icons."
+    IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
+    IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
 END
 
 #endif    // English (U.S.) resources
