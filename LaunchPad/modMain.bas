@@ -10,10 +10,9 @@ Sub Main()
 
   ' Initialize
   modConfig.iniFileName = modIniFile.MakeIniPathStr(App.Path, "LaunchPad.ini")
-  modIniFile.EnsurePathExists iniFileName
+  modIniFile.EnsurePathExists modConfig.iniFileName
   modConfig.LoadCategories fMainForm
 
   ' Start the GUI
   fMainForm.Show
 End Sub
-

@@ -93,11 +93,15 @@ Public Function RenameCategory(tvTree As TreeView, _
   tvNode As Node, _
   ByVal strNewNodeText As String) As Integer
 
+  Dim strOldKey As String
+  strOldKey = tvNode.Key
+
   ' Attempt to rename the current node (assuming the new key is unique)
   If RenameNode(tvTree, tvNode, strNewNodeText) <> 0 Then
     RenameCategory = 1  ' return, duplicate key
   Else
-    'TODO: rename category inside .ini file
+    ' Rename category inside .ini file
+    RenameCategoryInIniFile strOldKey, tvNode.Key
 
     ' If the renamed node has children then we  must recursively rebuild
     '  all children's keys to take into account this node's new key
@@ -111,9 +115,25 @@ Public Function RenameCategory(tvTree As TreeView, _
       Loop
     End If
 
+    ' TODO: rename the applications under this key
+    '  in (1) the ListView, and (2) .ini file
+
     RenameCategory = 0  ' return, the node was successfully renamed
   End If
 End Function
+
+'
+' Renames references to a certain category in the .ini file
+'
+Private Sub RenameCategoryInIniFile(strOldKey As String, _
+  strNewKey As String)
+
+  ' TODO: rename values under 'categories' top-level section
+
+  ' Rename section
+  modIniFile.RenameIniSection iniFileName, "categories." & strOldKey, "categories." & strNewKey
+
+End Sub
 
 '
 ' Adds a node to the given tree.  If the node already
