@@ -54,8 +54,6 @@ void CSBCompatCtlDSP::reset(void) {
   setSampleRate(11025);
 
   /* TODO: stop DMA xfer? (ops. 0x90, 0x98, ... others ?) */
-  /* TODO: account for different meanings of RESET when in high-speed DMA,
-     MIDI UART mode, etc. */
 }
 
 //
@@ -65,12 +63,18 @@ void CSBCompatCtlDSP::reset(char data) {
   if (data != 0) {
     m_isRstAsserted = true;
   } else if (m_isRstAsserted) {
+    /* TODO: account for different meanings of RESET when in high-speed DMA,
+       MIDI UART mode, etc. */
     reset();
     m_bufOut.push((char)0xaa);  // acknowledge reset
   }
 }
 
 void CSBCompatCtlDSP::putCommand(char data) {
+  /* TODO: in the future: handle UART MIDI through here;
+     during high-speed DMA, any byte that comes in here is ignored
+     or treated like a sample byte, but *not* like a DSP command */
+
   // put data into incoming queue
   m_bufIn.push_back(data);
 
@@ -94,7 +98,15 @@ void CSBCompatCtlDSP::putCommand(char data) {
     return;
   }
 
-  if (commandLength  == commandLength) {
+  if (commandLength == m_bufIn.size()) {
+
+#   if 1  /* TODO: might want to disable following logInformation code (performance penalty) in release versions */
+    char msgBuf[1024];
+    sprintf(msgBuf, "Processing DSP command 0x%02x (%d bytes)", cmd & 0xff, commandLength);
+    for (int i = 1; i < commandLength; i++) sprintf(msgBuf + strlen(msgBuf), " %02x", m_bufIn[i] & 0xff);
+    m_hwemu->logInformation(msgBuf);
+#   endif
+
     if (processCommand(cmd))
       m_lastCommand = cmd;
 
@@ -104,6 +116,10 @@ void CSBCompatCtlDSP::putCommand(char data) {
 }
 
 char CSBCompatCtlDSP::getData(void) {
+  /* TODO: if UART MIDI mode supported, might need to multiplex between
+     this and a thread-safe FIFO, or make this FIFO thread-safe -- MIDI
+     data would come in asynchronously! */
+
   if (!m_bufOut.empty()) {
     char data = m_bufOut.front();
     m_bufOut.pop();
@@ -141,6 +157,9 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
   int i;
   char msgBuf[1024] = "";
 
+  /* TODO: interface with mixer for establishing mono/stereo output, filters, etc.; let mixer
+     have a ptr. to DSP, and have DSP expose public fn's for setting up setero, filters, etc. */
+
   switch (command) {
     case 0x04:  /* 004h : DSP Status (Obsolete) */
       // TODO: implement
@@ -157,9 +176,15 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x14:  /* 014h : DMA DAC, 8-bit */
     case 0x91:  /* 091h : DMA DAC, 8-bit (High Speed) */
+      // TODO: account for high-speed by blocking DSP command interpretation until reset?
+      if (command == 0x91)
+        m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x91 (DMA DAC 8-bit high-speed)");
+
       setNumBits(8);
       setNumSamples(MKWORD(m_bufIn[2], m_bufIn[1]) + 1);  /* TODO: how about stereo? */
-//    DSPPlay(false);
+      m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
+          getSampleRate(), getSampleRate() * getNumBits() * getNumChannels() / 8,
+          getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, false);
       return true;
 
     case 0x16:  /* 016h : DMA DAC, 2-bit ADPCM */
@@ -171,10 +196,13 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
     case 0x1c:  /* 01Ch : Auto-Initialize DMA DAC, 8-bit */
     case 0x90:  /* 090h : Auto-Initialize DMA DAC, 8-bit (High Speed) */
       // TODO: account for high-speed by blocking DSP command interpretation until reset?
-      setNumBits(8);
-//    DSPPlay(true);
       if (command == 0x90)
         m_hwemu->logWarning("Attempted to use partially unimplemented DSP command 0x90 (A/I DMA DAC 8-bit high-speed)");
+
+      setNumBits(8);
+      m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(),
+          getSampleRate(), getSampleRate() * getNumBits() * getNumChannels() / 8,
+          getNumBits(), getNumSamples(), ISBDSPHWEmulationLayer::CODEC_PCM, true);
       return true;
 
     case 0x1f:  /* 01Fh : Auto-Initialize DMA DAC, 2-bit ADPCM Reference */
@@ -277,7 +305,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0x45:  /* 045h : Continue Auto-Initialize DMA, 8-bit */
     case 0x47:  /* 047h : Continue Auto-Initialize DMA, 16-bit */
-//    DSPResume();
+      m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0x48:  /* 048h : Set DMA Block Size */
@@ -359,13 +387,15 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
         }
 
         setNumSamples(MKWORD(m_bufIn[3], m_bufIn[2]) + 1); /* TODO: How about stereo? */
-//      DSPPlay(autoInit, true, isSigned ? SB16_CODEC_SIGNED_PCM : SB16_CODEC_UNSIGNED_PCM);
+        m_hwemu->startTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, getNumChannels(), getSampleRate(),
+            getSampleRate() * getNumBits() * getNumChannels() / 8, getNumBits(), getNumSamples(),
+            isSigned ? ISBDSPHWEmulationLayer::CODEC_PCM_SIGNED : ISBDSPHWEmulationLayer::CODEC_PCM, autoInit);
       } return true;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
     case 0xd0:  /* 0D0h : Halt DMA Operation, 8-bit */
-//    DSPPause();
+      m_hwemu->pauseTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xd1:  /* 0D1h : Enable Speaker */
@@ -377,15 +407,15 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0xd4:  /* 0D4h : Continue DMA Operation, 8-bit */
-//    DSPResume();
+      m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xd5:  /* 0D5h : Halt DMA Operation, 16-bit */
-//    DSPPause();
+      m_hwemu->pauseTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xd6:  /* 0D6h : Continue DMA Operation, 16-bit */
-//    DSPResume();
+      m_hwemu->resumeTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xd8:  /* 0D8h : Speaker Status */
@@ -394,7 +424,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xd9:  /* 0D9h : Exit Auto-Initialize DMA Operation, 16-bit */
     case 0xda:  /* 0DAh : Exit Auto-Initialize DMA Operation, 8-bit */
-//    DSPStop();
+      m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK);
       return true;
 
     case 0xe0:  /* 0E0h : DSP Identification */
@@ -418,7 +448,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xe8:  /* 0E8h : Read Test Register */
       m_bufOut.push(m_testRegister);
-      break;
+      return true;
 
     case 0xf0:  /* 0F0h : Sine Generator */
       // TODO: implement
@@ -434,7 +464,7 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 
     case 0xf2:  /* 0F2h : IRQ Request, 8-bit */
     case 0xf3:  /* 0F3h : IRQ Request, 16-bit */
-//    notify(SB16_NOT_INTERRUPT, NULL);     // NULL: not auto-init
+      m_hwemu->generateInterrupt();
       return true;
 
     case 0xfb:  /* 0FBh : DSP Status */

@@ -7,8 +7,28 @@
 //
 class ISBDSPHWEmulationLayer {
   public:
+    enum transfer_t { TT_PLAYBACK, TT_RECORD };
+    enum codec_t { CODEC_PCM, CODEC_PCM_SIGNED, CODEC_ADPCM_2, CODEC_ADPCM_3, CODEC_ADPCM_4 };
+
+  public:
+    virtual void startTransfer(
+        transfer_t type,        // playback (output) or recording (input)
+        int numChannels,        // 1 = mono, 2 = stereo
+        int samplesPerSecond,   // frequency (samples/s)
+        int avgBytesPerSecond,  // average bandwitch of (potentially compressed, e.g. ADPCM) stream
+        int bitsPerSample,      // 8 or 16 (PCM), 2, 3 or 4 (ADPCM)
+        int samplesPerBlock,    // length of SB "block" (in samples); interrupt is generated after every block
+        codec_t codec,          // PCM, ADPCM, etc.
+        bool isAutoInit) = 0;   // type of DMA transfer
+    virtual void pauseTransfer(transfer_t type) = 0;
+    virtual void resumeTransfer(transfer_t type) = 0;
+    virtual void stopTransfer(transfer_t type) = 0;
+
+    virtual void generateInterrupt(void) = 0;
+
     virtual void logError(const char* message) = 0;
     virtual void logWarning(const char* message) = 0;
+    virtual void logInformation(const char* message) = 0;
 };
 
 //
