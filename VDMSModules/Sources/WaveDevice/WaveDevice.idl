@@ -5,17 +5,6 @@
 // produce the type library (WaveDevice.tlb) and marshalling code.
 
 import "oaidl.idl";
-import "ocidl.idl";
-	[
-		object,
-		uuid(088488C0-0684-11D5-9C73-00A024112F81),
-	
-		helpstring("IWaveOut Interface"),
-		pointer_default(unique)
-	]
-	interface IWaveOut : IUnknown
-	{
-	};
 
 [
 	uuid(088488B3-0684-11D5-9C73-00A024112F81),
@@ -24,8 +13,8 @@ import "ocidl.idl";
 ]
 library WAVEDEVICELib
 {
-	importlib("stdole32.tlb");
-	importlib("stdole2.tlb");
+	import "IVDMModule.idl";
+	import "IWave.idl";
 
 	[
 		uuid(088488C1-0684-11D5-9C73-00A024112F81),
@@ -33,6 +22,7 @@ library WAVEDEVICELib
 	]
 	coclass WaveOut
 	{
-		[default] interface IWaveOut;
+		[default] interface IVDMBasicModule;
+		interface IWaveDataConsumer;
 	};
 };

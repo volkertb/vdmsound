@@ -114,8 +114,13 @@ STDMETHODIMP CWaveOut::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPerSample) {
-  if ((m_waveFormat.nChannels != channels) ||
-      (m_waveFormat.nSamplesPerSec != samplesPerSec) ||
+  /* TODO: validate that 10% tolerance in frequency chane is worth anything; if yes, make it parametrizable
+     in VDMS.ini file as a number n = 0...100, then use tolerance range = 1.00 +/- (n / 100.0) */
+
+  if ((m_hWaveOut == NULL) ||
+      (m_waveFormat.nChannels != channels) ||
+      (m_waveFormat.nSamplesPerSec * 0.90 > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
+      (m_waveFormat.nSamplesPerSec * 1.10 < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
       (m_waveFormat.wBitsPerSample != bitsPerSample))
   {
     MMRESULT errCode;
@@ -142,8 +147,12 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
     m_waveFormat.wBitsPerSample = bitsPerSample;
     m_waveFormat.cbSize = 0;
 
-    WaveOutOpen();
+    if (!WaveOutOpen())
+      return S_FALSE;
   }
+
+  if (m_waveOut != NULL)
+    return m_waveOut->SetFormat(channels, samplesPerSec, bitsPerSample);
 
   return S_OK;
 }
@@ -152,8 +161,8 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length) {
   if (data == NULL)
     return E_POINTER;
 
-  if (m_hWaveOut == NULL)
-    WaveOutOpen();
+  if ((m_hWaveOut == NULL) && (!WaveOutOpen()))
+    return S_FALSE;         // The device is not open, and an attempt to open it failed
 
   WAVEHDR* waveHdr = NULL;
   LPSTR waveData = NULL;
@@ -303,27 +312,30 @@ void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, D
 //
 // Opens the Wave device specified in the module's settings
 //
-void CWaveOut::WaveOutOpen(void) {
+bool CWaveOut::WaveOutOpen(bool isInteractive) {
   static bool isErrPrompt = true;
   static time_t lastRetry = 0;
 
+  // Don't open the device if it's already open
+  if (m_hWaveOut != NULL)
+    return true;
+
   // Only attempt to open the device at reasonable intervals, to avoid excessive overhead
   if ((time(NULL) - lastRetry) < WAVEOPEN_RETRY_INTERVAL) {
-    return;   // another attempt to open the device was made very recently; don't overdo it
+    return false;           // another attempt to open the device was made very recently; don't overdo it
   } else {
     lastRetry = time(NULL);
   }
-
-  // Don't open the device if it's already open
-  if (m_hWaveOut != NULL)
-    return;
 
   MMRESULT errCode;
 
   // Attempt to open the Wave-out device
   while ((errCode = waveOutOpen(&m_hWaveOut, m_deviceID, &m_waveFormat, (DWORD)WaveOutProc, (DWORD)(this), CALLBACK_FUNCTION)) != MMSYSERR_NOERROR) {
     if (!isErrPrompt)       // did the user select not to be prompted again ?
-      break;                // stop trying
+      return false;         // stop trying
+
+    if (!isInteractive)     // do we want to pop up a message box ?
+      return false;         // stop trying
 
     if (MessageBox(FormatMessage(MSG_ERR_E_OPENDEVICE, false, m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)),
                    _T("Wave-out Device Error"), /* TODO: LoadString(...) */
@@ -331,9 +343,11 @@ void CWaveOut::WaveOutOpen(void) {
     {
       isErrPrompt = false;  // the user does not whish to be prompted again !
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Could not open the device %d ('%s'):\n0x%08x - %s"), m_deviceID, (LPCTSTR)m_deviceName, (int)errCode, (LPCTSTR)WaveOutGetError(errCode)));
-      break;                // stop trying
+      return false;         // stop trying
     }
   }
+
+  return (m_hWaveOut != NULL);
 }
 
 //
