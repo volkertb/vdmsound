@@ -12,11 +12,16 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define INI_STR_DEVICEID      L"device"
+#define INI_STR_BUFOPRANGE    L"buffer"
 #define INI_STR_WAVEOUT       L"WaveOut"
 
 /////////////////////////////////////////////////////////////////////////////
 
 #define UM_WOM_ERROR      (WM_USER + 0x100)
+
+/////////////////////////////////////////////////////////////////////////////
+
+#define TOLERANCE_FREQ        10
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +54,7 @@ STDMETHODIMP CWaveOut::InterfaceSupportsErrorInfo(REFIID riid)
 }
 
 
-
+FILE* xyz=NULL;
 /////////////////////////////////////////////////////////////////////////////
 // IVDMBasicModule
 /////////////////////////////////////////////////////////////////////////////
@@ -69,6 +74,9 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
     // Obtain Wave-Out settings (if available)
     m_deviceID = CFG_Get(Config, INI_STR_DEVICEID, -1, 10, false);
 
+    // Obtain the buffer operating range (milliseconds)
+    m_bufOpRange = CFG_Get(Config, INI_STR_BUFOPRANGE, 50, 10, false);
+
     // Try to obtain an interface to a Wave-out module, use NULL if none available
     m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, true);   // do not complain if no such module available
   } catch (_com_error& ce) {
@@ -84,7 +92,7 @@ STDMETHODIMP CWaveOut::Init(IUnknown * configuration) {
   m_gcThread.Resume();
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("WaveOut initialized (device ID = %d, '%s')"), m_deviceID, (LPCTSTR)m_deviceName));
-
+xyz=fopen("jitter.txt","wb");
   return S_OK;
 }
 
@@ -92,7 +100,7 @@ STDMETHODIMP CWaveOut::Destroy() {
   // Release the Wave device
   if (m_hWaveOut != NULL)
     WaveOutClose();
-
+if(xyz) fclose(xyz);
   // Signal the GC thread to quit
   if (m_gcThread.GetThreadHandle() != NULL)
     m_gcThread.Cancel();
@@ -117,16 +125,20 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
   /* TODO: validate that 10% tolerance in frequency chane is worth anything; if yes, make it parametrizable
      in VDMS.ini file as a number n = 0...100, then use tolerance range = 1.00 +/- (n / 100.0) */
 
-  HRESULT hrThis = S_OK, hrThat;
+  HRESULT hrThis = S_OK, hrThat = S_OK;
 
+  // Check if the device has to be (re)opened either because it was not
+  //   opened before, or following a change in playback format that requires
+  //   the device to be closed then opened again with the new format
   if ((m_hWaveOut == NULL) ||
       (m_waveFormat.nChannels != channels) ||
-      (m_waveFormat.nSamplesPerSec * 0.90 > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
-      (m_waveFormat.nSamplesPerSec * 1.10 < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
+      (m_waveFormat.nSamplesPerSec * (1.00 - TOLERANCE_FREQ / 100.0) > samplesPerSec) || // accept 10% tolerance in freq. change, avoids excessive overhead in
+      (m_waveFormat.nSamplesPerSec * (1.00 + TOLERANCE_FREQ / 100.0) < samplesPerSec) || // closing/re-opening the device (some games abuse the time-constant)
       (m_waveFormat.wBitsPerSample != bitsPerSample))
   {
     MMRESULT errCode;
 
+    // If the device is open, try to close it first
     while (m_hWaveOut != NULL) {
       switch (errCode = waveOutClose(m_hWaveOut)) {
         case MMSYSERR_NOERROR:
@@ -141,7 +153,9 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
       }
     }
 
+    // (Re)open the (now closed) device
     if (hrThis == S_OK) {
+      // Change the format
       m_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
       m_waveFormat.nChannels = channels;
       m_waveFormat.nSamplesPerSec = samplesPerSec;
@@ -150,8 +164,16 @@ STDMETHODIMP CWaveOut::SetFormat(WORD channels, DWORD samplesPerSec, WORD bitsPe
       m_waveFormat.wBitsPerSample = bitsPerSample;
       m_waveFormat.cbSize = 0;
 
+      // Open the device with the new format
       if (!WaveOutOpen())
         hrThis = S_FALSE;
+
+      // No bytes are enqueued for playback (yet)
+      InterlockedExchange(&m_bufferedBytes, 0);
+
+      // Compute the ideal amount of buffering (in bytes)
+      m_bufferedLo = m_waveFormat.nAvgBytesPerSec * m_bufOpRange / 1000;
+      m_bufferedHi = m_bufferedLo * 2;
     }
   }
 
@@ -168,9 +190,8 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
   if (load == NULL)
     return E_POINTER;
 
-  *load = 1.0;
-
-  HRESULT hrThis = S_OK, hrThat;
+  HRESULT hrThis = S_OK, hrThat = S_OK;
+  DOUBLE loadThis = 1.0, loadThat = 1.0;
 
   if ((m_hWaveOut == NULL) && (!WaveOutOpen())) {
     hrThis = S_FALSE;         // The device is not open, and an attempt to open it failed
@@ -183,19 +204,26 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
       /* TODO: get rid of this silly new/delete scheme; replace with static,
          pre-allocated circular buffer (size specifiable in VDMS.ini?) and
          pre-allocated WAVEHDR's that point at consecutive locations in the
-         buffer -- new/delete is too inefficient */
+         buffer -- new/delete is too inefficient (we can make use of the fact
+         that we know that data will only be allocated/released in a FIFO
+         manner) */
 
+      // Allocate header & data needed by Windows to play back a sound-block
       waveHdr  = new WAVEHDR;
       waveData = new CHAR[length];
 
-      memcpy(waveData, data, length); // the actual data
-
+      // Fill in the header information
       waveHdr->lpData = waveData;
       waveHdr->dwBufferLength = length;
       waveHdr->dwBytesRecorded = 0;
       waveHdr->dwUser = (DWORD)waveHdr;
       waveHdr->dwFlags = 0;
       waveHdr->dwLoops = 0;
+
+      // Copy the data to the playback buffer
+      memcpy(waveData, data, length);
+
+      // Prepare and send the header + data to the Windows device
 
       MMRESULT errCode;
 
@@ -211,22 +239,10 @@ STDMETHODIMP CWaveOut::PlayData(BYTE * data, LONG length, DOUBLE * load) {
         AfxThrowUserException();
       }
 
-      LONG oldCount = InterlockedExchangeAdd(&m_enqueuedBytes, length);
+      // The data was enqueued successfully => update buffer byte count
+      LONG lastBufferedBytes = InterlockedExchangeAdd(&m_bufferedBytes, length);
 
-LONG _LO_ = m_waveFormat.nAvgBytesPerSec * 1.0 * 0.90;
-LONG _HI_ = m_waveFormat.nAvgBytesPerSec * 1.0 * 1.10;
-
-if (oldCount<_LO_) {
-*load = 1.0*oldCount/_LO_;//(oldCount*((double)(100000-_LO_)/_LO_)/(100000-oldCount));
-//printf("<< buf = % 6lu (%0.5f), xfer = %d\n", oldCount, (float)x, (int)length);
-} else if (oldCount>_HI_) {
-*load = 1.0*oldCount/_HI_;//(oldCount*((double)(100000-_HI_)/_HI_)/(100000-oldCount));
-//printf("<< buf = % 6lu (%0.5f), xfer = %d\n", oldCount, (float)x, (int)length);
-} else {
-//printf("** % 6lu\n", oldCount);
-*load=1.0;
-}
-
+      loadThis = min((double)/*lastBufferedBytes*/m_bufferedBytes / m_bufferedLo,1.0);
     } catch (CMemoryException * pme) {
       TCHAR errMsg[1024] = _T("<no description available>");
       pme->GetErrorMessage(errMsg, sizeof(errMsg)/sizeof(errMsg[0]));
@@ -241,8 +257,12 @@ if (oldCount<_LO_) {
     }
   }
 
+  // Forward the call to other module(s) daisy-chained after us (if any)
   if (m_waveOut != NULL)
-    hrThat = m_waveOut->PlayData(data, length, load);
+    hrThat = m_waveOut->PlayData(data, length, &loadThat);
+
+  // Decide the load (compromise between us and other modules)
+  *load = loadThis * loadThat;
 
   return (hrThat == S_OK ? hrThis : hrThat);
 }
@@ -332,7 +352,7 @@ void CALLBACK CWaveOut::WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, D
         _ASSERTE(hwo == pThis->m_hWaveOut);
         _ASSERTE(waveHdr != NULL);
 
-        InterlockedExchangeAdd(&(pThis->m_enqueuedBytes), -(LONG)(waveHdr->dwBufferLength));
+        InterlockedExchangeAdd(&(pThis->m_bufferedBytes), -(LONG)(waveHdr->dwBufferLength));
 
         if ((errCode = waveOutUnprepareHeader(hwo, waveHdr, sizeof(*waveHdr))) != MMSYSERR_NOERROR) {
           pThis->m_gcThread.PostMessage(UM_WOM_ERROR, (WPARAM)hwo, (LPARAM)errCode);

@@ -368,7 +368,6 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
 
   // Get the current time
   DWORD currentTime = timeGetTime();
-  DWORD deltaTime = currentTime - m_lastTransferTime;
   m_lastTransferTime = currentTime;
 
   // Performance 'hack' (quick-DMA)
@@ -382,7 +381,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
     m_transferredBytes += toTransfer;
 
 #   if _DEBUG
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d (quick-DMA)"), (int)(deltaTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d (quick-DMA)"), (int)(currentTime - m_lastTransferTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit));
 #   endif
 
     *transferred = maxData;
@@ -402,9 +401,15 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   //   on playback performance (playback buffer overrun/underrun)
   double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
 
+# if 0
+  // Compute how many bytes should be transferred based on average bandwidth and
+  //   the time elapsed since the last transfer
+  long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(currentTime - m_lastTransferTime)) / 1000.0);
+# else
   // Compute how many bytes should be transferred based on average bandwidth,
   //   time elapsed since the transfer started, and bytes transferred to date
-  long toTransfer = scalingFactor * max(0.0, ((m_avgBandwidth * (double)(deltaTime)) / 1000.0));
+  long toTransfer = max(0, ((m_avgBandwidth * (double)(currentTime - m_transferStartTime)) / 1000.0 - m_transferredBytes));
+#endif
 
   // Round (down) the number of bytes to transfer in such a way so that
   //   the transfer will not break a 16-bit sample down the middle, or split
@@ -495,7 +500,7 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   }
 
 # if _DEBUG
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d; load factor = %0.5f"), (int)(deltaTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit, (float)m_renderLoad));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transferring: after %dms, %d bytes (%d bytes in last burst) @ %dcps from %p, type = %d, mode = %d, dir = %d, A/I = %d; load factor = %0.5f"), (int)(currentTime - m_lastTransferTime), (int)m_transferredBytes, (int)toTransfer, (int)m_avgBandwidth, (int)physicalAddr, (int)type, (int)mode, (int)isDescending, (int)isAutoInit, (float)m_renderLoad));
 # endif
 
   // Update DMA state upon return
@@ -532,7 +537,7 @@ STDMETHODIMP CSBCompatCtl::HandleAfterTransfer(BYTE channel, ULONG transferred, 
       m_SBDSP.set16BitIRQ(numInterrupts);
     }
 
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_lastTransferTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Interrupting (%s, x%d): after %dms, %d bytes%s"), m_bitsPerSample != 16 ? _T("8-bit") : _T("16-bit"), numInterrupts, (int)(timeGetTime() - m_transferStartTime), (int)m_transferredBytes, isTerminalCount != 0 ? _T(" (terminal count)") : _T("")));
   }
 
   return S_OK;
@@ -565,7 +570,8 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
   }
 
   // Set up the transfer state
-  m_lastTransferTime = timeGetTime();   // when the transfer starts
+  m_transferStartTime = timeGetTime();  // when the transfer started
+  m_lastTransferTime = m_transferStartTime;
   m_transferredBytes = 0;               // how many bytes were transferred to date
   m_avgBandwidth = numChannels * samplesPerSecond * bitsPerSample / 8;
   m_DSPBlockSize = samplesPerBlock * bitsPerSample / 8;
@@ -618,7 +624,9 @@ void CSBCompatCtl::pauseTransfer(transfer_t type) {
 void CSBCompatCtl::resumeTransfer(transfer_t type) {
   if (m_isPaused) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("DMA transfer resumed (ch. %d)"), m_activeDMAChannel));
-    m_lastTransferTime += (timeGetTime() - m_transferPauseTime); // adjust delta-time with inactivity amount
+    DWORD deltaTime = timeGetTime() - m_transferPauseTime;
+    m_lastTransferTime  += deltaTime;
+    m_transferStartTime += deltaTime;
     m_isPaused = false;
   } else {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to resume an already active transfer")));
