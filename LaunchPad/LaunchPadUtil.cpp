@@ -197,6 +197,33 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 
 //////////////////////////////////////////////////////////////////////
 //
+// COpenMAPFileDialog
+//
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+COpenMAPFileDialog::COpenMAPFileDialog(
+  LPCTSTR lpszFileName,
+  CWnd* pParentWnd)
+: CFileDialog(TRUE, NULL, lpszFileName, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, NULL, pParentWnd)
+{
+  m_strFilter.LoadString(IDS_TXT_FILTER3);
+  m_strFilter += _T('|'); // add trailing delimiter
+
+  // Change '|' delimiters to '\0'; do not call ReleaseBuffer() since the string contains '\0' characters
+  for (LPTSTR pch = m_strFilter.GetBuffer(0); (pch = _tcschr(pch, '|')) != NULL; *(pch++) = '\0');
+
+  m_ofn.lpstrFilter  = m_strFilter;
+  m_ofn.nFilterIndex = 1;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
 // VLPUtil
 //
 //////////////////////////////////////////////////////////////////////
@@ -481,6 +508,7 @@ HRESULT VLPUtil::SyncRadioButton(
   LPCTSTR section,                                    // ini section
   LPCTSTR key,                                        // key (string) under the given section
   CButton& control,                                   // button control with which the data must be synchronized
+  CString& otherValueStorage,                         // caller-provided temporary storage for "other" data
   LPCTSTR selValue1,                                  // list of known values for which this button should not be in a selected state
   ...)                                                //  (list must end with a NULL value)
 {
@@ -494,8 +522,18 @@ HRESULT VLPUtil::SyncRadioButton(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((control.GetState() & 0x3) == BST_CHECKED) {
-      return settings.UnsetValue(section, key);       // reset if the "Other" option is selected
+    if ((control.GetState() & 0x3) == BST_CHECKED) {  // "Other" option is selected
+      if (otherValueStorage.IsEmpty())
+        return E_FAIL;  // if "Other" ever got selected/enabled (via bSave==FALSE) then we should have *something* in otherValueStorage
+
+      switch (otherValueStorage.GetAt(0)) {
+        case _T('0'):   // "indeterminate"
+          return settings.UnsetValue(section, key);   // reset
+        case _T('1'):   // "determinate"
+          return settings.SetValue(section, key, otherValueStorage.Mid(1));
+        default:
+          return E_FAIL;
+      }
     } else {
       return S_OK;
     }
@@ -510,20 +548,28 @@ HRESULT VLPUtil::SyncRadioButton(
     hr = settings.GetValue(section, key, value, &isIndeterminate, _T(""));
     value.TrimLeft(); value.TrimRight();
 
-    BOOL isEnabled = SUCCEEDED(hr);                   // disable the control if an error occured
+    BOOL isSelected = TRUE;
+    BOOL isEnabled  = SUCCEEDED(hr);                  // disable the control if an error occured
 
     if (!isIndeterminate) {
       for (LPCTSTR arg = selValue1; arg != NULL; arg = va_arg(argList, LPCTSTR)) {
         if (value.CollateNoCase(arg) == 0) {
-          isEnabled = FALSE;
+          isSelected = FALSE;                         // another radio matched, so do not select "Other"
+          isEnabled &= !otherValueStorage.IsEmpty();  // If we had a "Other" value lately then keep the control enabled, even if not selected
           break;
         }
       }
+
+      if (isSelected) {
+        otherValueStorage = _T("1") + value;          // store "determinate" (non-empty) value if it doesn't correspind to any of the known (non-"Other") values, i.e. selValue1/2/3...
+      }
+    } else {
+      otherValueStorage = _T("0");                    // remember as "indeterminate"
     }
 
     control.EnableWindow(isEnabled);
     control.SetButtonStyle(BS_AUTORADIOBUTTON);
-    control.SetCheck(isEnabled ? BST_CHECKED : BST_UNCHECKED);
+    control.SetCheck(isSelected ? BST_CHECKED : BST_UNCHECKED);
 
     va_end(argList);
 
@@ -931,6 +977,13 @@ BOOL VLPUtil::isMSDOSFile(LPCTSTR fName) {
     StrSplit(fName, _T('.'), lhs, rhs, FALSE);
     return (rhs.CompareNoCase(_T("exe")) == 0) || (rhs.CompareNoCase(_T("com")) == 0) || (rhs.CompareNoCase(_T("bat")) == 0);
   }
+}
+
+//
+//
+//
+CString VLPUtil::GetVDMSFilePath(LPCTSTR fileName) {
+  return GetAbsolutePath(fileName, _tgetenv(_T("VDMSPath")));
 }
 
 //
