@@ -15,6 +15,60 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define _VDMS_ENABLE_SVC_LOG 1
+
+#ifdef _VDMS_ENABLE_SVC_LOG
+
+# include <mmsystem.h>
+# pragma comment ( lib , "winmm.lib" )
+
+  FILE* _vdms_fLog;
+  CRITICAL_SECTION _vdms_lock;
+
+  void _vdms_trace(const char* format, ...) {
+    EnterCriticalSection(&_vdms_lock);
+    va_list marker;
+    va_start(marker, format);
+
+    DWORD wintime = timeGetTime();
+    int ms = wintime % 1000; wintime = (wintime - ms) / 1000;
+    int  s = wintime %   60; wintime = (wintime -  s) /   60;
+    int  m = wintime %   60; wintime = (wintime -  m) /   60;
+    int  h = wintime;
+
+    fprintf(_vdms_fLog != NULL ? _vdms_fLog : stderr, "%08x [%02d:%02d:%02d.%03d] ", GetCurrentThreadId(), h, m, s, ms);
+    vfprintf(_vdms_fLog != NULL ? _vdms_fLog : stderr, format, marker);
+
+    va_end(marker);
+    LeaveCriticalSection(&_vdms_lock);
+  }
+
+  void _vdms_trace_init(void) {
+    InitializeCriticalSection(&_vdms_lock);
+    _vdms_fLog = fopen("VDMServices.log", "wb");
+    _vdms_trace("*** begin ***\n");
+  }
+
+  void _vdms_trace_destroy(void) {
+    _vdms_trace("*** end ***\n");
+    if (_vdms_fLog != NULL) fclose(_vdms_fLog);
+    DeleteCriticalSection(&_vdms_lock);
+  }
+
+# define VDMS_TRACE_INIT _vdms_trace_init
+# define VDMS_TRACE_DESTROY _vdms_trace_destroy
+# define VDMS_TRACE _vdms_trace
+
+#else
+
+# define VDMS_TRACE_INIT
+# define VDMS_TRACE_DESTROY
+# define VDMS_TRACE
+
+#endif  // _VDMS_ENABLE_SVC_LOG
+
+/////////////////////////////////////////////////////////////////////////////
+
 IVDMQUERYLib::IVDMRTEnvironmentPtr CVDMServices::m_env = NULL;
 
 long CVDMServices::m_lInstanceCount = 0;
@@ -85,6 +139,8 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("VDMServices initialized (hInstance = 0x%08x)"), m_hInstance));
 
+  VDMS_TRACE_INIT();
+
   return S_OK;
 }
 
@@ -116,6 +172,8 @@ STDMETHODIMP CVDMServices::Destroy() {
   // Release the runtime environment
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("VDMServices released")));
   RTE_Set(m_env, NULL);
+
+  VDMS_TRACE_DESTROY();
 
   return S_OK;
 }
@@ -272,6 +330,8 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
   if (length < 1)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
 
+  VDMS_TRACE("-> READ MEMORY %04x:%08x (%d) into %p (%d bytes)\n", segment & 0xffff, offset, mode, buffer, length);
+
   PBYTE pSrc;
 
   switch (mode) {
@@ -283,18 +343,22 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       pSrc = GetVDMPointer(MAKELONG(offset, segment), length, FALSE);
       memcpy(buffer, pSrc, length);
       FreeVDMPointer(MAKELONG(offset, segment), length, pSrc, FALSE);
-      return S_OK;
+      break;
 
     case ADDR_PHYSICAL:
       pSrc = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
       memcpy(buffer, pSrc + offset, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pSrc, FALSE);
-      return S_OK;
+      break;
 
     default:
       memset(buffer, 0, length);
       return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
+
+  VDMS_TRACE("<- read memory\n");
+
+  return S_OK;
 }
 
 STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length) {
@@ -303,6 +367,8 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
 
   if (length < 1)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
+
+  VDMS_TRACE("-> WRITE MEMORY %04x:%08x (%d) from %p (%d bytes)\n", segment & 0xffff, offset, mode, buffer, length);
 
   PBYTE pDest;
 
@@ -314,32 +380,42 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       pDest = GetVDMPointer(MAKELONG(offset, segment), length, FALSE);
       memcpy(pDest, buffer, length);
       FreeVDMPointer(MAKELONG(offset, segment), length, pDest, FALSE);
-      return S_OK;
+      break;
 
     case ADDR_PHYSICAL:
       pDest = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
       memcpy(pDest + offset, buffer, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pDest, FALSE);
-      return S_OK;
+      break;
 
     default:
       return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
+
+  VDMS_TRACE("<- write memory\n");
+
+  return S_OK;
 }
 
 STDMETHODIMP CVDMServices::SimulateInterrupt(INTERRUPT_T type, BYTE line, USHORT count) {
+  VDMS_TRACE("-> SIMULATE IRQ %d (%d) %dx\n", line, type, count);
+
   switch (type) {
     case INT_MASTER:
       VDDSimulateInterrupt(ICA_MASTER, line, count);
-      return S_OK;
+      break;
 
     case INT_SLAVE:
       VDDSimulateInterrupt(ICA_SLAVE, line, count);
-      return S_OK;
+      break;
 
     default:
       return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SimulateInterrupt"), _T("type"), (int)type), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
+
+  VDMS_TRACE("<- simulate irq\n");
+
+  return S_OK;
 }
 
 STDMETHODIMP CVDMServices::TerminateVDM() {
@@ -419,6 +495,8 @@ STDMETHODIMP CVDMServices::SetDMAState(USHORT channel, DMA_INFO_SEL_T flags, DMA
   if (DMAInfo == NULL)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("SetDMAState"), _T("DMAInfo")), __uuidof(IVDMDMAServices), E_POINTER);
 
+  VDMS_TRACE("-> SET DMA %d (%c %c %c %c) %04x:%08x (%d, 0x%02x)\n", channel, ((flags & UPDATE_PAGE) != 0) ? 'p' : ' ', ((flags & UPDATE_ADDR) != 0) ? 'a' : ' ', ((flags & UPDATE_COUNT) != 0) ? 'c' : ' ', ((flags & UPDATE_STATUS) != 0) ? 's' : ' ', DMAInfo->page & 0xffff, DMAInfo->addr & 0xffff, DMAInfo->count & 0xffff, DMAInfo->status & 0xff);
+
   WORD vddFlags = 0;
   VDD_DMA_INFO info;
 
@@ -446,6 +524,8 @@ STDMETHODIMP CVDMServices::SetDMAState(USHORT channel, DMA_INFO_SEL_T flags, DMA
     DWORD lastError = GetLastError();
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("SetDMAState"), _T("VDDSetDMA")), __uuidof(IVDMDMAServices), HRESULT_FROM_WIN32(lastError));
   }
+
+  VDMS_TRACE("<- set dma\n");
 
   return S_OK;
 }
@@ -521,6 +601,8 @@ VOID CALLBACK CVDMServices::VDDUserResume(VOID) {
 /////////////////////////////////////////////////////////////////////////////
 
 VOID CALLBACK CVDMServices::VDDPortINB(WORD iPort, BYTE * data) {
+  VDMS_TRACE("-> INB 0x%03x\n", iPort);
+
   try {
     m_ports.PortINB(iPort, data);
   } catch (_com_error& ce) {
@@ -528,9 +610,13 @@ VOID CALLBACK CVDMServices::VDDPortINB(WORD iPort, BYTE * data) {
   } catch (...) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("%s: Unhandled exception"), _T("VDDPortINB")));
   }
+
+  VDMS_TRACE("<- inb (%02x)\n", (*data) & 0xff);
 }
 
 VOID CALLBACK CVDMServices::VDDPortINW(WORD iPort, WORD * data) {
+  VDMS_TRACE("-> INW 0x%03x\n", iPort);
+
   try {
     m_ports.PortINW(iPort, data);
   } catch (_com_error& ce) {
@@ -538,6 +624,8 @@ VOID CALLBACK CVDMServices::VDDPortINW(WORD iPort, WORD * data) {
   } catch (...) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("%s: Unhandled exception"), _T("VDDPortINW")));
   }
+
+  VDMS_TRACE("<- inw (%04x)\n", (*data) & 0xffff);
 }
 
 VOID CALLBACK CVDMServices::VDDPortINSB(WORD iPort, BYTE * data, WORD count) {
@@ -567,6 +655,8 @@ VOID CALLBACK CVDMServices::VDDPortINSW(WORD iPort, WORD * data, WORD count) {
 
 
 VOID CALLBACK CVDMServices::VDDPortOUTB(WORD oPort, BYTE data) {
+  VDMS_TRACE("-> OUTB 0x%03x, %02x\n", oPort, data & 0xff);
+
   try {
     m_ports.PortOUTB(oPort, data);
   } catch (_com_error& ce) {
@@ -574,9 +664,13 @@ VOID CALLBACK CVDMServices::VDDPortOUTB(WORD oPort, BYTE data) {
   } catch (...) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("%s: Unhandled exception"), _T("VDDPortOUTB")));
   }
+
+  VDMS_TRACE("<- outb\n");
 }
 
 VOID CALLBACK CVDMServices::VDDPortOUTW(WORD oPort, WORD data) {
+  VDMS_TRACE("-> OUTW 0x%03x, %04x\n", oPort, data & 0xffff);
+
   try {
     m_ports.PortOUTW(oPort, data);
   } catch (_com_error& ce) {
@@ -584,6 +678,8 @@ VOID CALLBACK CVDMServices::VDDPortOUTW(WORD oPort, WORD data) {
   } catch (...) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("%s: Unhandled exception"), _T("VDDPortOUTW")));
   }
+
+  VDMS_TRACE("<- outw\n");
 }
 
 VOID CALLBACK CVDMServices::VDDPortOUTSB(WORD oPort, BYTE * data, WORD count) {
