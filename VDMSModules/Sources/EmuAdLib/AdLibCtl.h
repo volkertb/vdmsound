@@ -10,11 +10,16 @@
 namespace MAME {
 # define HAS_YM3812 1
 # include "fmopl.h"
-# undef __FMOPL_H_    // temp. hack
+# undef __FMOPL_H_          // temp. hack
 # define HAS_YMF262 1
 # include "ymf262.h"
-# define __FMOPL_H_   // temp. hack
+# define __FMOPL_H_         // temp. hack
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+#define OPL_CHIP0 0         // First OPL chip (used in all modes)
+#define OPL_CHIP1 1         // Second OPL chip (used in dual-OPL2 mode only)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +95,7 @@ class ATL_NO_VTABLE CAdLibCtl :
 {
 public:
 	CAdLibCtl()
-    : m_instanceID(-1), m_AdLibFSM(this, CAdLibCtlFSM::TYPE_OPL2)
+    : m_instanceID(-1), m_AdLibFSM1(this, OPL_CHIP0), m_AdLibFSM2(this, OPL_CHIP1)
     { }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_ADLIBCTL)
@@ -108,7 +113,7 @@ END_COM_MAP()
 // IAdLibHWEmulationLayer
 public:
   void resetOPL(void);
-  void setOPLReg(int regSet, int regIdx, int value);
+  void setOPLReg(int chipID, int regSet, int regIdx, int value);
   OPLTime_t getTimeMicros(void);
   void logError(const char* message);
   void logWarning(const char* message);
@@ -162,9 +167,13 @@ protected:
 protected:
   struct OPLMessage {
     DWORD timestamp;
+    int chipID;
     int regSet;
     int regIdx;
     int value;
+  };
+  enum mode_t {
+    MODE_OPL2, MODE_DUAL_OPL2, MODE_OPL3
   };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -173,10 +182,11 @@ protected:
 protected:
   int m_basePort;
   int m_sampleRate;
+  mode_t m_oplMode;
 
 // Platform-independent classes
 protected:
-  CAdLibCtlFSM m_AdLibFSM;
+  CAdLibCtlFSM m_AdLibFSM1, m_AdLibFSM2;  // two FSM's, one per OPL chip (second FSM/chip is only used when in dual OPL2 mode)
 
 // Other member variables
 protected:

@@ -8,11 +8,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define USE_OPL2  1
-#define USE_OPL3  0
-
-/////////////////////////////////////////////////////////////////////////////
-
 /* TODO: put these in a .mc file or something */
 #define MSG_ERR_INTERFACE     _T("The dependency module '%1' does not support the '%2' interface.%0")
 #define MSG_ERR_NOINSTSLOTS   _T("Too many instances running (maximum %!d!1 allowed).%0")
@@ -25,13 +20,23 @@
 
 #define INI_STR_BASEPORT      L"port"
 #define INI_STR_RATE          L"sampleRate"
+#define INI_STR_OPLMODE       L"oplMode"
 
 /////////////////////////////////////////////////////////////////////////////
 
-#define OPL_AUDIOBUF_SIZE     65536     // Allows for almost 1s of stereo audio data at 44.1kHz
-#define OPL_INTERNAL_FREQ     3600000   // The OPL operates at 3.6MHz
-#define OPL_NUM_CHIPS         1         // Number of OPL chips
-#define OPL_CHIP0             0
+#define MAX_AUDIOBUF_SIZE     65536     // Allows for almost 1s of stereo audio data at 44.1kHz
+#define OPL2_INTERNAL_FREQ    3600000   // The OPL2 operates at 3.6MHz
+#define OPL3_INTERNAL_FREQ    14400000  // The OPL3 operates at 14.4MHz
+
+#define DUAL_OPL2_CHIP_DISCRIMINATOR  0x02
+/////////////////////////////////////////////////////////////////////////////
+
+// KLUDGE: in Win2k's NTVDM it looks as if a thread's reserved stack size is
+//  awfully tiny (supposed to be 1MB), and declaring moderate to large,
+//  i.e. <512kB, buffers on the stack causes a stack overflow!
+//  We therefore use the heap for now. :(
+
+#define STACK_HEAP_WORKAROUND 1
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -40,6 +45,10 @@
 
 #include <VDMUtil.h>
 #pragma comment ( lib , "VDMUtil.lib" )
+
+/////////////////////////////////////////////////////////////////////////////
+
+int _strmcmpi(const char* templ, ... );
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -99,6 +108,21 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     // Try to obtain the AdLib settings, use defaults if none specified
     m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x388, 16, false);
     m_sampleRate = CFG_Get(Config, INI_STR_RATE, 22050, 10, false);
+    _bstr_t oplMode = CFG_Get(Config, INI_STR_OPLMODE, "OPL2", false);
+    switch (_strmcmpi((LPCSTR)oplMode, "OPL2", "DUAL_OPL2", "OPL3", NULL)) {
+      case 0:
+        m_oplMode = MODE_OPL2;
+        break;
+      case 1:
+        m_oplMode = MODE_DUAL_OPL2;
+        break;
+      case 2:
+        m_oplMode = MODE_OPL3;
+        break;
+      default:
+        m_oplMode = MODE_OPL2;
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An invalid value ('%s') was provided for the OPL mode ('%s').  Valid values are: 'OPL2', 'DUAL_OPL2', and 'OPL3'.\nUsing 'none' by default."), (LPCTSTR)oplMode, (LPCTSTR)CString(INI_STR_OPLMODE)));
+    }
 
     /** Get VDM services ***************************************************/
 
@@ -147,14 +171,15 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     return hr;
 
   // Put the OPL in a known state
-  m_AdLibFSM.OPLReset();
+  m_AdLibFSM1.reset();
+  m_AdLibFSM2.reset();
 
   // Create the playback thread (converts FM information to PCM)
   m_playbackThread.Create(this, _T("AdLib Playback"), true);      /* TODO: check that creation was successful */
   m_playbackThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
   m_playbackThread.Resume();
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x)"), m_basePort));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x, type = %s)"), m_basePort, m_oplMode == MODE_OPL2 ? _T("OPL2") : m_oplMode == MODE_OPL2 ? _T("dual OPL2") : m_oplMode == MODE_OPL2 ? _T("OPL3") : _T("???")));
 
   return S_OK;
 }
@@ -165,7 +190,8 @@ STDMETHODIMP CAdLibCtl::Destroy() {
     m_playbackThread.Cancel();
 
   // Put the OPL in a known state
-  m_AdLibFSM.OPLReset();
+  m_AdLibFSM2.reset();
+  m_AdLibFSM1.reset();
 
   // Release the OPL software synthesizer
   OPLDestroy();
@@ -190,12 +216,42 @@ STDMETHODIMP CAdLibCtl::Destroy() {
 // IIOHandler
 /////////////////////////////////////////////////////////////////////////////
 
+// NOTE: When in dual OPL2 mode, ports 0x388/9 are used as "compatibility"
+//  ports and must make the card appear as (and sound like) a regular, single
+//  OPL2 card.
+// Both chips must act in tandem when accessed through the compatibility
+//  ports, which also ensures that the R and L channels are identical (will
+//  sound like a regular, single mono OPL2).
+// In order to achieve this tandem, when in dual OPL2 mode a value is written
+//  to a compatibility port it is dispatched to both OPL chips; when a value
+//  is read it will always be done from chip #0.
+
 STDMETHODIMP CAdLibCtl::HandleINB(USHORT inPort, BYTE * data) {
-  return OPLRead(inPort - m_basePort, data);
+  switch (m_oplMode) {
+    case MODE_OPL2:
+    case MODE_OPL3:
+      return OPLRead((inPort - m_basePort) & 0xff, data);
+    case MODE_DUAL_OPL2:
+      return OPLRead((inPort - m_basePort) & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR, data); // redirect all reads from chip #1 to chip #0
+    default:
+      return E_FAIL;
+  }
 }
 
 STDMETHODIMP CAdLibCtl::HandleOUTB(USHORT outPort, BYTE data) {
-  return OPLWrite(outPort - m_basePort, data);
+  HRESULT hr = S_OK;
+
+  switch (m_oplMode) {
+    case MODE_OPL2:
+    case MODE_OPL3:
+      return OPLWrite((outPort - m_basePort) & 0xff, data);
+    case MODE_DUAL_OPL2:
+      SUCCEEDED(hr = OPLWrite((outPort - m_basePort) & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR, data)) &&  // dispatch all writes to both chip #0
+      SUCCEEDED(hr = OPLWrite((outPort - m_basePort) & 0xff |  DUAL_OPL2_CHIP_DISCRIMINATOR, data));    //  and chip #1 (ensure tandem)
+      return hr;
+    default:
+      return E_FAIL;
+  }
 }
 
 
@@ -297,11 +353,17 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
 
           // Set up the renderer (if any)
           if (m_waveOut != NULL) try {
-#if USE_OPL2
-            m_waveOut->SetFormat(1, m_sampleRate, OPL_SAMPLE_BITS);
-#elif USE_OPL3
-            m_waveOut->SetFormat(2, m_sampleRate, OPL3_SAMPLE_BITS);
-#endif
+            switch (m_oplMode) {
+              case MODE_OPL2:
+                m_waveOut->SetFormat(1, m_sampleRate, OPL_SAMPLE_BITS);   // mono OPL2 output
+                break;
+              case MODE_DUAL_OPL2:
+                m_waveOut->SetFormat(2, m_sampleRate, OPL_SAMPLE_BITS);   // setero OPL2 output
+                break;
+              case MODE_OPL3:
+                m_waveOut->SetFormat(2, m_sampleRate, OPL3_SAMPLE_BITS);  // stereo OPL3 output
+                break;
+            }
           } catch (_com_error& ce) {
             CString args = Format(_T("%d, %d, %d"), 1, m_sampleRate, 16);
             RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("SetFormat(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -312,16 +374,24 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
         }
 
         // Program the OPL (functions will return after the UpdateHandler()
-        //  callback has been called)
-#if USE_OPL2
-        _ASSERTE(OPLMsg.regSet == 0);
-
-        MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.regIdx);
-        MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
-#elif USE_OPL3
-        MAME::YMF262Write(OPL_CHIP0, 0 + (OPLMsg.regSet << 1), OPLMsg.regIdx);
-        MAME::YMF262Write(OPL_CHIP0, 1 + (OPLMsg.regSet << 1), OPLMsg.value);
-#endif
+        //  callback has been invoked)
+        switch (m_oplMode) {
+          case MODE_OPL2:
+            _ASSERTE(OPLMsg.regSet == 0);
+            _ASSERTE(OPLMsg.chipID == OPL_CHIP0);
+            MAME::YM3812Write(OPL_CHIP0, 0, OPLMsg.regIdx);
+            MAME::YM3812Write(OPL_CHIP0, 1, OPLMsg.value);
+            break;
+          case MODE_DUAL_OPL2:
+            _ASSERTE(OPLMsg.regSet == 0);
+            MAME::YM3812Write(OPLMsg.chipID, 0, OPLMsg.regIdx);
+            MAME::YM3812Write(OPLMsg.chipID, 1, OPLMsg.value);
+            break;
+          case MODE_OPL3:
+            MAME::YMF262Write(OPL_CHIP0, 0 + (OPLMsg.regSet << 1), OPLMsg.regIdx);
+            MAME::YMF262Write(OPL_CHIP0, 1 + (OPLMsg.regSet << 1), OPLMsg.value);
+            break;
+        }
       }
 
       // Did we process any OPL writes (was the OPL kept active) ?
@@ -384,19 +454,27 @@ HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
   instances[m_instanceID] = this;
 
   // Initialize the OPL software synthesizer, return an error if failed
-#if USE_OPL2
-  if (MAME::YM3812Init(OPL_NUM_CHIPS, OPL_INTERNAL_FREQ, sampleRate))
-#elif USE_OPL3
-  if (MAME::YMF262Init(OPL_NUM_CHIPS, OPL_INTERNAL_FREQ, sampleRate))
-#endif
-    return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
-
-  // Install the callback handler(s)
-#if USE_OPL2
-  MAME::YM3812SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
-#elif USE_OPL3
-  MAME::YMF262SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
-#endif
+  switch (m_oplMode) {
+    case MODE_OPL2:
+      if (MAME::YM3812Init(1, OPL2_INTERNAL_FREQ, sampleRate))
+        return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
+      // Install the callback handler(s)
+      MAME::YM3812SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
+      break;
+    case MODE_DUAL_OPL2:
+      if (MAME::YM3812Init(2, OPL2_INTERNAL_FREQ, sampleRate))
+        return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
+      // Install the callback handler(s)
+      MAME::YM3812SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
+      MAME::YM3812SetUpdateHandler(OPL_CHIP1, OPLUpdateHandler, m_instanceID);
+      break;
+    case MODE_OPL3:
+      if (MAME::YMF262Init(1, OPL3_INTERNAL_FREQ, sampleRate))
+        return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_OPLINITFAILED, /*false, NULL, 0, */false), __uuidof(IVDMBasicModule), E_FAIL);
+      // Install the callback handler(s)
+      MAME::YMF262SetUpdateHandler(OPL_CHIP0, OPLUpdateHandler, m_instanceID);
+      break;
+  }
 
   return S_OK;
 }
@@ -409,11 +487,15 @@ void CAdLibCtl::OPLDestroy(void) {
   CSingleLock lock(&OPLMutex, TRUE);
 
   // Release the OPL software synthesizer
-#if USE_OPL2
-  MAME::YM3812Shutdown();
-#elif USE_OPL3
-  MAME::YMF262Shutdown();
-#endif
+  switch (m_oplMode) {
+    case MODE_OPL2:
+    case MODE_DUAL_OPL2:
+      MAME::YM3812Shutdown();
+      break;
+    case MODE_OPL3:
+      MAME::YMF262Shutdown();
+      break;
+  }
 
   // Release the slot in the static instance array
   if (m_instanceID >= 0)
@@ -434,41 +516,74 @@ void CAdLibCtl::OPLPlay(DWORD deltaTime) {
     double scalingFactor = min(2.0, max(0.0, 1 / m_renderLoad));
 
     // Compute how many samples we should transfer
-    long toTransfer = min(OPL_AUDIOBUF_SIZE, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
+    long toTransfer = min(MAX_AUDIOBUF_SIZE, (long)(scalingFactor * m_sampleRate * (deltaTime / 1000.0)));
 
-#if USE_OPL2
-    MAME::OPLSAMPLE* buf = NULL;
+    int bufSize;        // how much relevant data is stored in the buffer <buf>
+    BYTE* buf = NULL;   // temporary storage for processing (e.g. decompressing -- up to 4x if ADPCM2) data
 
-    buf = (MAME::OPLSAMPLE*)_alloca(toTransfer * sizeof(buf[0]));
-    MAME::YM3812UpdateOne(OPL_CHIP0, buf, toTransfer);
-#elif USE_OPL3
-    MAME::OPL3SAMPLE* buf = NULL;
+    MAME::OPLSAMPLE*  buf_opl2   = NULL;
+    MAME::OPL3SAMPLE* buf_opl3   = NULL;
+    MAME::OPL3SAMPLE* tbl_opl3[] = { NULL, NULL, NULL, NULL };
 
-#   if 0
-    buf = (MAME::OPL3SAMPLE*)_alloca(4 * toTransfer * sizeof(buf1[0]));
-#   else
-    // KLUDGE: in Win2k's NTVDM it looks as if the thread's reserved
-    //  stack size is awfully tiny (supposed to be 1MB), and declaring
-    //  buf[] on the stack causes a stack overflow!
-    //  We therefore use the heap for now. :(
-    buf = new MAME::OPL3SAMPLE[4 * toTransfer];
-    std::auto_ptr<MAME::OPL3SAMPLE> buf_auto(buf);
+#   if STACK_HEAP_WORKAROUND
+    std::auto_ptr<MAME::OPLSAMPLE>  buf_opl2_auto(buf_opl2);
+    std::auto_ptr<MAME::OPL3SAMPLE> buf_opl3_auto(buf_opl3);
 #   endif
 
-    // Synthesize channel A @ buf[2*toTransfer], channel B @ buf[3*toTransfer], and
-    //  discard channels C and D (starting at buf[0], will be overwritten)
-    MAME::OPL3SAMPLE* buf_tbl[] = { buf + 2 * toTransfer, buf + 3 * toTransfer, buf, buf };
-    MAME::YMF262UpdateOne(OPL_CHIP0, buf_tbl, toTransfer);
+    int i = 0;
 
-    for (int i = 0; i < toTransfer; i++) {
-      buf[2 * i + 0] = buf_tbl[0][i];
-      buf[2 * i + 1] = buf_tbl[1][i];
+    switch (m_oplMode) {
+      case MODE_OPL2:
+#       if STACK_HEAP_WORKAROUND
+        buf_opl2_auto = std::auto_ptr<MAME::OPLSAMPLE>(new MAME::OPLSAMPLE[toTransfer]);
+        buf_opl2 = buf_opl2_auto.get();
+#       else
+        buf_opl2 = (MAME::OPLSAMPLE*)_alloca(toTransfer * sizeof(buf_opl2[0]));
+#       endif
+        MAME::YM3812UpdateOne(OPL_CHIP0, buf_opl2, toTransfer);
+        bufSize = toTransfer * sizeof(buf_opl2[0]);
+        buf     = (BYTE*)buf_opl2;
+        break;
+      case MODE_DUAL_OPL2:
+#       if STACK_HEAP_WORKAROUND
+        buf_opl2_auto = std::auto_ptr<MAME::OPLSAMPLE>(new MAME::OPLSAMPLE[4 * toTransfer]);
+        buf_opl2 = buf_opl2_auto.get();
+#       else
+        buf_opl2 = (MAME::OPLSAMPLE*)_alloca(4 * toTransfer * sizeof(buf_opl2[0]));
+#       endif
+        MAME::YM3812UpdateOne(OPL_CHIP0, buf_opl2 + 2 * toTransfer, toTransfer);
+        MAME::YM3812UpdateOne(OPL_CHIP1, buf_opl2 + 3 * toTransfer, toTransfer);
+        for (i = 0; i < toTransfer; i++) {
+          buf_opl2[2 * i + 0] = buf_opl2[2 * toTransfer + i];
+          buf_opl2[2 * i + 1] = buf_opl2[3 * toTransfer + i];
+        }
+        bufSize = 2 * toTransfer * sizeof(buf_opl2[0]);
+        buf     = (BYTE*)buf_opl2;
+        break;
+      case MODE_OPL3:
+#       if STACK_HEAP_WORKAROUND
+        buf_opl3_auto = std::auto_ptr<MAME::OPL3SAMPLE>(new MAME::OPL3SAMPLE[4 * toTransfer]);
+        buf_opl3 = buf_opl3_auto.get();
+#       else
+        buf_opl3 = (MAME::OPL3SAMPLE*)_alloca(4 * toTransfer * sizeof(buf_opl3[0]));
+#       endif
+        tbl_opl3[0] = buf_opl3 + 2 * toTransfer;
+        tbl_opl3[1] = buf_opl3 + 3 * toTransfer;
+        tbl_opl3[2] = buf_opl3;
+        tbl_opl3[3] = buf_opl3 ;
+        MAME::YMF262UpdateOne(OPL_CHIP0, tbl_opl3, toTransfer);
+        for (i = 0; i < toTransfer; i++) {
+          buf_opl3[2 * i + 0] = buf_opl3[2 * toTransfer + i];
+          buf_opl3[2 * i + 1] = buf_opl3[3 * toTransfer + i];
+        }
+        bufSize = 2 * toTransfer * sizeof(buf_opl3[0]);
+        buf     = (BYTE*)buf_opl3;
+        break;
     }
-#endif
 
     // Play the data, and update the load factor
     try {
-      m_renderLoad = m_waveOut->PlayData((BYTE*)buf, toTransfer * sizeof(buf[0]));
+      m_renderLoad = m_waveOut->PlayData(buf, bufSize);
     } catch (_com_error& ce) {
       CString args = Format(_T("%p, %d"), buf, toTransfer * sizeof(buf[0]));
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
@@ -484,7 +599,22 @@ HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
     return E_POINTER;
 
   try {
-    *data = m_AdLibFSM.OPLRead(address & 0xff);
+    // Route to the appropriate chip
+    switch (m_oplMode) {
+      case MODE_OPL2:
+        *data = m_AdLibFSM1.read(address & 0xff);
+        break;
+      case MODE_DUAL_OPL2:
+        if ((address & DUAL_OPL2_CHIP_DISCRIMINATOR) == 0x00) {
+          *data = m_AdLibFSM1.read(address & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR);
+        } else {
+          *data = m_AdLibFSM2.read(address & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR);
+        }
+        break;
+      case MODE_OPL3:
+        *data = m_AdLibFSM1.read(address & 0xff);
+        break;
+    }
     return S_OK;
   } catch (std::runtime_error& e) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, e.what());
@@ -497,7 +627,21 @@ HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
 //
 HRESULT CAdLibCtl::OPLWrite(BYTE address, BYTE data) {
   try {
-    m_AdLibFSM.OPLWrite(address & 0xff, data);
+    switch (m_oplMode) {
+      case MODE_OPL2:
+        m_AdLibFSM1.write(address & 0xff, data);
+        break;
+      case MODE_DUAL_OPL2:
+        if ((address & DUAL_OPL2_CHIP_DISCRIMINATOR) == 0x00) {
+          m_AdLibFSM1.write(address & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR, data);
+        } else {
+          m_AdLibFSM2.write(address & 0xff & ~DUAL_OPL2_CHIP_DISCRIMINATOR, data);
+        }
+        break;
+      case MODE_OPL3:
+        m_AdLibFSM1.write(address & 0xff, data);
+        break;
+    }
     return S_OK;
   } catch (std::runtime_error& e) {
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, e.what());
@@ -512,17 +656,25 @@ HRESULT CAdLibCtl::OPLWrite(BYTE address, BYTE data) {
 /////////////////////////////////////////////////////////////////////////////
 
 void CAdLibCtl::resetOPL(void) {
-#if USE_OPL2
-  MAME::YM3812ResetChip(OPL_CHIP0);
-#elif USE_OPL3
-  MAME::YMF262ResetChip(OPL_CHIP0);
-#endif
+  switch (m_oplMode) {
+    case MODE_OPL2:
+      MAME::YM3812ResetChip(OPL_CHIP0);
+      break;
+    case MODE_DUAL_OPL2:
+      MAME::YM3812ResetChip(OPL_CHIP0);
+      MAME::YM3812ResetChip(OPL_CHIP1);
+      break;
+    case MODE_OPL3:
+      MAME::YMF262ResetChip(OPL_CHIP0);
+      break;
+  }
 }
 
-void CAdLibCtl::setOPLReg(int regSet, int regIdx, int value) {
+void CAdLibCtl::setOPLReg(int chipID, int regSet, int regIdx, int value) {
   OPLMessage msg;
 
   msg.timestamp = timeGetTime();
+  msg.chipID    = chipID;
   msg.regSet    = regSet;
   msg.regIdx    = regIdx;
   msg.value     = value;
@@ -582,4 +734,35 @@ void CAdLibCtl::OPLUpdateHandler(int param, int min_interval_usec) {
 
   // Generate and output the data for the last time interval
   pThis->OPLPlay(pThis->m_curTime - pThis->m_lastTime);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Misc. utility function(s)
+/////////////////////////////////////////////////////////////////////////////
+
+int _strmcmpi(
+    const char* templ,              // the string to compare
+    ... )                           // list of strings to compare agains; NULL means end of list
+{
+  va_list args;
+  va_start(args, templ);            // Initialize variable arguments
+
+  const char* against;
+  int count = 0, match = -1;
+
+  // Go through supplied arguments until a match is found or list ends
+  while ((against = va_arg(args, const char*)) != NULL) {
+    if (_strcmpi(templ, against) == 0) {
+      match = count;
+      break;
+    } else {
+      count++;
+    }
+  }
+
+  va_end(args);                     // Reset variable arguments
+
+  return match;
 }

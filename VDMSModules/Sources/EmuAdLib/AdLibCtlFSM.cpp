@@ -17,20 +17,14 @@
 #define OPL_CONTROL_T1_ENABLED 0x01
 #define OPL_CONTROL_T2_ENABLED 0x02
 
-CAdLibCtlFSM::CAdLibCtlFSM(IAdLibHWEmulationLayer* hwemu, OPL_t type)
-  : m_type(type), m_status(0), m_regIdx(0), m_OPL2_compat(false), m_hwemu(hwemu)
+#define OPL_SIGNATURE_MASK 0x06
+#define OPL_SIGNATURE_OPL2 0x06
+#define OPL_SIGNATURE_OPL3 0x00
+
+CAdLibCtlFSM::CAdLibCtlFSM(IAdLibHWEmulationLayer* hwemu, int chipID)
+  : m_type(TYPE_OPL2), m_status(OPL_SIGNATURE_OPL2), m_chipID(chipID), m_regIdx(0), m_OPL2_compat(false), m_hwemu(hwemu)
 {
   _ASSERTE(m_hwemu != NULL);
-
-  switch (m_type) {
-    case TYPE_OPL2:
-      m_status = 0x00;
-      break;
-
-    case TYPE_OPL3:
-      m_status = 0x06;
-      break;
-  }
 }
 
 CAdLibCtlFSM::~CAdLibCtlFSM(void)
@@ -42,9 +36,35 @@ CAdLibCtlFSM::~CAdLibCtlFSM(void)
 
 
 //
+// Sets the emulated OPL chip type (OPL2, OPL3)
+//
+void CAdLibCtlFSM::setType(type_t type) {
+  m_type = type;
+
+  switch (m_type) {
+    case TYPE_OPL2:
+      m_status &= ~OPL_SIGNATURE_MASK;
+      m_status |= OPL_SIGNATURE_OPL2;
+      break;
+
+    case TYPE_OPL3:
+      m_status &= ~OPL_SIGNATURE_MASK;
+      m_status |= OPL_SIGNATURE_OPL3;
+      break;
+  }
+}
+
+//
+// Retrieves the emulated OPL chip type (OPL2, OPL3)
+//
+CAdLibCtlFSM::type_t CAdLibCtlFSM::getType(void) {
+  return m_type;
+}
+
+//
 // Resets the OPL
 //
-void CAdLibCtlFSM::OPLReset(void) {
+void CAdLibCtlFSM::reset(void) {
   // Restart and unmask timer 1
   m_timer1.isEnabled = true;
   m_timer1.isMasked  = false;
@@ -71,16 +91,16 @@ void CAdLibCtlFSM::OPLReset(void) {
 //
 // Called when the OPL ports are read
 //
-char CAdLibCtlFSM::OPLRead(int port) {
+char CAdLibCtlFSM::read(int port) {
   if (port == 0) {
     // Get the current time
     OPLTime_t tNow = m_hwemu->getTimeMicros();
 
-# ifdef _DEBUG
+#   ifdef _DEBUGxxxxxxx
     char buf[1024];
-    sprintf(buf, "Polling OPL status: timer 1 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over); timer 2 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over).", m_timer1.isMasked ? "masked" : "unmasked", m_timer1.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T1_EXPIRED ? "expired" : "not expired", (float)(m_timer1.period / 1000.0), (float)((m_timer1.period - (m_timer1.expiry - tNow)) / 1000.0), m_timer2.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T2_EXPIRED ? "expired" : "not expired", (float)(m_timer2.period / 1000.0), (float)((m_timer2.period - (m_timer2.expiry - tNow)) / 1000.0));
+    sprintf(buf, "Polling OPL (id=%d) status: timer 1 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over); timer 2 is %s/%s/%s, triggers every %0.3fms (%0.3fms since last roll-over).", m_chipID, m_timer1.isMasked ? "masked" : "unmasked", m_timer1.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T1_EXPIRED ? "expired" : "not expired", (float)(m_timer1.period / 1000.0), (float)((m_timer1.period - (m_timer1.expiry - tNow)) / 1000.0), m_timer2.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_status & OPL_STATUS_T2_EXPIRED ? "expired" : "not expired", (float)(m_timer2.period / 1000.0), (float)((m_timer2.period - (m_timer2.expiry - tNow)) / 1000.0));
     m_hwemu->logInformation(buf);
-# endif
+#   endif
 
     return updateTimers(tNow);
   } else {
@@ -91,14 +111,14 @@ char CAdLibCtlFSM::OPLRead(int port) {
 //
 // Called when the OPL ports are written to
 //
-void CAdLibCtlFSM::OPLWrite(int port, char data) {
+void CAdLibCtlFSM::write(int port, char data) {
   char buf[1024];
 
   // Check port range
   if (((m_type == TYPE_OPL2) && (port & ~0x01)) ||
       ((m_type == TYPE_OPL3) && (port & ~0x03)))
   {
-    sprintf(buf, "Invalid port %d", port);
+    sprintf(buf, "Invalid OPL (id=%d) port %d", m_chipID, port);
     throw std::runtime_error(buf);
   }
 
@@ -132,13 +152,13 @@ void CAdLibCtlFSM::setRegister(int address, char data) {
   char buf[1024];
 
 # ifdef _DEBUG
-  sprintf(buf, "OPL write 0x%02x to register 0x%02x", data & 0xff, address & 0xff);
+  sprintf(buf, "OPL (id=%d) write 0x%02x to register 0x%02x", m_chipID, data & 0xff, address & 0xff);
   m_hwemu->logInformation(buf);
 # endif
 
   // Check register index range (approximate)
   if ((m_type == TYPE_OPL2) && (address & ~0xff)) {
-    sprintf(buf, "Invalid register %d", address);
+    sprintf(buf, "Invalid OPL (id=%d) register %d", m_chipID, address);
     throw std::runtime_error(buf);
   }
 
@@ -146,13 +166,13 @@ void CAdLibCtlFSM::setRegister(int address, char data) {
   switch (address) {
     case 0x02:    // Timer 1 count (OPL2, OPL3)
       m_timer1.period = OPL_T1_PERIOD * (256 - (data & 0xff));
-      sprintf(buf, "Reprogramming OPL timer 1, counter value = %d (T = %5.3fms).", data & 0xff, (float)(m_timer1.period/1000.0));
+      sprintf(buf, "Reprogramming OPL (id=%d) timer 1, counter value = %d (T = %5.3fms).", m_chipID, data & 0xff, (float)(m_timer1.period/1000.0));
       m_hwemu->logInformation(buf);
       return;
 
     case 0x03:    // Timer 2 count (OPL2, OPL3)
       m_timer2.period = OPL_T2_PERIOD * (256 - (data & 0xff));
-      sprintf(buf, "Reprogramming OPL timer 2, counter value = %d (T = %5.3fms).", data & 0xff, (float)(m_timer2.period/1000.0));
+      sprintf(buf, "Reprogramming OPL (id=%d) timer 2, counter value = %d (T = %5.3fms).", m_chipID, data & 0xff, (float)(m_timer2.period/1000.0));
       m_hwemu->logInformation(buf);
       return;
 
@@ -160,7 +180,8 @@ void CAdLibCtlFSM::setRegister(int address, char data) {
       if (data & 0x80) {
         // IRQ-Reset bit. Resets timer status flags.
         // All other bits are ignored when this bit is set.
-        m_hwemu->logInformation("Resetting OPL status flags.");
+        sprintf(buf, "Resetting OPL (id=%d) status flags.", m_chipID);
+        m_hwemu->logInformation(buf);
         clearStatus();
         return;
       } else {
@@ -187,7 +208,7 @@ void CAdLibCtlFSM::setRegister(int address, char data) {
         // If previously-disabled timers were just enabled, resynchronize
         clearTimers(tNow, m_timer1.isEnabled && !old_T1_isEnabled, m_timer2.isEnabled && !old_T2_isEnabled);
 
-        sprintf(buf, "Reprogramming OPL timers (timer 1 is %s and %s, timer 2 is %s and %s).", m_timer1.isEnabled ? "enabled" : "disabled", m_timer1.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_timer2.isMasked ? "masked" : "unmasked");
+        sprintf(buf, "Reprogramming OPL (id=%d) timers (timer 1 is %s and %s, timer 2 is %s and %s).", m_chipID, m_timer1.isEnabled ? "enabled" : "disabled", m_timer1.isMasked ? "masked" : "unmasked", m_timer2.isEnabled ? "enabled" : "disabled", m_timer2.isMasked ? "masked" : "unmasked");
         m_hwemu->logInformation(buf);
 
         return;
@@ -195,11 +216,11 @@ void CAdLibCtlFSM::setRegister(int address, char data) {
 
     case 0x0105:
       m_OPL2_compat = data & 0x01;
-      m_hwemu->setOPLReg(0x01, 0x05, data & 0xff);
+      m_hwemu->setOPLReg(m_chipID, 0x01, 0x05, data & 0xff);
       return;
 
     default:
-      m_hwemu->setOPLReg(address >> 8, address & 0xff, data & 0xff);
+      m_hwemu->setOPLReg(m_chipID, address >> 8, address & 0xff, data & 0xff);
       return;
   }
 }
