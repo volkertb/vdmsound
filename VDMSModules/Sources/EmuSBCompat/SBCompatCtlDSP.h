@@ -58,8 +58,10 @@ class CSBCompatCtlDSP {
     char getRdStatus(void);
     void ack8BitIRQ(void);
     void ack16BitIRQ(void);
-    void set8BitIRQ(int count = 1);
-    void set16BitIRQ(int count = 1);
+    void set8BitIRQ(void);
+    void set16BitIRQ(void);
+    bool get8BitIRQ(void);
+    bool get16BitIRQ(void);
 
   protected:
     void stopAllDMA(bool isSynchronous);
@@ -97,7 +99,7 @@ class CSBCompatCtlDSP {
     int m_sampleRate, m_timeConstant;
     int m_numSamples;
 
-    int m_8BitIRQsPending, m_16BitIRQsPending;
+    bool m_is8BitIRQPending, m_is16BitIRQPending;
 
     unsigned char m_testRegister;
 

@@ -27,8 +27,8 @@ CSBCompatCtlDSP::CSBCompatCtlDSP(ISBDSPHWEmulationLayer* hwemu, CSBCompatCtlMixe
     m_isRstAsserted(false),         // the reset sequence was not yet engaged
     m_isSpeakerEna(false),          // the speaker is disabled
     m_useTimeConstant(false),       // playback rate determined by sample rate, not time constant
-    m_8BitIRQsPending(0),           // no 8-bit operation IRQs pending
-    m_16BitIRQsPending(0),          // no 16-bit operation IRQs pending
+    m_is8BitIRQPending(false),      // no 8-bit operation IRQ pending
+    m_is16BitIRQPending(false),     // no 16-bit operation IRQs pending
     m_testRegister((char)0x00)      // no value in the test register
 {
   _ASSERTE(m_hwemu != NULL);
@@ -227,45 +227,51 @@ char CSBCompatCtlDSP::getRdStatus(void) {
 }
 
 void CSBCompatCtlDSP::ack8BitIRQ(void) {
-  if (m_8BitIRQsPending > 0) {
-    m_8BitIRQsPending--;
+  if (m_is8BitIRQPending) {
+    m_is8BitIRQPending = false;
     m_hwemu->logInformation("IRQ acknowledged (8-bit)");
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_8BitIRQsPending > 0);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_is8BitIRQPending);
 }
 
 void CSBCompatCtlDSP::ack16BitIRQ(void) {
-  if (m_16BitIRQsPending > 0) {
-    m_16BitIRQsPending--;
+  if (m_is16BitIRQPending) {
+    m_is16BitIRQPending = false;
     m_hwemu->logInformation("IRQ acknowledged (16-bit)");
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_16BitIRQsPending > 0);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_is16BitIRQPending);
 }
 
-void CSBCompatCtlDSP::set8BitIRQ(int count) {
-  if (m_8BitIRQsPending > 0) {
-    m_hwemu->logWarning("set8BitIRQ(): one or more IRQs already pending; resetting");
-    m_8BitIRQsPending = count;
+void CSBCompatCtlDSP::set8BitIRQ(void) {
+  if (m_is8BitIRQPending) {
+    m_hwemu->logWarning("set8BitIRQ(): an IRQ is already pending");
   } else {
-    m_8BitIRQsPending += count;
+    m_is8BitIRQPending = true;
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_8BitIRQsPending > 0);
-  m_hwemu->generateInterrupt(count);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_8BIT, m_is8BitIRQPending);
+  m_hwemu->generateInterrupt();
 }
 
-void CSBCompatCtlDSP::set16BitIRQ(int count) {
-  if (m_16BitIRQsPending > 0) {
-    m_hwemu->logWarning("set16BitIRQ(): one or more IRQs already pending; resetting");
-    m_16BitIRQsPending = count;
+void CSBCompatCtlDSP::set16BitIRQ(void) {
+  if (m_is16BitIRQPending) {
+    m_hwemu->logWarning("set16BitIRQ(): an IRQ is already pending");
   } else {
-    m_16BitIRQsPending += count;
+    m_is16BitIRQPending = true;
   }
 
-  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_16BitIRQsPending > 0);
-  m_hwemu->generateInterrupt(count);
+  m_sbmix->setIRQStatus(CSBCompatCtlMixer::DSP_16BIT, m_is16BitIRQPending);
+  m_hwemu->generateInterrupt();
+}
+
+bool CSBCompatCtlDSP::get8BitIRQ(void) {
+  return m_is8BitIRQPending;
+}
+
+bool CSBCompatCtlDSP::get16BitIRQ(void) {
+  return m_is16BitIRQPending;
 }
 
 
@@ -277,8 +283,8 @@ void CSBCompatCtlDSP::stopAllDMA(bool isSynchronous) {
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_RECORD, isSynchronous);
   m_hwemu->stopTransfer(ISBDSPHWEmulationLayer::TT_PLAYBACK, isSynchronous);
 
-  while (m_8BitIRQsPending > 0) ack8BitIRQ();
-  while (m_16BitIRQsPending > 0) ack16BitIRQ();
+  if (m_is8BitIRQPending) ack8BitIRQ();
+  if (m_is16BitIRQPending) ack16BitIRQ();
 }
 
 bool CSBCompatCtlDSP::processCommand(unsigned char command) {
@@ -611,11 +617,11 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return false;
 
     case 0xf2:  /* 0F2h : IRQ Request, 8-bit */
-      set8BitIRQ(1);  // generate one 8-bit IRQ
+      set8BitIRQ();         // generate a 8-bit IRQ
       return true;
 
     case 0xf3:  /* 0F3h : IRQ Request, 16-bit */
-      set16BitIRQ(1); // generate one 16-bit IRQ
+      set16BitIRQ();        // generate a 16-bit IRQ
       return true;
 
     case 0xfb:  /* 0FBh : DSP Status */
