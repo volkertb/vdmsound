@@ -18,10 +18,12 @@
 #include "AdvSettingsPage_Program.h"
 #include "AdvSettingsPage_Compat.h"
 #include "AdvSettingsPage_Dosenv.h"
+#include "AdvSettingsPage_Perf.h"
 #include "AdvSettingsPage_Midi.h"
 #include "AdvSettingsPage_Adlib.h"
 #include "AdvSettingsPage_Sb.h"
 #include "AdvSettingsPage_Joy.h"
+#include "AdvSettingsPage_Debug.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CSettingsContainer
@@ -69,10 +71,12 @@ protected:
   CAdvSettingsPage_Program m_p1;
   CAdvSettingsPage_Compat  m_p2;
   CAdvSettingsPage_Dosenv  m_p3;
-  CAdvSettingsPage_Midi    m_p4;
-  CAdvSettingsPage_Adlib   m_p5;
-  CAdvSettingsPage_Sb      m_p6;
-  CAdvSettingsPage_Joy     m_p7;
+  CAdvSettingsPage_Perf    m_p4;
+  CAdvSettingsPage_Midi    m_p5;
+  CAdvSettingsPage_Adlib   m_p6;
+  CAdvSettingsPage_Sb      m_p7;
+  CAdvSettingsPage_Joy     m_p8;
+  CAdvSettingsPage_Debug   m_p9;
 
 // Attributes
 public:

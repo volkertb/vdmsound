@@ -293,6 +293,10 @@ SOURCE=.\AdvSettingsPage_Compat.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\AdvSettingsPage_Debug.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\AdvSettingsPage_Dosenv.cpp
 # End Source File
 # Begin Source File
@@ -302,6 +306,10 @@ SOURCE=.\AdvSettingsPage_Joy.cpp
 # Begin Source File
 
 SOURCE=.\AdvSettingsPage_Midi.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Perf.cpp
 # End Source File
 # Begin Source File
 
@@ -402,6 +410,10 @@ SOURCE=.\AdvSettingsPage_Compat.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\AdvSettingsPage_Debug.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\AdvSettingsPage_Dosenv.h
 # End Source File
 # Begin Source File
@@ -411,6 +423,10 @@ SOURCE=.\AdvSettingsPage_Joy.h
 # Begin Source File
 
 SOURCE=.\AdvSettingsPage_Midi.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdvSettingsPage_Perf.h
 # End Source File
 # Begin Source File
 
@@ -479,6 +495,10 @@ SOURCE=.\IconListBox.h
 # Begin Source File
 
 SOURCE=.\LaunchPadUtil.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\PIF_FMT.H
 # End Source File
 # Begin Source File
 

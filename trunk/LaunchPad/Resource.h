@@ -14,10 +14,12 @@
 #define IDD_ADVPROPPAGE_PROGRAM         304
 #define IDD_ADVPROPPAGE_COMPAT          305
 #define IDD_ADVPROPPAGE_DOSENV          306
-#define IDD_ADVPROPPAGE_MIDI            307
-#define IDD_ADVPROPPAGE_ADLIB           308
-#define IDD_ADVPROPPAGE_SB              309
-#define IDD_ADVPROPPAGE_JOY             310
+#define IDD_ADVPROPPAGE_PERF            307
+#define IDD_ADVPROPPAGE_MIDI            308
+#define IDD_ADVPROPPAGE_ADLIB           309
+#define IDD_ADVPROPPAGE_SB              310
+#define IDD_ADVPROPPAGE_JOY             311
+#define IDD_ADVPROPPAGE_DEBUG           312
 
 #define IDC_ICO_APP                     1001
 #define IDC_EDT_DOSCMD                  1002
@@ -80,18 +82,20 @@
 #define IDC_CHK_USEMPU                  1501
 #define IDC_CMB_MPUPORT                 1502
 #define IDC_CMB_MPUIRQ                  1503
-#define IDC_CMB_SYSEXINDICATOR          1504
-#define IDC_BUT_MIDIMAPBROWSE           1505
-#define IDC_EDT_MIDIMAPBROWSE           1506
-#define IDC_CHK_MPUOUTDEV               1507
-#define IDC_CMB_MPUOUTDEV               1508
-#define IDC_CMB_MPUOUTDEVBUF            1509
-#define IDC_SPN_MPUOUTDEVBUF            1510
-#define IDC_CHK_MPUOUTFILE              1511
-#define IDC_EDT_MPUOUTFILE              1512
-#define IDC_BUT_MPUOUTFILEBROWSE        1513
-#define IDC_CHK_MPUINDEV                1514
-#define IDC_CMB_MPUINDEV                1515
+#define IDC_CHK_SYSEXINDICATOR          1504
+#define IDC_CMB_SYSEXINDICATOR          1505
+#define IDC_BUT_MIDIMAPBROWSE           1506
+#define IDC_EDT_MIDIMAPBROWSE           1507
+#define IDC_CHK_MPUOUTDEV               1508
+#define IDC_CMB_MPUOUTDEV               1509
+#define IDC_CMB_MPUOUTDEVBUF            1510
+#define IDC_SPN_MPUOUTDEVBUF            1511
+#define IDC_BUT_MPUOUTDEV               1512
+#define IDC_CHK_MPUOUTFILE              1513
+#define IDC_EDT_MPUOUTFILE              1514
+#define IDC_BUT_MPUOUTFILEBROWSE        1515
+#define IDC_CHK_MPUINDEV                1516
+#define IDC_CMB_MPUINDEV                1517
 
 #define IDC_CHK_USEFM                   1601
 #define IDC_CMB_FMPORT                  1602
@@ -100,9 +104,10 @@
 #define IDC_CMB_FMOUTDEV                1605
 #define IDC_CMB_FMOUTDEVBUF             1606
 #define IDC_SPN_FMOUTDEVBUF             1607
-#define IDC_CHK_FMOUTFILE               1608
-#define IDC_EDT_FMOUTFILE               1609
-#define IDC_BUT_FMOUTFILEBROWSE         1610
+#define IDC_BUT_FMOUTDEV                1608
+#define IDC_CHK_FMOUTFILE               1609
+#define IDC_EDT_FMOUTFILE               1610
+#define IDC_BUT_FMOUTFILEBROWSE         1611
 
 #define IDC_CHK_USESB                   1701
 #define IDC_CMB_SBPORT                  1702
@@ -114,11 +119,12 @@
 #define IDC_CMB_SBOUTDEV                1708
 #define IDC_CMB_SBOUTDEVBUF             1709
 #define IDC_SPN_SBOUTDEVBUF             1710
-#define IDC_CHK_SBOUTFILE               1711
-#define IDC_EDT_SBOUTFILE               1712
-#define IDC_BUT_SBOUTFILEBROWSE         1713
-#define IDC_CHK_SBINDEV                 1714
-#define IDC_CMB_SBINDEV                 1715
+#define IDC_BUT_SBOUTDEV                1711
+#define IDC_CHK_SBOUTFILE               1712
+#define IDC_EDT_SBOUTFILE               1713
+#define IDC_BUT_SBOUTFILEBROWSE         1714
+#define IDC_CHK_SBINDEV                 1715
+#define IDC_CMB_SBINDEV                 1716
 
 #define IDC_CHK_USEJOY                  1801
 #define IDC_CMB_JOYPORT                 1802
@@ -130,11 +136,25 @@
 #define IDC_CMB_JOYSCALEMAX             1808
 #define IDC_SPN_JOYSCALEMAX             1809
 
+#define IDC_CHK_VDMSLOG                 1901
+#define IDC_CMB_LOGDETAIL               1902
+#define IDC_BUT_LOGBROWSE               1903
+#define IDC_EDT_LOGBROWSE               1904
+#define IDC_CHK_LOGMIDI                 1905
+#define IDC_CHK_LOGADLIB                1906
+#define IDC_CHK_LOGSB                   1907
+#define IDC_CHK_LOGJOY                  1908
+#define IDC_CHK_LOGOTHER                1909
+#define IDC_CHK_VDMSINI                 1910
+#define IDC_EDT_VDMSINI                 1911
+
 #define IDS_PROJNAME                    10100
 #define IDS_ADVPROPERTIES               10101
 #define IDS_TXT_FILTER1                 10110
 #define IDS_TXT_FILTER2                 10111
 #define IDS_TXT_FILTER3                 10112
+#define IDS_TXT_FILTER4                 10113
+#define IDS_TXT_FILTER4_DEFEXT          10114
 #define IDS_TXT_MULTIPLEVALUES          10120
 #define IDS_TXT_BROWSEFOLDER_TIPS       10121
 #define IDS_TXT_RUNWITHVDMS             10130

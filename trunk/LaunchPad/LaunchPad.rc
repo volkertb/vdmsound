@@ -145,9 +145,9 @@ BEGIN
     CONTROL         "&Joystick Emulation",IDC_CHK_USEJOY,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,137,74,10,
                     WS_EX_TRANSPARENT
-    CONTROL         "Pair of &2-button, 2-axis joysticks",IDC_OPT_JOY2BUT,
+    CONTROL         "Pair of &2-axis, 2-button joysticks",IDC_OPT_JOY2BUT,
                     "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,149,115,10
-    CONTROL         "Single &4-button, 4-axis joystick (with rudder and throttle)",
+    CONTROL         "Single &4-axis, 4-button joystick (with rudder and throttle)",
                     IDC_OPT_JOY4BUT,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
                     14,160,189,10
     CONTROL         "Other",IDC_OPT_JOYOTHER,"Button",BS_AUTORADIOBUTTON | 
@@ -280,20 +280,27 @@ BEGIN
     CONTROL         "Additional options:",IDC_CHK_CONFIGSYS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,47,73,10
     EDITTEXT        IDC_EDT_CONFIGSYS,14,60,196,39,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_OEMCONVERT | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
                     ES_WANTRETURN | WS_VSCROLL
     GROUPBOX        "AUTOEXEC.BAT",IDC_GRP_AUTOEXECBAT,6,113,211,74,WS_GROUP
     CONTROL         "Additional options:",IDC_CHK_AUTOEXECBAT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,126,73,10
     EDITTEXT        IDC_EDT_AUTOEXECBAT,14,139,196,39,ES_MULTILINE | 
-                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_OEMCONVERT | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
                     ES_WANTRETURN | WS_VSCROLL
+END
+
+IDD_ADVPROPPAGE_PERF DIALOG DISCARDABLE  0, 0, 224, 198
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Performance"
+FONT 8, "MS Sans Serif"
+BEGIN
 END
 
 IDD_ADVPROPPAGE_MIDI DIALOGEX 0, 0, 224, 198
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "MIDI"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
     CONTROL         "&Enable MIDI (MPU-401) emulation",IDC_CHK_USEMPU,"Button",
@@ -305,11 +312,12 @@ BEGIN
     RTEXT           "IR&Q:",IDC_STATIC,89,20,21,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_MPUIRQ,115,20,25,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Indicato&r:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_CMB_SYSEXINDICATOR,52,37,89,60,CBS_DROPDOWNLIST | 
+    CONTROL         "SysE&x Indicator:",IDC_CHK_SYSEXINDICATOR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,37,63,12
+    COMBOBOX        IDC_CMB_SYSEXINDICATOR,81,37,59,60,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&MIDI Mapping...",IDC_BUT_MIDIMAPBROWSE,147,36,62,14,
-                    BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
+    PUSHBUTTON      "&MIDI Mapping...",IDC_BUT_MIDIMAPBROWSE,147,20,62,14,
+                    BS_CENTER | BS_VCENTER | WS_GROUP
     EDITTEXT        IDC_EDT_MIDIMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ | SS_SUNKEN,14,60,
@@ -329,6 +337,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
+    PUSHBUTTON      "Mo&re...",IDC_BUT_MPUOUTDEV,172,88,37,13, WS_DISABLED |
+                    BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_MPUOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_MPUOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -379,6 +389,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
+    PUSHBUTTON      "Mo&re...",IDC_BUT_FMOUTDEV,172,88,37,13, WS_DISABLED |
+                    BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_FMOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_FMOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -389,7 +401,7 @@ END
 IDD_ADVPROPPAGE_SB DIALOGEX 0, 0, 224, 198
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "SoundBlaster"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
     CONTROL         "&Enable SoundBlaster Emulation",IDC_CHK_USESB,"Button",
@@ -404,7 +416,7 @@ BEGIN
     RTEXT           "&8-bit DMA:",IDC_STATIC,144,20,39,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBDMA8,188,20,22,60,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "SB &Type:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
+    RTEXT           "DSP Ve&r.:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBTYPE,52,37,89,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "1&6-bit DMA:",IDC_STATIC,144,37,39,12,SS_CENTERIMAGE
@@ -427,6 +439,8 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
                     WS_EX_STATICEDGE
+    PUSHBUTTON      "Mo&re...",IDC_BUT_SBOUTDEV,172,88,37,13, WS_DISABLED |
+                    BS_CENTER | BS_VCENTER
     CONTROL         "&File:",IDC_CHK_SBOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_SBOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -455,7 +469,7 @@ BEGIN
     COMBOBOX        IDC_CMB_JOYPORT,52,20,36,40,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
-                    BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
+                    BS_CENTER | BS_VCENTER | WS_GROUP
     EDITTEXT        IDC_EDT_JOYMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
                     WS_TABSTOP
     RTEXT           "&Poll period:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
@@ -479,6 +493,41 @@ BEGIN
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
                     UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,54,9,13,
                     WS_EX_STATICEDGE
+END
+
+IDD_ADVPROPPAGE_DEBUG DIALOG DISCARDABLE  0, 0, 224, 198
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Troubleshooting"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "    ",IDC_STATIC,6,7,211,59
+    CONTROL         "Diagnostic &Log",IDC_CHK_VDMSLOG,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP | WS_GROUP,14,7,63,10,WS_EX_TRANSPARENT
+    RTEXT           "Log &Detail:",IDC_STATIC,9,20,38,12,SS_CENTERIMAGE | WS_GROUP
+    COMBOBOX        IDC_CMB_LOGDETAIL,52,20,89,70,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Choose &File...",IDC_BUT_LOGBROWSE,147,20,62,14,BS_CENTER | 
+                    BS_VCENTER
+    EDITTEXT        IDC_EDT_LOGBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
+                    WS_TABSTOP
+    RTEXT           "&Scope:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE | WS_GROUP
+    CONTROL         "&MIDI",IDC_CHK_LOGMIDI,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,52,37,31,12
+    CONTROL         "&AdLib",IDC_CHK_LOGADLIB,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,100,37,34,12
+    CONTROL         "Sound&Blaster",IDC_CHK_LOGSB,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,147,37,58,12
+    CONTROL         "&Joystick",IDC_CHK_LOGJOY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,52,48,41,12
+    CONTROL         "&Other modules",IDC_CHK_LOGOTHER,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,100,48,61,12
+    GROUPBOX        "   ",IDC_STATIC,6,71,211,71
+    CONTROL         "&Custom Configuration",IDC_CHK_VDMSINI,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,71,83,10,
+                    WS_EX_TRANSPARENT
+    EDITTEXT        IDC_EDT_VDMSINI,14,84,196,50,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL |
+                    ES_WANTRETURN | WS_VSCROLL
 END
 
 
@@ -658,6 +707,23 @@ BEGIN
         HORZGUIDE, 37
         HORZGUIDE, 54
     END
+
+    IDD_ADVPROPPAGE_DEBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 217
+        VERTGUIDE, 14
+        VERTGUIDE, 47
+        VERTGUIDE, 52
+        VERTGUIDE, 100
+        VERTGUIDE, 147
+        VERTGUIDE, 210
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 191
+        HORZGUIDE, 20
+        HORZGUIDE, 37
+        HORZGUIDE, 54
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -702,8 +768,6 @@ BEGIN
 0x0032, 
     IDC_CMB_MPUIRQ, 0x403, 2, 0
 0x0039, 
-    IDC_CMB_SYSEXINDICATOR, 0x403, 7, 0
-0x6e28, 0x6e6f, 0x2965, "\000" 
     IDC_CMB_SYSEXINDICATOR, 0x403, 9, 0
 0x754e, 0x206d, 0x6f4c, 0x6b63, "\000" 
     IDC_CMB_SYSEXINDICATOR, 0x403, 10, 0
@@ -751,15 +815,15 @@ BEGIN
     IDC_CMB_SBTYPE, 0x403, 24, 0
 0x2e31, 0x3530, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
 0x3120, 0x782e, 0x0029, 
-    IDC_CMB_SBTYPE, 0x403, 23, 0
+    IDC_CMB_SBTYPE, 0x403, 24, 0
 0x2e32, 0x3130, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
-0x4920, 0x2949, "\000" 
+0x3220, 0x302e, 0x0029, 
     IDC_CMB_SBTYPE, 0x403, 24, 0
 0x2e33, 0x3030, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
 0x5020, 0x6f72, 0x0029, 
-    IDC_CMB_SBTYPE, 0x403, 27, 0
+    IDC_CMB_SBTYPE, 0x403, 26, 0
 0x2e33, 0x3230, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
-0x5020, 0x6f72, 0x4920, 0x2949, "\000" 
+0x5020, 0x6f72, 0x3220, 0x0029, 
     IDC_CMB_SBTYPE, 0x403, 23, 0
 0x2e34, 0x3530, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
 0x3120, 0x2936, "\000" 
@@ -789,6 +853,18 @@ BEGIN
     0
 END
 
+IDD_ADVPROPPAGE_DEBUG DLGINIT
+BEGIN
+    IDC_CMB_LOGDETAIL, 0x403, 12, 0
+0x7245, 0x6f72, 0x7372, 0x6f20, 0x6c6e, 0x0079, 
+    IDC_CMB_LOGDETAIL, 0x403, 19, 0
+0x7245, 0x6f72, 0x2072, 0x6e61, 0x2064, 0x6177, 0x6e72, 0x6e69, 0x7367, 
+"\000" 
+    IDC_CMB_LOGDETAIL, 0x403, 11, 0
+0x7645, 0x7265, 0x7479, 0x6968, 0x676e, "\000" 
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -797,15 +873,17 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_PROJNAME            "VDMSound LaunchPad"
+    IDS_PROJNAME            "VDMS LaunchPad"
     IDS_ADVPROPERTIES       "Advanced VDMSound Properties"
-    IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
-    IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
+    IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER4         "Log Files (*.log)|*.log|All Files (*.*)|*.*||"
+    IDS_TXT_FILTER4_DEFEXT  "log"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*"
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
     IDS_TXT_BROWSEFOLDER_TIPS 
                             "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
@@ -841,4 +919,3 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-
