@@ -235,6 +235,7 @@ STDMETHODIMP CMPU401Ctl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMPU401Ctl::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
+  m_MPUFSM.putEvent(status, data1, data2, length);
   return S_OK;
 }
 
@@ -242,10 +243,13 @@ STDMETHODIMP CMPU401Ctl::HandleSysEx(LONGLONG usDelta, BYTE * data, LONG length)
   if (data == NULL)
     return E_POINTER;
 
+  m_MPUFSM.putSysEx(data, length);
+
   return S_OK;
 }
 
 STDMETHODIMP CMPU401Ctl::HandleRealTime(LONGLONG usDelta, BYTE data) {
+  m_MPUFSM.putRealTime(data);
   return S_OK;
 }
 
