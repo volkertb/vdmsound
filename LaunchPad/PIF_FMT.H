@@ -80,8 +80,8 @@ struct PIF_BASICSECTION {
 #define PIF_386_NOALTESC          0x00000040  // Not use Alt+Esc
 #define PIF_386_NOALTSPACE        0x00000080  // Not use Alt+Space
 #define PIF_386_NOALTENTER        0x00000100  // Not use Alt+Enter
-#define PIF_386_NOALTPRSCR        0x00000200  // Not use Alt+PrtSc
-#define PIF_386_NOPRSCR           0x00000400  // Not use PrtSc
+#define PIF_386_NOALTPRTSC        0x00000200  // Not use Alt+PrtSc
+#define PIF_386_NOPRTSC           0x00000400  // Not use PrtSc
 #define PIF_386_NOCTRLESC         0x00000800  // Not use Ctrl+Esc
 #define PIF_386_DETECT_IDLE       0x00001000  // Detect idle time
 #define PIF_386_NOHMA             0x00002000  // Not use HMA
@@ -152,8 +152,8 @@ struct PIF_WIN386_30_SECTION {
 #define PIF_VMM_NOALTESC              0x0040  // Not use Alt+Esc
 #define PIF_VMM_NOALTSPACE            0x0080  // Not use Alt+Space
 #define PIF_VMM_NOALTENTER            0x0100  // Not use Alt+Enter
-#define PIF_VMM_NOALTPRSCR            0x0200  // Not use Alt+PrtSc
-#define PIF_VMM_NOPRSCR               0x0400  // Not use PrtSc
+#define PIF_VMM_NOALTPRTSC            0x0200  // Not use Alt+PrtSc
+#define PIF_VMM_NOPRTSC               0x0400  // Not use PrtSc
 #define PIF_VMM_NOCTRLESC             0x0800  // Not use Ctrl+Esc
 
 #define PIF_VMM_NOMOUSESEL            0x0001  // Not use the mouse for selection.
