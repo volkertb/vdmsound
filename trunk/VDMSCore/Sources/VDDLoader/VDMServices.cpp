@@ -35,18 +35,19 @@ CArray<VDD_IO_PORTRANGE,VDD_IO_PORTRANGE&> CVDMServices::m_ranges;
 
 STDMETHODIMP CVDMServices::InterfaceSupportsErrorInfo(REFIID riid)
 {
-	static const IID* arr[] = 
-	{
-		&IID_IVDMBasicModule,
-		&IID_IVDMBaseServices,
-		&IID_IVDMIOServices
-	};
-	for (int i=0; i < sizeof(arr) / sizeof(arr[0]); i++)
-	{
-		if (InlineIsEqualGUID(*arr[i],riid))
-			return S_OK;
-	}
-	return S_FALSE;
+  static const IID* arr[] = 
+  {
+    &IID_IVDMBasicModule,
+    &IID_IVDMBaseServices,
+    &IID_IVDMIOServices,
+    &IID_IVDMDMAServices
+  };
+  for (int i=0; i < sizeof(arr) / sizeof(arr[0]); i++)
+  {
+    if (InlineIsEqualGUID(*arr[i],riid))
+      return S_OK;
+  }
+  return S_FALSE;
 }
 
 
@@ -56,14 +57,14 @@ STDMETHODIMP CVDMServices::InterfaceSupportsErrorInfo(REFIID riid)
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   // Check if first instance
   if ((++m_lInstanceCount) > 1)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_ALREADYINIT, false), __uuidof(IVDMBasicModule), E_UNEXPECTED);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_ALREADYINIT, false), __uuidof(IVDMBasicModule), E_UNEXPECTED);
 
   if (configuration == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("Init"), _T("configuration")), __uuidof(IVDMBasicModule), E_POINTER);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("Init"), _T("configuration")), __uuidof(IVDMBasicModule), E_POINTER);
 
   // Will need this instance handle when dealing with the VDM
   m_hInstance = AfxGetInstanceHandle();
@@ -77,7 +78,7 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
   // Install the VDM process create/terminate/VDM block/resume callback procedures
   if (!VDDInstallUserHook(m_hInstance, VDDUserCreate, VDDUserTerminate, VDDUserBlock, VDDUserResume)) {
     DWORD lastError = GetLastError();
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("Init"), _T("VDDInstallUserHook")), __uuidof(IVDMBasicModule), HRESULT_FROM_WIN32(lastError));
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("Init"), _T("VDDInstallUserHook")), __uuidof(IVDMBasicModule), HRESULT_FROM_WIN32(lastError));
   }
 
   m_ranges.RemoveAll();       // make sure the array of port ranges to hook is empty
@@ -95,7 +96,7 @@ STDMETHODIMP CVDMServices::Destroy() {
     return S_OK;              // Don't need to do anything more if we were not the first instance
   if (m_lInstanceCount < 0) {
     m_lInstanceCount = 0;     // Initialization did not occur (1)?
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_NOTINIT, false), __uuidof(IVDMBasicModule), E_UNEXPECTED);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_NOTINIT, false), __uuidof(IVDMBasicModule), E_UNEXPECTED);
   }
 
   // Uninstall the I/O hooks (if ever installed)
@@ -106,7 +107,7 @@ STDMETHODIMP CVDMServices::Destroy() {
   // Uninstall the VDM process create/terminate/VDM block/resume callback procedures
   if (!VDDDeInstallUserHook(m_hInstance)) {
     DWORD lastError = GetLastError();
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("Destroy"), _T("VDDDeInstallUserHook")), __uuidof(IVDMBasicModule), HRESULT_FROM_WIN32(lastError));
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("Destroy"), _T("VDDDeInstallUserHook")), __uuidof(IVDMBasicModule), HRESULT_FROM_WIN32(lastError));
   }
 
   // Reset the I/O handlers
@@ -127,7 +128,7 @@ STDMETHODIMP CVDMServices::Destroy() {
 
 STDMETHODIMP CVDMServices::GetRegister(REGISTER_T reg, ULONG * value) {
   if (value == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetRegister"), _T("value")), __uuidof(IVDMBaseServices), E_POINTER);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetRegister"), _T("value")), __uuidof(IVDMBaseServices), E_POINTER);
 
   switch (reg) {
     case REG_EAX: *value = getEAX(); return S_OK;
@@ -170,7 +171,7 @@ STDMETHODIMP CVDMServices::GetRegister(REGISTER_T reg, ULONG * value) {
 
     default:
       *value = 0;
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetRegister"), _T("reg"), (int)reg), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetRegister"), _T("reg"), (int)reg), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
@@ -219,7 +220,7 @@ STDMETHODIMP CVDMServices::SetRegister(REGISTER_T reg, ULONG value) {
 
     case REG_EIP:
     default:
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetRegister"), _T("reg"), (int)reg), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetRegister"), _T("reg"), (int)reg), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 
 # pragma warning ( pop )
@@ -228,7 +229,7 @@ STDMETHODIMP CVDMServices::SetRegister(REGISTER_T reg, ULONG value) {
 
 STDMETHODIMP CVDMServices::GetFlag(FLAG_T flag, ULONG * value) {
   if (value == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetFlag"), _T("value")), __uuidof(IVDMBaseServices), E_POINTER);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetFlag"), _T("value")), __uuidof(IVDMBaseServices), E_POINTER);
 
   switch (flag) {
     case FLAG_CARRY:  *value = getCF(); return S_OK;
@@ -243,7 +244,7 @@ STDMETHODIMP CVDMServices::GetFlag(FLAG_T flag, ULONG * value) {
     case FLAG_TRAP:
     default:
       *value = 0;
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetFlag"), _T("flag"), (int)flag), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetFlag"), _T("flag"), (int)flag), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
@@ -260,23 +261,23 @@ STDMETHODIMP CVDMServices::SetFlag(FLAG_T flag, ULONG value) {
 
     case FLAG_TRAP:
     default:
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetFlag"), _T("flag"), (int)flag), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetFlag"), _T("flag"), (int)flag), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
 STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length) {
   if (buffer == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetMemory"), _T("buffer")), __uuidof(IVDMBaseServices), E_POINTER);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetMemory"), _T("buffer")), __uuidof(IVDMBaseServices), E_POINTER);
 
-	if (length < 1)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
+  if (length < 1)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
 
   PBYTE pSrc;
 
   switch (mode) {
     case ADDR_PM:
       memset(buffer, 0, length);
-	    return E_NOTIMPL;
+      return E_NOTIMPL;
 
     case ADDR_V86:
       pSrc = GetVDMPointer(MAKELONG(segment, offset), length, FALSE);
@@ -286,22 +287,22 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
 
     default:
       memset(buffer, 0, length);
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("GetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
 STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length) {
-	if (buffer == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("SetMemory"), _T("buffer")), __uuidof(IVDMBaseServices), E_POINTER);
+  if (buffer == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("SetMemory"), _T("buffer")), __uuidof(IVDMBaseServices), E_POINTER);
 
-	if (length < 1)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
+  if (length < 1)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("length"), (int)length), __uuidof(IVDMBaseServices), E_INVALIDARG);
 
   PBYTE pDest;
 
   switch (mode) {
     case ADDR_PM:
-	    return E_NOTIMPL;
+      return E_NOTIMPL;
 
     case ADDR_V86:
       pDest = GetVDMPointer(MAKELONG(segment, offset), length, FALSE);
@@ -310,7 +311,7 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       return S_OK;
 
     default:
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SetMemory"), _T("mode"), (int)mode), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
@@ -325,7 +326,7 @@ STDMETHODIMP CVDMServices::SimulateInterrupt(INTERRUPT_T type, BYTE line, USHORT
       return S_OK;
 
     default:
-		  return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SimulateInterrupt"), _T("type"), (int)type), __uuidof(IVDMBaseServices), E_INVALIDARG);
+      return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("SimulateInterrupt"), _T("type"), (int)type), __uuidof(IVDMBaseServices), E_INVALIDARG);
   }
 }
 
@@ -341,36 +342,114 @@ STDMETHODIMP CVDMServices::TerminateVDM() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CVDMServices::AddIOHook(WORD basePort, WORD portRange, OPERATIONS_T inOps, OPERATIONS_T outOps, IIOHandler * handler) {
-	if (handler == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("AddIOHook"), _T("handler")), __uuidof(IVDMIOServices), E_POINTER);
+  if (handler == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("AddIOHook"), _T("handler")), __uuidof(IVDMIOServices), E_POINTER);
 
   if (portRange < 1)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("portRange"), (int)portRange), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("portRange"), (int)portRange), __uuidof(IVDMIOServices), E_INVALIDARG);
 
   if (basePort + portRange > m_ports.numPorts)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("basePort + portRange"), (int)(basePort + portRange)), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("basePort + portRange"), (int)(basePort + portRange)), __uuidof(IVDMIOServices), E_INVALIDARG);
 
   if (m_isCommitted)
     RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("An attempt was made to hook the I/O port range 0x%03x ... 0x%03x *after* all hooks were registered with the NT VDM!"), (int)basePort, (int)(basePort + portRange - 1)));
 
   if (!m_ports.addHandler(basePort, portRange, inOps, outOps, handler))
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_IOADDCONFLICT, false, NULL, 0, false, (int)basePort, (int)(basePort + portRange - 1)), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_IOADDCONFLICT, false, NULL, 0, false, (int)basePort, (int)(basePort + portRange - 1)), __uuidof(IVDMIOServices), E_INVALIDARG);
 
   return S_OK;
 }
 
 STDMETHODIMP CVDMServices::RemoveIOHook(WORD basePort, WORD portRange, IIOHandler * handler) {
-	if (handler == NULL)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("RemoveIOHook"), _T("handler")), __uuidof(IVDMIOServices), E_POINTER);
+  if (handler == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("RemoveIOHook"), _T("handler")), __uuidof(IVDMIOServices), E_POINTER);
 
   if (portRange < 1)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("RemoveIOHook"), _T("portRange"), (int)portRange), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("RemoveIOHook"), _T("portRange"), (int)portRange), __uuidof(IVDMIOServices), E_INVALIDARG);
 
   if (basePort + portRange > m_ports.numPorts)
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("basePort + portRange"), (int)(basePort + portRange)), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_INVALIDARG, false, NULL, 0, false, _T("AddIOHook"), _T("basePort + portRange"), (int)(basePort + portRange)), __uuidof(IVDMIOServices), E_INVALIDARG);
 
   if (!m_ports.removeHandler(basePort, portRange, handler))
-		return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_IODELCONFLICT, false, NULL, 0, false, (int)basePort, (int)(basePort + portRange - 1)), __uuidof(IVDMIOServices), E_INVALIDARG);
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_IODELCONFLICT, false, NULL, 0, false, (int)basePort, (int)(basePort + portRange - 1)), __uuidof(IVDMIOServices), E_INVALIDARG);
+
+  return S_OK;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IVDMDMAServices
+/////////////////////////////////////////////////////////////////////////////
+
+STDMETHODIMP CVDMServices::GetDMAState(USHORT channel, DMA_INFO_T * DMAInfo) {
+  if (DMAInfo == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetDMAState"), _T("DMAInfo")), __uuidof(IVDMDMAServices), E_POINTER);
+
+  VDD_DMA_INFO info;
+
+  if (!VDDQueryDMA(m_hInstance, channel, &info)) {
+    DWORD lastError = GetLastError();
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("GetDMAState"), _T("VDDQueryDMA")), __uuidof(IVDMDMAServices), HRESULT_FROM_WIN32(lastError));
+  }
+
+  DMAInfo->page   = info.page;
+  DMAInfo->addr   = info.addr;
+  DMAInfo->count  = info.count;
+  DMAInfo->status = info.status;
+  DMAInfo->mode   = info.mode;
+  DMAInfo->mask   = info.mask;
+
+  return S_OK;
+}
+
+STDMETHODIMP CVDMServices::SetDMAState(USHORT channel, DMA_INFO_SEL_T flags, DMA_INFO_T * DMAInfo) {
+  if (DMAInfo == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("SetDMAState"), _T("DMAInfo")), __uuidof(IVDMDMAServices), E_POINTER);
+
+  WORD vddFlags = 0;
+  VDD_DMA_INFO info;
+
+  if ((flags & UPDATE_PAGE) != 0) {
+    vddFlags |= VDD_DMA_PAGE;
+    info.page = DMAInfo->page;
+  }
+
+  if ((flags & UPDATE_ADDR) != 0) {
+    vddFlags |= VDD_DMA_ADDR;
+    info.addr = DMAInfo->addr;
+  }
+
+  if ((flags & UPDATE_COUNT) != 0) {
+    vddFlags |= VDD_DMA_COUNT;
+    info.count = DMAInfo->count;
+  }
+
+  if ((flags & UPDATE_STATUS) != 0) {
+    vddFlags |= VDD_DMA_STATUS;
+    info.status = DMAInfo->status;
+  }
+
+  if (!VDDSetDMA(m_hInstance, channel, vddFlags, &info)) {
+    DWORD lastError = GetLastError();
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("SetDMAState"), _T("VDDSetDMA")), __uuidof(IVDMDMAServices), HRESULT_FROM_WIN32(lastError));
+  }
+
+  return S_OK;
+}
+
+STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULONG length, ULONG * transferred) {
+  if (buffer == NULL)
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("PerformDMATransfer"), _T("buffer")), __uuidof(IVDMDMAServices), E_POINTER);
+
+  DWORD numBytes = VDDRequestDMA(m_hInstance, channel, buffer, length);
+  DWORD lastError = GetLastError();
+
+  if ((numBytes == 0) && (lastError != ERROR_SUCCESS))
+    return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_APIFAIL, false, NULL, 0, false, _T("PerformDMATransfer"), _T("VDDRequestDMA")), __uuidof(IVDMDMAServices), HRESULT_FROM_WIN32(lastError));
+
+  if (transferred != NULL)
+    *transferred = numBytes;
 
   return S_OK;
 }
@@ -388,7 +467,7 @@ VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
 
   if (!m_isCommitted) {
     // Push MFC state (needed by AfxGetInstanceHandle())
-	  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
     // Install the VDD hooks
     m_ports.getPortRanges(m_ranges);
@@ -569,12 +648,12 @@ CString CVDMServices::StringFromPortRanges(
 /*
 STDMETHODIMP CVDMServices::AddMemHook(ULONG baseAddr, ULONG addrRange, IMemHandler * handler) {
   // TODO: implement
-	return E_NOTIMPL;
+  return E_NOTIMPL;
 }
 
 STDMETHODIMP CVDMServices::RemoveMemHook(ULONG baseAddr, ULONG addrRange) {
   // TODO: implement
-	return E_NOTIMPL;
+  return E_NOTIMPL;
 }
 
 STDMETHODIMP CVDMServices::AllocMem(ULONG address, ULONG size) {
@@ -592,23 +671,4 @@ STDMETHODIMP CVDMServices::FreeMem(ULONG address, ULONG size) {
     return HRESULT_FROM_WIN32(GetLastError());
   }
 }
-
-STDMETHODIMP CVDMServices::QueryDMA(USHORT channel, DMA_INFO_T * DMAInfo) {
-	if (DMAInfo == NULL)
-		return E_POINTER;
-		
-  // TODO: implement
-	return E_NOTIMPL;
-}
-
-STDMETHODIMP CVDMServices::SetDMA(USHORT channel, DMA_INFO_SEL_T flags, DMA_INFO_T * DMAInfo) {
-  // TODO: implement
-	return E_NOTIMPL;
-}
-
-STDMETHODIMP CVDMServices::RequestDMA(USHORT channel, BYTE * buffer, ULONG length) {
-  // TODO: implement
-	return E_NOTIMPL;
-}
-
 */
