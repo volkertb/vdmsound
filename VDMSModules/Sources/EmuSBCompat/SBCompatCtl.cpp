@@ -5,6 +5,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define MIN_PLAYBACK_RATE     4000
+#define MAX_PLAYBACK_RATE     45454
+
+/////////////////////////////////////////////////////////////////////////////
+
 /* TODO: put these in a .mc file or something */
 #define MSG_ERR_INTERFACE   _T("The dependency module '%1' does not support the '%2' interface.%0")
 #define MSG_ERR_FMT_VERSION _T("The version string '%1' is not properly formatted.  Please use a value of the form X.Y, where X is the major and Y is the minor version.%0")
@@ -20,6 +25,10 @@
 #define INI_STR_IRQLINE       L"IRQ"
 #define INI_STR_DMA8CHANNEL   L"DMA8"
 #define INI_STR_DMA16CHANNEL  L"DMA16"
+
+#define INI_STR_FORCERATE     L"forceSampleRate"
+#define INI_STR_FORCENUMBITS  L"forceNumBits"
+#define INI_STR_FORCECHANNELS L"forceChannels"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -110,10 +119,15 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
     m_DSPVersion = MAKEWORD((BYTE)vMinor, (BYTE)vMajor);
 
     // Try to obtain the SB settings, use defaults if none specified
-    m_basePort = CFG_Get(Config, INI_STR_BASEPORT, 0x220, 16, false);
-    m_IRQLine  = CFG_Get(Config, INI_STR_IRQLINE, 7, 10, false);
+    m_basePort     = CFG_Get(Config, INI_STR_BASEPORT, 0x220, 16, false);
+    m_IRQLine      = CFG_Get(Config, INI_STR_IRQLINE, 7, 10, false);
     m_DMA8Channel  = CFG_Get(Config, INI_STR_DMA8CHANNEL, 1, 10, false);
     m_DMA16Channel = CFG_Get(Config, INI_STR_DMA16CHANNEL, 5, 10, false);
+
+    // These settings can be used for debugging inaccurate sound output
+    m_forcedSampleRate    = CFG_Get(Config, INI_STR_FORCERATE, -1, 10);
+    m_forcedBitsPerSample = CFG_Get(Config, INI_STR_FORCENUMBITS, -1, 10);
+    m_forcedNumChannels   = CFG_Get(Config, INI_STR_FORCECHANNELS, -1, 10);
 
     // Try to obtain an interface to a Wave-out module, use NULL if none available
     m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);
@@ -705,13 +719,21 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
   stopTransfer(type, true);
 
   // Adjust sample rates to fit in acceptable interval
-  if (samplesPerSecond < 4000) {
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is inferior to the %dHz lower bound; adjusting"), samplesPerSecond, 4000));
-    samplesPerSecond = 4000;
-  } else if (samplesPerSecond > 44100) {
-    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is superior to the %dHz upper bound; adjusting"), samplesPerSecond, 44100));
-    samplesPerSecond = 44100;
+  if (samplesPerSecond < MIN_PLAYBACK_RATE) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is inferior to the %dHz lower bound; adjusting"), samplesPerSecond, MIN_PLAYBACK_RATE));
+    samplesPerSecond = MIN_PLAYBACK_RATE;
+  } else if (samplesPerSecond > MAX_PLAYBACK_RATE) {
+    RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Sample rate (%dHz) is superior to the %dHz upper bound; adjusting"), samplesPerSecond, MAX_PLAYBACK_RATE));
+    samplesPerSecond = MAX_PLAYBACK_RATE;
   }
+
+  // If fixed playback parameters are imposed, use them instead
+  if (m_forcedSampleRate > -1)
+    samplesPerSecond = m_forcedSampleRate;
+  if (m_forcedBitsPerSample > -1)
+    bitsPerSample = m_forcedBitsPerSample;
+  if (m_forcedNumChannels > -1)
+    numChannels = m_forcedNumChannels;
 
   // Lock all transfer variables (DMA ch., sample rate, etc.)
   m_mutex.Lock(250);
