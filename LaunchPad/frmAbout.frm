@@ -53,7 +53,6 @@ Begin VB.Form frmAbout
       Width           =   1452
    End
    Begin VB.Label lblDescription 
-      Caption         =   "VDMSound LaunchPad is a graphical user interface to the VDMSound sound card emulation package."
       ForeColor       =   &H00000000&
       Height          =   1170
       Left            =   1050
@@ -135,6 +134,7 @@ Private Declare Function RegCloseKey Lib "advapi32" (ByVal hKey As Long) As Long
 
 Private Sub Form_Load()
   lblVersion.Caption = "Version " & App.Major & "." & App.Minor & "." & App.Revision
+  lblDescription.Caption = "VDMSound LaunchPad is an easy to use graphical user interface to the VDMSound sound-card emulation package." & Chr$(13) & Chr$(13) & "Written by Monty Python, SteadVex and Vlad Romascanu."
 End Sub
 
 
