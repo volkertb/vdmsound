@@ -1048,3 +1048,18 @@ CString AFX_CDECL VLPUtil::FormatMessage(
   va_end(Arguments);
   return Buffer;
 }
+
+//
+//
+//
+CString AFX_CDECL VLPUtil::FormatString(
+    LPCTSTR lpszFormat,         // A format-control string.
+    ... )
+{
+  CString Buffer;
+  va_list Arguments;
+  va_start(Arguments, lpszFormat);
+  Buffer.FormatV(lpszFormat, Arguments);
+  va_end(Arguments);
+  return Buffer;
+}

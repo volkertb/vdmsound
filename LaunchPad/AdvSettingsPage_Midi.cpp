@@ -88,13 +88,56 @@ VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled(BOOL bSave, BOOL bEnabled) {
 }
 
 VOID CAdvSettingsPage_Midi::SyncGUIData_Enabled_Device(BOOL bSave, BOOL bEnabled) {
-  // TODO: read/write device
+  // Read/write device
+  if (bSave) {
+    int curSel = m_cmbMpuoutdev.GetCurSel();
+
+    if (curSel != CB_ERR) {
+      m_settings.SetValue(_T("vdms.midi"), _T("deviceType"), VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceType));
+      m_settings.SetValue(_T("vdms.midi"), _T("deviceID"),   VLPUtil::FormatString(_T("%d"), m_devInfo[curSel].deviceID));
+    }
+  } else {
+    BOOL isDevTypeIndeterm, isDevIDIndeterm;
+    CString devType, devID;
+
+    if (FAILED(m_settings.GetValue(_T("vdms.midi"), _T("deviceType"), devType, &isDevTypeIndeterm, _T("0")))  ||
+        FAILED(m_settings.GetValue(_T("vdms.midi"), _T("deviceID"),   devID,   &isDevIDIndeterm,   _T("-1"))) ||
+        isDevTypeIndeterm ||
+        isDevIDIndeterm)
+    {
+      m_cmbMpuoutdev.SetCurSel(-1);
+    } else {
+      for (int i = 0; i < m_devInfo.GetSize(); i++) {
+        if ((m_devInfo[i].deviceType == (DeviceUtil::DeviceType)_tcstol(devType, NULL, 10)) && (m_devInfo[i].deviceID == (UINT)_tcstol(devID, NULL, 10))) {
+          m_cmbMpuoutdev.SetCurSel(i);
+          break;
+        }
+      }
+
+      if (i >= m_devInfo.GetSize()) {
+        m_cmbMpuoutdev.SetCurSel(-1);
+      }
+    }
+  }
 
   if (!bEnabled) {
     m_cmbMpuoutdev.EnableWindow(FALSE);
   } else {
     m_cmbMpuoutdev.EnableWindow(TRUE);
   }
+}
+
+VOID CAdvSettingsPage_Midi::InitDeviceList(void) {
+  m_devInfo.RemoveAll();
+  m_cmbMpuoutdev.ResetContent();
+
+  DeviceUtil::EnumMidiOut(m_devInfo);
+
+  for (int i = 0; i < m_devInfo.GetSize(); i++) {
+    m_cmbMpuoutdev.AddString(m_devInfo[i].deviceName + _T(" (") + DeviceUtil::GetDevTypeText(m_devInfo[i].deviceType) + _T(")"));
+  }
+
+  ASSERT(m_cmbMpuoutdev.GetCount() == m_devInfo.GetSize());
 }
 
 
@@ -107,7 +150,10 @@ BOOL CAdvSettingsPage_Midi::OnInitDialog()
 	
   // Enable context help
   m_help.Attach(this);
-	
+
+  // Set up controls
+  InitDeviceList();
+
   // Load the information from file into the GUI
   SyncGUIData(FALSE);
 

@@ -119,8 +119,9 @@ namespace VLPUtil {
   // NT security helper functions
   HRESULT GetEffectiveRights(LPCTSTR pObjectName, SE_OBJECT_TYPE ObjectType, PACCESS_MASK pAccessRights);
 
-  // Message formatting helper functions
+  // Message and string formatting helper functions
   CString AFX_CDECL FormatMessage(DWORD dwMessageID, bool bFromSystem = true, HMODULE hModule = NULL, DWORD dwLanguageID = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), bool bIgnoreInserts = true, ...);
+  CString AFX_CDECL FormatString(LPCTSTR lpszFormat, ...);
 
   // COM helper class
   // Keeps COM initialized during the lifetime of the object

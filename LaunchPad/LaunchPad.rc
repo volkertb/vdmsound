@@ -239,14 +239,18 @@ BEGIN
     GROUPBOX        "&Memory",IDC_GRP_MEMORY,6,7,211,75,WS_GROUP
     CONTROL         "Enable expanded memory (&EMS)",IDC_CHK_EMS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,20,119,10
-    RTEXT           "Total:",IDC_STATIC,14,32,25,12,SS_CENTERIMAGE | NOT WS_GROUP
-    LTEXT           "kB",IDC_STATIC,85,32,25,12,SS_CENTERIMAGE | NOT WS_GROUP
+    RTEXT           "Total:",IDC_STATIC,14,32,25,12,SS_CENTERIMAGE | NOT 
+                    WS_GROUP
+    LTEXT           "kB",IDC_STATIC,85,32,25,12,SS_CENTERIMAGE | NOT 
+                    WS_GROUP
     COMBOBOX        IDC_CMB_EMS,42,32,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Enable extended memory (&XMS)",IDC_CHK_XMS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,50,117,10
-    RTEXT           "Total:",IDC_STATIC,14,62,25,12,SS_CENTERIMAGE | NOT WS_GROUP
-    LTEXT           "kB",IDC_STATIC,85,62,15,12,SS_CENTERIMAGE | NOT WS_GROUP
+    RTEXT           "Total:",IDC_STATIC,14,62,25,12,SS_CENTERIMAGE | NOT 
+                    WS_GROUP
+    LTEXT           "kB",IDC_STATIC,85,62,15,12,SS_CENTERIMAGE | NOT 
+                    WS_GROUP
     COMBOBOX        IDC_CMB_XMS,42,62,40,60,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "&Protected Mode",IDC_GRP_PMODE,6,87,211,27,WS_GROUP
@@ -306,13 +310,14 @@ BEGIN
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&MIDI Mapping...",IDC_BUT_MIDIMAPBROWSE,147,36,62,14,
                     BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
-    EDITTEXT        IDC_EDT_MIDIMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT WS_TABSTOP
+    EDITTEXT        IDC_EDT_MIDIMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
+                    WS_TABSTOP
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ | SS_SUNKEN,14,60,
                     196,1
     CTEXT           "&Output",IDC_STATIC,19,54,33,12,SS_CENTERIMAGE
     CONTROL         "&Dev.:",IDC_CHK_MPUOUTDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,71,33,12
-    COMBOBOX        IDC_CMB_MPUOUTDEV,52,71,158,40,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_MPUOUTDEV,52,71,158,80,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Buffer:",IDC_STATIC,9,88,38,12,SS_CENTERIMAGE | 
                     WS_DISABLED | NOT WS_GROUP
@@ -322,7 +327,8 @@ BEGIN
                     WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin",IDC_SPN_MPUOUTDEVBUF,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,WS_EX_STATICEDGE
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
+                    WS_EX_STATICEDGE
     CONTROL         "&File:",IDC_CHK_MPUOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_MPUOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -335,7 +341,7 @@ BEGIN
                     WS_DISABLED
     CONTROL         "De&v.:",IDC_CHK_MPUINDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,139,33,12
-    COMBOBOX        IDC_CMB_MPUINDEV,52,139,158,40,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_MPUINDEV,52,139,158,80,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -361,7 +367,7 @@ BEGIN
     CTEXT           "&Output",IDC_STATIC,19,54,33,12,SS_CENTERIMAGE
     CONTROL         "&Dev.:",IDC_CHK_FMOUTDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,71,33,12
-    COMBOBOX        IDC_CMB_FMOUTDEV,52,71,158,40,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_FMOUTDEV,52,71,158,80,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Buffer:",IDC_STATIC,9,88,38,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
@@ -371,7 +377,8 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin",IDC_SPN_FMOUTDEVBUF,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,WS_EX_STATICEDGE
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
+                    WS_EX_STATICEDGE
     CONTROL         "&File:",IDC_CHK_FMOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_FMOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -382,7 +389,7 @@ END
 IDD_ADVPROPPAGE_SB DIALOGEX 0, 0, 224, 198
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "SoundBlaster"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "    ",IDC_STATIC,6,7,211,154
     CONTROL         "&Enable SoundBlaster Emulation",IDC_CHK_USESB,"Button",
@@ -398,7 +405,7 @@ BEGIN
     COMBOBOX        IDC_CMB_SBDMA8,188,20,22,60,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "SB &Type:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_CMB_SBTYPE,52,37,89,70,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_SBTYPE,52,37,89,70,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "1&6-bit DMA:",IDC_STATIC,144,37,39,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CMB_SBDMA16,188,37,22,60,CBS_DROPDOWN | 
@@ -408,7 +415,7 @@ BEGIN
     CTEXT           "&Output",IDC_STATIC,19,54,33,12,SS_CENTERIMAGE
     CONTROL         "&Dev.:",IDC_CHK_SBOUTDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,71,33,12
-    COMBOBOX        IDC_CMB_SBOUTDEV,52,71,158,40,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_SBOUTDEV,52,71,158,80,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Buffer:",IDC_STATIC,9,88,38,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
@@ -418,7 +425,8 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin",IDC_SPN_SBOUTDEVBUF,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,WS_EX_STATICEDGE
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,88,9,13,
+                    WS_EX_STATICEDGE
     CONTROL         "&File:",IDC_CHK_SBOUTFILE,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,105,33,14
     EDITTEXT        IDC_EDT_SBOUTFILE,52,105,144,14,ES_AUTOHSCROLL | 
@@ -430,7 +438,7 @@ BEGIN
                     WS_DISABLED
     CONTROL         "De&v.:",IDC_CHK_SBINDEV,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,14,139,33,12
-    COMBOBOX        IDC_CMB_SBINDEV,52,139,158,40,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_CMB_SBINDEV,52,139,158,80,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -448,7 +456,8 @@ BEGIN
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Inputs &Mapping...",IDC_BUT_JOYMAPBROWSE,142,20,67,14,
                     BS_CENTER | BS_VCENTER | BS_MULTILINE | WS_GROUP
-    EDITTEXT        IDC_EDT_JOYMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT WS_TABSTOP
+    EDITTEXT        IDC_EDT_JOYMAPBROWSE,0,0,14,14,NOT WS_VISIBLE | NOT 
+                    WS_TABSTOP
     RTEXT           "&Poll period:",IDC_STATIC,9,37,38,12,SS_CENTERIMAGE
     LTEXT           "(ms)",IDC_STATIC,90,37,20,12,SS_CENTERIMAGE | NOT 
                     WS_GROUP
@@ -462,12 +471,14 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin",IDC_SPN_JOYSCALEMIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,194,54,9,13,WS_EX_STATICEDGE
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,194,54,9,13,
+                    WS_EX_STATICEDGE
     COMBOBOX        IDC_CMB_JOYSCALEMAX,101,54,40,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin",IDC_SPN_JOYSCALEMAX,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
-                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,54,9,13,WS_EX_STATICEDGE
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,201,54,9,13,
+                    WS_EX_STATICEDGE
 END
 
 
@@ -737,17 +748,21 @@ BEGIN
 0x0037, 
     IDC_CMB_SBDMA8, 0x403, 2, 0
 0x0031, 
-    IDC_CMB_SBTYPE, 0x403, 17, 0
-0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 0x3120, 0x352e, "\000" 
-    IDC_CMB_SBTYPE, 0x403, 17, 0
-0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 0x5020, 0x6f72, "\000" 
-    IDC_CMB_SBTYPE, 0x403, 16, 0
-0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 0x4920, 0x0049, 
-    IDC_CMB_SBTYPE, 0x403, 20, 0
-0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 0x5020, 0x6f72, 0x4920, 
-0x0049, 
-    IDC_CMB_SBTYPE, 0x403, 16, 0
-0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 0x3120, 0x0036, 
+    IDC_CMB_SBTYPE, 0x403, 24, 0
+0x2e31, 0x3530, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
+0x3120, 0x782e, 0x0029, 
+    IDC_CMB_SBTYPE, 0x403, 23, 0
+0x2e32, 0x3130, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
+0x4920, 0x2949, "\000" 
+    IDC_CMB_SBTYPE, 0x403, 24, 0
+0x2e33, 0x3030, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
+0x5020, 0x6f72, 0x0029, 
+    IDC_CMB_SBTYPE, 0x403, 27, 0
+0x2e33, 0x3230, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
+0x5020, 0x6f72, 0x4920, 0x2949, "\000" 
+    IDC_CMB_SBTYPE, 0x403, 23, 0
+0x2e34, 0x3530, 0x2820, 0x6f53, 0x6e75, 0x4264, 0x616c, 0x7473, 0x7265, 
+0x3120, 0x2936, "\000" 
     IDC_CMB_SBDMA16, 0x403, 2, 0
 0x0035, 
     IDC_CMB_SBOUTDEVBUF, 0x403, 3, 0
@@ -786,13 +801,14 @@ BEGIN
     IDS_ADVPROPERTIES       "Advanced VDMSound Properties"
     IDS_TXT_FILTER1         "All Program Files (*.exe,*.com,*.bat)|*.exe;*.com;*.bat|Applications (*.exe,*.com)|*.exe;*.com|Batch Files (*.bat)|*.bat|All Files (*.*)|*.*"
     IDS_TXT_FILTER2         "All Icon Files (*.ico,*.exe,*.dll)|*.ico;*.exe;*.dll|Icons (*.ico)|*.ico|Programs (*.exe)|*.exe|Program Extensions (*.dll)|*.ico|All Files (*.*)|*.*"
-    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    IDS_TXT_FILTER3         "Map Files (*.map)|*.map|All Files (*.*)|*.*"
     IDS_TXT_MULTIPLEVALUES  "(multiple values)"
-    IDS_TXT_BROWSEFOLDER_TIPS "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
+    IDS_TXT_BROWSEFOLDER_TIPS 
+                            "Please select a folder where the DOS application should be run (application files will be loaded and saved here):"
 END
 
 STRINGTABLE DISCARDABLE 
