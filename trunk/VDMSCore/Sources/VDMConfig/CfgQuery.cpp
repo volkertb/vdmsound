@@ -154,24 +154,25 @@ STDMETHODIMP CCfgQuery::Get(BSTR name, BSTR * value) {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CCfgQuery::RecordLogEntry(LOGENTRY_T type, BSTR message) {
+  if (m_pEnv == NULL)
+    return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_QUERY_NOT_INIT, false, NULL, 0, false, m_pEnv), HLP_ERR_QUERY_NOT_INIT, ::GetHelpPath(), __uuidof(IVDMRTEnvironment), E_UNEXPECTED);
+
+  if (type < m_pEnv->loggingLevel)
+    return S_FALSE; // do not need to log anything (filtered out)
+
   CString logEntry;
   CString entryType;
   CString logMsg = message;
   CString moduleName = (m_pEnv != NULL) ? m_pEnv->name.c_str() : "<error>";
 
-  switch (type) {
-    case LOG_INFORMATION:
-      entryType = _T("@I");
-      break;
-    case LOG_WARNING:
-      entryType = _T("@W");
-      break;
-    case LOG_ERROR:
-      entryType = _T("@E");
-      break;
-    default:
-      entryType = _T("@?");
-      break;
+  if (type >= LOG_ERROR) {
+    entryType = _T("@E");
+  } else if (type >= LOG_WARNING) {
+    entryType = _T("@W");
+  } else if (type >= LOG_INFORMATION) {
+    entryType = _T("@I");
+  } else {
+    entryType = _T("@?");
   }
 
   WrapString(logMsg, 70, _T("\t"), _T("\t"));

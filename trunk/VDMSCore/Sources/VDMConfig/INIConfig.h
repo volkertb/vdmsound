@@ -17,7 +17,7 @@ class CVDMConfig {
       nosection_error(
           const std::string& _section)
         : section(_section), invalid_argument(_section)
-        { };
+        { }
       const std::string section;
     };
     // Key was not found within section(s)
@@ -27,7 +27,7 @@ class CVDMConfig {
           const std::string& _location,
           const std::string& _key)
         : section(_section), location(_location), key(_key), invalid_argument(_location + ", [" + _section + "] : " + _key + " = \?\?\?")
-        { };
+        { }
       const std::string section;
       const std::string location;
       const std::string key;
@@ -50,7 +50,7 @@ class CINIConfig :
       modulename_error(
           const std::string& _sections)
         : sections(_sections), logic_error(_sections)
-        { };
+        { }
       const std::string sections;
     };
     // Section(s) cannot be associated with a module
@@ -58,7 +58,7 @@ class CINIConfig :
       orphansection_error(
           const std::string& _sections)
         : sections(_sections), logic_error(_sections)
-        { };
+        { }
       const std::string sections;
     };
     // Dependency cycle was identified
@@ -67,7 +67,7 @@ class CINIConfig :
           const std::string& _cycle,
           const std::string& _modules)
         : cycle(_cycle), modules(_modules), logic_error(_cycle + "\n\n=>\n\n" + _modules)
-        { };
+        { }
       const std::string cycle;
       const std::string modules;
     };

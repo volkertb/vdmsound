@@ -35,10 +35,10 @@ class CInstantiationError : public CException {
   public:
     CInstantiationError(const CInstantiationError& src)
       : m_errText(src.m_errText), m_defaultText(src.m_defaultText)
-    { };
+    { }
     CInstantiationError(const CString& defaultText = _T(""))
       : CException(FALSE), m_defaultText(defaultText + "\n")
-    { };
+    { }
     void AddError(
         const CString& location,
         HRESULT errCode)
@@ -238,7 +238,8 @@ STDAPI CfgDestroy(void) {
 /////////////////////////////////////////////////////////////////////////////
 
 //
-// Attempts to instantiate a COM emulation module using one or more methods
+// Attempts to instantiate a COM emulation module using one of several
+//   methods
 //
 void InstantiateModule(
     const std::string& moduleName,
@@ -260,12 +261,34 @@ void InstantiateModule(
       config.getLocation(moduleName, CVDMConfig::SEC_LOADER, "CLSID", location);
       errorMsg.AddError(CString(location.c_str()), hr);
     }
-  } catch (CVDMConfig::nokey_error& /*nke*/) { };
+  } catch (CVDMConfig::nokey_error& /*nke*/) { }
 
   /* TODO: try other loading methods (e.g. explicitly call LoadLibrary,
      GetProcAddress(DllGetClassObject), DllGetClassObject */
 
   throw errorMsg;           // Failure
+}
+
+//
+// Attempts to load the threshold for error-logging detail from the loader
+//   section corresponding to the given module in the .INI file
+//
+int GetModuleLoggingDetail(
+    const std::string& moduleName,
+    const CVDMConfig& config)
+{
+  int threshold;
+  std::string thresholdStr = "";
+
+  try {
+    config.getValue(moduleName, CVDMConfig::SEC_LOADER, "detail", thresholdStr);
+  } catch (CVDMConfig::nokey_error& /*nke*/) { }
+
+  if (sscanf(thresholdStr.c_str(), "%d", &threshold) != 1) {
+    threshold = LOG_WARNING; // by default, don't log anything less severe than warnings
+  }
+
+  return threshold;
 }
 
 //
@@ -281,9 +304,8 @@ void InitializeModule(
   pModule = ptr;
 
   // Check if IVDMBasicModule interface was supported
-  if (pModule == NULL) {
-    return;
-  }
+  if (pModule == NULL)
+    return; // it's OK, but don't continue: this module can't accept a CfgQuery object
 
   // Create query object, and pass to module
   HRESULT hr;
@@ -296,7 +318,9 @@ void InitializeModule(
 
     _ASSERTE(pCQ != NULL);
 
-    pCQ->Init(CfgEnvironment(moduleName, config, modules));
+    int loggingLevel = GetModuleLoggingDetail(moduleName, config);
+
+    pCQ->Init(CfgEnvironment(moduleName, config, modules, loggingLevel));
 
     if (FAILED(hr = pCQ->QueryInterface(__uuidof(IUnknown), (void**)(&pQuery))))
       throw _com_error(hr);     // Failure
@@ -311,7 +335,7 @@ void InitializeModule(
       // Release query object (avoid memory leaks)
       pQuery->Release();
       // Module failed Init, give it a chance to cleanup
-      try { pModule->Destroy(); } catch (_com_error& /*ce*/) { };
+      try { pModule->Destroy(); } catch (_com_error& /*ce*/) { }
     } else if (pCQ != NULL) {
       // Object was allocated but not AddRef'ed, so must delete manually
       delete pCQ;
@@ -388,4 +412,3 @@ CString FormatCOMError(
 
   return retVal;
 }
-
