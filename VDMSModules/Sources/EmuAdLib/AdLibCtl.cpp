@@ -170,6 +170,20 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
   if (FAILED(hr = OPLCreate(m_sampleRate)))
     return hr;
 
+  // Initialize the OPL controller(s)
+  switch (m_oplMode) {
+    case MODE_OPL2:
+      m_AdLibFSM1.setType(CAdLibCtlFSM::TYPE_OPL2);
+      break;
+    case MODE_DUAL_OPL2:
+      m_AdLibFSM1.setType(CAdLibCtlFSM::TYPE_OPL2);
+      m_AdLibFSM2.setType(CAdLibCtlFSM::TYPE_OPL2);
+      break;
+    case MODE_OPL3:
+      m_AdLibFSM1.setType(CAdLibCtlFSM::TYPE_OPL3);
+      break;
+  }
+
   // Put the OPL in a known state
   m_AdLibFSM1.reset();
   m_AdLibFSM2.reset();
