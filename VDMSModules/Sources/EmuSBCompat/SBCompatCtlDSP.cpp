@@ -633,7 +633,6 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return false;
 
     case 0xfd:  /* 0FDh : DSP Command Status */
-      /* TODO: inquire: exclude self ?! */
       flushOutputBuffer();  // flush any previous replies
       m_bufOut.push(m_lastCommand); // output reply
       return true;
@@ -649,6 +648,13 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
 const char* CSBCompatCtlDSP::getCopyright(void) {
   return "COPYRIGHT (C) CREATIVE TECHNOLOGY LTD, 1992.";
 }
+
+/* TODO: ** BUG! ** if stereo/mono hard-coded in command (not taken from
+   mixer) and time-constant is used, the wrong pitch will probably be used!!!
+   Inquire if, in samplerate=fn(timeconstant,#channels), the # of channels
+   is evaluated (1) at the time the TC is set, or (2) when the DSP command
+   is executed, and if (2), then if only the mixer #channels is used, or 
+   if for commands bxh/cxh stereo/mono is also used */
 
 int CSBCompatCtlDSP::getNumChannels(void) {
   if (m_hwemu->getDSPVersion() < 0x0400) {
