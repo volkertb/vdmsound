@@ -71,12 +71,12 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "LaunchPad Module\0"
+            VALUE "FileDescription", "VDMS LaunchPad Shell Extension\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "LaunchPad\0"
-            VALUE "LegalCopyright", "Copyright 2001\0"
+            VALUE "LegalCopyright", "Copyright (C) 2001\0"
             VALUE "OriginalFilename", "LaunchPad.DLL\0"
-            VALUE "ProductName", "LaunchPad Module\0"
+            VALUE "ProductName", "VDMSound 2.x\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
             VALUE "OLESelfRegister", "\0"
         END
@@ -106,6 +106,34 @@ IDD_PROPPAGE DIALOG DISCARDABLE  0, 0, 227, 215
 STYLE WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
+    CONTROL         "",IDC_ICO_APP,"Static",SS_BLACKFRAME,7,7,20,20
+    EDITTEXT        IDC_EDT_DOSCMD,34,12,130,12,ES_AUTOHSCROLL | ES_READONLY | 
+                    NOT WS_BORDER | WS_GROUP
+    PUSHBUTTON      "&Change...",IDC_BUT_CHANGE,170,11,50,14
+    GROUPBOX        "Compatibilit&y",IDC_STATIC,7,29,213,49,WS_GROUP
+    CONTROL         "Enable expanded memory (&EMS)",IDC_CHK_EMS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,40,119,10
+    CONTROL         "Enable basic &VESA support",IDC_CHK_VESA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,52,103,10
+    CONTROL         "Enable low-level CD-&ROM support",IDC_CHK_CDROM,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,64,123,10
+    GROUPBOX        "&MIDI Emulation",IDC_STATIC,7,82,213,48,WS_GROUP
+    CONTROL         "General MIDI (&GM) or GS",IDC_OPT_GMIDI,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,14,94,95,10
+    CONTROL         "Roland M&T-32, LAPC-1 or CM-64",IDC_OPT_MT32,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,14,105,120,10
+    CONTROL         "Other",IDC_OPT_MIDIOTHER,"Button",BS_AUTORADIOBUTTON | 
+                    WS_TABSTOP,14,116,33,10
+    GROUPBOX        "&Joystick Emulation",IDC_STATIC,7,134,213,48,WS_GROUP
+    CONTROL         "Pair of &2-button, 2-axis joysticks",IDC_OPT_JOY2BUT,
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,146,115,10
+    CONTROL         "Single &4-button, 4-axis joystick",IDC_OPT_JOY4BUT,
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,14,157,111,10
+    CONTROL         "Other",IDC_OPT_JOYOTHER,"Button",BS_AUTORADIOBUTTON | 
+                    WS_TABSTOP,14,168,33,10
+    CONTROL         "Do not close DOS window on e&xit",IDC_CHK_CLOSE,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,192,122,10
+    PUSHBUTTON      "A&dvanced...",IDC_BUT_ADVANCED,170,190,50,14
 END
 
 
@@ -127,6 +155,15 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON    DISCARDABLE     "VDMSound.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
