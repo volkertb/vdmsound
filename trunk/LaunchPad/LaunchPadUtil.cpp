@@ -209,7 +209,7 @@ BOOL COpenDOSProgramDialog::OnFileNameOK(void) {
 // Force declaration even for older versions of IE; the delayed imports binding
 //  wil take care of any problems with missing exports or dll's etc. at runtime.
 // Do it this way in order to provide prototypes for older versions of VC because
-//  VC7's shlwapi.h is the firts one to declare these.
+//  VC7's shlwapi.h is the first one to declare these.
 // TODO: switch to VC7 and define _WIN32_IE = 0x0500 before including shlwapi.h
 //  instead of keeping the declarations below
 
@@ -371,10 +371,9 @@ HRESULT VLPUtil::SyncCheckBox(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((!control.IsWindowEnabled()) || ((control.GetState() & 0x3) == BST_INDETERMINATE))
-      return settings.UnsetValue(section, key);
-
     switch (control.GetState() & 0x3) {
+      case BST_INDETERMINATE:
+      return settings.UnsetValue(section, key);
       case BST_CHECKED:
         return settings.SetValue(section, key, yesValue);
       case BST_UNCHECKED:
@@ -395,7 +394,7 @@ HRESULT VLPUtil::SyncCheckBox(
 
     int bState;
 
-    if (isIndeterminate) {
+    if (isIndeterminate || FAILED(hr)) {
       bState = BST_INDETERMINATE;
     } else if (value.CollateNoCase(yesValue) == 0) {
       bState = BST_CHECKED;
@@ -437,7 +436,7 @@ HRESULT VLPUtil::SyncRadioButton(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((control.IsWindowEnabled()) && ((control.GetState() & 0x3) == BST_CHECKED)) {
+    if ((control.GetState() & 0x3) == BST_CHECKED) {
       return settings.SetValue(section, key, selValue);
     } else {
       return S_OK;
@@ -455,7 +454,7 @@ HRESULT VLPUtil::SyncRadioButton(
 
     int bState;
 
-    if (isIndeterminate) {
+    if (isIndeterminate || FAILED(hr)) {
       bState = BST_UNCHECKED;
     } else if (value.CollateNoCase(selValue) == 0) {
       bState = BST_CHECKED;
@@ -495,8 +494,8 @@ HRESULT VLPUtil::SyncRadioButton(
     return E_INVALIDARG;
 
   if (bSave) {
-    if ((control.IsWindowEnabled()) && ((control.GetState() & 0x3) == BST_CHECKED)) {
-      return settings.UnsetValue(section, key);
+    if ((control.GetState() & 0x3) == BST_CHECKED) {
+      return settings.UnsetValue(section, key);       // reset if the "Other" option is selected
     } else {
       return S_OK;
     }
@@ -537,6 +536,58 @@ HRESULT VLPUtil::SyncRadioButton(
 //  setting.
 //  This function deals with 'regular' radio buttons (that represent
 //  meaningful settings).
+//
+HRESULT VLPUtil::SyncEditBox(
+  BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
+  CLaunchPadSettings& settings,                       // settings store
+  LPCTSTR section,                                    // ini section
+  LPCTSTR key,                                        // key (string) under the given section
+  CWnd& control,                                      // window control with which the data must be synchronized
+  LPCTSTR defValue)                                   // default value
+{
+  ASSERT(section != NULL);
+  ASSERT(key != NULL);
+  ASSERT(defValue != NULL);
+
+  ASSERT_VALID(&control);
+
+  if (control.m_hWnd == NULL)
+    return E_INVALIDARG;
+
+  HRESULT hr = S_OK;
+  CString value = defValue;
+  BOOL isIndeterminate = FALSE;
+
+  hr = settings.GetValue(section, key, value, &isIndeterminate, defValue);
+  value.TrimLeft(); value.TrimRight();
+
+  control.EnableWindow(SUCCEEDED(hr));                // disable the control if an error occured
+
+  if (bSave) {
+    CString newValue;
+    control.GetWindowText(newValue);
+
+    if (((!isIndeterminate) && (value.Compare(newValue) == 0)) || (isIndeterminate && newValue.IsEmpty())) {
+      return S_FALSE;       // do not modify the value
+    } else {
+      return settings.SetValue(section, key, newValue);
+    }
+  } else {
+    if (isIndeterminate) {
+      control.SetWindowText(_T(""));
+    } else {
+      control.SetWindowText(value);
+    }
+
+    return hr;
+  }
+}
+
+#if 0
+
+//
+// Enables or disables a group of controls based on whether the given
+//  boolean setting is true or not.
 //
 HRESULT VLPUtil::SyncGroup(
   BOOL bSave,                                         // whether this is a set (GUI->INI) as opposed to a get (INI->GUI) operation
@@ -587,6 +638,8 @@ HRESULT VLPUtil::SyncGroup(
     return hr;
   }
 }
+
+#endif
 
 //
 // Loads a Win32 icon from a setting.

@@ -78,6 +78,7 @@ namespace VLPUtil {
   HRESULT SyncCheckBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState, LPCTSTR selValue);
   HRESULT SyncRadioButton(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, LPCTSTR selValue1, ...);
+  HRESULT SyncEditBox(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CWnd& control, LPCTSTR defValue = _T(""));
   HRESULT SyncGroup(BOOL bSave, CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CButton& control, BOOL defState = FALSE, LPCTSTR yesValue = T_YES, LPCTSTR noValue = T_NO);
 
   HRESULT LoadIconCtl(CLaunchPadSettings& settings, LPCTSTR section, LPCTSTR key, CStatic_Icon& control);
