@@ -447,12 +447,12 @@ Begin VB.Form frmMain
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "8/10/01"
+            TextSave        =   "11/10/01"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "20:21 PM"
+            TextSave        =   "22:13 PM"
          EndProperty
       EndProperty
    End
@@ -461,6 +461,7 @@ Begin VB.Form frmMain
       Left            =   8280
       Picture         =   "frmMain.frx":24BC
       Top             =   2040
+      Visible         =   0   'False
       Width           =   480
    End
    Begin VB.Image picMSDOS16 
@@ -468,6 +469,7 @@ Begin VB.Form frmMain
       Left            =   8280
       Picture         =   "frmMain.frx":27C6
       Top             =   1680
+      Visible         =   0   'False
       Width           =   240
    End
    Begin VB.Image imgSplitter 
@@ -674,7 +676,7 @@ Private Sub Form_Resize()
   SizeControls imgSplitter.Left
 End Sub
 
-Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
   With imgSplitter
     picSplitter.Move .Left, .Top, .Width \ 2, .Height - 20
   End With
@@ -682,7 +684,7 @@ Private Sub imgSplitter_MouseDown(Button As Integer, Shift As Integer, X As Sing
   mbMoving = True
 End Sub
 
-Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
   Dim sglPos As Single
   
   If mbMoving Then
@@ -697,13 +699,13 @@ Private Sub imgSplitter_MouseMove(Button As Integer, Shift As Integer, X As Sing
   End If
 End Sub
 
-Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub imgSplitter_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
   SizeControls picSplitter.Left
   picSplitter.Visible = False
   mbMoving = False
 End Sub
 
-Private Sub tvTreeView_DragDrop(Source As Control, X As Single, y As Single)
+Private Sub tvTreeView_DragDrop(Source As Control, X As Single, Y As Single)
   If Source = imgSplitter Then
     SizeControls X
   End If
@@ -1001,7 +1003,7 @@ End Sub
 '
 Private Sub PopUpCategoriesContextMenu( _
   X As Single, _
-  y As Single _
+  Y As Single _
 )
   Dim tvContextNode As Node
   Set tvContextNode = GetContextNode()
@@ -1024,7 +1026,7 @@ Private Sub PopUpCategoriesContextMenu( _
     mnuTreeViewCollapseAll.Enabled = False
   End If
 
-  PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton, X, y
+  PopupMenu mnuTreeViewMenu, vbPopupMenuRightButton, X, Y
 End Sub
 
 '
@@ -1032,7 +1034,7 @@ End Sub
 '
 Private Sub PopUpProgramsContextMenu( _
   X As Single, _
-  y As Single _
+  Y As Single _
 )
   Dim lvContextItems As Collection
   Set lvContextItems = GetContextItems(False)
@@ -1049,7 +1051,7 @@ Private Sub PopUpProgramsContextMenu( _
     mnuListViewDelete.Enabled = False
   End If
 
-  PopupMenu mnuListViewMenu, vbPopupMenuRightButton, X, y
+  PopupMenu mnuListViewMenu, vbPopupMenuRightButton, X, Y
 End Sub
 
 '----------------------------------------------------------------------------
@@ -1214,12 +1216,12 @@ End Sub
 '
 ' Pops up a context menu on a category (on the tree view)
 '
-Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub tvTreeView_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
   On Error Resume Next
 
   If Button = 2 Then  ' Check if right mouse button was clicked.
     ' Pop up the menu
-    PopUpCategoriesContextMenu tvTreeView.Left + X, tvTreeView.Top + y
+    PopUpCategoriesContextMenu tvTreeView.Left + X, tvTreeView.Top + Y
   End If
 End Sub
 
@@ -1282,14 +1284,14 @@ End Sub
 '
 '
 '
-Private Sub tvTreeView_OLEDragOver(Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, y As Single, State As Integer)
+Private Sub tvTreeView_OLEDragOver(Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, Shift As Integer, X As Single, Y As Single, State As Integer)
   On Error Resume Next
 
   Select Case State
     Case vbEnter
     Case vbOver
       Dim tvNode As Node
-      Set tvNode = tvTreeView.HitTest(X, y)
+      Set tvNode = tvTreeView.HitTest(X, Y)
       tvTreeView.DropHighlight = tvNode
     Case vbLeave
       tvTreeView.DropHighlight = Nothing
@@ -1377,12 +1379,12 @@ End Sub
 '
 ' Pops up a context menu on a program (on the list view)
 '
-Private Sub lvListView_MouseUp(Button As Integer, Shift As Integer, X As Single, y As Single)
+Private Sub lvListView_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
   On Error Resume Next
 
   If Button = 2 Then  ' Check if right mouse button was clicked.
     ' Pop up the menu
-    PopUpProgramsContextMenu lvListView.Left + X, lvListView.Top + y
+    PopUpProgramsContextMenu lvListView.Left + X, lvListView.Top + Y
   End If
 End Sub
 
