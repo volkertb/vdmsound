@@ -467,7 +467,11 @@ HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
 
   switch (address) {
     case 0:   // the address/status port
+#if USE_OPL2
+      *data = m_AdLibFSM.getStatus() | 0x06;
+#elif USE_OPL3
       *data = m_AdLibFSM.getStatus();
+#endif
       return S_OK;
 
     case 1:   // the data port
