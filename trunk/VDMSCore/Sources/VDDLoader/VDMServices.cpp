@@ -7,6 +7,10 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define INI_STR_POPF_FIX      L"fixPOPF"
+
+/////////////////////////////////////////////////////////////////////////////
+
 #include <MFCUtil.h>
 #pragma comment ( lib , "MFCUtil.lib" )
 
@@ -36,7 +40,7 @@
     int  m = wintime %   60; wintime = (wintime -  m) /   60;
     int  h = wintime;
 
-    fprintf(_vdms_fLog != NULL ? _vdms_fLog : stderr, "%08x [%02d:%02d:%02d.%03d] ", GetCurrentThreadId(), h, m, s, ms);
+    fprintf(_vdms_fLog != NULL ? _vdms_fLog : stderr, "%08x @%04x:%08x [%02d:%02d:%02d.%03d] ", GetCurrentThreadId(), getCS() & 0xffff, getEIP() & 0xffffffff, h, m, s, ms);
     vfprintf(_vdms_fLog != NULL ? _vdms_fLog : stderr, format, marker);
 
     va_end(marker);
@@ -70,6 +74,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 IVDMQUERYLib::IVDMRTEnvironmentPtr CVDMServices::m_env = NULL;
+int CVDMServices::m_fixPOPF = 0;
 
 long CVDMServices::m_lInstanceCount = 0;
 bool CVDMServices::m_isCommitted = false;
@@ -120,6 +125,9 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
   if (configuration == NULL)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("Init"), _T("configuration")), __uuidof(IVDMBasicModule), E_POINTER);
 
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
+  Config = configuration;
+
   // Will need this instance handle when dealing with the VDM
   m_hInstance = AfxGetInstanceHandle();
 
@@ -136,6 +144,8 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
   }
 
   m_ranges.RemoveAll();       // make sure the array of port ranges to hook is empty
+
+  m_fixPOPF = CFG_Get(Config, INI_STR_POPF_FIX, 0, 10, true);
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("VDMServices initialized (hInstance = 0x%08x)"), m_hInstance));
 
@@ -155,9 +165,20 @@ STDMETHODIMP CVDMServices::Destroy() {
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_NOTINIT, false), __uuidof(IVDMBasicModule), E_UNEXPECTED);
   }
 
-  // Uninstall the I/O hooks (if ever installed)
+  // Clean up
   if (m_isCommitted) {
+    // Uninstall the I/O hooks
     VDDDeInstallIOHook(m_hInstance, m_ranges.GetSize(), m_ranges.GetData());
+
+    // Deactivate WinXP's PUSHF/CLI/POPF workaround
+    if (m_fixPOPF) {
+      DWORD result;
+      DWORD fn = 0x0d, param = 0;
+
+      if ((result = VDMControl(fn, &param)) != ERROR_SUCCESS) {
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("NtVdmControl(0x%02x,%d):\n0x%08x - %s"), fn, param, result, (LPCTSTR)FormatMessage(result)));
+      }
+    }
   }
 
   // Uninstall the VDM process create/terminate/VDM block/resume callback procedures
@@ -549,6 +570,25 @@ STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULO
 
 
 /////////////////////////////////////////////////////////////////////////////
+// ** PRIVATE ** VDM utility functions
+/////////////////////////////////////////////////////////////////////////////
+
+DWORD CVDMServices::VDMControl(DWORD fn, LPVOID param) {
+  HMODULE hNTDLL;
+  LPFNNTVDMCONTROL lpfnNtVdmControl;
+
+  if ((hNTDLL = GetModuleHandle(_T("NTDLL"))) == NULL)
+    return GetLastError();
+
+  if ((lpfnNtVdmControl = (LPFNNTVDMCONTROL)GetProcAddress(hNTDLL, "NtVdmControl")) == NULL)
+    return GetLastError();
+
+  return (*lpfnNtVdmControl)(fn, param);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 // ** PRIVATE ** VDD user hook functions
 /////////////////////////////////////////////////////////////////////////////
 
@@ -572,6 +612,16 @@ VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
       }
     } else {
       m_isCommitted = true;
+    }
+
+    // Activate WinXP's PUSHF/CLI/POPF workaround
+    if (m_fixPOPF) {
+      DWORD result;
+      DWORD fn = 0x0d, param = 1;
+
+      if ((result = VDMControl(fn, &param)) != ERROR_SUCCESS) {
+        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("NtVdmControl(0x%02x,%d):\n0x%08x - %s"), fn, param, result, (LPCTSTR)FormatMessage(result)));
+      }
     }
   }
 }
