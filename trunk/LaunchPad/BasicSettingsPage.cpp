@@ -158,13 +158,6 @@ UINT CALLBACK CBasicSettingsPage::PropPageCallbackProc(HWND hWnd, UINT uMsg, LPP
 // CBasicSettingsPage helper functions
 
 VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
-  static LPCTSTR T_IDENTITY_MAP = _T("identity.map");
-  static LPCTSTR T_MT2GM_MAP = _T("mt2gm.map");
-
-  static LPCTSTR T_JOY1_MAP = _T("joy1.map");
-  static LPCTSTR T_JOY2_MAP = _T("joy2.map");
-  static LPCTSTR T_JOY3_MAP = _T("joy3.map");
-
   //
   // Synchronize the editable controls (checkboxes and radio buttons)
   //  with the settings they represent
@@ -176,16 +169,12 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"), m_chkCdrom, FALSE);
 
   // MIDI
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
-  VLPUtil::SyncGroup(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_grpMidi, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_chkUsempu, FALSE);
+  SyncGUIData_MIDI(bSave, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 
   // Joystick
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
-  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
-  VLPUtil::SyncGroup(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_grpJoystick, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_chkUsejoy, FALSE);
+  SyncGUIData_Joystick(bSave, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 
   // Other
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.dosbox"), _T("exitClose"), m_chkClose, FALSE);
@@ -221,6 +210,37 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   }
 }
 
+VOID CBasicSettingsPage::SyncGUIData_MIDI(BOOL bSave, BOOL bEnabled) {
+  static LPCTSTR T_IDENTITY_MAP = _T("identity.map");
+  static LPCTSTR T_MT2GM_MAP = _T("mt2gm.map");
+
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optGmidi, TRUE, T_IDENTITY_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMt32, FALSE, T_MT2GM_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.midi"), _T("mapFile"), m_optMidiother, T_IDENTITY_MAP, T_MT2GM_MAP, NULL);
+
+  if (!bEnabled) {
+    m_optGmidi.EnableWindow(FALSE);
+    m_optMt32.EnableWindow(FALSE);
+    m_optMidiother.EnableWindow(FALSE);
+  }
+}
+
+VOID CBasicSettingsPage::SyncGUIData_Joystick(BOOL bSave, BOOL bEnabled) {
+  static LPCTSTR T_JOY1_MAP = _T("joy1.map");
+  static LPCTSTR T_JOY2_MAP = _T("joy2.map");
+  static LPCTSTR T_JOY3_MAP = _T("joy3.map");
+
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy2but, TRUE, T_JOY2_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoy4but, FALSE, T_JOY3_MAP);
+  VLPUtil::SyncRadioButton(bSave, m_settings, _T("vdms.gameport"), _T("mapFile"), m_optJoyother, T_JOY2_MAP, T_JOY3_MAP, NULL);
+
+  if (!bEnabled) {
+    m_optJoy2but.EnableWindow(FALSE);
+    m_optJoy4but.EnableWindow(FALSE);
+    m_optJoyother.EnableWindow(FALSE);
+  }
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -231,8 +251,8 @@ void CBasicSettingsPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CBasicSettingsPage)
-	DDX_Control(pDX, IDC_GRP_MIDI, m_grpMidi);
-	DDX_Control(pDX, IDC_GRP_JOYSTICK, m_grpJoystick);
+	DDX_Control(pDX, IDC_CHK_USEMPU, m_chkUsempu);
+	DDX_Control(pDX, IDC_CHK_USEJOY, m_chkUsejoy);
 	DDX_Control(pDX, IDC_ICO_APP, m_icoApp);
 	DDX_Control(pDX, IDC_EDT_DOSCMD, m_edtDoscmd);
 	DDX_Control(pDX, IDC_CHK_EMS, m_chkEms);
@@ -253,6 +273,9 @@ BEGIN_MESSAGE_MAP(CBasicSettingsPage, CPropertyPage)
 	//{{AFX_MSG_MAP(CBasicSettingsPage)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUT_CHANGE, OnButChange)
+	ON_BN_CLICKED(IDC_BUT_ADVANCED, OnButAdvanced)
+	ON_BN_CLICKED(IDC_CHK_USEJOY, OnChkUsejoy)
+	ON_BN_CLICKED(IDC_CHK_USEMPU, OnChkUsempu)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -380,6 +403,26 @@ void CBasicSettingsPage::OnButChange()
   }
 }
 
+void CBasicSettingsPage::OnButAdvanced() 
+{
+  CPropertyPage p1(IDD_ADVPROPPAGE_PROGRAM);
+  CPropertyPage p2(IDD_ADVPROPPAGE_COMPAT);
+  CPropertyPage p3(IDD_ADVPROPPAGE_DOSENV);
+  CPropertyPage p4(IDD_ADVPROPPAGE_MIDI);
+  CPropertyPage p5(IDD_ADVPROPPAGE_ADLIB);
+  CPropertyPage p6(IDD_ADVPROPPAGE_SB);
+  CPropertyPage p7(IDD_ADVPROPPAGE_JOY);
+  CPropertySheet propSheet(_T("Advanced VDMSound Properties"), this, 0);
+  propSheet.AddPage(&p1);
+  propSheet.AddPage(&p2);
+  propSheet.AddPage(&p3);
+  propSheet.AddPage(&p4);
+  propSheet.AddPage(&p5);
+  propSheet.AddPage(&p6);
+  propSheet.AddPage(&p7);
+  propSheet.DoModal();
+}
+
 BOOL CBasicSettingsPage::OnApply() 
 {
   CWaitCursor wait;
@@ -400,4 +443,16 @@ BOOL CBasicSettingsPage::OnApply()
   SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
 
   return CPropertyPage::OnApply();
+}
+
+void CBasicSettingsPage::OnChkUsempu() 
+{
+  SyncGUIData_MIDI(TRUE);
+  SyncGUIData_MIDI(FALSE, m_chkUsempu.GetCheck() != BST_UNCHECKED);
+}
+
+void CBasicSettingsPage::OnChkUsejoy() 
+{
+  SyncGUIData_Joystick(TRUE);
+  SyncGUIData_Joystick(FALSE, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 }
