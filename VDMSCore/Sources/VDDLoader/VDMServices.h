@@ -84,6 +84,13 @@ public:
   STDMETHOD(FreeMem)(ULONG address, ULONG size);
 */
 
+protected:
+// VDM utility types
+  typedef DWORD (WINAPI* LPFNNTVDMCONTROL)(DWORD,LPVOID);
+
+// VDM utility functions
+  static DWORD VDMControl(DWORD fn, LPVOID param);
+
 // VDD user hook functions
 public:
   static VOID CALLBACK VDDUserCreate(USHORT DosPDB);
@@ -114,6 +121,7 @@ protected:
 
 protected:
   static IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
+  static int m_fixPOPF;
 
 protected:
   static long m_lInstanceCount;
