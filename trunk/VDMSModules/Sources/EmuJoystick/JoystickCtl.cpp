@@ -455,10 +455,10 @@ HRESULT CJoystickCtl::loadMappingEntry(LPCSTR fName, const CINIParser& map, bool
       default : return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_MAP_RANGE, /*false, NULL, 0, */false, (LPCTSTR)CString(keyLoc.c_str()), (LPCTSTR)CString(value.c_str()), (LPCTSTR)(CString(value.c_str()).Right(3)), MSG_ERR_MAP_RANGE_3), __uuidof(IVDMBasicModule), E_ABORT);
     }
 
-    if ((mapPortID_chr == 'b') && ((buttonID < 0) || (buttonID > 31)))
+    if ((mapPortID_chr == 'b') && ((buttonID < 1) || (buttonID > 32)))
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_MAP_RANGE, /*false, NULL, 0, */false, (LPCTSTR)CString(keyLoc.c_str()), (LPCTSTR)CString(value.c_str()), (LPCTSTR)(CString(value.c_str()).Right(3)), MSG_ERR_MAP_RANGE_4), __uuidof(IVDMBasicModule), E_ABORT);
 
-    if ((mapPortID_chr == 'p') && ((buttonID < 0) || (buttonID > 1)))
+    if ((mapPortID_chr == 'p') && ((buttonID < 1) || (buttonID > 2)))
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_MAP_RANGE, /*false, NULL, 0, */false, (LPCTSTR)CString(keyLoc.c_str()), (LPCTSTR)CString(value.c_str()), (LPCTSTR)(CString(value.c_str()).Right(3)), MSG_ERR_MAP_RANGE_5), __uuidof(IVDMBasicModule), E_ABORT);
 
     m_state.info[mapJoyID].flags |= flag;
