@@ -276,7 +276,15 @@ SOURCE="$(InputPath)"
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\BasicBrowseDlg.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\BasicSettingsPage.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ChangeIconDlg.cpp
 # End Source File
 # Begin Source File
 
@@ -284,7 +292,15 @@ SOURCE=.\LaunchPad.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\LaunchPadSettings.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPadShellEx.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\LaunchPadUtil.cpp
 # End Source File
 # Begin Source File
 
@@ -297,11 +313,27 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\BasicBrowseDlg.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\BasicSettingsPage.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ChangeIconDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\LaunchPadSettings.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\LaunchPadShellEx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\LaunchPadUtil.h
 # End Source File
 # Begin Source File
 
