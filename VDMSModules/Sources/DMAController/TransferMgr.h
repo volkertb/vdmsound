@@ -27,13 +27,15 @@
 
 struct DMAChannel {
   DMAChannel(void)
-    : handler(NULL), isActive(false), inProgress(false), addr(0x0000), count(0xffff)
+    : handler(NULL), isActive(false), baseAddr(0x0000), baseCount(0xffff)
     { }
+  // The entity that performs the actual transfers
   IDMAHANDLERSLib::IDMAHandlerPtr handler;
+  // Internal flag indicating whether the channel requires servicing
   bool isActive;
-  bool inProgress;
-  WORD addr;
-  WORD count;
+  // Base address and count registers, used to restart auto-initialized transfers
+  WORD baseAddr;
+  WORD baseCount;
 };
 
 /////////////////////////////////////////////////////////////////////////////

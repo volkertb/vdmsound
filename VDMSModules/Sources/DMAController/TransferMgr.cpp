@@ -144,11 +144,10 @@ STDMETHODIMP CTransferMgr::AddDMAHandler(BYTE channel, IDMAHandler * handler) {
   if (m_channels[channel].handler != NULL)
 		return E_INVALIDARG;
 
-  m_channels[channel].handler = handler;
-  m_channels[channel].isActive = false;     // no transfer request for this channel yet
-  m_channels[channel].inProgress = false;   // no transfer actually initiated on this channel yet
-  m_channels[channel].addr = 0x0000;        // address is not known
-  m_channels[channel].count = 0xffff;       // count is not known
+  m_channels[channel].handler   = handler;
+  m_channels[channel].isActive  = false;    // no transfer request for this channel yet
+  m_channels[channel].baseAddr  = 0x0000;   // address is not known
+  m_channels[channel].baseCount = 0xffff;   // count is not known
 
   return S_OK;
 }
@@ -262,10 +261,15 @@ unsigned int CTransferMgr::Run(CThread& thread) {
           DMAInfo.status |= DREQMask;               // set DREQ
 
           if ((DMAInfo.mask & DMAChMask) == 0) {    // is channel enabled?
-            if (!m_channels[DMAChannel].inProgress) {
-              m_channels[DMAChannel].addr = DMAInfo.addr;
-              m_channels[DMAChannel].count = DMAInfo.count;
-              m_channels[DMAChannel].inProgress = true;
+            // The DMA base address and base count are loaded by the CPU in parallel with the
+            //  current address and current count registers; unfortunately there is no way of
+            //  being notified when such a load (OUT operation to DMA address and count registers)
+            //  occurs, so we must resort to a trick to detect when the DMA address and count
+            //  registers are reprogrammed by checking for inconsistency between the base and
+            //  current regiser sets
+            if (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount != DMAInfo.addr + DMAInfo.count) {
+              m_channels[DMAChannel].baseAddr  = DMAInfo.addr;
+              m_channels[DMAChannel].baseCount = DMAInfo.count;
             }
 
             bool isAutoInit = (DMAInfo.mode & 0x10) != 0;
@@ -274,6 +278,8 @@ unsigned int CTransferMgr::Run(CThread& thread) {
             ULONG numData = 0;
             ULONG maxData = DMAInfo.count + 1ul;
 
+            /* TODO: if single-cycle transfer but T.C. was reached then break, to avoid calling the
+               xfer callback with maxData set to 65536 *and* continually setting the T.C. status flag */
             if (m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[(DMAInfo.mode >> 2) & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending, &numData)) {
               isSlow = true;    // remember to boost the DMA activity frequency, this handler is not too happy with it as it is now
             }
@@ -287,15 +293,17 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
                 if (isAutoInit) {
                   // Reinitialize
-                  DMAInfo.addr = m_channels[DMAChannel].addr;
-                  DMAInfo.count = m_channels[DMAChannel].count;
+                  DMAInfo.addr  = m_channels[DMAChannel].baseAddr;
+                  DMAInfo.count = m_channels[DMAChannel].baseCount;
                 } else {
                   DMAInfo.status &= (~DREQMask);    // transfer done => clear DREQ
                   DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
                   DMAInfo.count = 0xffff;
 
-                  _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (m_channels[DMAChannel].addr - m_channels[DMAChannel].count - 1) : (m_channels[DMAChannel].addr + m_channels[DMAChannel].count + 1)));
+                  _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (m_channels[DMAChannel].baseAddr - m_channels[DMAChannel].baseCount - 1) :
+                                                                 (m_channels[DMAChannel].baseAddr + m_channels[DMAChannel].baseCount + 1)));
 
+                  /* TODO: get rid of this; do it by calling stopTransfer from notification function */
                   m_channels[DMAChannel].isActive = false;  // transfer done, disable (mask) channel
                 }
 
@@ -387,7 +395,6 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
           needsAck = (message.lParam != FALSE);     // remember to signal back after the DMA is programmed to reflect a STARTED transaction
           m_channels[message.wParam].isActive = true;
-          m_channels[message.wParam].inProgress = false;
           break;
 
         case UM_DMA_STOP:
@@ -399,7 +406,6 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
           needsAck = (message.lParam != FALSE);     // remember to signal back after the DMA is programmed to reflect a STOPPED transaction
           m_channels[message.wParam].isActive = false;
-          m_channels[message.wParam].inProgress = false;
           break;
 
         default:
