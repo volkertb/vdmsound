@@ -28,6 +28,22 @@ Package=<4>
 
 ###############################################################################
 
+Project: "DiskWriter"=.\Sources\DiskWriter\DiskWriter.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/VDMSModules/Sources/DiskWriter", JLAAAAAA
+    .\sources\diskwriter
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "EmuMPU401"=.\Sources\EmuMPU401\EmuMPU401.dsp - Package Owner=<4>
 
 Package=<5>
