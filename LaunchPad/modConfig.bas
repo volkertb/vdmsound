@@ -6,7 +6,7 @@ Public iniFileName As String
 
 '
 ' Allocates a uniquely identifying key (for either categories or
-'  applications, based on prefix) inside the main INI file
+'  programs, based on prefix) inside the main INI file
 '
 Private Function AllocateKey( _
   strPrefix As String _
@@ -279,12 +279,12 @@ Private Function DeleteCategory_Helper( _
   Dim itemValue As String
 
   ' If dealing with a category we have to recursively delete any
-  '  sub-categories or applications
+  '  sub-categories or programs
   If LCase$(Left$(strKey, 4)) = "cat." Then
     ' Get the number of sub-elements that exist in this category
     numItems = Val(modIniFile.ReadIniString(iniFileName, strKey, "count"))
 
-    ' Delete each sub-category and/or application listed
+    ' Delete each sub-category and/or program listed
     For i = 0 To numItems - 1
       itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
       If DeleteCategory_Helper(itemValue) <> 0 Then GoTo Error
@@ -301,51 +301,51 @@ Error:
 End Function
 
 '----------------------------------------------------------------------------
-' APPLICATIONS
+' PROGRAMS
 '----------------------------------------------------------------------------
 
 '
-' Loads list of applications for a given category from the main .ini file
+' Loads list of programs for a given category from the main .ini file
 '
-Public Function LoadApplications( _
+Public Function LoadPrograms( _
   lvList As ListView, _
   strKey As String _
 ) As Long
 
   On Error GoTo Error
 
-  ' Empty the applications list
+  ' Empty the programs list
   fMainForm.lvListView.ListItems.Clear
 
-  ' Reset the application icons (detach image list from list view first)
-  ResetApplicationsIcons lvList, 32, modMain.fMainForm.picMSDOS32
-  ResetApplicationsIcons lvList, 16, modMain.fMainForm.picMSDOS16
+  ' Reset the program icons (detach image list from list view first)
+  ResetProgramsIcons lvList, 32, modMain.fMainForm.picMSDOS32
+  ResetProgramsIcons lvList, 16, modMain.fMainForm.picMSDOS16
 
   ' Get the number of sub-elements that exist
   Dim numItems As Long
   numItems = Val(modIniFile.ReadIniString(iniFileName, strKey, "count"))
 
-  ' Create each application
+  ' Create each program
   For i = 0 To numItems - 1
     Dim itemValue As String
     itemValue = modIniFile.ReadIniString(iniFileName, strKey, "item" & Format$(i))
 
     If LCase$(Left$(itemValue, 4)) = "app." Then
-      LoadApplication lvList, itemValue
+      LoadProgram lvList, itemValue
     End If
   Next
-  LoadApplications = 0
+  LoadPrograms = 0
   Exit Function
 
 Error:
-  modError.ReportError "Unable to load applications from '" & iniFileName & "'."
-  LoadApplications = -1
+  modError.ReportError "Unable to load programs from '" & iniFileName & "'."
+  LoadPrograms = -1
 End Function
 
 '
 '
 '
-Private Sub ResetApplicationsIcons( _
+Private Sub ResetProgramsIcons( _
   lvList As ListView, _
   intSize As Integer, _
   icoDefault As Picture _
@@ -360,7 +360,7 @@ Private Sub ResetApplicationsIcons( _
       Set imlListIcons = lvList.SmallIcons
       Set lvList.SmallIcons = Nothing
     Case Else
-      Err.Raise ccInvalidProcedureCall, "ResetApplicationsIcons", "Invalid icon size (" & intSize & ")"
+      Err.Raise ccInvalidProcedureCall, "ResetProgramsIcons", "Invalid icon size (" & intSize & ")"
   End Select
 
   imlListIcons.ListImages.Clear
@@ -374,14 +374,14 @@ Private Sub ResetApplicationsIcons( _
     Case 16
       Set lvList.SmallIcons = imlListIcons
     Case Else
-      Err.Raise ccInvalidProcedureCall, "ResetApplicationsIcons", "Invalid icon size (" & intSize & ")"
+      Err.Raise ccInvalidProcedureCall, "ResetProgramsIcons", "Invalid icon size (" & intSize & ")"
   End Select
 End Sub
 
 '
 '
 '
-Private Sub LoadApplication( _
+Private Sub LoadProgram( _
   lvList As ListView, _
   ByVal strKey As String _
 )
@@ -406,9 +406,9 @@ Error_UseDefaultIcon:
 End Sub
 
 '
-' Adds an application to the category tree and main INI file
+' Adds a program to the category tree and main INI file
 '
-Public Function AddApplication( _
+Public Function AddProgram( _
   lvList As ListView, _
   strParentKey As String, _
   strText As String _
@@ -427,24 +427,24 @@ Public Function AddApplication( _
   modIniFile.WriteIniString iniFileName, strParentKey, "item" & Format$(numItems), strKey
 
   If lvList Is Nothing Then
-    Set AddApplication = Nothing
+    Set AddProgram = Nothing
   Else
-    Set AddApplication = modListUtil.AddItem(lvList, strText, strKey)
+    Set AddProgram = modListUtil.AddItem(lvList, strText, strKey)
   End If
   Exit Function
 
 Error:
-  modError.ReportError "Unable to create application '" & strText & "'."
-  Set AddApplication = Nothing
+  modError.ReportError "Unable to create program '" & strText & "'."
+  Set AddProgram = Nothing
 End Function
 
 '
-' Attempts to rename an application.  If the function is successful, the
-'  function returns zero, otherwise (e.g. if the application name already
+' Attempts to rename a program.  If the function is successful, the
+'  function returns zero, otherwise (e.g. if the program name already
 '  exists), it returns a non-zero value.
 ' If the renaming is successful, it is mirrored in the .ini configuration file.
 '
-Public Function RenameApplication( _
+Public Function RenameProgram( _
   lvList As ListView, _
   lvItem As ListItem, _
   ByVal strNewText As String _
@@ -457,26 +457,26 @@ Public Function RenameApplication( _
 
   ' Attempt to rename the current node (assuming the new key is unique)
   If modListUtil.RenameItem(lvList, lvItem, strNewText) <> 0 Then
-    RenameApplication = 1  ' return, duplicate name
+    RenameProgram = 1  ' return, duplicate name
   Else
     ' Rename category inside .ini file
     modIniFile.WriteIniString iniFileName, lvItem.Key, "name", StrEncode(strNewText)
 
-    RenameApplication = 0 ' return, the item was successfully renamed
+    RenameProgram = 0 ' return, the item was successfully renamed
   End If
   Exit Function
 
 Error:
-  modError.ReportError "Unable to rename application to '" & strNewText & "'."
+  modError.ReportError "Unable to rename program to '" & strNewText & "'."
   On Error Resume Next
   modListUtil.RenameItem lvList, lvItem, strOldText ' roll back changes
-  RenameApplication = -1  ' return, error
+  RenameProgram = -1  ' return, error
 End Function
 
 '
 '
 '
-Public Function DeleteApplication( _
+Public Function DeleteProgram( _
   lvList As ListView, _
   lvItem As ListItem, _
   strParentKey As String _
@@ -496,12 +496,12 @@ Public Function DeleteApplication( _
   modIniFile.DeleteIniSection iniFileName, strKey
 
   modListUtil.RemoveItem lvList, lvItem ' remove the item from the GUI
-  DeleteApplication = 0   ' return, success
+  DeleteProgram = 0   ' return, success
   Exit Function
 
 Error:
-  modError.ReportError "An error was encountered while deleting the application '" & strKey & "'."
-  DeleteApplication = -1  ' return, error
+  modError.ReportError "An error was encountered while deleting the program '" & strKey & "'."
+  DeleteProgram = -1  ' return, error
 End Function
 
 '----------------------------------------------------------------------------

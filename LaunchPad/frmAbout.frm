@@ -7,8 +7,9 @@ Begin VB.Form frmAbout
    ClientTop       =   330
    ClientWidth     =   5865
    ClipControls    =   0   'False
-   ControlBox      =   0   'False
+   Icon            =   "frmAbout.frx":0000
    LinkTopic       =   "Form1"
+   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
    ScaleHeight     =   3630
@@ -23,7 +24,7 @@ Begin VB.Form frmAbout
       ClipControls    =   0   'False
       Height          =   480
       Left            =   240
-      Picture         =   "frmAbout.frx":0000
+      Picture         =   "frmAbout.frx":000C
       ScaleHeight     =   480
       ScaleMode       =   0  'User
       ScaleWidth      =   480
@@ -58,7 +59,7 @@ Begin VB.Form frmAbout
       Left            =   1050
       TabIndex        =   6
       Tag             =   "App Description"
-      Top             =   1125
+      Top             =   1065
       Width           =   4095
    End
    Begin VB.Label lblTitle 
@@ -99,7 +100,7 @@ Begin VB.Form frmAbout
       Width           =   4095
    End
    Begin VB.Label lblDisclaimer 
-      Caption         =   $"frmAbout.frx":08CA
+      Caption         =   $"frmAbout.frx":08D6
       ForeColor       =   &H00000000&
       Height          =   825
       Left            =   255
@@ -134,7 +135,7 @@ Private Declare Function RegCloseKey Lib "advapi32" (ByVal hKey As Long) As Long
 
 Private Sub Form_Load()
   lblVersion.Caption = "Version " & App.Major & "." & App.Minor & "." & App.Revision
-  lblDescription.Caption = "VDMSound LaunchPad is an easy to use graphical user interface to the VDMSound sound-card emulation package." & Chr$(13) & Chr$(13) & "Written by Monty Python, SteadVex and Vlad Romascanu."
+  lblDescription.Caption = "VDMSound LaunchPad is an easy to use graphical user interface to the VDMSound sound-card emulation package." & Chr$(13) & Chr$(13) & "Written by Monty Python, SteadVéx and Vlad Romascanu."
 End Sub
 
 

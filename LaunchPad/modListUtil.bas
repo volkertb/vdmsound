@@ -17,7 +17,7 @@ Public Function AddItem( _
   Set lvDupeItem = GetItemByText(lvList, strText)
 
   If lvDupeItem Is Nothing Then
-    Set lvItem = lvList.ListItems.Add(, strKey, strText, "default", "default") ' return, new item created
+    Set lvItem = lvList.ListItems.Add(lvList.SelectedItem.Index + 1, strKey, strText, "default", "default")  ' return, new item created
   Else
     Set lvItem = lvDupeItem  ' return, the existing item
   End If
