@@ -76,7 +76,7 @@ HRESULT CBasicSettingsPage::AddPage(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM
 #if __CHEAT_PROPERTYSHEETACTIVATION
 
   BOOL isPotentialPSH = FALSE;                        // initial impression based on lParam type (pointer to data, etc.)
-  PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;   // pointer to (suspected) proerty sheet structure
+  PROPSHEETHEADER* pPSH = (PROPSHEETHEADER*)lParam;   // pointer to (suspected) property sheet structure
   PROPSHEETHEADER initialPSHData;                     // snapshot of the suspected structure before adding our page
 
   try {
