@@ -34,7 +34,7 @@ class ATL_NO_VTABLE CWaveOut :
 {
 public:
 	CWaveOut()
-    : m_hWaveOut(NULL), m_deviceName(_T("<unknown>"))
+    : m_hWaveOut(NULL), m_deviceName(_T("<unknown>")), m_enqueuedBytes(0)
   {
     m_waveFormat.nChannels = 0;
     m_waveFormat.nSamplesPerSec = 0;
@@ -68,7 +68,7 @@ public:
 // IWaveDataConsumer
 public:
   STDMETHOD(SetFormat)(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
-  STDMETHOD(PlayData)(BYTE * data, LONG length);
+  STDMETHOD(PlayData)(BYTE * data, LONG length, DOUBLE * load);
 
 protected:
   static void CALLBACK WaveOutProc(HWAVEOUT hwo, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
@@ -84,7 +84,8 @@ protected:
   CString m_deviceName;
   HWAVEOUT m_hWaveOut;
   WAVEFORMATEX m_waveFormat;
-  CThread gcThread;
+  CThread m_gcThread;
+  LONG m_enqueuedBytes;
 
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;

@@ -17,7 +17,8 @@ interface IWaveDataConsumer : IUnknown
 	[ helpstring("Plays a packet of wave data") ]
 	HRESULT PlayData(
 		[in, size_is(length)] BYTE data[],  // wave data
-		[in] LONG length );                 // number of bytes in the wave data
+		[in] LONG length,                   // number of bytes in the wave data
+		[out, retval] DOUBLE * load );      // < 1.0 if buffer underrun, > 1.0 if overrun
 };
 
 
