@@ -285,7 +285,7 @@ unsigned int CAdLibCtl::Run(CThread& thread) {
           hasStarted = true;                        // we're in business
 
           // Set up the renderer (if any)
-          try {
+          if (m_waveOut != NULL) try {
             m_waveOut->SetFormat(1, m_sampleRate, 16);
           } catch (_com_error& ce) {
             CString args = Format(_T("%d, %d, %d"), 1, m_sampleRate, 16);
