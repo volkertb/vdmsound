@@ -473,14 +473,12 @@ STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULO
 /////////////////////////////////////////////////////////////////////////////
 
 VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
-//MessageBox(FormatMessage(_T("Created DOS process: PDB = 0x%1!08x!"), false, (int)DosPDB),
-//           FormatMessage(_T("VDDUserCreate")),
-//           MB_OK, MB_ICONINFORMATION);
+  // Push MFC state (needed by AfxGetInstanceHandle())
+  AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Created DOS process (0x%04x, '%s')"), DosPDB, (LPCTSTR)getDOSProgArg(DosPDB, 0)));
 
   if (!m_isCommitted) {
-    // Push MFC state (needed by AfxGetInstanceHandle())
-    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
     // Install the VDD hooks
     m_ports.getPortRanges(m_ranges);
     if (!VDDInstallIOHook(AfxGetInstanceHandle(), m_ranges.GetSize(), m_ranges.GetData(), &m_hooks)) {
@@ -499,21 +497,15 @@ VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
 }
 
 VOID CALLBACK CVDMServices::VDDUserTerminate(USHORT DosPDB) {
-//MessageBox(FormatMessage(_T("Terminated DOS process: PDB = 0x%1!08x!"), false, (int)DosPDB),
-//           FormatMessage(_T("VDDUserTerminate")),
-//           MB_OK, MB_ICONINFORMATION);
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Terminated DOS process (0x%04x)"), DosPDB));
 }
 
 VOID CALLBACK CVDMServices::VDDUserBlock(VOID) {
-//MessageBox(FormatMessage(_T("VDM blocked")),
-//           FormatMessage(_T("VDDUserBlock")),
-//           MB_OK, MB_ICONINFORMATION);
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, _T("NTVDM.EXE DOS emulation suspended"));
 }
 
 VOID CALLBACK CVDMServices::VDDUserResume(VOID) {
-//MessageBox(FormatMessage(_T("VDM resumed")),
-//           FormatMessage(_T("VDDUserResume")),
-//           MB_OK, MB_ICONINFORMATION);
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, _T("NTVDM.EXE DOS emulation resumed"));
 }
 
 
@@ -647,6 +639,99 @@ CString CVDMServices::StringFromPortRanges(
       retVal += portStr;
     }
   }
+
+  return retVal;
+}
+
+//
+// Obtains the segment of the environment corresponding to the given PSP
+//
+USHORT CVDMServices::getDOSEnvSeg(USHORT DOSPSPSeg) {
+  BYTE* pPSP;
+
+  pPSP = GetVDMPointer(MAKELONG(0, DOSPSPSeg), 256, FALSE);
+
+  if (pPSP == NULL)
+    return 0;       // an error occured in GetVDMPointer
+
+  USHORT retVal = 0;
+
+  if (((pPSP[0] & 0xff) == 0xcd) && ((pPSP[1] & 0xff) == 0x20)) {
+    retVal = (pPSP[0x2c] & 0xff) | (pPSP[0x2d] << 8);
+  }
+
+  FreeVDMPointer(MAKELONG(0, DOSPSPSeg), 256, pPSP, FALSE);
+
+  return retVal;
+}
+
+//
+// Obtains an environment variable from the given PSP's environment
+//
+CString CVDMServices::getDOSEnvString(USHORT DOSPSPSeg, LPCSTR varName) {
+  BYTE* pEnv;
+
+  USHORT DOSEnvSeg = getDOSEnvSeg(DOSPSPSeg);
+
+  if (DOSEnvSeg == 0)
+    return CString("<cannot locate environment segment>");
+
+  pEnv = GetVDMPointer(MAKELONG(0, DOSEnvSeg), 65536, FALSE);
+
+  if (pEnv == NULL)
+    return CString("<cannot lock environment segment>");
+
+  int i;
+  CString retVal("<variable not set>");
+
+  for (i = 0; pEnv[i] != 0; i += (strlen((const char*)pEnv + i) + 1)) {
+    const char* equalPos = strchr((const char*)pEnv + i, '=');
+
+    if (equalPos == NULL)
+      break;
+
+    if ((strlen(varName) == (size_t)(equalPos - ((const char*)pEnv + i))) && (_strnicmp((const char*)pEnv + i, varName, strlen(varName)) == 0)) {
+      retVal = CString(equalPos + 1);
+      break;
+    }
+  }
+
+  FreeVDMPointer(MAKELONG(0, DOSEnvSeg), 65536, pEnv, FALSE);
+
+  return retVal;
+}
+
+//
+// Obtains a command-line argument, i.e. argv[argIdx], for the given PSP
+//
+CString CVDMServices::getDOSProgArg(USHORT DOSPSPSeg, int argIdx) {
+  BYTE* pEnv;
+
+  USHORT DOSEnvSeg = getDOSEnvSeg(DOSPSPSeg);
+
+  if (DOSEnvSeg == 0)
+    return CString("<cannot locate environment segment>");
+
+  pEnv = GetVDMPointer(MAKELONG(0, DOSEnvSeg), 65536, FALSE);
+
+  if (pEnv == NULL)
+    return CString("<cannot lock environment segment>");
+
+  int i, j;
+  CString retVal("<index out of range>");
+
+  for (i = 0; pEnv[i] != 0; i += (strlen((const char*)pEnv + i) + 1)) { }
+
+  int argCount = ((pEnv[i+1] & 0xff) | (pEnv[i+2] << 8)) & 0xffff;
+
+  for (i = i + 3, j = 0; pEnv[i] != 0; i += (strlen((const char*)pEnv + i) + 1), j++) {
+    if (j == argIdx) {
+      retVal = CString(pEnv + i);
+      break;
+    }
+  }
+
+  FreeVDMPointer(MAKELONG(0, DOSEnvSeg), 65536, pEnv, FALSE);
 
   return retVal;
 }
