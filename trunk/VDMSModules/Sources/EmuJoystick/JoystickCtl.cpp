@@ -486,7 +486,7 @@ HRESULT CJoystickCtl::loadMappingEntry(LPCSTR fName, const CINIParser& map, bool
       if ((mapPortID_chr == 'b') && ((buttonID < 1) || (buttonID > 32)))
         return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_MAP_RANGE, /*false, NULL, 0, */false, (LPCTSTR)CString(keyLoc.c_str()), (LPCTSTR)CString(value.c_str()), (LPCTSTR)::Format(_T("%d"), buttonID), MSG_ERR_MAP_RANGE_4), __uuidof(IVDMBasicModule), E_ABORT);
 
-      if ((mapPortID_chr == 'p') && ((buttonID < 1) || (buttonID > 2)))
+      if ((mapPortID_chr == 'p') && ((buttonID < 0) || (buttonID > 4)))
         return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_MAP_RANGE, /*false, NULL, 0, */false, (LPCTSTR)CString(keyLoc.c_str()), (LPCTSTR)CString(value.c_str()), (LPCTSTR)::Format(_T("%d"), buttonID), MSG_ERR_MAP_RANGE_5), __uuidof(IVDMBasicModule), E_ABORT);
 
       m_state.info[mapJoyID].flags |= flag;
@@ -495,7 +495,7 @@ HRESULT CJoystickCtl::loadMappingEntry(LPCSTR fName, const CINIParser& map, bool
 
       m_state.digital[inputID].components[componentID].mapJoyID  = mapJoyID;
       m_state.digital[inputID].components[componentID].mapPortID = mapPortID;
-      m_state.digital[inputID].components[componentID].buttonID  = buttonID - 1;  // convert from 1-based to 0-based indices
+      m_state.digital[inputID].components[componentID].buttonID  = (mapPortID == JOY_DIGITAL_POV) ? buttonID : buttonID - 1;  // convert from 1-based to 0-based indices (for buttons ONLY)
     }
 
     return S_OK;
@@ -656,14 +656,18 @@ bool CJoystickCtl::mapDigitalData(void) {
 
         case JOY_DIGITAL_POV:
           if (isJoyPresent) {
-            if ((joyInfo.dwPOV < 45*100) || (joyInfo.dwPOV >= 315*00)) {
-              input.value |= ((0 & (1 << buttonID)) != 0);
+            if (joyInfo.dwPOV < 0) {
+              input.value |= (buttonID == 0); // centered
+            } else if (joyInfo.dwPOV < 45*100) {
+              input.value |= (buttonID == 1); // forward (1)
             } else if (joyInfo.dwPOV < 135*100) {
-              input.value |= ((1 & (1 << buttonID)) != 0);
+              input.value |= (buttonID == 2); // right
             } else if (joyInfo.dwPOV < 225*100) {
-              input.value |= ((2 & (1 << buttonID)) != 0);
+              input.value |= (buttonID == 3); // backward
             } else if (joyInfo.dwPOV < 315*100) {
-              input.value |= ((3 & (1 << buttonID)) != 0);
+              input.value |= (buttonID == 4); // left
+            } else if (joyInfo.dwPOV < 360*100) {
+              input.value |= (buttonID == 1); // forward (2)
             }
           } break;
 
