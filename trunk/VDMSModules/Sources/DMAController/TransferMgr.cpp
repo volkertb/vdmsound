@@ -175,8 +175,9 @@ STDMETHODIMP CTransferMgr::StartTransfer(BYTE channel, LONG synchronous) {
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
-//CSingleLock lock(&m_mutex, TRUE); // !! bad idea; syncronous start will deadlock because of S/C & 0xe2 cmd DMA stop
+  // Lock to avoid race condition in thecase of two or more concurrent *sycnhronous*
+  //   requests by ensuring that { thread.PostMessage(); event.Lock(); } is an atomic
+  CSingleLock lock(&m_mutex, synchronous);  // locking for a non-synchronous call can lead to deadlock
 
   if (m_DMAThread.PostMessage(UM_DMA_START, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
@@ -196,8 +197,9 @@ STDMETHODIMP CTransferMgr::StopTransfer(BYTE channel, LONG synchronous) {
   if (m_channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  // Lock to avoid race condition: thread.PostMessage()/event.Lock() must be atomic
-//CSingleLock lock(&m_mutex, TRUE); // !! bad idea; syncronous start will deadlock because of S/C & 0xe2 cmd DMA stop
+  // Lock to avoid race condition in thecase of two or more concurrent *sycnhronous*
+  //   requests by ensuring that { thread.PostMessage(); event.Lock(); } is an atomic
+  CSingleLock lock(&m_mutex, synchronous);  // locking for a non-synchronous call can lead to deadlock
 
   if (m_DMAThread.PostMessage(UM_DMA_STOP, (WPARAM)channel, (LPARAM)synchronous)) {
     if (synchronous != FALSE)
