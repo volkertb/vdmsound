@@ -14,6 +14,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#define WM_DMA_START      (WM_USER + 0x100)
+#define WM_DMA_STOP       (WM_USER + 0x101)
+
+/////////////////////////////////////////////////////////////////////////////
+
 #define DMA8_PAGE_MASK    0x00ff      // supposed to be 0x0f, but some games go beyond that
 #define DMA16_PAGE_MASK   0x00ff      // 0x7f on pre-386 machines?
 
@@ -150,29 +155,39 @@ STDMETHODIMP CTransferMgr::RemoveDMAHandler(BYTE channel, IDMAHandler * handler)
   return S_OK;
 }
 
-STDMETHODIMP CTransferMgr::InitiateTransfer(BYTE channel) {
+/* TODO: add "synchronous" option, in which initialize/abort functions only
+   return after the first/last transfer & notification functions were called
+   (pass a flag in the message's lParam, and wait on an event; the DMA thread
+   will signal that event if told to do so in the lParam, at which point the
+   initialize/abort function can return.  Suggested behaviour: for abort,
+   receive message, DEASSERT DREQ, then signal the event; for init, receive,
+   the message, ASSERT DREQ, then signal the event.
+   Synchronous abort could be needed in a reset function, when no transfer/
+   notification function calls are desired after the reset unless the
+   transfer is explictly started (again).
+   Synchronous init can be needed if DREQ must be asserted by the time the
+   init function returns. */
+
+STDMETHODIMP CTransferMgr::InitiateTransfer(BYTE channel, LONG synchronous) {
   if (channel >= NUM_DMA_CHANNELS)
 		return E_INVALIDARG;
 
   if (channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  channels[channel].inProgress = false;
-  channels[channel].isActive = true;
-  DMAThread.PostMessage(WM_USER, NULL, NULL); /* TODO: a more intelligent choice of WM_xxx, not that it really matters? */
-
+  DMAThread.PostMessage(WM_DMA_START, channel, NULL);
+  
   return S_OK;
 }
 
-STDMETHODIMP CTransferMgr::AbortTransfer(BYTE channel) {
+STDMETHODIMP CTransferMgr::AbortTransfer(BYTE channel, LONG synchronous) {
   if (channel >= NUM_DMA_CHANNELS)
 		return E_INVALIDARG;
 
   if (channels[channel].handler == NULL)
 		return E_INVALIDARG;
 
-  channels[channel].isActive = false;
-  channels[channel].inProgress = false;
+  DMAThread.PostMessage(WM_DMA_STOP, channel, NULL);
 
   return S_OK;
 }
@@ -226,15 +241,15 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
             bool isAutoInit = (DMAInfo.mode & 0x10) != 0;
             bool isDescending = ((DMAInfo.mode >> 5) & 0x01) != 0;
-            int physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 17) | ((DMAInfo.addr & 0xffff) << 1));
-            int maxBytes = DMAInfo.count + 1;
+            ULONG physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 17) | ((DMAInfo.addr & 0xffff) << 1));
+            ULONG maxData = DMAInfo.count + 1;
 
-            int numBytes = channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxBytes, isDescending);
+            ULONG numData = channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending);
 
-            _ASSERTE(numBytes <= DMAInfo.count + 1);
+            _ASSERTE(numData <= DMAInfo.count + 1);
 
-            if (numBytes > 0) { // any change?
-              if (numBytes > DMAInfo.count) {
+            if (numData > 0) {  // any change?
+              if (numData > DMAInfo.count) {
                 // Terminal count reached
                 DMAInfo.status |= DMAChMask;  // set TC
 
@@ -243,7 +258,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
                   DMAInfo.addr = channels[DMAChannel].addr;
                   DMAInfo.count = channels[DMAChannel].count;
                 } else {
-                  DMAInfo.addr = isDescending ? (DMAInfo.addr - numBytes) : (DMAInfo.addr + numBytes);
+                  DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
                   DMAInfo.count = 0xffff;
 
                   _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (channels[DMAChannel].addr - channels[DMAChannel].count - 1) : (channels[DMAChannel].addr + channels[DMAChannel].count + 1)));
@@ -253,15 +268,15 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
                 m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_ALL, &DMAInfo);
 
-                channels[DMAChannel].handler->HandleAfterTransfer(DMAChannel, numBytes, true);
+                channels[DMAChannel].handler->HandleAfterTransfer(DMAChannel, numData, true);
               } else {
                 // Terminal count NOT reached
-                DMAInfo.addr = isDescending ? (DMAInfo.addr - numBytes) : (DMAInfo.addr + numBytes);
-                DMAInfo.count -= numBytes;
+                DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
+                DMAInfo.count -= (WORD)numData;
 
                 m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_ALL, &DMAInfo);
 
-                channels[DMAChannel].handler->HandleAfterTransfer(DMAChannel, numBytes, false);
+                channels[DMAChannel].handler->HandleAfterTransfer(DMAChannel, numData, false);
               }
             }
           } else {
@@ -282,25 +297,26 @@ unsigned int CTransferMgr::Run(CThread& thread) {
          OR
        (much better) have feedback mechanism from DMA Handler about transfer (too fast/too slow) and adjust Sleep() accordingly by steering it up or down */
 
-    if (isIdle) {
-      if (thread.GetMessage(&message)) {
-        if (message.message == WM_QUIT) {
+    if (thread.GetMessage(&message, isIdle)) {
+      switch (message.message) {
+        case WM_QUIT:
           RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread cancelled")));
           return 0;
-        }
-      } else {
-        DWORD lastError = GetLastError();
-        RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Abnormal condition encoundered while waiting on message queue:\n0x%08x - %s"), lastError, (LPCTSTR)FormatMessage(lastError)));
-        return -2;  // abnormal thread termination (error in message fetch)
+
+        case WM_DMA_START:
+          channels[message.wParam].isActive = true;
+          channels[message.wParam].inProgress = false;
+          break;
+
+        case WM_DMA_STOP:
+          channels[message.wParam].isActive = false;
+          channels[message.wParam].inProgress = false;
+          break;
+
+        default:
+          break;
       }
     } else {
-      if (thread.GetMessage(&message, false)) {
-        if (message.message == WM_QUIT) {
-          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Transfer Manager thread cancelled")));
-          return 0;
-        }
-      }
-
       Sleep(15);    // whatever amount, but not too low for too high a priority!
     }
   } while (true);
