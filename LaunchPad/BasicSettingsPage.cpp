@@ -7,6 +7,8 @@
 
 #include "BasicBrowseDlg.h"
 
+#include "AdvSettingsSheet.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -164,16 +166,16 @@ VOID CBasicSettingsPage::SyncGUIData(BOOL bSave) {
   //
 
   // Compatibility
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.memory"), _T("useEMS"), m_chkEms, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.memory"), _T("useEMS"), m_chkEms, TRUE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.video"), _T("useVESA"), m_chkVesa, FALSE);
   VLPUtil::SyncCheckBox(bSave, m_settings, _T("winnt.storage"), _T("useCDROM"), m_chkCdrom, FALSE);
 
   // MIDI
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_chkUsempu, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.midi"), _T("enabled"), m_chkUsempu, TRUE);
   SyncGUIData_MIDI(bSave, m_chkUsempu.GetCheck() != BST_UNCHECKED);
 
   // Joystick
-  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_chkUsejoy, FALSE);
+  VLPUtil::SyncCheckBox(bSave, m_settings, _T("vdms.gameport"), _T("enabled"), m_chkUsejoy, TRUE);
   SyncGUIData_Joystick(bSave, m_chkUsejoy.GetCheck() != BST_UNCHECKED);
 
   // Other
@@ -405,21 +407,8 @@ void CBasicSettingsPage::OnButChange()
 
 void CBasicSettingsPage::OnButAdvanced() 
 {
-  CPropertyPage p1(IDD_ADVPROPPAGE_PROGRAM);
-  CPropertyPage p2(IDD_ADVPROPPAGE_COMPAT);
-  CPropertyPage p3(IDD_ADVPROPPAGE_DOSENV);
-  CPropertyPage p4(IDD_ADVPROPPAGE_MIDI);
-  CPropertyPage p5(IDD_ADVPROPPAGE_ADLIB);
-  CPropertyPage p6(IDD_ADVPROPPAGE_SB);
-  CPropertyPage p7(IDD_ADVPROPPAGE_JOY);
-  CPropertySheet propSheet(_T("Advanced VDMSound Properties"), this, 0);
-  propSheet.AddPage(&p1);
-  propSheet.AddPage(&p2);
-  propSheet.AddPage(&p3);
-  propSheet.AddPage(&p4);
-  propSheet.AddPage(&p5);
-  propSheet.AddPage(&p6);
-  propSheet.AddPage(&p7);
+
+  CAdvSettingsSheet propSheet(m_settings, _T("Advanced VDMSound Properties"), this, 0);
   propSheet.DoModal();
 }
 
