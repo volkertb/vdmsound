@@ -129,6 +129,7 @@
 #define IDC_SPN_JOYSCALEMAX             1808
 
 #define IDS_PROJNAME                    10100
+#define IDS_ADVPROPERTIES               10101
 #define IDS_TXT_FILTER1                 10110
 #define IDS_TXT_FILTER2                 10111
 #define IDS_TXT_MULTIPLEVALUES          10120
