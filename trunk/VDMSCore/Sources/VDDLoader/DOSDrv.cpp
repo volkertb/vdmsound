@@ -25,7 +25,7 @@
 #endif
 
 #define _VER_MAJOR 2
-#define _VER_MINOR 0
+#define _VER_MINOR 1
 
 #include "DOSDrv.h"
 
@@ -261,7 +261,7 @@ int main(int argc, char** argv) {
 
   lowvideo();
   cprintf("VDMSound is covered by the GNU Public License (GPL), version 2 or later, as\n\r"
-          "published by the Free Software Foundation, Inc. (http://www.gnu.org/).\n\n\r");
+          "published by the Free Software Foundation, Inc. (http://www.fsf.org/).\n\n\r");
 
   normvideo();
   for (int i = 1; i < argc; i++) {
