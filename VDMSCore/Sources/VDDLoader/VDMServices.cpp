@@ -7,7 +7,9 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef _NTVDM_SVC
 #define INI_STR_POPF_FIX      L"fixPOPF"
+#endif //_NTVDM_SVC
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +80,10 @@
 /////////////////////////////////////////////////////////////////////////////
 
 IVDMQUERYLib::IVDMRTEnvironmentPtr CVDMServices::m_env = NULL;
+
+#ifdef _NTVDM_SVC
 int CVDMServices::m_fixPOPF = 0;
+#endif //_NTVDM_SVC
 
 long CVDMServices::m_lInstanceCount = 0;
 bool CVDMServices::m_isCommitted = false;
@@ -149,7 +154,14 @@ STDMETHODIMP CVDMServices::Init(IUnknown * configuration) {
 
   m_ranges.RemoveAll();       // make sure the array of port ranges to hook is empty
 
+#ifdef _NTVDM_SVC
   m_fixPOPF = CFG_Get(Config, INI_STR_POPF_FIX, 0, 10, true);
+#endif //_NTVDM_SVC
+
+#ifdef _VXD_SVC
+  memset(m_picUsage, 0, sizeof(m_picUsage));
+  memset(m_dmaUsage, 0, sizeof(m_dmaUsage));
+#endif //_VXD_SVC
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("VDMServices initialized (hInstance = 0x%08x)"), m_hInstance));
 
@@ -174,6 +186,8 @@ STDMETHODIMP CVDMServices::Destroy() {
     // Uninstall the I/O hooks
     VDDDeInstallIOHook(m_hInstance, m_ranges.GetSize(), m_ranges.GetData());
 
+#ifdef _NTVDM_SVC
+
     // Deactivate WinXP's PUSHF/CLI/POPF workaround
     if (m_fixPOPF) {
       DWORD result;
@@ -183,6 +197,29 @@ STDMETHODIMP CVDMServices::Destroy() {
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("NtVdmControl(0x%02x,%d):\n0x%08x - %s"), fn, param, result, (LPCTSTR)FormatMessage(result)));
       }
     }
+
+#endif //_NTVDM_SVC
+
+#ifdef _VXD_SVC
+
+    // Unhook IRQs
+    for (int type = 0; type < 2; type++) {
+      for (int line = 0; line < 8; line++) {
+        if (m_picUsage[type][line]) {
+          VDDUnhookIRQ(line);
+        }
+      }
+    }
+
+    // Unhook DMA channels
+    for (int channel = 0; channel < 8; channel++) {
+      if (m_dmaUsage[channel]) {
+        VDDUnhookDMA(channel);
+      }
+    }
+
+#endif //_VXD_SVC
+
   }
 
   // Uninstall the VDM process create/terminate/VDM block/resume callback procedures
@@ -371,7 +408,13 @@ STDMETHODIMP CVDMServices::GetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       break;
 
     case ADDR_PHYSICAL:
+
+#ifdef _NTVDM_SVC
       pSrc = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
+#else //_NTVDM_SVC
+      pSrc = NULL;
+#endif //_NTVDM_SVC
+
       memcpy(buffer, pSrc + offset, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pSrc, FALSE);
       break;
@@ -408,7 +451,13 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
       break;
 
     case ADDR_PHYSICAL:
+
+#ifdef _NTVDM_SVC
       pDest = GetVDMPointer(MAKELONG(0, 0), 1, FALSE);
+#else //_NTVDM_SVC
+      pDest = NULL;
+#endif //_NTVDM_SVC
+
       memcpy(pDest + offset, buffer, length);
       FreeVDMPointer(MAKELONG(0, 0), 1, pDest, FALSE);
       break;
@@ -424,6 +473,19 @@ STDMETHODIMP CVDMServices::SetMemory(WORD segment, ULONG offset, ADDRMODE_T mode
 
 STDMETHODIMP CVDMServices::SimulateInterrupt(INTERRUPT_T type, BYTE line, USHORT count) {
   VDMS_TRACE("-> SIMULATE IRQ %d (%d) %dx\n", line, type, count);
+
+#ifdef _VXD_SVC
+
+  // In the VxD world we have to reserve an IRQ before we can trigger it.  Do that once, then
+  //  mark the IRQ as reserved in m_picUsage and no longer worry about it.
+  int type_i = (type == INT_MASTER) ? 0 : (type == INT_SLAVE) ? 1 : -1;
+  if ((type_i >= 0) && (line < 8u) && !m_picUsage[type_i][line]) {
+    VDMS_TRACE("   (hook irq %d[%d])\n", line, type_i);
+    VDDHookIRQ(line);
+    m_picUsage[type_i][line] = TRUE;
+  }
+
+#endif //_VXD_SVC
 
   switch (type) {
     case INT_MASTER:
@@ -499,6 +561,18 @@ STDMETHODIMP CVDMServices::GetDMAState(USHORT channel, DMA_INFO_T * DMAInfo) {
   if (DMAInfo == NULL)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("GetDMAState"), _T("DMAInfo")), __uuidof(IVDMDMAServices), E_POINTER);
 
+#ifdef _VXD_SVC
+
+  // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
+  //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
+  if (channel < 8u) {
+    VDMS_TRACE("   (hook channel %d)\n", channel);
+    VDDHookDMA(channel, VDDDMAActivity);
+    m_dmaUsage[channel] = TRUE;
+  }
+
+#endif //_VXD_SVC
+
   VDD_DMA_INFO info;
 
   if (!VDDQueryDMA(m_hInstance, channel, &info)) {
@@ -521,6 +595,18 @@ STDMETHODIMP CVDMServices::SetDMAState(USHORT channel, DMA_INFO_SEL_T flags, DMA
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("SetDMAState"), _T("DMAInfo")), __uuidof(IVDMDMAServices), E_POINTER);
 
   VDMS_TRACE("-> SET DMA %d (%c %c %c %c) %04x:%08x (%d, 0x%02x)\n", channel, ((flags & UPDATE_PAGE) != 0) ? 'p' : ' ', ((flags & UPDATE_ADDR) != 0) ? 'a' : ' ', ((flags & UPDATE_COUNT) != 0) ? 'c' : ' ', ((flags & UPDATE_STATUS) != 0) ? 's' : ' ', DMAInfo->page & 0xffff, DMAInfo->addr & 0xffff, DMAInfo->count & 0xffff, DMAInfo->status & 0xff);
+
+#ifdef _VXD_SVC
+
+  // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
+  //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
+  if (channel < 8u) {
+    VDMS_TRACE("   (hook channel %d)\n", channel);
+    VDDHookDMA(channel, VDDDMAActivity);
+    m_dmaUsage[channel] = TRUE;
+  }
+
+#endif //_VXD_SVC
 
   WORD vddFlags = 0;
   VDD_DMA_INFO info;
@@ -559,6 +645,18 @@ STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULO
   if (buffer == NULL)
     return AtlReportError(GetObjectCLSID(), FormatMessage(MSG_ERR_E_POINTER, false, NULL, 0, false, _T("PerformDMATransfer"), _T("buffer")), __uuidof(IVDMDMAServices), E_POINTER);
 
+#ifdef _VXD_SVC
+
+  // In the VxD world we have to reserve a DMA channel before we can use it.  Do that once,
+  //  then mark the DMA channel as reserved in m_dmaUsage and no longer worry about it.
+  if (channel < 8u) {
+    VDMS_TRACE("   (hook channel %d)\n", channel);
+    VDDHookDMA(channel, VDDDMAActivity);
+    m_dmaUsage[channel] = TRUE;
+  }
+
+#endif //_VXD_SVC
+
   DWORD numBytes = VDDRequestDMA(m_hInstance, channel, buffer, length);
   DWORD lastError = GetLastError();
 
@@ -572,6 +670,8 @@ STDMETHODIMP CVDMServices::PerformDMATransfer(USHORT channel, BYTE * buffer, ULO
 }
 
 
+
+#ifdef _NTVDM_SVC
 
 /////////////////////////////////////////////////////////////////////////////
 // ** PRIVATE ** VDM utility functions
@@ -590,6 +690,7 @@ DWORD CVDMServices::VDMControl(DWORD fn, LPVOID param) {
   return (*lpfnNtVdmControl)(fn, param);
 }
 
+#endif //_NTVDM_SVC
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -618,6 +719,8 @@ VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
       m_isCommitted = true;
     }
 
+#ifdef _NTVDM_SVC
+
     // Activate WinXP's PUSHF/CLI/POPF workaround
     if (m_fixPOPF) {
       DWORD result;
@@ -627,6 +730,9 @@ VOID CALLBACK CVDMServices::VDDUserCreate(USHORT DosPDB) {
         RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("NtVdmControl(0x%02x,%d):\n0x%08x - %s"), fn, param, result, (LPCTSTR)FormatMessage(result)));
       }
     }
+
+#endif //_NTVDM_SVC
+
   }
 }
 
@@ -756,6 +862,18 @@ VOID CALLBACK CVDMServices::VDDPortOUTSW(WORD oPort, WORD * data, WORD count) {
   }
 }
 
+
+#ifdef _VXD_SVC
+
+/////////////////////////////////////////////////////////////////////////////
+// VDD DMA hook functions
+/////////////////////////////////////////////////////////////////////////////
+
+VOID CALLBACK CVDMServices::VDDDMAActivity(DWORD channel) {
+  /* do nothing (yet) */
+}
+
+#endif //_VXD_SVC
 
 
 /////////////////////////////////////////////////////////////////////////////

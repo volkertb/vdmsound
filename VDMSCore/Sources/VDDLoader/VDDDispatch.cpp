@@ -21,10 +21,14 @@ void SignalVDMSStatus(bool);
 
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef _NTVDM_SVC
+
 typedef VOID (WINAPI* LPFNEXITPROCESS)(UINT);
 
 VOID WINAPI ExitProcess_Surrogate(UINT);
 LPFNEXITPROCESS ExitProcess_Original = NULL;
+
+#endif //_NTVDM_SVC
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -35,8 +39,8 @@ typedef HRESULT (WINAPI* LPFNCFGDESTROY)(void);
 
 
 //
-// Initialization routine; called right after NTVDM.EXE loads VDDLoader.DLL
-//   in its memory space
+// Initialization routine; called right after NTVDM.EXE or equivalent loads
+//   VDDLoader.DLL in its memory space
 //
 STDAPI_(void) VddInitialize(void) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -151,6 +155,8 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
     // Successful load & initialization
     SignalVDMSStatus(true);
 
+#ifdef _NTVDM_SVC
+
     // Hook ExitProcess, for clean shutdowns (hook automatically calls
     //   unloadConfiguration when NTVDM.EXE ends normally)
     ExitProcess_Original = (LPFNEXITPROCESS)HookProcByName(GetModuleHandleA("NTVDM.EXE"), "KERNEL32.DLL", "ExitProcess", (FARPROC)ExitProcess_Surrogate);
@@ -164,6 +170,9 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
         return 0xb0;        // Could not hook function
       }
     }
+
+#endif //_NTVDM_SVC
+
   } catch (...) {
     MessageBox(FormatMessage(_T("Unhandled exception encountered while loading")),
                FormatMessage(_T("Fatal Error")),
@@ -266,6 +275,7 @@ void SignalVDMSStatus(bool isLoaded) {
 /////////////////////////////////////////////////////////////////////////////
 
 
+#ifdef _NTVDM_SVC
 
 //
 // Automatically unloads the configuration module (and, implictly, all
@@ -280,3 +290,5 @@ VOID WINAPI ExitProcess_Surrogate(UINT uExitCode) {
     (*ExitProcess_Original)(uExitCode);
   }
 }
+
+#endif //_NTVDM_SVC

@@ -50,7 +50,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /Gz /MDd /W3 /Gm /GX /ZI /Od /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "_DEBUG" /D "_ATL_DEBUG_INTERFACES" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /Gz /MDd /W3 /Gm /GX /ZI /Od /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "_DEBUG" /D "_ATL_DEBUG_INTERFACES" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -124,7 +124,7 @@ SOURCE="$(InputPath)"
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /Gz /MDd /W3 /Gm /GX /ZI /Od /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "_DEBUG" /D "_ATL_DEBUG_INTERFACES" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /Gz /MDd /W3 /Gm /GX /ZI /Od /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "_DEBUG" /D "_ATL_DEBUG_INTERFACES" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -167,7 +167,7 @@ SOURCE="$(InputPath)"
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_DLL" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -241,7 +241,7 @@ SOURCE="$(InputPath)"
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /D "_ATL_STATIC_REGISTRY" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -315,7 +315,7 @@ SOURCE="$(InputPath)"
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_DLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_DLL" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -358,7 +358,7 @@ SOURCE="$(InputPath)"
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Gz /MD /W3 /GX /O2 /Ob2 /I "$(NTDDKPath)/inc" /I "../Interfaces" /I "../MFCUtil" /I "../VDMUtil" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_USRDLL" /D "_UNICODE" /D "_ATL_STATIC_REGISTRY" /D "_NTVDM_SVC" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /I "../Interfaces"
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -627,7 +627,7 @@ SOURCE=.\VDDLoader.idl
 # ADD MTL /tlb ".\VDDLoader.tlb" /h "VDDLoader.h" /iid "VDDLoader_i.c" /Oicf
 # End Source File
 # End Group
-# Begin Group "16-bit"
+# Begin Group "WinNT-specific"
 
 # PROP Default_Filter ""
 # Begin Source File
@@ -747,6 +747,13 @@ InputName=DOSDrv
 SOURCE=.\DOSDrv.h
 # End Source File
 # End Group
+# Begin Group "Win9x-specific"
+# Begin Source File
+
+SOURCE=.\vxdsdll.h
+# End Source File
+# End Group
+
 # Begin Source File
 
 SOURCE=.\VDDLoader.def

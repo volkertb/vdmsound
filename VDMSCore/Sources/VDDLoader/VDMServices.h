@@ -84,6 +84,14 @@ public:
   STDMETHOD(FreeMem)(ULONG address, ULONG size);
 */
 
+#ifdef _VXD_SVC
+
+protected:
+  BOOL m_picUsage[2][8];  // what IRQ lines have been reserved
+  BOOL m_dmaUsage[8];     // what DMA channels have been reserved
+
+#endif //_VXD_SVC
+
 protected:
 // VDM utility types
   typedef DWORD (WINAPI* LPFNNTVDMCONTROL)(DWORD,LPVOID);
@@ -109,6 +117,14 @@ public:
   static VOID CALLBACK VDDPortOUTW(WORD oPort, WORD data);
   static VOID CALLBACK VDDPortOUTSB(WORD oPort, BYTE * data, WORD count);
   static VOID CALLBACK VDDPortOUTSW(WORD oPort, WORD * data, WORD count);
+
+#ifdef _VXD_SVC
+
+// VDD DMA hook functions
+public:
+  static VOID CALLBACK VDDDMAActivity(DWORD channel);
+
+#endif //_VXD_SVC
 
 protected:
   static CString StringFromPortRanges(int numPorts, const VDD_IO_PORTRANGE* ports);
