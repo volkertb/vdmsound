@@ -40,6 +40,36 @@ Package=<5>
 
 Package=<4>
 {{{
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "EmuJoystick"=.\Sources\EmuJoystick\EmuJoystick.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Interfaces
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name MFCUtil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name VDMUtil
+    End Project Dependency
 }}}
 
 ###############################################################################
