@@ -339,25 +339,32 @@ void CBasicSettingsPage::OnButChange()
 
   SyncGUIData(TRUE);        // save all changes that occured in the GUI
 
-  m_settings.GetValue(_T("program"), _T("executable"), dlgBrowse.m_edtFile_val);
-  m_settings.GetValue(_T("program"), _T("params"), dlgBrowse.m_edtArgs_val);
-  m_settings.GetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
+  CString edtFile, edtArgs, edtDir, iconLocation;
 
-  m_settings.GetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
+  m_settings.GetValue(_T("program"), _T("executable"), edtFile);
+  m_settings.GetValue(_T("program"), _T("params"), edtArgs);
+  m_settings.GetValue(_T("program"), _T("workdir"), edtDir);
 
-  dlgBrowse.m_edtFile_val = VLPUtil::GetAbsolutePath(dlgBrowse.m_edtFile_val, dlgBrowse.m_edtDir_val, FALSE);
+  edtFile = VLPUtil::GetAbsolutePath(edtFile, edtDir, FALSE);
+
+  m_settings.GetValue(_T("program"), _T("icon"), iconLocation);
+
+  dlgBrowse.m_edtFile_val  = edtFile;
+  dlgBrowse.m_edtArgs_val  = edtArgs;
+  dlgBrowse.m_edtDir_val   = edtDir;
+  dlgBrowse.m_iconLocation = iconLocation;
 
   switch (dlgBrowse.DoModal()) {
     case IDOK:
       // If got back empty strings then leave unchanged
-      if (!dlgBrowse.m_edtFile_val.IsEmpty())
+      if (edtFile.Compare(dlgBrowse.m_edtFile_val) != 0)
         m_settings.SetValue(_T("program"), _T("executable"), dlgBrowse.m_edtFile_val);
-      if (!dlgBrowse.m_edtArgs_val.IsEmpty())
+      if (edtArgs.Compare(dlgBrowse.m_edtArgs_val) != 0)
         m_settings.SetValue(_T("program"), _T("params"), dlgBrowse.m_edtArgs_val);
-      if (!dlgBrowse.m_edtDir_val.IsEmpty())
+      if (edtDir.Compare(dlgBrowse.m_edtDir_val) != 0)
         m_settings.SetValue(_T("program"), _T("workdir"), dlgBrowse.m_edtDir_val);
 
-      if (!dlgBrowse.m_iconLocation.IsEmpty())
+      if (iconLocation.Compare(dlgBrowse.m_iconLocation) != 0)
         m_settings.SetValue(_T("program"), _T("icon"), dlgBrowse.m_iconLocation);
 
       SyncGUIData(FALSE);       // update the GUI to reflect any changed settings
