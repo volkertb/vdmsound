@@ -54,7 +54,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,3,1
+ FILEVERSION 1,0,3,2
  PRODUCTVERSION 2,0,3,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -72,7 +72,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "EmuAdLib Module\0"
-            VALUE "FileVersion", "1, 0, 3, 1\0"
+            VALUE "FileVersion", "1, 0, 3, 2\0"
             VALUE "InternalName", "EmuAdLib\0"
             VALUE "LegalCopyright", "Copyright 2001 Vlad ROMASCANU\0"
             VALUE "OriginalFilename", "EmuAdLib.DLL\0"
