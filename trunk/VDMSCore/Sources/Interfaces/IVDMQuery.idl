@@ -51,9 +51,9 @@ interface IVDMRTEnvironment : IUnknown
 {
 	typedef [ helpstring("Event types") ] enum
 	{
-		LOG_INFORMATION = 0x00,
-		LOG_WARNING     = 0x01,
-		LOG_ERROR       = 0x02
+		LOG_INFORMATION = 0x40,
+		LOG_WARNING     = 0x80,
+		LOG_ERROR       = 0xc0
 	} LOGENTRY_T;
 
 	[ helpstring("Get the property labeled with the given name") ]
