@@ -871,6 +871,7 @@ VOID CALLBACK CVDMServices::VDDPortOUTSW(WORD oPort, WORD * data, WORD count) {
 
 VOID CALLBACK CVDMServices::VDDDMAActivity(DWORD channel) {
   /* do nothing (yet) */
+  VDMS_TRACE("   (dma event notification on channel %d)\n", channel);
 }
 
 #endif //_VXD_SVC
