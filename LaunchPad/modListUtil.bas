@@ -22,7 +22,6 @@ Public Function AddItem( _
     Set lvItem = lvDupeItem  ' return, the existing item
   End If
 
-  lvItem = lvList.Sorted
   Set AddItem = lvItem
 End Function
 
@@ -85,7 +84,7 @@ Public Function GetItemByText( _
   ByVal strText As String _
 ) As ListItem
 
-  If lvList.ListItems.Count < 1 Then GoTo Error_NotFound
+  If lvList.ListItems.Count <= 0 Then GoTo Error_NotFound
 
   strLCaseText = LCase(strText)
 
