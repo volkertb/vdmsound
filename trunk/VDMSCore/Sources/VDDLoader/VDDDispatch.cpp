@@ -2,6 +2,8 @@
 
 #include "DOSDrv.h"
 
+#include "ApiHook.h"
+
 /////////////////////////////////////////////////////////////////////////////
 
 #include <MFCUtil.h>
@@ -17,7 +19,12 @@ int unloadConfiguration(LPVOID lpParam, WORD uParamLen);
 
 void SignalVDMSStatus(bool);
 
-BOOL WINAPI ConsoleEventHandler(DWORD);
+/////////////////////////////////////////////////////////////////////////////
+
+typedef VOID (WINAPI* LPFNEXITPROCESS)(UINT);
+
+VOID WINAPI ExitProcess_Surrogate(UINT);
+LPFNEXITPROCESS ExitProcess_Original = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -144,15 +151,17 @@ int loadConfiguration(LPVOID lpParam, WORD uParamLen) {
     // Successful load & initialization
     SignalVDMSStatus(true);
 
-    // Hook console events, for clean shutdowns (hook automatically calls
-    //   unloadConfiguration on console close)
-    if (!SetConsoleCtrlHandler(ConsoleEventHandler, TRUE)) {
+    // Hook ExitProcess, for clean shutdowns (hook automatically calls
+    //   unloadConfiguration when NTVDM.EXE ends normally)
+    ExitProcess_Original = (LPFNEXITPROCESS)HookProcByName(GetModuleHandleA("NTVDM.EXE"), "KERNEL32.DLL", "ExitProcess", (FARPROC)ExitProcess_Surrogate);
+
+    if (ExitProcess_Original == NULL) {
       DWORD lastError = GetLastError();
-      if (MessageBox(FormatMessage(_T("Failed to register an event handler with the console window.  This means that the VDD will be unable to automatically unload in a clean manner when the console window closes, which will probably lead to a protection fault.%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nDo you want to continue?"), false, lastError, (LPCTSTR)FormatMessage(lastError)),
+      if (MessageBox(FormatMessage(_T("Failed to hook ExitProcess() in KERNEL32.DLL.  This means that the VDD will be unable to automatically unload in a clean manner when the console window closes, which will probably lead to a protection fault.%n%nLast error reported by Windows:%n0x%1!08x! - %2%n%nDo you want to continue?"), false, lastError, (LPCTSTR)FormatMessage(lastError)),
                      FormatMessage(_T("VDD Error")),
                      MB_YESNO|MB_DEFBUTTON1, MB_ICONERROR) == IDNO)
       {
-        return 0xb0;        // Could not register console hook
+        return 0xb0;        // Could not hook function
       }
     }
   } catch (...) {
@@ -207,9 +216,10 @@ int unloadConfiguration(LPVOID lpParam, WORD uParamLen) {
       retVal = 0x98;      // Could not unload DLL
     }
 
-    // Remove handler, since this DLL is about to unload
-    SetConsoleCtrlHandler(ConsoleEventHandler, FALSE);
+    // Note: No need to remove the ExitProcess hook because the process
+    //  is about to exit anyway
 
+    // Clean up handles
     g_hCfgLib = NULL;
 
     // Done unloading
@@ -259,27 +269,14 @@ void SignalVDMSStatus(bool isLoaded) {
 
 //
 // Automatically unloads the configuration module (and, implictly, all
-// emulation modules) when the DOS (console) window is closed.
+// emulation modules) when the process is about to exit.
 //
-BOOL WINAPI ConsoleEventHandler(
-  DWORD dwCtrlType )    // control signal type
-{
-  CString msg;
+VOID WINAPI ExitProcess_Surrogate(UINT uExitCode) {
+  unloadConfiguration(NULL, 0);
 
-  switch (dwCtrlType) {
-    case CTRL_C_EVENT:
-    case CTRL_BREAK_EVENT:
-      return FALSE;
-
-    case 3: /* WinNT4: corresponds to typing 'exit' at the command prompt */
-    case CTRL_CLOSE_EVENT:
-    case CTRL_LOGOFF_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-      unloadConfiguration(NULL, 0);
-      VDDTerminateVDM();
-      return TRUE;
-
-    default:
-      return FALSE;
+  if ((ExitProcess_Original != NULL) &&                 // avoid protection fault
+      (ExitProcess_Original != ExitProcess_Surrogate))  // avoid infinite recursion
+  {
+    (*ExitProcess_Original)(uExitCode);
   }
 }
