@@ -230,6 +230,10 @@ unsigned int CTransferMgr::Run(CThread& thread) {
         if (m_channels[DMAChannel].isActive) {      // is this channel awaiting servicing?
           isIdle = false;   // at least one channel (this one) needs servicing
 
+#         if _DEBUG
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Polling (active) DMA channel %d: page/offset = %04x/%04x, count = %04x (%d) ; status = %02x, mode = %02x, mask = %02x (%s)"), DMAChannel, DMAInfo.page & 0xffff, DMAInfo.addr & 0xffff, DMAInfo.count & 0xffff, DMAInfo.count & 0xffff, DMAInfo.status & 0xff, DMAInfo.mode & 0xff, DMAInfo.mask & 0xff, (DMAInfo.mask & DMAChMask) != 0 ? _T("masked") : _T("not masked")));
+#         endif
+
           DMAInfo.status |= DREQMask;               // set DREQ
 
           if ((DMAInfo.mask & DMAChMask) == 0) {    // is channel enabled?
@@ -241,7 +245,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
             bool isAutoInit = (DMAInfo.mode & 0x10) != 0;
             bool isDescending = ((DMAInfo.mode >> 5) & 0x01) != 0;
-            ULONG physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 17) | ((DMAInfo.addr & 0xffff) << 1));
+            ULONG physicalAddr = (DMAChannel < 4) ? (((DMAInfo.page & DMA8_PAGE_MASK) << 16) | (DMAInfo.addr & 0xffff)) : (((DMAInfo.page & DMA16_PAGE_MASK) << 16) | ((DMAInfo.addr & 0x7fff) << 1));
             ULONG maxData = DMAInfo.count + 1ul;
 
             ULONG numData = m_channels[DMAChannel].handler->HandleTransfer(DMAChannel, types[DMAInfo.mode & 0x03], modes[(DMAInfo.mode >> 6) & 0x03], isAutoInit, physicalAddr, maxData, isDescending);
@@ -258,12 +262,13 @@ unsigned int CTransferMgr::Run(CThread& thread) {
                   DMAInfo.addr = m_channels[DMAChannel].addr;
                   DMAInfo.count = m_channels[DMAChannel].count;
                 } else {
+                  DMAInfo.status &= (~DREQMask);            // transfer done, clear DREQ
                   DMAInfo.addr = isDescending ? (DMAInfo.addr - (WORD)numData) : (DMAInfo.addr + (WORD)numData);
                   DMAInfo.count = 0xffff;
 
                   _ASSERTE(DMAInfo.addr == (WORD)(isDescending ? (m_channels[DMAChannel].addr - m_channels[DMAChannel].count - 1) : (m_channels[DMAChannel].addr + m_channels[DMAChannel].count + 1)));
 
-                  m_channels[DMAChannel].isActive = false; // transfer done, disable (mask) channel
+                  m_channels[DMAChannel].isActive = false;  // transfer done, disable (mask) channel
                 }
 
                 m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_ALL, &DMAInfo);
@@ -283,6 +288,10 @@ unsigned int CTransferMgr::Run(CThread& thread) {
             m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_STATUS, &DMAInfo);
           }
         } else {
+#         if _DEBUG
+          if ((DMAInfo.status & DREQMask) != 0) RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Deasserting DREQ on (now inactive) DMA channel %d"), DMAChannel));
+#         endif
+
           DMAInfo.status &= (~DREQMask);            // clear DREQ
           m_DMASrv->SetDMAState(DMAChannel, IVDMSERVICESLib::UPDATE_STATUS, &DMAInfo);
         }
@@ -314,6 +323,11 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
         case UM_DMA_START:
           _ASSERTE(message.wParam < NUM_DMA_CHANNELS);
+
+#         if _DEBUG
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Received DMA start request (%s) on %s channel %d"), message.lParam != FALSE ? _T("synchronous") : _T("asynchronous"), m_channels[message.wParam].isActive ? _T("active") : _T("inactive"), (int)message.wParam));
+#         endif
+
           needsAck = (message.lParam != FALSE); // remember to signal back after the DMA is programmed to reflect a STARTED transaction
           m_channels[message.wParam].isActive = true;
           m_channels[message.wParam].inProgress = false;
@@ -321,6 +335,11 @@ unsigned int CTransferMgr::Run(CThread& thread) {
 
         case UM_DMA_STOP:
           _ASSERTE(message.wParam < NUM_DMA_CHANNELS);
+
+#         if _DEBUG
+          RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Received DMA stop request (%s) on %s channel %d"), message.lParam != FALSE ? _T("synchronous") : _T("asynchronous"), m_channels[message.wParam].isActive ? _T("active") : _T("inactive"), (int)message.wParam));
+#         endif
+
           needsAck = (message.lParam != FALSE); // remember to signal back after the DMA is programmed to reflect a STOPPED transaction
           m_channels[message.wParam].isActive = false;
           m_channels[message.wParam].inProgress = false;
