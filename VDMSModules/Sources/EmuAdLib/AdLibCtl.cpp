@@ -182,6 +182,8 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
     case MODE_OPL3:
       m_AdLibFSM1.setType(CAdLibCtlFSM::TYPE_OPL3);
       break;
+    default:
+      ASSERT(FALSE);
   }
 
   // Put the OPL in a known state
@@ -193,7 +195,7 @@ STDMETHODIMP CAdLibCtl::Init(IUnknown * configuration) {
   m_playbackThread.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
   m_playbackThread.Resume();
 
-  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x, type = %s)"), m_basePort, m_oplMode == MODE_OPL2 ? _T("OPL2") : m_oplMode == MODE_OPL2 ? _T("dual OPL2") : m_oplMode == MODE_OPL2 ? _T("OPL3") : _T("???")));
+  RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("AdLibCtl initialized (base port = 0x%03x, type = %s)"), m_basePort, m_oplMode == MODE_OPL2 ? _T("OPL2") : m_oplMode == MODE_DUAL_OPL2 ? _T("dual OPL2") : m_oplMode == MODE_OPL3 ? _T("OPL3") : _T("???")));
 
   return S_OK;
 }
