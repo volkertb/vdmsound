@@ -84,6 +84,7 @@ protected:
 // Module's settings
 protected:
   int m_deviceID;
+  int m_bufOpRange;
 
 // Other member variables
 protected:
@@ -91,7 +92,6 @@ protected:
   HWAVEOUT m_hWaveOut;
   WAVEFORMATEX m_waveFormat;
   CThread m_gcThread;
-  int m_bufOpRange;
 
   LONG m_bufferedBytes;
   LONG m_bufferedLo, m_bufferedHi;
