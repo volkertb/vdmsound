@@ -19,6 +19,7 @@
 #define INI_STR_VDMSERVICES   L"VDMSrv"
 #define INI_STR_DMACTL        L"DMACtl"
 #define INI_STR_WAVEOUT       L"WaveOut"
+#define INI_STR_ADLIB         L"AdLib"
 
 #define INI_STR_DSPVERSION    L"version"
 #define INI_STR_BASEPORT      L"port"
@@ -136,7 +137,10 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_DMACTL), _T("IDMAController")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
 
     // Try to obtain an interface to a Wave-out module, use NULL if none available
-    m_waveOut  = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);
+    m_waveOut = DEP_Get(Depends, INI_STR_WAVEOUT, NULL, false);
+
+    // Try to obtain an interface to an AdLib meulation module, use NULL if none available
+    m_AdLib   = DEP_Get(Depends, INI_STR_ADLIB, NULL, false);
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
@@ -205,6 +209,9 @@ STDMETHODIMP CSBCompatCtl::Destroy() {
   // Put the DSP in a known state
   m_SBDSP.reset();
 
+  // Release the AdLib module
+  m_AdLib   = NULL;
+
   // Release the Wave-out module
   m_waveOut = NULL;
 
@@ -234,6 +241,17 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
 # endif
 
   switch (inPort - m_basePort) {
+    case 0x00:  /* Left FM status port */
+    case 0x02:  /* Right FM status port */
+    case 0x08:  /* Compatible FM status port */
+      try {
+        m_AdLib->HandleByteRead((inPort - m_basePort) & 0x03, data);
+        return S_OK;
+      } catch (_com_error& ce) {
+        *data = 0xff;
+        return ce.Error();
+      }
+
     case 0x05:  /* MIXER data register */
       *data = m_SBMixer.getValue();
       return S_OK;
@@ -255,13 +273,6 @@ STDMETHODIMP CSBCompatCtl::HandleINB(USHORT inPort, BYTE * data) {
       m_SBDSP.ack16BitIRQ();
       *data = 0xff;
       return S_OK;
-
-    case 0x00:
-    case 0x02:
-    case 0x08:
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to read from unsupported FM port (IN 0x%3x)"), inPort));
-      *data = *data;       // Do not modify AL; this can help in passing some DOS games' tests (e.g. Day of the Tentacle)
-      return S_FALSE;
 
     case 0x07:  // not documented
     case 0x0b:  // not documented
@@ -292,6 +303,26 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
 # endif
 
   switch (outPort - m_basePort) {
+    case 0x00:  /* Left FM register port */
+    case 0x02:  /* Right FM register port */
+    case 0x08:  /* Compatible FM register port */
+      try {
+        m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
+        return S_OK;
+      } catch (_com_error& ce) {
+        return ce.Error();
+      }
+
+    case 0x01:  /* Left FM data port */
+    case 0x03:  /* Right FM data port */
+    case 0x09:  /* Compatible FM data port */
+      try {
+        m_AdLib->HandleByteWrite((outPort - m_basePort) & 0x03, data);
+        return S_OK;
+      } catch (_com_error& ce) {
+        return ce.Error();
+      }
+
     case 0x04:  /* MIXER register port */
       m_SBMixer.setAddress(data);
       return S_OK;
@@ -307,15 +338,6 @@ STDMETHODIMP CSBCompatCtl::HandleOUTB(USHORT outPort, BYTE data) {
     case 0x0c:  /* DSP write data or command */
       m_SBDSP.putCommand(data);
       return S_OK;
-
-    case 0x00:
-    case 0x01:
-    case 0x02:
-    case 0x03:
-    case 0x08:
-    case 0x09:
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("Attempted to write to unsupported FM port (OUT 0x%3x, 0x%02x)"), outPort, data));
-      return S_FALSE;
 
     case 0x07:  // not documented
     case 0x0b:  // not documented

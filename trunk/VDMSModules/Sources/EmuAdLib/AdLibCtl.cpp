@@ -48,7 +48,8 @@ STDMETHODIMP CAdLibCtl::InterfaceSupportsErrorInfo(REFIID riid)
   static const IID* arr[] = 
   {
     &IID_IVDMBasicModule,
-    &IID_IIOHandler
+    &IID_IIOHandler,
+    &IID_IAddressable
   };
   for (int i=0; i < sizeof(arr) / sizeof(arr[0]); i++)
   {
@@ -179,40 +180,11 @@ STDMETHODIMP CAdLibCtl::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CAdLibCtl::HandleINB(USHORT inPort, BYTE * data) {
-  if (data == NULL)
-    return E_POINTER;
-
-  DWORD curTime = 0;
-
-  switch (inPort - m_basePort) {
-    case 0:   // the address/status port
-      *data = m_AdLibFSM.getStatus();
-      return S_OK;
-
-    case 1:   // the data port
-      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to read from write-only port (IN 0x%3x)"), inPort));
-      *data = 0xff;
-      return S_FALSE;
-
-    default:
-      *data = 0xff;
-      return E_FAIL;
-  }
+  return OPLRead(inPort - m_basePort, data);
 }
 
 STDMETHODIMP CAdLibCtl::HandleOUTB(USHORT outPort, BYTE data) {
-  switch (outPort - m_basePort) {
-    case 0:   // the address/status port
-      m_AdLibFSM.setAddress(data);
-      return S_OK;
-
-    case 1:   // the data port
-      m_AdLibFSM.putData(data);
-      return S_OK;
-
-    default:
-      return E_FAIL;
-  }
+  return OPLWrite(outPort - m_basePort, data);
 }
 
 
@@ -242,6 +214,34 @@ STDMETHODIMP CAdLibCtl::HandleOUTSB(USHORT outPort, BYTE * data, USHORT count, D
 }
 STDMETHODIMP CAdLibCtl::HandleOUTSW(USHORT outPort, USHORT * data, USHORT count, DIR_T direction) {
   if (data == NULL) return E_POINTER;
+  return E_NOTIMPL;
+}
+
+// ** END not implemented ** ////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// IAddressable
+/////////////////////////////////////////////////////////////////////////////
+
+STDMETHODIMP CAdLibCtl::HandleByteRead(ULONG address, BYTE * data) {
+  return OPLRead((BYTE)address, data);
+}
+
+STDMETHODIMP CAdLibCtl::HandleByteWrite(ULONG address, BYTE data) {
+  return OPLWrite((BYTE)address, data);
+}
+
+
+// ** BEGIN not implemented ** //////////////////////////////////////////////
+
+STDMETHODIMP CAdLibCtl::HandleWordRead(ULONG address, USHORT * data) {
+  if (data == NULL) return E_POINTER;
+  *data = -1;
+  return E_NOTIMPL;
+}
+STDMETHODIMP CAdLibCtl::HandleWordWrite(ULONG address, USHORT data) {
   return E_NOTIMPL;
 }
 
@@ -372,7 +372,7 @@ HRESULT CAdLibCtl::OPLCreate(int sampleRate) {
 }
 
 //
-//
+// This function will release and clean up after the OPL emulation core
 //
 void CAdLibCtl::OPLDestroy(void) {
   // Lock static instances array and access to OPL software synthesizer
@@ -388,7 +388,8 @@ void CAdLibCtl::OPLDestroy(void) {
 }
 
 //
-//
+// This function will output a certain amount of synthesized OPL audio data
+//  to the output wave device
 //
 void CAdLibCtl::OPLPlay(DWORD deltaTime) {
   if (m_waveOut == NULL)
@@ -413,6 +414,47 @@ void CAdLibCtl::OPLPlay(DWORD deltaTime) {
       CString args = Format(_T("%p, %d"), buf, toTransfer * sizeof(buf[0]));
       RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_ERROR, Format(_T("PlayData(%s): 0x%08x - %s"), (LPCTSTR)args, ce.Error(), ce.ErrorMessage()));
     }
+  }
+}
+
+//
+// This function will read a value from one of the OPL ports
+//
+HRESULT CAdLibCtl::OPLRead(BYTE address, BYTE * data) {
+  if (data == NULL)
+    return E_POINTER;
+
+  switch (address) {
+    case 0:   // the address/status port
+      *data = m_AdLibFSM.getStatus();
+      return S_OK;
+
+    case 1:   // the data port
+      RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_WARNING, Format(_T("Attempted to read from write-only port (IN 0x%3x)"), address + m_basePort));
+      *data = 0xff;
+      return S_FALSE;
+
+    default:
+      *data = 0xff;
+      return E_FAIL;
+  }
+}
+
+//
+// This function will write a value to one of the OPL ports
+//
+HRESULT CAdLibCtl::OPLWrite(BYTE address, BYTE data) {
+  switch (address) {
+    case 0:   // the address/status port
+      m_AdLibFSM.setAddress(data);
+      return S_OK;
+
+    case 1:   // the data port
+      m_AdLibFSM.putData(data);
+      return S_OK;
+
+    default:
+      return E_FAIL;
   }
 }
 

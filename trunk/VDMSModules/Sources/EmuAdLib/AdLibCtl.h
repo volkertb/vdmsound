@@ -16,6 +16,7 @@ namespace MAME {
 #pragma warning ( disable : 4192 )
 #import <IVDMModule.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 #import <IVDMHandlers.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
+#import <IAddressable.tlb> raw_interfaces_only, raw_native_types, no_namespace, named_guids 
 
 #import <IVDMServices.tlb>
 #import <IVDMQuery.tlb>
@@ -79,7 +80,8 @@ class ATL_NO_VTABLE CAdLibCtl :
   public IRunnable,
   public ISupportErrorInfo,
   public IVDMBasicModule,
-  public IIOHandler
+  public IIOHandler,
+  public IAddressable
 {
 public:
 	CAdLibCtl()
@@ -95,6 +97,7 @@ BEGIN_COM_MAP(CAdLibCtl)
   COM_INTERFACE_ENTRY(ISupportErrorInfo)
   COM_INTERFACE_ENTRY(IVDMBasicModule)
   COM_INTERFACE_ENTRY(IIOHandler)
+  COM_INTERFACE_ENTRY(IAddressable)
 END_COM_MAP()
 
 // IAdLibHWEmulationLayer
@@ -129,6 +132,13 @@ public:
   STDMETHOD(HandleOUTSB)(USHORT outPort, BYTE * data, USHORT count, DIR_T direction);
   STDMETHOD(HandleOUTSW)(USHORT outPort, USHORT * data, USHORT count, DIR_T direction);
 
+// IAddressable
+public:
+  STDMETHOD(HandleByteRead)(ULONG address, BYTE * data);
+  STDMETHOD(HandleWordRead)(ULONG address, USHORT * data);
+  STDMETHOD(HandleByteWrite)(ULONG address, BYTE data);
+  STDMETHOD(HandleWordWrite)(ULONG address, USHORT data);
+
 protected:
   static void OPLTimerHandler(int channel, double interval_sec);
   static void OPLUpdateHandler(int param, int min_interval_usec);
@@ -137,6 +147,8 @@ protected:
   HRESULT OPLCreate(int sampleRate);
   void OPLDestroy(void);
   void OPLPlay(DWORD deltaTime);
+  HRESULT OPLRead(BYTE address, BYTE * data);
+  HRESULT OPLWrite(BYTE address, BYTE data);
 
 /////////////////////////////////////////////////////////////////////////////
 
