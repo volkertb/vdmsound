@@ -89,15 +89,21 @@ public:
   STDMETHOD(HandleTransfer)(BYTE channel, TTYPE_T type, TMODE_T mode, LONG isAutoInit, ULONG physicalAddr, ULONG maxData, LONG isDescending, ULONG * transferred, LONG * isTooSlow);
   STDMETHOD(HandleAfterTransfer)(BYTE channel, ULONG transferred, LONG isTerminalCount);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
-  CSBCompatCtlMixer m_SBMixer;
-  CSBCompatCtlDSP m_SBDSP;
   short m_DSPVersion;
   int m_basePort;
   int m_IRQLine;
   int m_DMA8Channel;
   int m_DMA16Channel;
 
+  int m_forcedSampleRate;
+  int m_forcedBitsPerSample;
+  int m_forcedNumChannels;
+
+// Other member variables
 protected:
   DWORD m_lastTransferTime;
   DWORD m_transferStartTime;
@@ -116,12 +122,14 @@ protected:
 
   BYTE m_E2Reply;
 
-  int m_forcedSampleRate;
-  int m_forcedBitsPerSample;
-  int m_forcedNumChannels;
-
   CCriticalSection m_mutex;
 
+// Platform-independent classes
+protected:
+  CSBCompatCtlMixer m_SBMixer;
+  CSBCompatCtlDSP m_SBDSP;
+
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;

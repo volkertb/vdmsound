@@ -83,11 +83,18 @@ public:
   STDMETHOD(HandleSysEx)(LONGLONG usDelta, BYTE * data, LONG length);
   STDMETHOD(HandleRealTime)(LONGLONG usDelta, BYTE data);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
-  CMPU401CtlFSM m_MPUFSM;
   int m_basePort;
   int m_IRQLine;
 
+// Platform-independent classes
+protected:
+  CMPU401CtlFSM m_MPUFSM;
+
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IVDMSERVICESLib::IVDMBaseServicesPtr m_BaseSrv;

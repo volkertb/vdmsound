@@ -76,12 +76,19 @@ protected:
   CString MidiOutGetName(void);
   CString MidiOutGetError(MMRESULT errCode);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Module's settings
 protected:
   int m_deviceID;
+
+// Other member variables
+protected:
   CString m_deviceName;
   HMIDIOUT m_hMidiOut;
   CThread m_gcThread;
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IMIDIEventHandlerPtr m_midiOut;

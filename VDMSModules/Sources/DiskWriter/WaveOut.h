@@ -51,9 +51,13 @@ public:
   STDMETHOD(SetFormat)(WORD channels, DWORD samplesPerSec, WORD bitsPerSample);
   STDMETHOD(PlayData)(BYTE * data, LONG length, DOUBLE * load);
 
+/////////////////////////////////////////////////////////////////////////////
+
+// Other member variables
 protected:
   FILE* m_fOut;
 
+// Interfaces to dependency modules
 protected:
   IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
   IWaveDataConsumerPtr m_waveOut;
