@@ -1,0 +1,25 @@
+HKCR
+{
+	LaunchPad.LaunchPadShellEx.1 = s 'LaunchPadShellEx Class'
+	{
+		CLSID = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
+	}
+	LaunchPad.LaunchPadShellEx = s 'LaunchPadShellEx Class'
+	{
+		CLSID = s '{64BC5640-700F-4E7E-8462-D3092DD74B0F}'
+		CurVer = s 'LaunchPad.LaunchPadShellEx.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {64BC5640-700F-4E7E-8462-D3092DD74B0F} = s 'LaunchPadShellEx Class'
+		{
+			ProgID = s 'LaunchPad.LaunchPadShellEx.1'
+			VersionIndependentProgID = s 'LaunchPad.LaunchPadShellEx'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{5397AA66-C386-4F77-B625-7A34EB12B576}'
+		}
+	}
+}

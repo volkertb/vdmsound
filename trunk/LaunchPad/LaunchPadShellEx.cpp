@@ -1,10 +1,10 @@
-// PropertySheetShellEx.cpp : Implementation of CPropertySheetShellEx
+// LaunchPadShellEx.cpp : Implementation of CLaunchPadShellEx
 #include "stdafx.h"
 #include "LaunchPad.h"
-#include "PropertySheetShellEx.h"
+#include "LaunchPadShellEx.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CPropertySheetShellEx
+// CLaunchPadShellEx
 
 BOOL CALLBACK PropPageDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL OnInitDialog(HWND, LPARAM);
@@ -14,7 +14,7 @@ BOOL OnApply(HWND, PSHNOTIFY*);
 // IShellExtInit
 /////////////////////////////////////////////////////////////////////////////
 
-HRESULT CPropertySheetShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDataObj, HKEY hProgID) {
+HRESULT CLaunchPadShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT pDataObj, HKEY hProgID) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   FORMATETC format = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -69,7 +69,7 @@ HRESULT CPropertySheetShellEx::Initialize(LPCITEMIDLIST pidlFolder, LPDATAOBJECT
 // IShellPropSheetExt
 /////////////////////////////////////////////////////////////////////////////
 
-HRESULT CPropertySheetShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam) {
+HRESULT CLaunchPadShellEx::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPageProc, LPARAM lParam) {
   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
   PROPSHEETPAGE  pageProps;
@@ -127,18 +127,25 @@ BOOL CALLBACK PropPageDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
   return FALSE;
 }
 
-BOOL OnInitDialog(HWND hWnd, LPARAM lParam) {        
+BOOL OnInitDialog(HWND hWnd, LPARAM lParam) {
   PROPSHEETPAGE* pPSP = (PROPSHEETPAGE*)(lParam);
 
-  // TODO: implement
+  if (pPSP) {
+    // TODO: implement
+
+  }
 
   return FALSE;
 }
 
-BOOL OnApply(HWND hWnd, PSHNOTIFY* phdr) {
-  // TODO: implement
+BOOL OnApply(HWND hWnd, PSHNOTIFY* pHdr) {
+  if (pHdr) {
+    // TODO: implement
 
-  // Return PSNRET_NOERROR to allow the sheet to close if the user clicked OK.
-  SetWindowLong(hWnd, DWL_MSGRESULT, PSNRET_NOERROR);
-  return TRUE;
+    // Return PSNRET_NOERROR to allow the sheet to close if the user clicked OK.
+    SetWindowLong(hWnd, DWL_MSGRESULT, PSNRET_NOERROR);
+    return TRUE;
+  } else {
+    return FALSE;
+  }
 }
