@@ -1,0 +1,59 @@
+import "oaidl.idl";
+
+[
+	object,
+	uuid(DBF598C0-05C6-11d5-9C72-00A024112F81),
+	helpstring(""),
+	pointer_default(unique)
+]
+interface IDMAHandler : IUnknown
+{
+	typedef [ helpstring("Transfer type") ] enum
+	{
+		TRT_VERIFY    = 0x00,
+		TRT_WRITE     = 0x01,
+		TRT_READ      = 0x02,
+		TRT_INVALID   = 0x03
+	} TTYPE_T;
+
+	typedef [ helpstring("Transfer mode") ] enum
+	{
+		MOD_DEMAND    = 0x00,
+		MOD_SINGLE    = 0x01,
+		MOD_BLOCK     = 0x02,
+		MOD_CASCADE   = 0x03
+	} TMODE_T;
+
+	[ helpstring("Transfers data on a DMA channel") ]
+	HRESULT HandleTransfer(
+		[in] BYTE channel,                    // DMA channel
+		[in] TTYPE_T type,                    // Type of operation to be performed during transfer
+		[in] TMODE_T mode,                    // Modality of transfer
+		[in] BOOL isAutoInit,                 // The transfer re-initializes itself
+		[in] ULONG physicalAddr,              // Physical address where the data is located
+		[in] ULONG maxBytes,                  // Maximum amount of bytes that can be transferred
+		[in] BOOL isDescending,               // Direction in which the data should be transferred
+		[out, retval] ULONG * transferred );  // Actual amount of bytes that were transferred
+
+	[ helpstring("Transfers data on a DMA channel") ]
+	HRESULT HandleAfterTransfer(
+		[in] BYTE channel,                    // DMA channel
+		[in] ULONG transferred,               // Amount of bytes that were transferred in the last burst
+		[in] BOOL isTerminalCount );          // The transfer reached terminal-count
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+[
+	uuid(E46AE170-05C6-11d5-9C72-00A024112F81),
+	version(1.0),
+	helpstring("DMAHandlers 1.0 Definition Type Library")
+]
+library IDMAHANDLERSLib
+{
+	interface IDMAHandler;
+};
