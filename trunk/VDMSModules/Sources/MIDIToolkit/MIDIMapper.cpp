@@ -119,7 +119,7 @@ STDMETHODIMP CMIDIMapper::Destroy() {
 /////////////////////////////////////////////////////////////////////////////
 
 STDMETHODIMP CMIDIMapper::HandleEvent(LONGLONG usDelta, BYTE status, BYTE data1, BYTE data2, BYTE length) {
-  ASSERT(data1 < 128);
+  _ASSERTE(data1 < 128);
 
   if (GET_EVENT(status) == MIDI_EVENT_PROGRAM_CHANGE)
     data1 = m_patchMap[data1];      // Program change
