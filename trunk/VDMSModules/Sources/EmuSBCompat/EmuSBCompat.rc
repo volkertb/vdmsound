@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,1,2
+ PRODUCTVERSION 2,0,2,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,14 +70,15 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
+            VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "EmuSBCompat Module\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "1, 0, 1, 2\0"
             VALUE "InternalName", "EmuSBCompat\0"
             VALUE "LegalCopyright", "Copyright 2001\0"
             VALUE "OriginalFilename", "EmuSBCompat.DLL\0"
-            VALUE "ProductName", "EmuSBCompat Module\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductName", "VDMSound\0"
+            VALUE "ProductVersion", "2, 0, 2, 2\0"
             VALUE "OLESelfRegister", "\0"
         END
     END
