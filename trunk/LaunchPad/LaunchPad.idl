@@ -1,0 +1,20 @@
+// LaunchPad.idl : IDL source for LaunchPad.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (LaunchPad.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(08E6E524-B9D0-4907-B803-504B46C07040),
+	version(1.0),
+	helpstring("LaunchPad 1.0 Type Library")
+]
+library LAUNCHPADLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+};
