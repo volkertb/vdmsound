@@ -1,0 +1,22 @@
+BODY 
+{
+	background: #999999 none;
+	color: #DDDDDD;
+}
+
+div.table1
+{	
+	border: 1px solid #000000;				
+}
+
+div.table2  
+{
+	background: #BBBBBB none; 
+	color: #000000;
+	border-left: 1px solid #DDDDDD; 
+	border-top: 1px solid #DDDDDD; 
+	padding-left: 3px;	
+	font-size: 10pt;
+	font-family: Arial;
+			
+}
