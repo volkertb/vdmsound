@@ -502,15 +502,15 @@ BOOL CRUNWITHVDMSThread::SetupINI(CINIFile& INIFile) {
       vdmsini += _T("[AdLibWavePlayer.depends]\n");
     }
 
-    if (vdms_sb_dsp_useFileOut) {
+    if (vdms_sb_fm_useFileOut) {
       vdmsini += _T("WaveOut=AdLibWaveWriter\n");
 
       vdmsini += _T("[AdLibWaveWriter]\n");
       vdmsini += _T("CLSID=DiskWriter.WaveOut\n");
       vdmsini += _T("[AdLibWaveWriter.debug]\n");
-      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logsblaster) ? vdms_debug_logdetail : log_none) + _T("\n");
+      vdmsini += _T("detail=") + VLPUtil::FormatString(_T("%d"), (vdms_debug_logenabled && vdms_debug_logadlib) ? vdms_debug_logdetail : log_none) + _T("\n");
       vdmsini += _T("[AdLibWaveWriter.config]\n");
-      vdmsini += _T("path=") + vdms_sb_dsp_fileOut + _T("\n");
+      vdmsini += _T("path=") + vdms_sb_fm_fileOut + _T("\n");
     }
   }
 
