@@ -20,17 +20,18 @@
 /////////////////////////////////////////////////////////////////////////////
 // CVDMServices
 class ATL_NO_VTABLE CVDMServices : 
-	public CComObjectRootEx<CComMultiThreadModel>,
-	public CComCoClass<CVDMServices, &CLSID_VDMServices>,
-	public ISupportErrorInfo,
-	public IVDMBasicModule,
-	public IVDMBaseServices,
-  public IVDMIOServices
+  public CComObjectRootEx<CComMultiThreadModel>,
+  public CComCoClass<CVDMServices, &CLSID_VDMServices>,
+  public ISupportErrorInfo,
+  public IVDMBasicModule,
+  public IVDMBaseServices,
+  public IVDMIOServices,
+  public IVDMDMAServices
 {
 public:
   CVDMServices() : m_hInstance(NULL)
-	{
-	}
+  {
+  }
 
 DECLARE_REGISTRY_RESOURCEID(IDR_VDMSERVICES)
 DECLARE_NOT_AGGREGATABLE(CVDMServices)
@@ -38,47 +39,49 @@ DECLARE_NOT_AGGREGATABLE(CVDMServices)
 DECLARE_PROTECT_FINAL_CONSTRUCT()
 
 BEGIN_COM_MAP(CVDMServices)
-	COM_INTERFACE_ENTRY(ISupportErrorInfo)
-	COM_INTERFACE_ENTRY(IVDMBasicModule)
-	COM_INTERFACE_ENTRY(IVDMBaseServices)
-	COM_INTERFACE_ENTRY(IVDMIOServices)
+  COM_INTERFACE_ENTRY(ISupportErrorInfo)
+  COM_INTERFACE_ENTRY(IVDMBasicModule)
+  COM_INTERFACE_ENTRY(IVDMBaseServices)
+  COM_INTERFACE_ENTRY(IVDMIOServices)
+  COM_INTERFACE_ENTRY(IVDMDMAServices)
 END_COM_MAP()
 
 // ISupportsErrorInfo
 public:
-	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
+  STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
 
 // IVDMBasicModule
 public:
-	STDMETHOD(Init)(IUnknown * configuration);
-	STDMETHOD(Destroy)();
+  STDMETHOD(Init)(IUnknown * configuration);
+  STDMETHOD(Destroy)();
 
 // IVDMBaseServices
 public:
-	STDMETHOD(GetRegister)(REGISTER_T reg, ULONG * value);
-	STDMETHOD(SetRegister)(REGISTER_T reg, ULONG value);
-	STDMETHOD(GetFlag)(FLAG_T flag, ULONG * value);
-	STDMETHOD(SetFlag)(FLAG_T flag, ULONG value);
-	STDMETHOD(GetMemory)(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length);
-	STDMETHOD(SetMemory)(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length);
-	STDMETHOD(SimulateInterrupt)(INTERRUPT_T type, BYTE line, USHORT count);
-	STDMETHOD(TerminateVDM)();
+  STDMETHOD(GetRegister)(REGISTER_T reg, ULONG * value);
+  STDMETHOD(SetRegister)(REGISTER_T reg, ULONG value);
+  STDMETHOD(GetFlag)(FLAG_T flag, ULONG * value);
+  STDMETHOD(SetFlag)(FLAG_T flag, ULONG value);
+  STDMETHOD(GetMemory)(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length);
+  STDMETHOD(SetMemory)(WORD segment, ULONG offset, ADDRMODE_T mode, BYTE * buffer, ULONG length);
+  STDMETHOD(SimulateInterrupt)(INTERRUPT_T type, BYTE line, USHORT count);
+  STDMETHOD(TerminateVDM)();
 
 // IVDMIOServices
 public:
-	STDMETHOD(AddIOHook)(WORD basePort, WORD portRange, OPERATIONS_T inOps, OPERATIONS_T outOps, IIOHandler * handler);
-	STDMETHOD(RemoveIOHook)(WORD basePort, WORD portRange, IIOHandler * handler);
+  STDMETHOD(AddIOHook)(WORD basePort, WORD portRange, OPERATIONS_T inOps, OPERATIONS_T outOps, IIOHandler * handler);
+  STDMETHOD(RemoveIOHook)(WORD basePort, WORD portRange, IIOHandler * handler);
+
+// IVDMDMAServices
+public:
+  STDMETHOD(GetDMAState)(USHORT channel, DMA_INFO_T * DMAInfo);
+  STDMETHOD(SetDMAState)(USHORT channel, DMA_INFO_SEL_T flags, DMA_INFO_T * DMAInfo);
+  STDMETHOD(PerformDMATransfer)(USHORT channel, BYTE * buffer, ULONG length, ULONG * transferred);
 
 /*
-	STDMETHOD(AddIOHook)(USHORT basePort, USHORT portRange, IIOHandler * handler);
-	STDMETHOD(RemoveIOHook)(USHORT basePort, USHORT portRange);
-	STDMETHOD(AddMemHook)(ULONG baseAddr, ULONG addrRange, IMemHandler * handler);
-	STDMETHOD(RemoveMemHook)(ULONG baseAddr, ULONG addrRange);
-	STDMETHOD(AllocMem)(ULONG address, ULONG size);
-	STDMETHOD(FreeMem)(ULONG address, ULONG size);
-	STDMETHOD(QueryDMA)(USHORT channel, DMA_INFO_T * DMAInfo);
-	STDMETHOD(SetDMA)(USHORT channel, DMA_INFO_SEL_T flags, DMA_INFO_T * DMAInfo);
-	STDMETHOD(RequestDMA)(USHORT channel, BYTE * buffer, ULONG length);
+  STDMETHOD(AddMemHook)(ULONG baseAddr, ULONG addrRange, IMemHandler * handler);
+  STDMETHOD(RemoveMemHook)(ULONG baseAddr, ULONG addrRange);
+  STDMETHOD(AllocMem)(ULONG address, ULONG size);
+  STDMETHOD(FreeMem)(ULONG address, ULONG size);
 */
 
 // VDD user hook functions
@@ -104,7 +107,7 @@ protected:
   static CString StringFromPortRanges(int numPorts, const VDD_IO_PORTRANGE* ports);
 
 protected:
-	HINSTANCE m_hInstance;
+  HINSTANCE m_hInstance;
 
 protected:
   static IVDMQUERYLib::IVDMRTEnvironmentPtr m_env;
