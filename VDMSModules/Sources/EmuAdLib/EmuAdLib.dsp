@@ -292,6 +292,10 @@ SOURCE=.\AdLibCtl.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\AdLibCtlFSM.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\EmuAdLib.cpp
 # End Source File
 # Begin Source File
@@ -310,6 +314,10 @@ SOURCE=.\StdAfx.cpp
 # Begin Source File
 
 SOURCE=.\AdLibCtl.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\AdLibCtlFSM.h
 # End Source File
 # Begin Source File
 
