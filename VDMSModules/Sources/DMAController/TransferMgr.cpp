@@ -11,6 +11,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define INI_STR_VDMSERVICES   L"VDMSrv"
+#define INI_STR_ACTINTERVAL   L"interval"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -70,15 +71,20 @@ STDMETHODIMP CTransferMgr::Init(IUnknown * configuration) {
 
   // Obtain the Query objects (for intialization purposes)
   IVDMQUERYLib::IVDMQueryDependenciesPtr Depends;   // Dependency query object
+  IVDMQUERYLib::IVDMQueryConfigurationPtr Config;   // Configuration query object
 
   // Initialize configuration and VDM services
   try {
     // Obtain the Query objects (for intialization purposes)
     Depends = configuration;    // Dependency query object
+    Config  = configuration;    // Configuration query object
 
     // Obtain VDM Services instance (if available)
     if ((m_DMASrv = Depends->Get(INI_STR_VDMSERVICES)) == NULL) // DMA services
       return AtlReportError(GetObjectCLSID(), (LPCTSTR)::FormatMessage(MSG_ERR_INTERFACE, /*false, NULL, 0, */false, (LPCTSTR)CString(INI_STR_VDMSERVICES), _T("IVDMDMAServices")), __uuidof(IVDMBasicModule), E_NOINTERFACE);
+
+    // Try to obtain the SB settings, use defaults if none specified
+    m_activityInterval = CFG_Get(Config, INI_STR_ACTINTERVAL, 15, 10, false);
   } catch (_com_error& ce) {
     SetErrorInfo(0, ce.ErrorInfo());
     return ce.Error();          // Propagate the error
@@ -349,7 +355,7 @@ unsigned int CTransferMgr::Run(CThread& thread) {
           break;
       }
     } else {
-      Sleep(15);    // whatever amount, but not too low for too high a priority!
+      Sleep(m_activityInterval);  // whatever amount, but not too low for too high a priority!
     }
   } while (true);
 }
