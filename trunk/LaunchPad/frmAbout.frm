@@ -7,6 +7,7 @@ Begin VB.Form frmAbout
    ClientTop       =   330
    ClientWidth     =   5865
    ClipControls    =   0   'False
+   ControlBox      =   0   'False
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
@@ -18,8 +19,9 @@ Begin VB.Form frmAbout
    Begin VB.PictureBox picIcon 
       AutoSize        =   -1  'True
       BackColor       =   &H00C0C0C0&
+      BorderStyle     =   0  'None
       ClipControls    =   0   'False
-      Height          =   540
+      Height          =   480
       Left            =   240
       Picture         =   "frmAbout.frx":0000
       ScaleHeight     =   480
@@ -28,7 +30,7 @@ Begin VB.Form frmAbout
       TabIndex        =   2
       TabStop         =   0   'False
       Top             =   240
-      Width           =   540
+      Width           =   480
    End
    Begin VB.CommandButton cmdOK 
       Cancel          =   -1  'True
@@ -51,24 +53,24 @@ Begin VB.Form frmAbout
       Width           =   1452
    End
    Begin VB.Label lblDescription 
-      Caption         =   "App Description"
+      Caption         =   "VDMSound LaunchPad is a graphical user interface to the VDMSound sound card emulation package."
       ForeColor       =   &H00000000&
       Height          =   1170
       Left            =   1050
       TabIndex        =   6
       Tag             =   "App Description"
       Top             =   1125
-      Width           =   4092
+      Width           =   4095
    End
    Begin VB.Label lblTitle 
-      Caption         =   "Application Title"
+      Caption         =   "VDMSound LaunchPad"
       ForeColor       =   &H00000000&
-      Height          =   480
+      Height          =   360
       Left            =   1050
       TabIndex        =   5
       Tag             =   "Application Title"
       Top             =   240
-      Width           =   4092
+      Width           =   4095
    End
    Begin VB.Line Line1 
       BorderColor     =   &H00808080&
@@ -94,11 +96,11 @@ Begin VB.Form frmAbout
       Left            =   1050
       TabIndex        =   4
       Tag             =   "Version"
-      Top             =   780
-      Width           =   4092
+      Top             =   600
+      Width           =   4095
    End
    Begin VB.Label lblDisclaimer 
-      Caption         =   "Warning: ..."
+      Caption         =   $"frmAbout.frx":08CA
       ForeColor       =   &H00000000&
       Height          =   825
       Left            =   255
@@ -114,7 +116,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 ' Reg Key Security Options...
-Const KEY_ALL_ACCESS = &H2003F
+Const KEY_READ = &H2001F
                      
 ' Reg Key ROOT Types...
 Const HKEY_LOCAL_MACHINE = &H80000002
@@ -133,7 +135,6 @@ Private Declare Function RegCloseKey Lib "advapi32" (ByVal hKey As Long) As Long
 
 Private Sub Form_Load()
   lblVersion.Caption = "Version " & App.Major & "." & App.Minor & "." & App.Revision
-  lblTitle.Caption = App.Title
 End Sub
 
 
@@ -186,7 +187,7 @@ Public Function GetKeyValue(KeyRoot As Long, KeyName As String, SubKeyRef As Str
     '------------------------------------------------------------
     ' Open RegKey Under KeyRoot {HKEY_LOCAL_MACHINE...}
     '------------------------------------------------------------
-    rc = RegOpenKeyEx(KeyRoot, KeyName, 0, KEY_ALL_ACCESS, hKey) ' Open Registry Key
+    rc = RegOpenKeyEx(KeyRoot, KeyName, 0, KEY_READ, hKey) ' Open Registry Key
     
     If (rc <> ERROR_SUCCESS) Then GoTo GetKeyError          ' Handle Error...
     
