@@ -35,11 +35,11 @@ goto end
 REM VDD load errors
 :error2
 echo.
-echo VDMS encountered an error while loading a DLL.  Please make sure that VDMS
-echo is properly installed, and that the file VDDLoader.dll is in the PATH or
-echo in the current directory.  It is also possible that you have older
-echo versions of one or more system DLLs, in which case you will have to
-echo download newer versions from the VDMS site.
+echo VDMS encountered an error while loading a DLL.  Please make sure that VDMS is
+echo properly installed, and that the file VDDLoader.dll is in the PATH or in the
+echo current directory.  It is also possible that you have older versions of one or
+echo more system DLLs, in which case you will have to download newer versions from
+echo the VDMS site.
 goto end
 
 REM VDMConfig errors
@@ -53,4 +53,5 @@ echo.
 echo Don't hesitate to seek support on the VDMS site, http://ntvdm.cjb.net/.
 pause
 exit
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
+
+REM -123456789012345678901234567890123456789012345678901234567890123456789012345678

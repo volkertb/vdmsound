@@ -476,13 +476,11 @@ bool CSBCompatCtlDSP::processCommand(unsigned char command) {
       return true;
 
     case 0x41:  /* 041h : Set Output Sample Rate */
-      /* TODO: inquire: LSL6 (16-bit sound over 8-bit DMA) treats sample rate as "byte rate" (not 16 bit-samples rate) -- BECAUSE LSL6 does 16 bit over 8-bit DMA?! */
+      /* TODO: inquire: LSL6 (when using aliased DMA, i.e. 16-bit sound over 8-bit DMA) treats sample rate as "byte rate" (not 16 bit-samples rate) -- BECAUSE LSL6 does 16 bit over 8-bit DMA?! */
       setSampleRate(MKWORD(m_bufIn[1], m_bufIn[2]));  // sample rate independent from number of channels
       return true;
 
     case 0x42:  /* 042h : Set Input Sample Rate */
-      // TODO: implement (same holds as for DSP cmd. 0x41)
-      m_hwemu->logError("Attempted to use unimplemented DSP command 0x42 (Input sample rate)");
       setSampleRate(MKWORD(m_bufIn[1], m_bufIn[2]));  // sample rate independent from number of channels
       return false;
 
