@@ -79,8 +79,8 @@ public:
 public:
 	STDMETHOD(AddDMAHandler)(BYTE channel, IDMAHandler * handler);
 	STDMETHOD(RemoveDMAHandler)(BYTE channel, IDMAHandler * handler);
-	STDMETHOD(InitiateTransfer)(BYTE channel);
-	STDMETHOD(AbortTransfer)(BYTE channel);
+	STDMETHOD(InitiateTransfer)(BYTE channel, LONG synchronous);
+	STDMETHOD(AbortTransfer)(BYTE channel, LONG synchronous);
 
 protected:
   CThread DMAThread;
