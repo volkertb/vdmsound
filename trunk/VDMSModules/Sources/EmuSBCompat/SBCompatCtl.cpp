@@ -61,9 +61,6 @@ STDMETHODIMP CSBCompatCtl::InterfaceSupportsErrorInfo(REFIID riid)
 
 
 
-#define _XYZ(str) if(xyz) fprintf(xyz,(LPCSTR)str);
-FILE* xyz=NULL;
-
 /////////////////////////////////////////////////////////////////////////////
 // IVDMBasicModule
 /////////////////////////////////////////////////////////////////////////////
@@ -177,15 +174,13 @@ STDMETHODIMP CSBCompatCtl::Init(IUnknown * configuration) {
   m_SBMixer.setDMASelect(m_DMA8Channel, m_DMA16Channel);
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("SBCompatCtl initialized (DSP version = %d.%02d, base port = 0x%03x, IRQ = %d, 8-bit DMA = %d, 16-bit DMA = %d)"), HIBYTE(m_DSPVersion) & 0xff, LOBYTE(m_DSPVersion) & 0xff, m_basePort, m_IRQLine, m_DMA8Channel, m_DMA16Channel));
-//xyz=fopen("D:\\vdmsdma.txt","wt");
+
   return S_OK;
 }
 
 STDMETHODIMP CSBCompatCtl::Destroy() {
   // put the mixer in a known state
   m_SBMixer.reset();
-
-if(xyz)fclose(xyz);
 
   // put the DSP in a known state
   m_SBDSP.reset();
@@ -364,17 +359,13 @@ STDMETHODIMP CSBCompatCtl::HandleTransfer(BYTE channel, TTYPE_T type, TMODE_T mo
   *transferred = 0;
   *isTooSlow = false;
 
-_XYZ("*");
-
   // Lock all transfer variables (DMA ch., sample rate, etc.)
   CSingleLock lock(&m_mutex, TRUE);
-_XYZ("# ");
 
   // If this transfer does not occur on the active DMA channel, ignore it
   if (channel != m_activeDMAChannel)
     return S_FALSE;
 
-_XYZ("1");
   // If we are dealing with a DSP command 0xe2 1-byte transfer, do it now
   if (m_transferType == TT_E2CMD) {
     // No matter what, transfer 1 byte (done on an 8-bit channel)
@@ -402,12 +393,10 @@ _XYZ("1");
     }
   }
 
-_XYZ("2");
   // If transfer is paused, don't process any bytes
   if (m_isPaused)
     return S_OK;
 
-_XYZ("3");
   // On SB16: if the last IRQ was not acknowledged, don't process any bytes
   if ((getDSPVersion() >= 0x0400) &&
       (m_bitsPerSample != 16 ? m_SBDSP.get8BitIRQ() : m_SBDSP.get16BitIRQ()))
@@ -415,7 +404,6 @@ _XYZ("3");
     return S_OK;
   }
 
-_XYZ("4");
   // Get the current time
   DWORD currentTime = timeGetTime();
   DWORD deltaTime = currentTime - m_lastTransferTime;
@@ -444,7 +432,6 @@ _XYZ("4");
     return S_OK;
   }
 
-_XYZ("5");
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
   /* TODO: buffer can be as much as 4 times larger for ADPCM2 playback ! */
@@ -465,14 +452,12 @@ _XYZ("5");
   //  the time elapsed since the last transfer (+/- 1 time uncertainty), and on
   //  the scaling factor computed above.
   long toTransfer = scalingFactor * max(0.0, (m_avgBandwidth * (double)(deltaTime + 1)) / 1000.0);
-// ***DragonSphere*** // toTransfer=m_DSPBlockSize/2;
+
   // Round (down) the number of bytes to transfer in such a way so that
   //  the transfer will not break a 16-bit sample down the middle, split a
   //  left/right sample pair (for stereo data), or be misaligned on a 16-bit
   //  boundary when transferring across 16-bit DMA channels
   toTransfer = round(toTransfer, max((m_numChannels - 1) + (m_bitsPerSample >> 4), alignment)); // rounding boundaries: 2^0 for mono 8-bit over 8-bit DMA channels, 2^1 for 16-bit mono or 8-bit stereo over any DMA channels, <OR> 8-bit mono over 16-bit DMA channels, 2^2 for 16-bit stereo (any DMA channels)
-
-_XYZ((bstr_t)Format(_T(" % 6lu % 6lu % 6lu % 4d %0.3f    % 6ld %c\n"), m_transferredBytes, toTransfer, maxTransfer, (int)deltaTime, m_renderLoad, toTransfer + (toTransfer - maxTransfer), toTransfer + (toTransfer - maxTransfer) > m_DSPBlockSize ? '^' : ' '));
 
   // Clip the amount of bytes to transfer if it exceeds the transfer limit
   if (toTransfer > maxTransfer) {
@@ -757,8 +742,6 @@ void CSBCompatCtl::startTransfer(transfer_t type, int numChannels, int samplesPe
 
   // Release the lock
   m_mutex.Unlock();
-
-_XYZ((bstr_t)Format(_T("Starting DMA transfer (%s) on ch. %d (%s, %d samples/block): %d-bit %s %dHz, %s\n"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown transfer type>"), m_activeDMAChannel, isAutoInit ? _T("auto-init") : _T("single-cycle"), samplesPerBlock, bitsPerSample, numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown aurality>"), samplesPerSecond, codec == CODEC_PCM ? _T("unsigned PCM") : codec == CODEC_PCM_SIGNED ? _T("signed PCM") : codec == CODEC_ADPCM_2 ? _T("ADPCM 2") : codec == CODEC_ADPCM_3 ? _T("ADPCM 3") : codec == CODEC_ADPCM_4 ? _T("ADPCM 4") : _T("<unknown codec>")));
 
   RTE_RecordLogEntry(m_env, IVDMQUERYLib::LOG_INFORMATION, Format(_T("Starting DMA transfer (%s) on ch. %d (%s, %d samples/block): %d-bit %s %dHz, %s"), type == TT_PLAYBACK ? _T("playback") : type == TT_RECORD ? _T("record") : _T("<unknown transfer type>"), m_activeDMAChannel, isAutoInit ? _T("auto-init") : _T("single-cycle"), samplesPerBlock, bitsPerSample, numChannels == 1 ? _T("mono") : numChannels == 2 ? _T("stereo") : _T("<unknown aurality>"), samplesPerSecond, codec == CODEC_PCM ? _T("unsigned PCM") : codec == CODEC_PCM_SIGNED ? _T("signed PCM") : codec == CODEC_ADPCM_2 ? _T("ADPCM 2") : codec == CODEC_ADPCM_3 ? _T("ADPCM 3") : codec == CODEC_ADPCM_4 ? _T("ADPCM 4") : _T("<unknown codec>")));
 
